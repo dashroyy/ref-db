@@ -3,6 +3,7 @@
   "type": "module",
   "version": "2.0.0",
   "private": true,
+  "license": "MIT",
   "description": "REF·DB — an open engineering reference and learning site for solid rocket motor and mechanical design.",
   "scripts": {
     "dev": "astro dev",
