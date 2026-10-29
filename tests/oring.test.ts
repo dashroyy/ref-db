@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyseGland, stretchedCs, extrusionLimit, suggestGroove, nearestId, type ORingInputs } from '../src/lib/oring.ts';
+import { analyseGland, stretchedCs, extrusionLimit, suggestGroove, nearestId, designGland, sectionFor, pointSqueeze, type ORingInputs } from '../src/lib/oring.ts';
 import data from '../src/data/orings.json' with { type: 'json' };
 
 const close = (a: number, b: number, rel = 1e-3) =>
@@ -73,4 +73,31 @@ test('suggested groove hits the target nominal squeeze and fill', () => {
 test('stock ID lookup from ISO 3601 class A data', () => {
   const ids = (data.idsA as Record<string, number[]>)['5.33'];
   assert.equal(nearestId(ids, 137.4), 139.29);
+});
+
+test('design from the hardware: the nozzle seal of the worked example', () => {
+  const ids = (data.idsA as Record<string, number[]>)['5.33'];
+  const d = designGland({ arrangement: 'piston', duty: 'static', mating: 150, pressure: 10, hardness: 70, clearance: 0.203, squeeze: 0.2, fill: 0.75, ids });
+  assert.equal(d.cs, 5.33); assert.equal(d.id, 139.29);
+  assert.ok(d.stretch > 0.01 && d.stretch < 0.05, 'stretch 1–5%');
+  assert.ok(Math.abs(d.groove - 141.54) < 0.01); assert.equal(d.backups, 1, 'a back-up ring at 10 MPa with this clearance');
+  assert.ok(Math.abs(d.idTol - 0.84) < 0.005);
+  assert.equal(sectionFor(10), 1.78); assert.equal(sectionFor(150), 5.33);
+});
+
+test('face seals put the ring against the pressure side', () => {
+  const ids = (data.idsA as Record<string, number[]>)['3.53'];
+  const inside = designGland({ arrangement: 'face', duty: 'static', mating: 80, pressureInside: true, pressure: 5, hardness: 70, clearance: 0.05, squeeze: 0.25, fill: 0.75, ids });
+  assert.ok(inside.od >= 80, 'ring OD on the groove OD');
+  const outside = designGland({ arrangement: 'face', duty: 'static', mating: 80, pressureInside: false, pressure: 5, hardness: 70, clearance: 0.05, squeeze: 0.25, fill: 0.75, ids });
+  assert.ok(outside.id <= 80, 'ring ID on the groove ID');
+});
+
+test('point squeeze agrees with the worst case at the corners', () => {
+  const i = { ...base };
+  const g = analyseGland(i);
+  const x = [i.cs - i.csTol, i.id - i.idTol, i.bore.max, i.shaft.min, i.groove.max, 0, 0];
+  // smallest ring, most stretch (smallest ID onto the largest root), deepest gland, cold
+  const s = pointSqueeze({ ...i, groove: { min: i.groove.max, max: i.groove.max } }, x, i.tMin);
+  assert.ok(Math.abs(s - g.sqMinCold) < 0.01, `${s} vs ${g.sqMinCold}`);
 });

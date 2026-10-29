@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { linearStack, capability, monteCarlo, radialStack, rng, sigmaOf, tiltOffset, parseContributors, parseOffsets } from '../src/lib/stack.ts';
-import type { Contributor, Offset } from '../src/lib/stack.ts';
+import { linearStack, capability, monteCarlo, radialStack, rng, sigmaOf, tiltOffset, parseContributors, parseOffsets, rowLimits, toContributors, groupedStack, groupedMonteCarlo, thermalShift, allocate, itGrade, toleranceFactor, rowsToText, rowsFromText } from '../src/lib/stack.ts';
+import { itValue } from '../src/lib/fits.ts';
+import type { Contributor, Offset, StackRow } from '../src/lib/stack.ts';
 import { glandRange } from '../src/lib/gdt.ts';
 
 const close = (a: number, b: number, tol: number, msg?: string) => assert.ok(Math.abs(a - b) <= tol, `${msg ?? ''} ${a} vs ${b}`);
@@ -103,4 +104,67 @@ test('parsing contributor and offset tables', () => {
   const o = parseOffsets('Face, squareness, 0.05/300, zone\nPilot, 0.125, shift\nNope, 0.1, sideways', 700);
   assert.equal(o.rows.length, 2); close(o.rows[0].r, 0.11667, 1e-5); assert.equal(o.rows[0].name, 'Face, squareness'); assert.equal(o.bad.length, 1);
   assert.equal(parseOffsets('Face, 0.05/300, zone', NaN).bad.length, 1, 'a tilt needs a lever arm');
+});
+
+test('drawing formats convert to a mean and an equal half tolerance', () => {
+  const L = (r: Partial<StackRow>) => rowLimits({ name: 'x', dir: 1, format: 'eq', ...r } as StackRow);
+  close(L({ nom: 20, tol: 0.1 }).half, 0.1, 1e-12);
+  const u = L({ format: 'uneq', nom: 20, plus: 0.8, minus: 0.2 });
+  close(u.mean, 20.3, 1e-12); close(u.half, 0.5, 1e-12); close(u.shift, 0.3, 1e-12);
+  const lim = L({ format: 'limits', max: 20.2, min: 20.8 });
+  close(lim.lo, 20.2, 1e-12); close(lim.hi, 20.8, 1e-12); close(lim.shift, 0, 1e-12);
+  close(L({ format: 'uniPlus', nom: 12, tol: 0.2 }).mean, 12.1, 1e-12);
+  close(L({ format: 'uniMin', nom: 12, tol: 0.2 }).mean, 11.9, 1e-12);
+  close(L({ format: 'gdt', gdt: 'pos', zone: 0.2, nom: 0 }).half, 0.1, 1e-12, 'a diametral zone acts by its radius');
+  close(L({ format: 'gdt', gdt: 'pos', zone: 0.2, bonus: 0.1, nom: 0 }).half, 0.15, 1e-12, 'MMC bonus enlarges a position zone');
+  close(L({ format: 'gdt', gdt: 'form', zone: 0.2, bonus: 0.1, nom: 0 }).half, 0.1, 1e-12, 'no bonus on form');
+  close(L({ format: 'gdt', gdt: 'profOut', zone: 0.2, nom: 5 }).mean, 5.1, 1e-12);
+  close(L({ format: 'gdt', gdt: 'profIn', zone: 0.2, nom: 5 }).mean, 4.9, 1e-12);
+});
+
+const sealRows = (): StackRow[] => [
+  { name: 'O-ring section', dir: 1, format: 'limits', max: 5.46, min: 5.2, locked: true },
+  { name: 'Case bore', dir: -1, format: 'limits', max: 150.063, min: 150 },
+  { name: 'Plug pilot', dir: 1, sens: 0.5, format: 'limits', max: 149.9, min: 149.86 },
+  { name: 'Groove root', dir: 1, sens: 0.5, format: 'limits', max: 141.55, min: 141.45 },
+  { name: 'Root runout', dir: -1, format: 'gdt', gdt: 'runout', zone: 0.05, nom: 0 },
+];
+
+test('worked example: the row editor gives the same seal stack', () => {
+  const g = groupedStack(toContributors(sealRows()), 1.33);
+  close(g.nominal, 0.9885, 1e-9); close(g.wcMin, 0.767, 1e-9); close(g.rssMin, 0.8498, 1e-4);
+  close(g.sigma, 0.03477, 1e-5); close(g.bender, 1.5 * g.rss, 1e-12);
+  const off = sealRows().map((r, i) => (i === 4 ? { ...r, on: false } : r));
+  close(groupedStack(toContributors(off)).wc, 0.1965, 1e-9, 'an unticked row leaves the stack');
+  const back = rowsFromText(rowsToText(sealRows()));
+  assert.equal(back.bad.length, 0); close(groupedStack(toContributors(back.rows)).wcMin, 0.767, 1e-9);
+});
+
+test('correlated groups add worst case inside the group', () => {
+  const cs = [{ name: 'a', sens: 1, lo: -1, hi: 1, group: 'G' }, { name: 'b', sens: -1, lo: -1, hi: 1, group: 'G' }, { name: 'c', sens: 1, lo: -1, hi: 1 }];
+  const g = groupedStack(cs);
+  close(g.rss, Math.sqrt(2 ** 2 + 1), 1e-12); close(g.wc, 3, 1e-12);
+  const mc = groupedMonteCarlo(cs, { n: 100000, seed: 2 });
+  close(mc.sd, g.sigma, 0.01 * g.sigma, 'Monte Carlo agrees with the grouped σ');
+  close(groupedStack(cs.map((c) => ({ ...c, group: undefined }))).rss, Math.sqrt(3), 1e-12);
+});
+
+test('thermal shift follows the loop', () => {
+  const rows: StackRow[] = [{ name: 'Al housing', dir: 1, format: 'eq', nom: 100, tol: 0.05, mat: 'al' }, { name: 'Steel shaft', dir: -1, format: 'eq', nom: 99, tol: 0.05, mat: 'st' }];
+  const t = thermalShift(rows, (m) => (m === 'al' ? 23e-6 : 12e-6), 40);
+  close(t.total, 100 * 23e-6 * 40 - 99 * 12e-6 * 40, 1e-12);
+});
+
+test('allocation meets the target and keeps locked rows', () => {
+  const ar = sealRows().map((r) => { const l = rowLimits(r); return { name: r.name, sens: r.dir * (r.sens ?? 1), half: l.half, mean: l.mean, locked: r.locked, unsized: r.format === 'gdt' }; });
+  const target = 0.9885 - 0.74;
+  for (const m of ['scale', 'equal', 'size'] as const) for (const b of ['wc', 'rss'] as const) {
+    const a = allocate(ar, target, b, m), v = a.rows.map((r) => Math.abs(r.sens) * r.newHalf);
+    close(b === 'wc' ? v.reduce((x, y) => x + y, 0) : Math.hypot(...v), target, 1e-9, `${m} ${b}`);
+    close(a.rows[0].newHalf, 0.13, 1e-12);
+  }
+  const sc = allocate(ar, target, 'wc', 'scale');
+  close(sc.k, 1.2951, 1e-4); assert.equal(itGrade(150, 2 * sc.rows[1].newHalf, itValue), 8);
+  assert.equal(allocate(ar, 0.1, 'wc', 'scale').ok, false, 'the locked ring alone uses more than the target');
+  close(toleranceFactor(150), 0.45 * Math.cbrt(150) + 0.15, 1e-12);
 });

@@ -116,10 +116,25 @@ Two more lessons about joints:
 
 ## Calculator
 
-<ORingCalc />
+The calculator works in two steps:
 
-Use **Suggest groove** to size a groove for a nominal squeeze of 20% (14% for dynamic) and a fill of 75% around the
-selected ring. Then change the minimum and maximum values to your real tolerances, and check the worst case.
+1. **Design from the hardware.** Enter the bore and the plug (or the rod, or the groove diameter of a face seal), the
+   pressure and the targets. **Design the ring and groove** selects the section from the diameter, a stock ring with
+   1–5% stretch (or against the pressure side of a face groove), the groove for the target squeeze and fill, and back-up
+   rings if the extrusion check needs them. It writes the result into the fields.
+2. **Check the gland.** Change the minimum and maximum values to your real tolerances. The calculator checks the worst
+   case at the tolerance corners and the temperature extremes, after compression set, and with the joint opening. It
+   also shows:
+   - the minimum and maximum squeeze across the full service temperature range;
+   - a Monte Carlo of 40,000 assemblies at the coldest temperature after compression set, with each dimension normal
+     across its limits. This tells how rare the worst case is;
+   - a table of what goes on the groove drawing: ring, groove dimensions, corner radii, lead-in chamfer, surface finish
+     and extrusion gap.
+
+The housing material comes from the [material library](../../materials/selection/), so its expansion is the same as
+in the other tools. For a ring that is not in the class A list, select **Other** and type the section and the ID.
+
+<ORingCalc />
 
 ## Worked example: a nozzle-to-case radial seal
 
@@ -141,6 +156,15 @@ groove root is Ø141.45–141.55, the width is 7.0–7.2 mm, the bore is Ø150.0
 5. **Joint opening.** Enter 0.25 mm of radial opening under pressure. The minimum squeeze decreases to **6.9%**, and
    the cold-resilience check fails. This is the Challenger situation on a small scale. Make the joint stiffer. Do not
    change the seal.
+6. **How rare is the worst case?** With the joint opening back at 0, the Monte Carlo puts the 3σ squeeze at 11.9%,
+   and none of 40,000 assemblies is below 10%. The worst case of 10.8% needs the smallest ring, the most stretch, the
+   deepest gland, full eccentricity and −40 °C together. Use the worst case for this seal (see
+   [Tolerance stack](../../drawing/tolerance-stack/#the-nozzle-seal) for why), but the statistics show where the margin
+   is.
+7. **Redesign with a back-up ring.** Push **Design the ring and groove**. It keeps the 139.29 × 5.33 ring, moves the
+   groove root to Ø141.52–141.62 for 20% nominal squeeze, and adds one back-up ring because of item 3: the groove width
+   becomes 8.32–8.52 mm. The minimum squeeze after compression set increases to 11.4%, and the extrusion check passes.
+   The compound check still fails until you select a low-temperature grade.
 
 ## Choosing the compound
 

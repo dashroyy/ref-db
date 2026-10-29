@@ -128,7 +128,24 @@ failures. This method does not need a normal assumption, but it needs sufficient
 10,000, use some hundred thousand samples. The result is only as good as the distributions that you use.
 
 **Correlation.** RSS and Monte Carlo assume that the parts are independent. Two features made in one setup, by one tool
-or from one batch, change together. Put them in a group and add them as a worst case.
+or from one batch, change together. Put them in a group and add them as a worst case. The calculator does this when you
+give the rows the same group letter.
+
+## Allocating tolerances
+
+A stack can also go in the opposite direction: from the requirement on the result to the tolerance of each part. Start
+with a target $T$ on the result. Rows that you cannot change (a bought O-ring, a standard bearing) are **fixed**, and
+they use their part of the target first. Then share the remainder among the other rows. Three usual methods are:
+
+| Method | Weight of each row | Use it when |
+| --- | --- | --- |
+| Scale | The present tolerance | The present balance is correct and only the size of the tolerances must change |
+| By size | The ISO 286 tolerance factor $i = 0.45\sqrt[3]{D} + 0.001D$ of the size $D$ | The rows are made by similar processes. Each row gets about the same IT grade, so each process works equally hard |
+| Equal effect | $1/|s_i|$ | Each row must have the same effect on the result |
+
+With weights $w_i$, the worst-case allocation is $t_i = k\,w_i$ with $k = T_\text{free} / \sum |s_i| w_i$. The RSS
+allocation uses $k = T_\text{free} / \sqrt{\sum (s_i w_i)^2}$. Then compare each new tolerance with the IT grades: IT6 and
+finer needs grinding or honing, IT7 to IT8 needs fine turning or boring, and IT9 to IT11 is normal machining.
 
 ## Radial stacks
 
@@ -153,6 +170,21 @@ gives a disturbing moment $M = F d$, which the vehicle control system must corre
 and the tilt of the nozzle into one value.
 
 ## Calculator
+
+The calculator has four tabs:
+
+- **Linear stack.** Enter one row for each arrow, as the drawing gives the dimension: equal ±, unequal + and −, limits,
+  unilateral, or a GD&T control. The calculator changes each row to a mean ± an equal half, and shows the change. A
+  diametral position zone acts by its radius, and a position at MMC can take its bonus. Each row can have a sensitivity,
+  a normal or uniform distribution, a correlation group and a material from the
+  [material library](../../materials/selection/) for thermal growth. The results are the worst case, RSS, Bender's 1.5 ×
+  RSS, the Cpk-based band and a Monte Carlo, with a table of the contribution of each row. You can also paste the rows
+  as text, for example from a spreadsheet.
+- **Allocate.** Shares a target on the result among the rows, by one of the three methods above, and writes the new
+  tolerances back to the rows.
+- **Radial stack.** Offsets that add as vectors, as described above.
+- **Fasteners.** The floating and fixed fastener formulae of ASME Y14.5, also without a projected tolerance zone (see
+  [GD&T](../gdt/)).
 
 <StackCalc />
 
@@ -192,6 +224,12 @@ added to the drawing:
 5. **Decision: use the worst case and keep the 0.05.** At assembly, you cannot see a seal that has too little squeeze.
    Its failure causes a burn-through, and the quantity made is small. The statistics would accept a risk that the
    programme must not accept. The runout has no cost if the groove and the pilot are machined in one setup.
+6. **How much tolerance is there?** In the **Allocate** tab, the target is the distance from the nominal to the
+   minimum: $0.9885 - 0.74 = 0.2485$ mm. The O-ring section is fixed, because it is a bought part. It uses 0.130 mm of
+   the worst case, and 0.1185 mm is left for the machined rows. **Scale** gives a factor of **1.30**: every machined
+   tolerance can open by 30% and the worst case still passes. **By size** gives about IT8 on the bore, the pilot and the
+   groove root (± 0.042, ± 0.042 and ± 0.041 mm), and a runout of 0.07. The present drawing is tighter than necessary on
+   the pilot (± 0.020) and looser on the groove root (± 0.050). This is a cost decision for the supplier and the designer to make together.
 
 ### The nozzle alignment
 

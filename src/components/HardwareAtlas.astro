@@ -67,7 +67,7 @@ const PARTS: { key: string; n: number; name: string; job: string; loads: string;
     then: 'Bulk or pyrolytic graphite; refractory metals such as tungsten on small motors.',
     now: 'Carbon–carbon, often 3-D woven, for toughness under thermal shock at low mass.',
     drawing: 'Material grade and density; orientation of the reinforcement; fit to the housing at temperature as well as at assembly.',
-    links: [{ href: '../../legacy/?z=diffexp', label: 'Differential expansion (v1)' }] },
+    links: [{ href: '../../joints/differential-expansion/', label: 'Differential expansion' }] },
   { key: 'exit', n: 9, name: 'Exit cone',
     job: 'Expands the gas to supersonic speed, turning chamber pressure into exhaust velocity.',
     loads: 'Heat and erosion, falling with distance from the throat; side loads from flow separation when an over-expanded nozzle fires at sea level; vibration.',
@@ -83,8 +83,120 @@ const PARTS: { key: string; n: number; name: string; job: string; loads: string;
     then: 'Jet vanes or jetavators in the exhaust, or liquid injected into the nozzle (Titan III’s solid boosters injected nitrogen tetroxide).',
     now: 'A movable nozzle on a flexible bearing (laminated elastomer pads and metal or composite shims that flex in shear) driven by actuators, increasingly electromechanical.',
     drawing: 'Elastomer compound and shim material; bearing stiffness and torque at temperature; actuator attach points.',
-    links: [{ href: '../../legacy/?z=visco', label: 'Viscoelasticity (v1)' }] },
+    links: [{ href: '../../fundamentals/viscoelasticity/', label: 'Viscoelasticity' }] },
 ];
+
+// Material candidates, drawing notes and an example callout for each part (from REF·DB v1, rewritten).
+const EXTRA: Record<string, { materials?: string[]; notes?: string[]; callout?: string }> = {
+  fwd: {
+    materials: [
+      'D6AC, 15CDV6 or maraging 18Ni-250: the same steel as the case, so that the joint can be welded.',
+      'Ti-6Al-4V: less mass. Isolate it from a steel case (see Galvanic corrosion).',
+      'Al 2219-T87 or 7075-T73: low pressure, low temperature, and ground-test hardware.',
+    ],
+    notes: [
+      'Large fillet radii into the boss, with their surface finish. Fatigue and fracture usually start here.',
+      'For a forging, add a grain-flow requirement or a macro-etch acceptance. The bar specification alone is not sufficient.',
+      'If it is welded to the case: the weld preparation, the procedure specification and the heat-treatment condition after welding. 15CDV6 and maraging steels tolerate welding better than D6AC.',
+    ],
+    callout: 'MATERIAL: 15CDV6 FORGING PER AIR 9160C, HEAT TREAT PER [PROCESS SPEC], UTS 980 MPa MIN\nNDT:      100% FPI PER ASTM E1417, SENSITIVITY LEVEL 3; MPI PER ASTM E1444\nMARK:     ETCH PART NO., ISSUE AND HEAT/BATCH NO. AT LOCATION SHOWN. STAMPING NOT PERMITTED.',
+  },
+  case: {
+    materials: [
+      'D6AC (AMS 6431, VAR melted): the classic. Weld, anneal, then heat treat.',
+      '15CDV6: welds with almost no loss of properties, and needs no heat treatment after welding.',
+      'Maraging 18Ni-250 or 300: the highest strength with good weldability, and almost no distortion when aged.',
+      '4130: lower performance and ground-test hardware.',
+      'Filament-wound carbon/epoxy (the highest efficiency), aramid/epoxy (more damage tolerant) or S-glass/epoxy (low cost).',
+    ],
+    notes: [
+      'With composites, the process is the material: fibre and resin system, prepreg or wet winding, winding pattern and angles, fibre volume fraction, cure cycle and the boss interface. Two cases wound to one drawing with a different fibre tension do not burst at the same pressure.',
+      'The wall thickness of a thin shell usually governs. Measure it by ultrasonic thickness mapping, not with a micrometer (see Gauging).',
+      'Give the ultrasonic quality class of the billet or plate for a fracture-critical shell.',
+      'Straightness, roundness and total runout of the bore control the insulation bond and the fit of the grain.',
+      'Proof pressure and leak test are drawing requirements: refer to the test specification.',
+    ],
+    callout: 'MATERIAL: D6AC PER AMS 6431, VAR, HEAT TREAT TO 1520 MPa MIN UTS, DOUBLE TEMPER\nNDT:      WELDS 100% RT AND UT PER [SPEC], CLASS [X]; BODY MPI PER ASTM E1444\nTEST:     PROOF PRESSURE AND LEAK TEST PER [TEST SPEC]. NO PERMANENT SET.',
+  },
+  skirt: {
+    materials: [
+      'Machined integrally with a metal case, in the same alloy.',
+      'On a composite case: aluminium, titanium or composite skirts, bonded through a rubber shear ply.',
+    ],
+    notes: [
+      'The interface hole pattern comes from the vehicle ICD. Use datums that agree with the vehicle interface.',
+      'Bond preparation, adhesive and shear-ply specification, and the inspection of the bond.',
+    ],
+  },
+  insul: {
+    materials: [
+      'EPDM filled with aramid or silica: the standard internal insulation.',
+      'Silica or carbon phenolic locally, where the heat flux or erosion is higher.',
+      'Liner: the thin layer that bonds the propellant. Its formulation is energetics. The hardware drawing gives its geometry, surface preparation and inspection.',
+    ],
+    notes: [
+      'You design a bondline, not a rubber part. Define the surface preparation (grit-blast specification, cleanliness, time limit before bonding), the adhesive or primer, the bondline thickness with its tolerance, the cure, and the NDT method and acceptance.',
+      'A thickness that changes along the case: use a profile tolerance against the model, not a chain of ± thicknesses.',
+      'Cleanliness: no silicone contamination near a bonding operation. A fingerprint from the wrong glove can cause a bond to fail.',
+      'Inspection: tap test, ultrasonic or thermography, with an acceptance size and location for debonds.',
+    ],
+  },
+  aft: {
+    materials: [
+      'The case steel (D6AC, 15CDV6, maraging) for a welded closure; Ti-6Al-4V, 17-4PH or 15-5PH for a bolted closure.',
+      'Inconel 718 or 625 where the local gas temperature is too high for steel.',
+    ],
+    notes: [
+      'Preload control for bolted joints: torque with the lubrication condition, or an angle or preload method. Positive locking is usually required.',
+      'Seal grooves, the seal specification and the assembly condition. Redundant seals are usual: check the rules of your programme.',
+      'Thread inserts in aluminium or titanium: the insert part number and the STI tapped hole, and the number of assemblies that it must survive.',
+      'Edge distance and bolt spacing on the flange are strength-critical. Do not let the CAD default set them.',
+    ],
+    callout: 'BOLTS: 30 × M10 × 1.5 CLASS 12.9, TORQUE 60 N·m WITH [LUBRICANT], TIGHTEN IN THE SEQUENCE SHOWN\nLOCK:  [POSITIVE LOCKING METHOD] PER [SPEC]\nSEAL:  O-RING 139.29 × 5.33 [COMPOUND] PER ISO 3601-1, CURE DATE RECORDED; LEAK TEST PER [TEST SPEC]',
+  },
+  nozzle: {
+    materials: [
+      '4130 or 15CDV6 steel: welded shells and structure, low cost and tolerant.',
+      'Ti-6Al-4V, Al 7075-T73 or 2219: brackets and structure away from the heat, where mass is important.',
+      'A286 or Inconel 718: fasteners that must keep their preload when hot.',
+    ],
+    notes: [
+      'Hot joints relax. Select the fastener alloy for its temperature, and specify positive locking.',
+      'Do not change a fastener class or finish without engineering approval. Plating changes strength and friction, and hydrogen-embrittlement rules apply to high-strength steel.',
+      'Where a bracket bolts to composite: specify the bearing area, the isolation and the torque separately.',
+      'Position tolerances with datums that agree with the assembly fixture, not coordinates from convenient edges.',
+    ],
+  },
+  throat: {
+    materials: [
+      'Bulk graphite: low cost, easy to machine, stronger when hot. It is brittle and weak in tension, so hold it in compression.',
+      'Carbon–carbon: much tougher at a similar temperature capability, and light. It needs an oxidation coating for air exposure.',
+      'Tungsten, W-Re or W-Cu: the best erosion resistance and melting point, but high mass.',
+      'TZM molybdenum or Ta-10W: good hot strength and conductivity. Both need oxidation protection.',
+      'Rhenium with an iridium coating: the highest capability, at the highest cost.',
+    ],
+    notes: [
+      'Design it as an insert: a small refractory part in a lighter, lower-cost shell. The design problem is then the retention and the differential expansion across the joint.',
+      'Graphite and carbon–carbon are anisotropic. Give the grain or ply direction relative to the axis on the drawing.',
+      'Give the fit at a stated temperature. "⌀50 H7/p6" alone is not sufficient when the parts are hundreds of degrees apart in service (see Differential expansion).',
+      'Specify the surface finish in the flow path, and handling and edge-chip acceptance for brittle materials.',
+    ],
+  },
+  exit: {
+    materials: [
+      'Tape-wrapped carbon phenolic: the standard ablative liner. The wrap angle is a controlled parameter.',
+      'Silica phenolic: lower cost, more erosion; for a lower heat flux.',
+      'Carbon–carbon: light, expensive, and can be reused.',
+      'C-103 niobium with a silicide coating: radiation-cooled extensions for upper stages. Without the coating it oxidises rapidly in air above approximately 400 °C.',
+      'Inconel 625, Haynes 230 or Hastelloy X sheet, where the temperature permits.',
+    ],
+    notes: [
+      'The contour is the function. Use a profile tolerance against the model, with datums that agree with how it mounts.',
+      'Coated refractories: the coating specification, thickness, coverage and repair rules, and if the dimensions apply before or after coating.',
+      'Thin shells distort. Give the free-state condition (ISO 10579) or the restrained inspection condition.',
+    ],
+  },
+};
 
 // Badge position and the point on the part its leader line touches.
 const BADGES: Record<string, [number, number, number, number]> = {
@@ -202,6 +314,15 @@ const BADGES: Record<string, [number, number, number, number]> = {
         <div><dt>Now</dt><dd>{p.now}</dd></div>
         <div class="wide"><dt>On the drawing</dt><dd>{p.drawing}</dd></div>
       </dl>
+      {EXTRA[p.key]?.materials && (
+        <div class="ha-more"><p class="ha-h">Material candidates</p><ul>{EXTRA[p.key].materials!.map((m) => <li>{m}</li>)}</ul></div>
+      )}
+      {EXTRA[p.key]?.notes && (
+        <div class="ha-more"><p class="ha-h">Drawing notes</p><ul>{EXTRA[p.key].notes!.map((m) => <li>{m}</li>)}</ul></div>
+      )}
+      {EXTRA[p.key]?.callout && (
+        <div class="ha-more"><p class="ha-h">Example callout (illustrative)</p><pre class="ha-callout">{EXTRA[p.key].callout}</pre></div>
+      )}
       <p class="ha-links">Go deeper: {p.links.map((l, j) => <>{j > 0 && ' · '}<a href={l.href}>{l.label}</a></>)}</p>
     </section>
   ))}
@@ -236,6 +357,11 @@ const BADGES: Record<string, [number, number, number, number]> = {
   .ha-card dl .wide { grid-column: 1 / -1; }
   .ha-card dt { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); }
   .ha-card dd { margin: 0.15rem 0 0 !important; font-size: var(--sl-text-sm); }
+  .ha-card .ha-more { margin: 0.75rem 0 0 !important; }
+  .ha-card .ha-h { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); margin: 0 !important; }
+  .ha-card .ha-more ul { margin: 0.25rem 0 0 !important; padding-left: 1.1rem; font-size: var(--sl-text-sm); }
+  .ha-card .ha-more li { margin: 0.15rem 0 0 !important; }
+  .ha-card .ha-callout { margin: 0.3rem 0 0 !important; font-size: 0.72rem; line-height: 1.5; white-space: pre; overflow-x: auto; background: var(--rd-panel2, var(--rd-panel)); border: 1px solid var(--rd-line); border-radius: 4px; padding: 0.5rem 0.6rem; }
   .ha-card .ha-links { margin: 0.75rem 0 0 !important; font-size: var(--sl-text-sm); }
 </style>
 

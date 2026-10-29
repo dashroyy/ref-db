@@ -1,6 +1,6 @@
 ---
 title: Rocket motor hardware
-description: Each component of a solid rocket motor. What it carries, how it fails, what it is made of and why that changed. Propellant mass fraction, the number that controls all the parts. And how to design the case so that it fails safely.
+description: Each component of a solid rocket motor. What it carries, how it fails, what it is made of, why that changed and what goes on its drawing. MEOP, proof and burst. Propellant mass fraction, the number that controls all the parts. Materials and design factors against motor performance. And how to design the case so that it fails safely in an insensitive-munitions threat.
 sidebar:
   order: 0
 ---
@@ -42,6 +42,21 @@ now, and what must go on its drawing.
   each part alone, but an interface is between two drawings and two analysts. Give each interface an owner, a load path
   and an inspection.
 </Aside>
+
+## The three pressures: MEOP, proof and burst
+
+Each pressure-carrying part is judged against three pressures:
+
+| Pressure | What it is | How it is shown |
+| --- | --- | --- |
+| **MEOP** | Maximum expected operating pressure. It includes the hot-day grain temperature, the manufacturing variation of the propellant and the ignition and erosive-burning transients, not only the nominal pressure | Ballistic prediction and test firings at the temperature extremes |
+| **Proof** | A pressure above MEOP, applied to each unit (or a defined sample) | No yield, no leak, no permanent set; the test also screens for flaws |
+| **Burst** | The demonstrated ultimate capability | Analysis, and test to destruction of qualification articles |
+
+**The factors are not yours to select.** The proof and burst factors come from the governing requirement: for example
+DEF STAN 07-085, AIAA S-080 and S-081 for pressure vessels, or the design rules of your programme. Do not take them from
+a textbook or from a different programme. See [Case sizing](../case-sizing/), [Proof testing](../../verify/proof-testing/)
+and [Margin policy](../../verify/margin-policy/).
 
 ## The number every part answers to: mass fraction
 
@@ -123,6 +138,47 @@ Assume that a composite case could do the work of the case with 6 kg less mass (
 $\Delta v$ would increase by approximately 113 m/s. Try it in the calculator. Then try the same 6 kg on the nozzle. A
 kilogram has the same effect in all locations.
 
+## Materials and motor performance
+
+Each material choice changes the motor, not only the part. This table shows what each class of material gives at motor
+level, and what it costs.
+
+| Material class | Examples | What it gives | What it costs |
+| --- | --- | --- | --- |
+| Case, high-strength steel | D6AC, 15CDV6, 300M, maraging | Good fracture-toughness data and a long service history, which helps certification. High stiffness, so the case grows less and strains the grain and bondline less | The heaviest case for a given MEOP. It fragments under an unplanned stimulus, which is poor for IM |
+| Case, filament-wound composite | Carbon/epoxy, glass/epoxy, aramid | The lightest case for a given burst pressure: the largest single gain in mass fraction. It softens when heated, so it vents early in a fast fire | Lower stiffness, so the grain and bondline must accept more strain. Impact damage that cannot be seen; more complex liner, bond and inspection |
+| Case, titanium alloy | Ti-6Al-4V, Ti-6242 | Approximately 40% lighter than steel for a similar strength, with metallic NDT methods | Expensive material and slow machining. Galling and hydrogen pick-up at joints and threads |
+| Case, aluminium alloy | 2219, 7075, 6082 | Light, for small motors and low pressures. 2219 welds and works at cryogenic temperatures | Low strength: the wall gets thick as the pressure increases. Loses strength quickly with temperature, so it needs more insulation |
+| Insulation and liner | EPDM, silica-filled EPDM, carbon and silica phenolic | Protects the case. A good bond is part of the structure | Pure inert mass. A debond increases the burning surface and can overpressure the motor |
+| Throat insert | Bulk graphite, carbon–carbon, tungsten, rhenium | Holds the throat area, so the pressure and thrust stay flat over the burn | Erosion against mass and cost: graphite erodes fastest; refractory metals erode least but are dense, at the aft end where mass is worst |
+| Nozzle structure and exit cone | Carbon phenolic, silica phenolic, C-103, composite shells | Expansion ratio, which gives performance | More expansion ratio is more mass and length, at the aft end, far from the centre of gravity |
+
+<Aside type="caution" title="Peripheral coarse grain">
+  Extrusions and forgings in some aluminium alloys have a layer of coarse grain at the surface, which has lower
+  fatigue and stress-corrosion resistance. Where the drawing does not permit it on loaded surfaces, the minimum stock
+  removal sets the minimum size of the bar or forging, adds machining time, and can need a heavier starting billet. Agree
+  the requirement before you size the part, or the finished wall may not be possible after the skin is removed.
+</Aside>
+
+## Design factors and their trade-offs
+
+None of these is a target. Each one is a trade-off between what it gives and what it costs. The hardware designer
+inherits most of them from the ballistic design, so know what they do to the hardware. See
+[Propellant grain](../propellant-grain/) and [Propellant](../propellant/) for the details.
+
+| Factor | What it is | What it gives | What it costs the hardware |
+| --- | --- | --- | --- |
+| Volumetric loading | Propellant volume ÷ the volume in the case | Total impulse for a given envelope: the largest performance lever per unit size | A thinner web and less port area: higher risk of erosive burning at ignition, and less room for insulation and stress relief |
+| Web fraction | Burn distance ÷ grain radius | Burn duration | Thick webs limit the grain geometry, and have larger thermal strains in environmental cycling |
+| Port-to-throat area ratio | Flow area along the grain ÷ throat area | A small port gives more propellant in the case | If too small, fast gas along the bore increases the local burn rate (erosive burning): a pressure peak at ignition that a simple prediction does not show |
+| Sliver | Propellant that is not burned when the flame gets to the liner | A simple port geometry | Dead mass and a slow tail-off. Less sliver needs a more complex port, which is harder to cast and qualify |
+| Case-bonded or cartridge-loaded | Grain cast into the case, or made separately and inserted | Case bonding gives higher loading and support | The bondline becomes structural and safety-critical for the full service life. A cartridge is easier to inspect but wastes volume |
+| Thermal cycling and ageing | Repeated temperature cycles in storage | Not a choice: it comes from the storage environment | The propellant expands much more than the case, so each cycle strains the grain and bondline. This is the main cause of cracks and debonds, which increase the burning surface |
+| L/D ratio | Motor length ÷ diameter | Usually set by the vehicle | Long motors: more pressure drop along the port and erosive burning. Short motors: harder dome and nozzle integration |
+| Temperature sensitivity of the burn rate | Burn rate against grain temperature | A property of the propellant | A hot motor has a higher pressure: MEOP comes from the hot case plus the variation plus any transient |
+| Throat erosion | The throat grows during the burn | A property of the insert material | Pressure and thrust decrease over the burn. The insert material trades erosion against cost, mass and thermal-shock resistance |
+| Ignition transient | The pressure rise from ignition to steady burning | A fast and repeatable start | The case, closures and grain see this peak first. It is part of the pressure design case |
+
 ## Then and now: why the materials changed
 
 | Part | Then | Now | Cause of the change |
@@ -137,6 +193,17 @@ kilogram has the same effect in all locations.
 Look at the last column again. Most of these changes came from a **manufacturing process** (filament winding, 3-D
 weaving, tape wrapping and laminated bearings) as much as from a new material. When you select a material, ask which
 process it makes possible. That is usually where the real improvement is.
+
+**Beyond solid motors.** Liquid engines and in-space hardware show the same pattern:
+
+| Area | Then | Now | Cause of the change |
+| --- | --- | --- | --- |
+| Combustion chamber liner | NARloy-Z (Cu-3Ag-0.5Zr), forged and machined with much waste | GRCop-42 and GRCop-84 (Cu-Cr-Nb), printed by laser powder bed fusion with internal cooling channels; bimetallic chambers with a superalloy jacket added by directed energy deposition | Silver cost and machining waste. GRCop makes a stable oxide where NARloy-Z blanches. Printing puts the cooling channels in the part instead of brazing them on |
+| Hot structure and manifolds | René 41 and Waspaloy (strain-age cracking when welded); Hastelloy X sheet | Haynes 282 (weldable); GRX-810 oxide-dispersion-strengthened alloy, made for printing; printed Inconel 939 | A little peak strength traded for weldability and printability, which usually wins once repairs and scrap are counted |
+| Hydrogen-side hardware | Inconel 718 with a hydrogen-embrittlement penalty; A286 | NASA HR-1 (resists hydrogen embrittlement); JBK-75 | An alloy designed for the environment is better than a reduced allowable on one that is not |
+| Cryogenic tanks | 2219-T87; 2014 and early Al-Li alloys | Al-Li 2195, friction-stir welded (about 5% lighter and stiffer than 2219); 2050 and 2099; 301 and 304L stainless for large reusable structures | Al-Li gives mass fraction directly. Stainless becomes stronger when cold, costs less, welds well and survives entry heating |
+| Nozzle extensions | C-103 niobium with a silicide coating; carbon phenolic | Printed C-103; SiC/SiC ceramic-matrix composites; carbon–carbon | The material almost did not change; the process did. Printing removes most of the forming and joining |
+| Small thruster chambers | Molybdenum with a disilicide coating; C-103 | Rhenium with an iridium coating; printed refractory and CMC chambers | Life and duty cycle: Ir/Re operates hotter for longer, at a very high price |
 
 ## Designing the case to fail gently
 
@@ -165,6 +232,30 @@ What the hardware designer controls:
 - **A venting feature is structure with two functions.** It must hold MEOP with margin at all storage temperatures and
   for the full service life, and it must still open when necessary. It needs the same proof, ageing and qualification
   evidence as the remainder of the case.
+
+**The threats.** The test standards and the usual required responses are below. Check them against the current editions
+and the requirements of your programme.
+
+| Threat | Test standard | What it simulates | Usual required response | What it means for the hardware |
+| --- | --- | --- | --- | --- |
+| Fast heating (fast cook-off) | STANAG 4240 | A liquid-fuel fire around the item | Type V (burning) or better | The case must vent before the propellant reacts violently. A composite case usually does this itself |
+| Slow heating (slow cook-off) | STANAG 4382 | A slow temperature increase, for example from a fire in an adjacent compartment | Type V or better | The difficult case: the case is still strong when the propellant reacts. A designed venting feature is usually necessary |
+| Bullet impact | STANAG 4241 | Small-arms rounds at service velocity | Type V or better | Ignition in a closed case pressurises it quickly. The vent area and how the case breaks decide the result |
+| Fragment impact | STANAG 4496 | A steel fragment from an adjacent detonation | Type V or better | A much more energetic stimulus than a bullet |
+| Sympathetic reaction | STANAG 4396 | Detonation of an adjacent munition in storage or transport | Type III (explosion) or better | Also a packaging problem: spacing, dunnage and the container count |
+| Shaped-charge jet | STANAG 4526 | An anti-armour jet through the item | Type III or better | Very difficult to control by case design alone; shielding and propellant choice usually decide it |
+
+**Features that make the case open early.** Each one has a cost in normal service:
+
+| Feature | How it works | Advantages | Costs |
+| --- | --- | --- | --- |
+| Grooves in the case wall | A designed weak line opens under internal pressure before the full case bursts | No moving parts, no energy source; works for slow and fast heating | Reduces the strength of a pressure vessel. The groove becomes a fatigue and stress-corrosion feature in service. Difficult on a thick case |
+| Meltable or eutectic retention | A plug or a closure retainer is held by a material that melts below the reaction temperature of the propellant; it releases and the case vents | Simple, and acts by itself in a thermal threat. Weakens the wall less than a groove | Thermal threats only: no help in bullet or fragment impact. The retainer and its seal must survive MEOP, proof and the full service environment. Adds a leak path and an ageing seal |
+| Composite case | The resin softens and loses strength at a much lower temperature than a metal case | The best balance of performance and IM; fails progressively, without steel fragments | Effective in fast heating, less so in slow heating. Impact damage and its inspection become design drivers |
+| Slotted metal shell | A metal shell with distributed slots cannot hold pressure by itself; a liner or overwrap carries the operating pressure | Limits pressure containment in an impact or cook-off; keeps axial stiffness for handling | Needs a separate pressure-carrying layer. The slots must not cut the load paths that the shell carries |
+| Grain stress relief | Boots, flaps and articulated ends limit the stress at the bondline in thermal cycling and ageing | Better structural margin in service *and* better IM: fewer cracks that increase the burning surface | Complex shapes to make and inspect; the bondline NDT is difficult there |
+
+Active venting systems that cut the case are energetic devices. They are outside the scope of this site.
 
 <Aside type="note">
   IM qualification is a specialist activity and a safety-authority activity. This section gives the view of the
@@ -205,6 +296,10 @@ What the hardware designer controls:
 - **Bondlines are structure.** Bonds between insulation and case, and liner bonds, carry load and are the usual failure
   path. Define the surface preparation, adhesive, bondline thickness, cure and the NDT that verifies the bond. A bond
   without an inspection requirement is a joint that nobody has verified.
+- **Peripheral coarse grain.** Where coarse grain is not permitted on loaded surfaces of aluminium extrusions and
+  forgings, give the minimum stock removal, and size the starting material for it.
+- **Example callouts** for the main parts are in the component cards above. They are illustrative: the specifications
+  and classes come from your programme.
 
 ## References and further reading
 

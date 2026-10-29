@@ -138,3 +138,88 @@ export function suggestGroove(arrangement: Arrangement, mating: number, cs: numb
 
 /** Nearest stock inside diameter from a list. */
 export const nearestId = (ids: number[], target: number) => ids.reduce((b, v) => (Math.abs(v - target) < Math.abs(b - target) ? v : b), ids[0]);
+
+// ---------- Design from the hardware ----------
+
+/** Cross-section tolerances (±, mm) of the ISO 3601-1 class A sections used here. */
+export const CS_TOL: Record<string, number> = { '1.78': 0.08, '2.62': 0.08, '3.53': 0.1, '5.33': 0.13, '6.99': 0.15 };
+
+/** A typical inside-diameter tolerance (±, mm), fitted to the AS568 / ISO 3601-1 inch series: 0.13 + 0.0051·d. */
+export const idTolerance = (id: number) => 0.13 + 0.0051 * id;
+
+/** The usual class A section for a seal diameter (mm): larger seals need a larger section to tolerate the hardware. */
+export const sectionFor = (d: number) => (d < 20 ? 1.78 : d < 50 ? 2.62 : d < 120 ? 3.53 : d < 300 ? 5.33 : 6.99);
+
+/** Minimum length of a 15–20° lead-in chamfer (mm) for a section, from the usual seal-maker tables (≈ 0.5 × CS). */
+export const leadIn = (cs: number) => Math.max(1.1, Math.round(cs * 0.52 * 10) / 10);
+
+/** Typical back-up ring thickness (mm) for a section: approximately a quarter of the section. */
+export const backupThickness = (cs: number) => Math.round(cs * 0.26 * 10) / 10;
+
+export interface DesignInputs {
+  arrangement: Arrangement; duty: Duty;
+  /** piston: bore Ø · rod: rod Ø · face: groove OD (pressure inside) or groove ID (pressure outside) */
+  mating: number;
+  pressureInside?: boolean; // face seals
+  pressure: number; hardness: number; clearance: number; // diametral clearance of the fit, mm
+  squeeze: number; fill: number; // targets, fractions
+  cs?: number; // section; chosen from the diameter when not given
+  ids: number[]; // stock inside diameters for the section
+  backups?: number; // 0, 1 or 2; chosen from the extrusion check when not given
+}
+
+/**
+ * Size a ring and its groove for a nominal squeeze and fill. Radial: the ring is stretched 1–5% onto a piston groove
+ * root, or sits at or just under the rod for a rod groove. Face: the ring presses against the pressure side of the
+ * groove (OD for internal pressure, ID for external). The groove width includes any back-up rings.
+ */
+export function designGland(o: DesignInputs) {
+  const cs = o.cs ?? sectionFor(o.mating);
+  const limit = extrusionLimit(o.pressure, o.hardness);
+  const backups = o.backups ?? (limit === 0 || o.clearance > limit ? (o.pressure > 10 ? 2 : 1) : 0);
+  let id: number, stretch = 0, groove: number, depth: number;
+  if (o.arrangement === 'piston') {
+    const target = o.mating - 2 * cs * (1 - o.squeeze); // approximate root, to pick the ID
+    const fit = o.ids.filter((v) => v <= target / 1.01 && v >= target / 1.05);
+    id = fit.length ? fit[fit.length - 1] : nearestId(o.ids, target / 1.02);
+    const s = suggestGroove('piston', o.mating, cs, id, o.squeeze, o.fill);
+    ({ groove, depth, stretch } = s);
+  } else if (o.arrangement === 'rod') {
+    const fit = o.ids.filter((v) => v <= o.mating && v >= o.mating / 1.03);
+    id = fit.length ? fit[fit.length - 1] : nearestId(o.ids, o.mating);
+    const s = suggestGroove('rod', o.mating, cs, id, o.squeeze, o.fill);
+    ({ groove, depth, stretch } = s);
+  } else {
+    // face: internal pressure → ring OD 1–3% over the groove OD; external → ring ID 1–3% under the groove ID
+    const inside = o.pressureInside !== false;
+    const fit = inside ? o.ids.filter((v) => v + 2 * cs >= o.mating && v + 2 * cs <= o.mating * 1.03) : o.ids.filter((v) => v <= o.mating && v >= o.mating * 0.97);
+    const over = o.ids.filter((v) => v + 2 * cs >= o.mating), under = o.ids.filter((v) => v <= o.mating);
+    id = fit.length ? (inside ? fit[0] : fit[fit.length - 1]) : inside ? (over[0] ?? o.ids[o.ids.length - 1]) : (under[under.length - 1] ?? o.ids[0]);
+    depth = cs * (1 - o.squeeze);
+    groove = depth;
+  }
+  const area = (Math.PI / 4) * cs * cs / (1 + stretch);
+  const width = area / (o.fill * depth) + backups * backupThickness(cs);
+  const od = id + 2 * cs;
+  return {
+    cs, csTol: CS_TOL[cs.toFixed(2)] ?? 0.1, id, idTol: idTolerance(id), od, stretch, groove, depth, width,
+    backups, backupT: backupThickness(cs), extrusionLimit: limit, chamfer: leadIn(cs),
+    rootRadius: cs <= 2.62 ? 0.2 : cs <= 5.33 ? 0.4 : 0.6, edgeBreak: 0.1,
+    faceRing: o.arrangement === 'face' ? (o.pressureInside !== false ? { od, groove: o.mating, comp: (od - o.mating) / od } : { id, groove: o.mating, stretch: (o.mating - id) / id }) : null,
+  };
+}
+
+/**
+ * The squeeze of one assembly at a temperature, for a Monte Carlo: x = [cs, id, bore, shaft, groove, width, gap].
+ * The off-centre offset is half the actual clearance when the parts can sit fully off-centre.
+ */
+export function pointSqueeze(i: ORingInputs, x: number[], T: number) {
+  const [cs, id, bore, shaft, groove, , gap] = x, dT = T - i.tAssembly;
+  const e = i.eccentric && i.arrangement !== 'face' ? Math.max(0, bore - shaft) / 2 : 0;
+  let g: number, stretch = 0;
+  if (i.arrangement === 'piston') { g = (bore - groove) / 2 + e; stretch = Math.max(0, (groove - id) / id); }
+  else if (i.arrangement === 'rod') { g = (groove - shaft) / 2 + e; stretch = Math.max(0, (shaft - id) / id); }
+  else g = groove + gap;
+  const c = stretchedCs(cs, stretch) * (1 + i.alphaE * dT) * (dT > 0 ? Math.cbrt(1 + i.swell) : 1);
+  return (c - g * (1 + i.alphaM * dT)) / c;
+}

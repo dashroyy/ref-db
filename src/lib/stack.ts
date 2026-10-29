@@ -148,3 +148,185 @@ export function parseOffsets(text: string, lever: number) {
   }
   return { rows: out, bad };
 }
+
+// ---------- Rows as they are on the drawing ----------
+
+/** How a dimension is toleranced on the drawing. Every format converts to limits, then to a mean ± equal half. */
+export type TolFormat = 'eq' | 'uneq' | 'limits' | 'uniPlus' | 'uniMin' | 'gdt';
+export const TOL_FORMATS: { key: TolFormat; name: string; hint: string }[] = [
+  { key: 'eq', name: 'Equal ±t', hint: '20.5 ±0.5' },
+  { key: 'uneq', name: 'Unequal +a / −b', hint: '20 +0.8 / −0.2' },
+  { key: 'limits', name: 'Limits max / min', hint: '20.8 / 20.2' },
+  { key: 'uniPlus', name: 'Unilateral +t / 0', hint: '12 +0.2 / 0' },
+  { key: 'uniMin', name: 'Unilateral 0 / −t', hint: '12 0 / −0.2' },
+  { key: 'gdt', name: 'GD&T control', hint: 'position ⌀0.2' },
+];
+
+/**
+ * Geometric controls and how a zone of width t acts along one direction of a linear stack. A diametral zone is a
+ * circle, so only its radius acts: ⌀0.2 is ±0.1, not ±0.2. Position zones can take the MMC bonus; a unilateral profile
+ * zone moves the mean by t/2 as well.
+ */
+export const GDT_CONTROLS = [
+  { key: 'pos', name: 'Position, diametral zone', mmc: true, shift: 0 },
+  { key: 'posLin', name: 'Position, width zone', mmc: true, shift: 0 },
+  { key: 'prof', name: 'Profile, equally disposed', mmc: false, shift: 0 },
+  { key: 'profOut', name: 'Profile, unilateral outside (+)', mmc: false, shift: 1 },
+  { key: 'profIn', name: 'Profile, unilateral inside (−)', mmc: false, shift: -1 },
+  { key: 'form', name: 'Flatness or straightness', mmc: false, shift: 0 },
+  { key: 'orient', name: 'Parallelism, perpendicularity, angularity', mmc: false, shift: 0 },
+  { key: 'runout', name: 'Runout or total runout (FIM)', mmc: false, shift: 0 },
+  { key: 'coax', name: 'Coaxiality, concentricity, symmetry', mmc: false, shift: 0 },
+] as const;
+export type GdtKey = (typeof GDT_CONTROLS)[number]['key'];
+
+export interface StackRow {
+  name: string; on?: boolean;
+  dir: 1 | -1; sens?: number; // direction in the loop, and a sensitivity (½ for a diameter whose radius is in the loop)
+  format: TolFormat;
+  nom?: number; tol?: number; plus?: number; minus?: number; max?: number; min?: number;
+  gdt?: GdtKey; zone?: number; bonus?: number;
+  dist?: Dist; group?: string; locked?: boolean; mat?: string;
+}
+
+/** Limits of a row from its drawing format, with the equal-bilateral mean and half, and what the conversion did. */
+export function rowLimits(r: StackRow) {
+  const n = (v: number | undefined) => (Number.isFinite(v) ? (v as number) : 0);
+  const nom = n(r.nom);
+  let lo: number, hi: number, note = '';
+  switch (r.format) {
+    case 'uneq': hi = nom + n(r.plus); lo = nom - n(r.minus); break;
+    case 'limits': hi = Math.max(n(r.max), n(r.min)); lo = Math.min(n(r.max), n(r.min)); break;
+    case 'uniPlus': hi = nom + Math.abs(n(r.tol)); lo = nom; break;
+    case 'uniMin': hi = nom; lo = nom - Math.abs(n(r.tol)); break;
+    case 'gdt': {
+      const g = GDT_CONTROLS.find((x) => x.key === r.gdt) ?? GDT_CONTROLS[0];
+      const zone = Math.abs(n(r.zone)) + (g.mmc ? Math.max(0, n(r.bonus)) : 0);
+      const c = nom + (g.shift * zone) / 2;
+      lo = c - zone / 2; hi = c + zone / 2;
+      note = g.shift ? 'unilateral zone: mean moved by t/2' : g.mmc && n(r.bonus) > 0 ? 'includes the MMC bonus' : g.key === 'pos' ? 'diametral zone: only the radius acts' : '';
+      break;
+    }
+    default: hi = nom + Math.abs(n(r.tol)); lo = nom - Math.abs(n(r.tol));
+  }
+  const mean = (lo + hi) / 2, halfW = (hi - lo) / 2, shift = r.format === 'limits' || r.format === 'gdt' ? 0 : mean - nom;
+  if (!note && Math.abs(shift) > 1e-12) note = 'unequal tolerance: mean moved to the middle of the limits';
+  return { lo, hi, mean, half: halfW, shift, note };
+}
+
+/** The active rows as contributors: sensitivity = direction × sensitivity. */
+export const toContributors = (rows: StackRow[]): (Contributor & { group?: string; locked?: boolean })[] =>
+  rows.filter((r) => r.on !== false).map((r) => {
+    const l = rowLimits(r);
+    return { name: r.name, sens: r.dir * (r.sens ?? 1), lo: l.lo, hi: l.hi, dist: r.dist ?? 'normal', group: r.group?.trim() || undefined, locked: r.locked };
+  });
+
+/**
+ * A linear stack with correlated groups: the members of a group (one setup, one tool, one batch) add worst case
+ * among themselves, and the groups and single rows then combine statistically. Without groups this is linearStack,
+ * with the textbook RSS (Cpk 1, normal), the Cpk-based band, and Bender's 1.5 × RSS.
+ */
+export function groupedStack(cs: (Contributor & { group?: string })[], cpk = 1) {
+  const base = linearStack(cs, cpk);
+  const gs = new Map<string, number>(), gt = new Map<string, number>();
+  let variance = 0, tv = 0;
+  cs.forEach((c) => {
+    const s = Math.abs(c.sens) * sigmaOf(c, cpk), t = Math.abs(c.sens) * half(c);
+    if (c.group) { gs.set(c.group, (gs.get(c.group) ?? 0) + s); gt.set(c.group, (gt.get(c.group) ?? 0) + t); }
+    else { variance += s * s; tv += t * t; }
+  });
+  for (const s of gs.values()) variance += s * s;
+  for (const t of gt.values()) tv += t * t;
+  const sigma = Math.sqrt(variance), rss = Math.sqrt(tv);
+  return {
+    ...base, sigma, rss, rssMin: base.nominal - rss, rssMax: base.nominal + rss,
+    cpkBand: 3 * sigma, cpkMin: base.nominal - 3 * sigma, cpkMax: base.nominal + 3 * sigma,
+    bender: 1.5 * rss, groups: [...gs.keys()],
+  };
+}
+
+/** Monte Carlo with correlated groups: one random draw per group, applied to every member in the direction of the loop. */
+export function groupedMonteCarlo(cs: (Contributor & { group?: string })[], opts: { n?: number; seed?: number; cpk?: number } = {}) {
+  const { n = 100000, seed = 1, cpk = 1 } = opts, r = rng(seed), out = new Float64Array(n);
+  const keys = [...new Set(cs.map((c) => c.group).filter(Boolean))] as string[];
+  const gz = new Map<string, number>(), gu = new Map<string, number>();
+  for (let k = 0; k < n; k++) {
+    for (const g of keys) { gz.set(g, gauss(r)); gu.set(g, r()); }
+    let y = 0;
+    for (const c of cs) {
+      const sgn = Math.sign(c.sens) || 1;
+      let x: number;
+      if (c.dist === 'uniform') {
+        const u = c.group ? (sgn > 0 ? gu.get(c.group)! : 1 - gu.get(c.group)!) : r();
+        x = c.lo + (c.hi - c.lo) * u;
+      } else x = mid(c) + sigmaOf(c, cpk) * (c.group ? sgn * gz.get(c.group)! : gauss(r));
+      y += c.sens * x;
+    }
+    out[k] = y;
+  }
+  return summarise(out);
+}
+
+/** Thermal shift of the stack result: each row grows by L·α·ΔT, L its mean, in the direction of the row. */
+export function thermalShift(rows: StackRow[], alphaOf: (mat: string) => number | undefined, dT: number) {
+  let total = 0;
+  const parts = rows.filter((r) => r.on !== false).map((r) => {
+    const a = r.mat ? alphaOf(r.mat) : undefined, L = rowLimits(r).mean;
+    const d = a === undefined ? 0 : r.dir * (r.sens ?? 1) * L * a * dT;
+    total += d;
+    return { name: r.name, alpha: a, shift: d };
+  });
+  return { total, parts };
+}
+
+// ---------- Allocation ----------
+
+/** ISO 286 standard tolerance factor i (µm) for a size D (mm): 0.45 D^⅓ + 0.001 D. */
+export const toleranceFactor = (D: number) => 0.45 * Math.cbrt(Math.max(1, Math.abs(D))) + 0.001 * Math.abs(D);
+
+export type AllocMethod = 'scale' | 'equal' | 'size';
+/**
+ * New half tolerances so that the result meets a target half tolerance, by worst case or by RSS. Locked rows (bought
+ * parts, standard parts) keep their tolerance and use part of the target first. Scale keeps the present proportions;
+ * equal gives each row the same effect on the result; size makes each tolerance proportional to the ISO tolerance
+ * factor of its size, so every row gets about the same IT grade (a row without a size, such as a geometric control,
+ * changes in the same proportion as the sized rows on average).
+ */
+export function allocate(rows: { name: string; sens: number; half: number; mean: number; locked?: boolean; unsized?: boolean }[], target: number, basis: 'wc' | 'rss', method: AllocMethod) {
+  const free = rows.filter((r) => !r.locked), fixed = rows.filter((r) => r.locked);
+  // a row without a size (a geometric control) keeps the average ratio of tolerance factor to tolerance of the sized rows
+  const sized = free.filter((r) => !r.unsized && r.half > 0);
+  const ratio = sized.length ? sized.reduce((a, r) => a + toleranceFactor(r.mean) / r.half, 0) / sized.length : 1;
+  const used = basis === 'wc' ? fixed.reduce((a, r) => a + Math.abs(r.sens) * r.half, 0) : Math.sqrt(fixed.reduce((a, r) => a + (r.sens * r.half) ** 2, 0));
+  const ok = target > used;
+  const left = basis === 'wc' ? target - used : ok ? Math.sqrt(target * target - used * used) : 0;
+  const weight = (r: (typeof rows)[number]) =>
+    method === 'scale' ? r.half : method === 'size' ? (r.unsized ? r.half * ratio : toleranceFactor(r.mean)) : 1 / Math.max(Math.abs(r.sens), 1e-12);
+  const sum = basis === 'wc' ? free.reduce((a, r) => a + Math.abs(r.sens) * weight(r), 0) : Math.sqrt(free.reduce((a, r) => a + (r.sens * weight(r)) ** 2, 0));
+  const k = ok && sum > 0 ? left / sum : NaN;
+  return { used, left, k, ok, rows: rows.map((r) => ({ ...r, newHalf: r.locked ? r.half : k * weight(r) })) };
+}
+
+/** The coarsest ISO IT grade (4–12) whose width fits inside a total tolerance 2t (mm) at size D (mm), or undefined. */
+export function itGrade(D: number, twoT: number, itValue: (d: number, g: number) => number) {
+  const d = Math.min(500, Math.max(1, Math.abs(D)));
+  let best: number | undefined;
+  for (let g = 4; g <= 12; g++) if (itValue(d, g) / 1000 <= twoT + 1e-12) best = g;
+  return best;
+}
+
+/** Rows as editable text: "name, sensitivity, low, high[, u]" (the format of parseContributors). */
+export const rowsToText = (rows: StackRow[]) =>
+  rows.filter((r) => r.on !== false).map((r) => {
+    const l = rowLimits(r), f = (v: number) => String(Number(v.toPrecision(10)));
+    return `${r.name}, ${f(r.dir * (r.sens ?? 1))}, ${f(l.lo)}, ${f(l.hi)}${r.dist === 'uniform' ? ', u' : ''}`;
+  }).join('\n');
+
+/** Rows from text lines, as limits. */
+export const rowsFromText = (text: string) => {
+  const p = parseContributors(text);
+  return {
+    rows: p.rows.map((c): StackRow => ({ name: c.name, on: true, dir: c.sens < 0 ? -1 : 1, sens: Math.abs(c.sens) || 1, format: 'limits', max: c.hi, min: c.lo, nom: (c.lo + c.hi) / 2, dist: c.dist })),
+    bad: p.bad,
+  };
+};
