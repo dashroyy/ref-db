@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import FitZones from '../../../components/FitZones.astro';
 import FitsCalc from '../../../components/FitsCalc.astro';
+import GeneralTolCalc from '../../../components/GeneralTolCalc.astro';
 
 <div class="glance">
   <div><b>In one line</b>A fit is the clearance or interference between two toleranced parts. ISO 286 gives each part a letter for position and a grade for width. Together they decide if the parts slide, locate or grip, at all the temperatures that they will see.</div>
@@ -143,6 +144,24 @@ The starting values of the calculator are the first and the last of these fits.
    4.4 MPa of contact pressure and 73 MPa in the aluminium (15% of its yield). At +60 °C it is −0.020 to +0.064 mm:
    **the fit can become loose**. That page had the same conclusion: the fit only centres the ring, and pins or bolts
    must carry the load. To assemble it, heat the ring to approximately 35 K above the steel.
+
+## General tolerances (ISO 2768)
+
+Most dimensions on a drawing have no tolerance next to them. A general tolerance in the title block applies to these
+dimensions. ISO 2768-1 gives the linear and angular tolerances in four classes: f (fine), m (medium), c (coarse) and
+v (very coarse). ISO 2768-2 gives straightness, flatness, perpendicularity, symmetry and circular runout in three
+classes: H, K and L. The note "ISO 2768-mK" applies class m of part 1 and class K of part 2.
+
+- **What it does not cover.** Part 2 gives no roundness or cylindricity: the size tolerance limits them. Parallelism
+  is the larger of the size tolerance and the straightness or flatness value.
+- **The envelope.** The suffix -E ("ISO 2768-mK-E") applies the envelope requirement to all single features of size.
+- **Broken edges** (external radii and chamfer heights) have their own, larger tolerances.
+- **ISO 22081 replaced ISO 2768-2.** It gives a general profile tolerance to stated datums instead of the H, K and L
+  classes. Many drawings still use ISO 2768, so check which standard your programme uses.
+- **It is not a reason to stop tolerancing.** Give each functional dimension its own tolerance. Make sure that the shop
+  can hold the general class on all the other dimensions, because each one is a requirement.
+
+<GeneralTolCalc />
 
 ## Where this stops
 

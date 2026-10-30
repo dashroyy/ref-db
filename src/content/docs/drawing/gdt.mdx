@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import GdtSymbols from '../../../components/GdtSymbols.astro';
 import GdtFrame from '../../../components/GdtFrame.astro';
+import FrameBuilder from '../../../components/FrameBuilder.astro';
 import GdtCalc from '../../../components/GdtCalc.astro';
 
 <div class="glance">
@@ -57,6 +58,12 @@ A, B at MMB, and C.* These are the modifiers that are most frequently important 
 - **No modifier: regardless of feature size.** This is the default. Use it for features that locate accurately.
 - **Ⓟ Projected tolerance zone.** The zone extends above a threaded hole, where the fastener is.
 - **Ⓕ Free state.** Use it for non-rigid parts that you measure without restraint.
+
+Build a frame below. The builder draws it, checks it against the rules of ASME Y14.5-2018 (for example: no datums on a
+form tolerance, no ⌀ on runout, MMC only on a feature of size), tells where ISO is different, and gives the frame as
+text for a drawing note or a CAD field.
+
+<FrameBuilder />
 
 ## Datums
 

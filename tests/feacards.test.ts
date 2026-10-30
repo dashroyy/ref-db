@@ -63,3 +63,15 @@ test('thermal expansion: secant from instantaneous, and re-referencing', () => {
   // re-referencing from 20 °C data to a −40 °C stress-free state gives the secant from −40 directly
   close(rereference((T) => al.secant(20, T), 20, -40, 150), al.secant(-40, 150), 1e-12);
 });
+
+import { estimatedSN } from '../src/lib/feacards.ts';
+test('estimated S-N curve: through 0.9 Rm at 10³ and the Marin-corrected endurance at the knee', () => {
+  const s = estimatedSN('steel', 1000, { surface: 'ground', load: 'bending', dMm: 7.62, reliability: '50' });
+  assert.ok(Math.abs(s.S(1e3) - 900) < 1e-9);
+  assert.ok(Math.abs(s.S(1e6) - s.se) < 1e-9);
+  assert.ok(Math.abs(s.se - 500 * s.factors.ka * s.factors.kb) < 1e-9, 'Se = Se′ × ka × kb (kc, kd, ke = 1)');
+  assert.equal(s.S(1e8), s.se, 'steel has an endurance limit');
+  const al = estimatedSN('al', 570, { surface: 'machined', load: 'axial', dMm: 10, reliability: '99' });
+  assert.equal(al.limit, false); assert.ok(al.S(1e9) < al.S(1e8), 'aluminium keeps falling');
+  assert.ok(al.points.length >= 6);
+});

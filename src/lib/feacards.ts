@@ -1,6 +1,7 @@
 // Material cards for finite-element models: unit consistency, isotropic and orthotropic elastic constants, nearly
 // incompressible materials (rubber, propellant), a true-stress plastic table built from tensile properties, and secant
 // thermal expansion from instantaneous data. Each function returns what the card implies, so it can be checked.
+import { baseFatigueStrength, marin, snCurve } from './fatigue.ts';
 
 // ---------- Units ----------
 
@@ -191,4 +192,19 @@ export function solverCard(solver: Solver, m: CardMaterial, units: UnitKey, o: {
     if (plastic) say('plasticity (MATS1 with TABLES1) is not written: take the table from the Plastic curve tab');
   }
   return { text: lines.join('\n'), missing, units: c.units };
+}
+
+// ---------- Estimated S-N curve ----------
+
+/**
+ * An estimated S-N curve for a metal from its ultimate strength: the family estimate of the unnotched endurance
+ * strength, corrected by the Marin factors, and a Basquin line through 0.9·Rm at 10³ cycles and the corrected
+ * endurance at its knee. A mean curve for early screening, not an allowable. Stress amplitude, fully reversed, MPa.
+ */
+export function estimatedSN(family: string, uts: number, o: { surface: string; load: string; dMm: number; reliability: string }) {
+  const base = baseFatigueStrength(family, uts);
+  const mf = marin({ uts, sePrime: base.se, surface: o.surface, load: o.load, dMm: o.dMm, kd: 1, reliability: o.reliability });
+  const curve = snCurve(uts, mf.se, base.nE, base.limit);
+  const Ns = [1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9].filter((n) => n <= Math.max(1e8, 2 * base.nE));
+  return { ...curve, se: mf.se, sePrime: base.se, nE: base.nE, limit: base.limit, factors: mf, points: Ns.map((n) => ({ n, s: curve.S(n) })) };
 }

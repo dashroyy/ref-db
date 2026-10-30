@@ -15,7 +15,8 @@ const pick = <C extends string>(t: Table<C>, size: number, cls: C) => {
   const i = t.to.findIndex((b) => size <= b);
   if (i < 0) return { value: null, range: `over ${t.to[t.to.length - 1]}` };
   const lo = i === 0 ? t.from : t.to[i - 1];
-  return { value: t.v[cls][i], range: i === 0 ? `${lo} to ${t.to[i]}` : `over ${lo} to ${t.to[i]}` };
+  const hi = t.to[i];
+  return { value: t.v[cls][i], range: !Number.isFinite(hi) ? `over ${lo}` : i === 0 ? `${lo} to ${hi}` : `over ${lo} to ${hi}` };
 };
 
 /** ISO 2768-1 table 1: permissible deviations (±mm) for linear dimensions except broken edges. */

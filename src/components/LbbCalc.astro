@@ -10,7 +10,7 @@ const FAM = ['steel', 'ss', 'ti', 'al', 'ni'];
 const raw = (m: Material) => ({ key: m.key, name: m.name, family: m.family, spec: m.spec, uts: m.Ftu!, yield: m.Fty!, density: m.rho! / 1000,
   kic: m.kic, kicIsFamilyDefault: m.kicDefault, maxServiceTemp: m.maxT, weldable: m.weldable });
 const metals = MATERIALS.filter((m) => FAM.includes(m.family) && m.kic && m.Fty! > 100).map(raw);
-const MATS = Object.fromEntries(metals.map((m) => [m.key, { kic: m.kic, y: m.yield, u: m.uts, fam: m.family, def: !!m.kicIsFamilyDefault }]));
+const MATS = Object.fromEntries(metals.map((m) => [m.key, { name: m.name, kic: m.kic, y: m.yield, u: m.uts, fam: m.family, def: !!m.kicIsFamilyDefault }]));
 ---
 
 <div class="calc lbbcalc" data-lbbcalc>
@@ -79,6 +79,10 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { kic: m.kic, y: m.yie
       <ul class="pv-notes" data-notes></ul>
     </div>
   </div>
+  <div class="lb-cmp">
+    <p class="pv-sub">Every material at this duty</p>
+    <div data-cmp></div>
+  </div>
   <div class="calc-foot">
     Linear-elastic screening with a plastic-collapse check on flow stress = (yield + UTS)/2. Newman–Raju surface-crack
     solution (fitted to a/t ≤ 0.8 and a/c ≤ 1; extrapolated beyond), Paris growth at the deepest and surface points,
@@ -93,6 +97,14 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { kic: m.kic, y: m.yie
   .lb-fig { margin: 0.9rem 0 0 !important; }
   .lb-fig svg { width: 100%; height: auto; font-family: var(--sl-font-mono); }
   .lb-fig figcaption { font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .lb-cmp { padding: 0 1rem 1rem; }
+  .lb-cmp .wrap { overflow-x: auto; }
+  .lb-cmp table { width: 100%; font-size: var(--sl-text-xs); border-collapse: collapse; display: table; margin: 0 !important; }
+  .lb-cmp th, .lb-cmp td { padding: 0.25rem 0.45rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
+  .lb-cmp th:first-child, .lb-cmp td:first-child { text-align: left; white-space: normal; }
+  .lb-cmp tr.sel td { background: color-mix(in srgb, var(--rd-accent) 14%, transparent); font-weight: 600; }
+  .lb-cmp .ok { color: var(--rd-ok); } .lb-cmp .bad { color: var(--rd-accent); } .lb-cmp .warn { color: var(--rd-warn); }
+  .lb-cmp p.hint { margin: 0.3rem 0 0 !important; }
   .lbbcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
 </style>
 
@@ -105,7 +117,7 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { kic: m.kic, y: m.yie
   const cyc = (n: number) => (!Number.isFinite(n) ? '∞' : n >= 1e6 ? `${f(n / 1e6, 1)} M` : n >= 1e4 ? `${f(n / 1e3, 0)} k` : f(n, 0));
 
   document.querySelectorAll<HTMLElement>('[data-lbbcalc]').forEach((root) => {
-    const MATS: Record<string, { kic: number; y: number; u: number; fam: string; def: boolean }> = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const MATS: Record<string, { name: string; kic: number; y: number; u: number; fam: string; def: boolean }> = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
     const form = root.querySelector<HTMLFormElement>('[data-form]')!;
     const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
     const num = (n: string) => +field(n).value;
@@ -117,10 +129,11 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { kic: m.kic, y: m.yie
       if (text !== undefined) e.textContent = text;
       return e;
     };
+    const parisFor = (m: { fam: string; u: number }) => (m.fam === 'steel' ? (m.u > 1100 ? 'mart' : 'fp') : m.fam === 'ss' ? (m.u > 900 ? 'mart' : 'aus') : m.fam === 'ni' ? 'aus' : m.fam);
     const applyMat = () => {
       const m = MATS[field('m').value];
       field('k').value = String(m.kic); field('y').value = String(m.y); field('u').value = String(m.u);
-      field('paris').value = m.fam === 'steel' ? (m.u > 1100 ? 'mart' : 'fp') : m.fam === 'ss' ? (m.u > 900 ? 'mart' : 'aus') : m.fam === 'ni' ? 'aus' : m.fam;
+      field('paris').value = parisFor(m);
       root.querySelector('[data-mathint]')!.textContent =
         `Database K_IC ${m.kic} MPa√m${m.def ? ' (family default)' : ''}: indicative. Use measured toughness for the orientation, thickness and lowest temperature that matter.`;
     };
@@ -162,6 +175,26 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { kic: m.kic, y: m.yie
       notes.innerHTML = out.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
       drawWall(g, t, leak);
       drawFail(i, g, leak);
+      clearTimeout(cmpTimer);
+      cmpTimer = window.setTimeout(() => compare(i), 250);
+    }
+
+    // The same case, flaw and pressure in every alloy of the list, ranked by the margin on crack length at breakthrough.
+    let cmpTimer = 0;
+    function compare(i: { sigma: number; rangeFraction: number; a0: number; ac0: number; t: number; R: number }) {
+      const sel = field('m').value;
+      const all = Object.entries(MATS).map(([key, m]) => {
+        const p = PARIS_CLASSES.find((x) => x.key === parisFor(m)) ?? PARIS_CLASSES[0];
+        const yields = i.sigma >= m.y;
+        const g = yields ? null : growToBreakthrough({ ...i, kic: m.kic, flow: (m.y + m.u) / 2, C: p.C, m: p.m });
+        return { key, m, g, yields, ratio: g ? g.cCrit / g.c : -1 };
+      }).sort((a, b) => b.ratio - a.ratio);
+      const top = all.slice(0, 12), k = all.findIndex((x) => x.key === sel);
+      if (k >= 12) top.push(all[k]);
+      const verdict = (x: (typeof all)[number]) => (x.yields ? '<span class="bad">yields at MEOP</span>' : x.g!.outcome === 'leak' ? '<span class="ok">leak</span>' : x.g!.outcome === 'runs' ? '<span class="bad">runs along</span>' : '<span class="bad">break</span>');
+      root.querySelector('[data-cmp]')!.innerHTML = `<div class="wrap"><table><thead><tr><th>Material</th><th>Yield (MPa)</th><th>K<sub>IC</sub> (MPa√m)</th><th>Verdict</th><th>Stable ÷ breakthrough</th><th>Cycles to breakthrough</th></tr></thead><tbody>${top.map((x) =>
+        `<tr class="${x.key === sel ? 'sel' : ''}"><td>${all.indexOf(x) + 1}. ${x.m.name}</td><td>${x.m.y}</td><td>${x.m.kic}${x.m.def ? '*' : ''}</td><td>${verdict(x)}</td><td>${x.g ? `${f(x.ratio, 2)}×` : '—'}</td><td>${x.g ? cyc(x.g.N) : '—'}</td></tr>`).join('')}</tbody></table></div>` +
+        `<p class="hint">The same wall (${f(i.t, 3)} mm), hoop stress (${f(i.sigma, 0)} MPa) and starting flaw in each alloy, with its database K<sub>IC</sub> and a growth law from its family. In practice each alloy needs its own wall: use the case-sizing page for that. * K<sub>IC</sub> is a family default.</p>`;
     }
 
     function drawWall(g: ReturnType<typeof growToBreakthrough>, t: number, leak: boolean) {

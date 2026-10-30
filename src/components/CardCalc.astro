@@ -3,13 +3,14 @@
 // orthotropic stability, nearly incompressible materials, a true-stress plastic table built from tensile properties,
 // and secant thermal expansion. Maths in src/lib/feacards.ts (unit-tested); UI only here.
 import { UNIT_SYSTEMS, SOLVERS } from '../lib/feacards';
+import { SURFACES, LOADS, RELIABILITY } from '../lib/fatigue';
 import MaterialSelect from './MaterialSelect.astro';
 import { MATERIALS, DEFAULTS as D } from '../lib/materials';
 
 // Every library material with a modulus or a density can make a card; a new entry in materials.json appears here.
 const CARD_MATS = MATERIALS.filter((m) => m.E !== undefined || m.rho !== undefined);
 const CARD_DATA = Object.fromEntries(CARD_MATS.map((m) => [m.key, {
-  name: m.name, kind: m.kind, familyName: m.familyName, E: m.E, nu: m.nu, rho: m.rho, alpha: m.alpha,
+  name: m.name, kind: m.kind, family: m.family, familyName: m.familyName, E: m.E, nu: m.nu, rho: m.rho, alpha: m.alpha,
   k: m.kz ?? m.k, kIsZ: m.kz !== undefined, cp: m.cp, Fty: m.Fty, Ftu: m.Ftu, eu: m.eu, defaults: m.defaults,
 }]));
 
@@ -36,6 +37,12 @@ const TABS = [
           <label>Expansion reference (°C)<input name="g_tref" type="number" step="any" value="20" /></label>
           <label>Uniform elongation (%)<input name="g_eu" type="number" min="0.1" step="any" placeholder="for a plastic table" autocomplete="off" /></label>
           <label>Plastic rows<input name="g_n" type="number" min="3" max="20" step="1" value="8" /></label>
+        </div>
+        <div class="row2" data-sn-in>
+          <label>S-N: surface<select name="g_sf">{SURFACES.map((x) => <option value={x.key} selected={x.key === 'machined'}>{x.name}</option>)}</select></label>
+          <label>S-N: loading<select name="g_ld">{LOADS.map((x) => <option value={x.key}>{x.name}</option>)}</select></label>
+          <label>S-N: reliability<select name="g_rl">{RELIABILITY.map((x) => <option value={x.key} selected={x.key === '50'}>{x.name}</option>)}</select></label>
+          <label>S-N: section size (mm)<input name="g_dd" type="number" min="1" step="any" value="10" /></label>
         </div>
         <p class="hint">The library holds typical room-temperature values, and its expansion is the secant value from 20 °C. Enter the uniform elongation from your material data to add a plastic table. <button type="button" class="chip" data-use>Use in the check tabs</button></p>
       </fieldset>
@@ -111,6 +118,10 @@ const TABS = [
         <div class="cd-table-head"><span data-cardhead>Solver card</span><span class="head-btns"><button type="button" class="chip" data-copycard>Copy</button><button type="button" class="chip" data-save>Download</button></span></div>
         <textarea readonly rows="14" data-cardtext aria-label="Solver card text" spellcheck="false"></textarea>
       </div>
+      <div class="cd-table" data-sn hidden>
+        <div class="cd-table-head"><span>Estimated S-N curve: cycles, stress amplitude (MPa)</span><button type="button" class="chip" data-copysn>Copy</button></div>
+        <textarea readonly rows="7" data-sntext aria-label="Estimated S-N points as comma-separated values"></textarea>
+      </div>
       <div class="cd-table" data-table hidden>
         <div class="cd-table-head"><span>Plastic table: true stress (MPa), true plastic strain</span><button type="button" class="chip" data-copy>Copy</button></div>
         <textarea readonly rows="8" data-csv aria-label="Plastic table as comma-separated values"></textarea>
@@ -150,7 +161,7 @@ const TABS = [
 </style>
 
 <script>
-  import { UNIT_SYSTEMS, SOLVERS, solverCard, cardInUnits, cardNumber, type Solver, cardUnits, shearModulus, bulkModulus, poissonFromEG, poissonFromEK, neoHookean, orthotropic, plasticTable, rambergOsgoodStress, expansion, type UnitKey } from '../lib/feacards';
+  import { UNIT_SYSTEMS, SOLVERS, solverCard, cardInUnits, cardNumber, estimatedSN, type Solver, cardUnits, shearModulus, bulkModulus, poissonFromEG, poissonFromEK, neoHookean, orthotropic, plasticTable, rambergOsgoodStress, expansion, type UnitKey } from '../lib/feacards';
 
   const NS = 'http://www.w3.org/2000/svg';
   const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
@@ -225,10 +236,11 @@ const TABS = [
     };
 
     // ---- solver card from the material library ----
-    type CardMat = { name: string; kind: string; familyName: string; E?: number; nu?: number; rho?: number; alpha?: number; k?: number; kIsZ: boolean; cp?: number; Fty?: number; Ftu?: number; eu?: number; defaults: string[] };
+    type CardMat = { name: string; kind: string; family: string; familyName: string; E?: number; nu?: number; rho?: number; alpha?: number; k?: number; kIsZ: boolean; cp?: number; Fty?: number; Ftu?: number; eu?: number; defaults: string[] };
     const CARD: Record<string, CardMat> = JSON.parse(root.querySelector('[data-cardmats]')!.textContent!);
     const cardBox = root.querySelector<HTMLElement>('[data-card]')!, cardText = root.querySelector<HTMLTextAreaElement>('[data-cardtext]')!;
     const fig = root.querySelector<HTMLElement>('[data-fig]')!;
+    const snBox = root.querySelector<HTMLElement>('[data-sn]')!, snText = root.querySelector<HTMLTextAreaElement>('[data-sntext]')!;
     const EXT: Record<Solver, string> = { abaqus: 'inp', ansys: 'mac', nastran: 'bdf' };
     const cardMat = () => CARD[field('g_m').value];
     const fillEu = () => { const m = cardMat(); field('g_eu').value = m?.eu !== undefined ? String(m.eu) : ''; };
@@ -264,8 +276,35 @@ const TABS = [
       if (m.kind === 'composite') notes.push(['warn', 'This is an isotropic equivalent of a laminate. It is acceptable for stiffness and mass in a coarse model. For the stresses in the plies, use orthotropic constants or a layup, and check them on the Orthotropic tab.']);
       if (units === 'in-lbf') notes.push(['', 'Temperatures and α are in °C and 1/K. If the model is in °F, divide α by 1.8 and convert the reference temperature.']);
       notes.push(['', 'Typical values, not allowables. For a strength check, use A- or B-basis values from your material specification at the temperature of the load case. See <a href="../../materials/allowables/">Allowables</a>.']);
-      return null;
+      // estimated S-N curve for a metal with an ultimate strength
+      const metal = m.kind === 'metal' && (m.Ftu ?? 0) > 0;
+      root.querySelectorAll<HTMLElement>('[data-sn-in]').forEach((e) => (e.hidden = !metal));
+      snBox.hidden = !metal;
+      if (!metal) return null;
+      const sn = estimatedSN(m.family, m.Ftu!, { surface: field('g_sf').value, load: field('g_ld').value, dMm: num('g_dd') || 10, reliability: field('g_rl').value });
+      const pow10 = (n: number) => `10${[...String(Math.round(Math.log10(n)))].map((d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]).join('')}`;
+      snText.value = sn.points.map((p) => `${p.n.toExponential(0).replace('e+', 'e')}, ${p.s.toFixed(1)}`).join('\n');
+      rows.push({ dt: 'S-N, estimated', dd: `S<sub>e</sub> ${g3(sn.se)} MPa at ${pow10(sn.nE)} cycles <small>${g3(sn.sePrime)} MPa unnotched × k<sub>a</sub> ${f(sn.factors.ka, 2)} × k<sub>b</sub> ${f(sn.factors.kb, 2)} × k<sub>c</sub> ${f(sn.factors.kc, 2)} × k<sub>e</sub> ${f(sn.factors.ke, 2)} · Basquin b ${f(sn.b, 3)} · ${sn.limit ? 'endurance limit' : 'no endurance limit'}</small>`, cls: 'warn' });
+      notes.push(['warn', 'The S-N curve is ESTIMATED from the ultimate strength: a mean curve for screening, not an allowable and not test data. Real fatigue data has a large scatter, and notches, mean stress and the environment change it. See <a href="../../fundamentals/fatigue/">Fatigue</a>.']);
+      return () => {
+        const lo = 3, hi = Math.log10(sn.points[sn.points.length - 1].n), top = Math.max(...sn.points.map((p) => p.s)) * 1.12;
+        const c = frame({ x0: lo, x1: hi, y0: 0, y1: top, xl: 'cycles N', yl: 'stress amplitude (MPa)', fx: (v) => pow10(10 ** v), sx: 1 });
+        const pts = Array.from({ length: 121 }, (_, k) => lo + ((hi - lo) * k) / 120).map((x) => `${c.X(x).toFixed(1)},${c.Y(sn.S(10 ** x)).toFixed(1)}`).join(' ');
+        el('line', { x1: c.X(Math.log10(sn.nE)), x2: c.X(Math.log10(sn.nE)), y1: c.T, y2: c.H - c.B, stroke: 'var(--rd-muted)', 'stroke-dasharray': '3 3' });
+        el('polyline', { points: pts, fill: 'none', stroke: 'var(--rd-accent)', 'stroke-width': 2.2, 'stroke-dasharray': '6 3' });
+        el('circle', { cx: c.X(3), cy: c.Y(sn.s3), r: 4, fill: 'var(--rd-accent)' });
+        el('circle', { cx: c.X(Math.log10(sn.nE)), cy: c.Y(sn.se), r: 4, fill: 'var(--rd-accent)' });
+        el('text', { x: c.X(Math.log10(sn.nE)) + 6, y: c.Y(sn.se) - 8, 'font-size': 12, fill: 'var(--rd-ink)', ...halo }, `Se ${g3(sn.se)}`);
+        el('text', { x: c.X(3) + 8, y: c.Y(sn.s3) + 4, 'font-size': 12, fill: 'var(--rd-ink)', ...halo }, `0.9·Rm ${g3(sn.s3)}`);
+        el('text', { x: c.W - c.R, y: 16, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--rd-warn)', ...halo }, 'ESTIMATED: mean curve');
+      };
     }
+    root.querySelector('[data-copysn]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(snText.value); btn.textContent = 'Copied'; }
+      catch { snText.focus(); snText.select(); btn.textContent = 'Select and copy'; }
+      window.setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
     root.querySelector('[data-copycard]')!.addEventListener('click', async (ev) => {
       const btn = ev.currentTarget as HTMLButtonElement;
       try { await navigator.clipboard.writeText(cardText.value); btn.textContent = 'Copied'; }
@@ -439,7 +478,7 @@ const TABS = [
 
     const RUN: Record<string, typeof runUnits> = { gen: runGen, units: runUnits, ortho: runOrtho, incomp: runIncomp, plastic: runPlastic, cte: runCte };
     const CAPS: Record<string, string> = {
-      gen: '',
+      gen: 'Estimated S-N curve of the selected metal: a Basquin line from 0.9·Rm at 10³ cycles to the Marin-corrected endurance strength at its knee. A mean curve for screening.',
       units: 'Bar wave speed √(E/ρ) on a log scale, with typical bands. A density in the wrong units moves the line by orders of magnitude.',
       ortho: 'Each Poisson\'s ratio as a share of its bound; the det bar fills only if the compliance determinant is not positive. Any full bar means the constants are not a material.',
       incomp: 'Bulk-to-shear modulus ratio against Poisson\'s ratio. Near 0.5 a tiny change in ν changes K many times over.',
@@ -450,9 +489,9 @@ const TABS = [
     function run() {
       const rows: Row[] = [], notes: [string, string][] = [];
       if (mode !== 'plastic') tableBox.hidden = true;
-      if (mode !== 'gen') cardBox.hidden = true;
-      fig.hidden = mode === 'gen';
+      if (mode !== 'gen') { cardBox.hidden = true; snBox.hidden = true; }
       draw = RUN[mode](rows, notes);
+      fig.hidden = !draw;
       root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
       root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
       root.querySelector('[data-cap]')!.textContent = CAPS[mode];

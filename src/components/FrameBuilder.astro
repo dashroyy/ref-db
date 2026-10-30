@@ -1,0 +1,168 @@
+---
+// Feature control frame builder: select the parts of a frame, see it drawn, check it against the rules, copy it as
+// text. Rules and text in src/lib/fcf.ts (unit-tested); glyphs from src/lib/gdtglyphs.ts.
+import { CHARS } from '../lib/fcf';
+import { GLYPHS } from '../lib/gdtglyphs';
+const groups = [...new Set(CHARS.map((c) => c.group))].map((g) => ({ g, items: CHARS.filter((c) => c.group === g) }));
+const MOD = [['', 'none (RFS)'], ['M', 'Ⓜ MMC'], ['L', 'Ⓛ LMC']];
+const DMOD = [['', 'RMB'], ['M', 'Ⓜ MMB'], ['L', 'Ⓛ LMB']];
+const DEF = ['A', 'B', 'C'];
+---
+
+<div class="calc fbcalc" data-fbcalc>
+  <div class="calc-head"><span>Feature control frame builder</span><span>ASME Y14.5-2018 rules · ISO notes</span></div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Characteristic and tolerance</legend>
+        <label>Characteristic<select name="c">{groups.map((g) => <optgroup label={g.g}>{g.items.map((c) => <option value={c.key} selected={c.key === 'position'}>{c.sym} {c.name}</option>)}</optgroup>)}</select></label>
+        <div class="row2">
+          <label>Tolerance (mm)<input name="v" type="number" min="0" step="any" value="0.5" /></label>
+          <label>Material condition<select name="m">{MOD.map(([k, n]) => <option value={k} selected={k === 'M'}>{n}</option>)}</select></label>
+          <label>Projected zone height (mm)<input name="p" type="number" min="0" step="any" placeholder="none" /></label>
+        </div>
+        <label class="fb-check"><input type="checkbox" name="dia" checked /> Diametral zone ⌀</label>
+        <label class="fb-check"><input type="checkbox" name="fos" checked /> The controlled feature is a feature of size (a hole, a pin, a slot)</label>
+      </fieldset>
+      <fieldset>
+        <legend>Datum references, in order</legend>
+        {DEF.map((d, i) => (
+          <div class="row2 fb-datum">
+            <label>{['Primary', 'Secondary', 'Tertiary'][i]}<input name={`d${i}`} type="text" maxlength="3" value={d} placeholder="none" autocomplete="off" /></label>
+            <label>Boundary<select name={`dm${i}`}>{DMOD.map(([k, n]) => <option value={k} selected={i === 1 ? k === 'M' : k === ''}>{n}</option>)}</select></label>
+          </div>
+        ))}
+        <p class="hint">Leave a datum blank to remove it. MMB and LMB let the part shift on a datum feature of size (ASME); RMB is the default.</p>
+      </fieldset>
+    </form>
+    <div>
+      <figure class="fb-fig">
+        <svg viewBox="0 0 360 70" data-frame role="img" aria-label="The feature control frame"></svg>
+      </figure>
+      <div class="fb-text"><code data-text></code><button type="button" class="chip" data-copy>Copy frame text</button></div>
+      <dl class="readouts" data-out></dl>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-glyphs set:html={JSON.stringify(GLYPHS)}></script>
+  <div class="calc-foot">
+    Checks the combinations that the standard does not permit (datums on form tolerances, ⌀ or modifiers where they do not
+    apply, duplicate or unclear datum letters) and warns where ASME and ISO differ. It does not check the drawing that the
+    frame is on.
+  </div>
+</div>
+
+<style is:global>
+  .fb-check { display: flex !important; align-items: center; gap: 0.4rem; }
+  .fb-check input { width: auto; }
+  .fb-datum { grid-template-columns: 1fr 1fr; }
+  .fb-fig { margin: 0 0 0.6rem !important; padding: 0.8rem; border: 1px solid var(--rd-line); border-radius: 6px; background: var(--rd-panel2, var(--rd-panel)); }
+  .fb-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .fb-text { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.6rem !important; }
+  .fb-text > * { margin: 0 !important; }
+  .fb-text code { font-size: 1rem; background: none; color: var(--rd-ink); }
+  .fbcalc .pv-notes { font-size: var(--sl-text-sm); padding-left: 1.1rem; }
+</style>
+
+<script>
+  import { CHARS, checkFrame, frameText, type Char, type Mod, type Frame } from '../lib/fcf';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  document.querySelectorAll<HTMLElement>('[data-fbcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const svg = root.querySelector<SVGSVGElement>('[data-frame]')!;
+    const GL: Record<string, { d: string; fill?: string }> = JSON.parse(root.querySelector('[data-glyphs]')!.textContent!);
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+
+    const frame = (): Frame => ({
+      char: field('c').value as Char, dia: (field('dia') as HTMLInputElement).checked, value: +field('v').value, mod: field('m').value as Mod,
+      projected: +field('p').value > 0 ? +field('p').value : undefined, featureOfSize: (field('fos') as HTMLInputElement).checked,
+      datums: [0, 1, 2].map((i) => ({ letter: field(`d${i}`).value.trim().toUpperCase(), mod: field(`dm${i}`).value as Mod })),
+    });
+
+    // the frame, cell by cell: symbol, tolerance with modifiers, then each datum with its boundary modifier
+    function draw(f: Frame, bad: boolean) {
+      svg.replaceChildren();
+      const H = 36, y0 = 17, cw = 7.8, circ = 17, ink = bad ? 'var(--rd-accent)' : 'var(--rd-ink)';
+      const val = `${f.dia ? '⌀' : ''}${Number.isFinite(f.value) ? Number(f.value.toPrecision(6)) : ''}`;
+      const tolW = 14 + val.length * cw + (f.mod ? circ + 4 : 0) + (f.projected ? circ + 6 + String(f.projected).length * cw : 0);
+      const ds = f.datums.filter((d) => d.letter);
+      const cells = [36, tolW, ...ds.map((d) => 14 + d.letter.length * cw + (d.mod ? circ + 4 : 0))];
+      const total = cells.reduce((a, b) => a + b, 0), x0 = Math.max(4, (360 - total) / 2);
+      let x = x0;
+      el('rect', { x: x0, y: y0, width: total, height: H, fill: 'var(--rd-panel)', stroke: ink, 'stroke-width': 1.5 });
+      const circled = (cx: number, t: string) => {
+        el('circle', { cx, cy: y0 + H / 2, r: 7.5, fill: 'none', stroke: 'var(--rd-ink)', 'stroke-width': 1.2 });
+        el('text', { x: cx, y: y0 + H / 2 + 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600, fill: 'var(--rd-ink)' }, t);
+      };
+      cells.forEach((w, i) => {
+        if (i > 0) el('line', { x1: x, x2: x, y1: y0, y2: y0 + H, stroke: ink, 'stroke-width': 1.5 });
+        if (i === 0) {
+          const g = GL[f.char];
+          if (g) {
+            const gg = document.createElementNS(NS, 'g');
+            gg.setAttribute('transform', `translate(${x + 7} ${y0 + 7}) scale(1.1)`);
+            const p = document.createElementNS(NS, 'path');
+            p.setAttribute('d', g.d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'var(--rd-accent)'); p.setAttribute('stroke-width', '1.5');
+            gg.append(p);
+            if (g.fill) { const q = document.createElementNS(NS, 'path'); q.setAttribute('d', g.fill); q.setAttribute('fill', 'var(--rd-accent)'); gg.append(q); }
+            svg.append(gg);
+          }
+        } else if (i === 1) {
+          let tx = x + 7;
+          el('text', { x: tx, y: y0 + H / 2 + 5, 'font-size': 14, fill: 'var(--rd-ink)' }, val);
+          tx += val.length * cw + 2;
+          if (f.mod) { circled(tx + circ / 2, f.mod); tx += circ + 4; }
+          if (f.projected) { circled(tx + circ / 2, 'P'); el('text', { x: tx + circ + 3, y: y0 + H / 2 + 5, 'font-size': 14, fill: 'var(--rd-ink)' }, String(f.projected)); }
+        } else {
+          const d = ds[i - 2];
+          el('text', { x: x + 7, y: y0 + H / 2 + 5, 'font-size': 14, fill: 'var(--rd-ink)' }, d.letter);
+          if (d.mod) circled(x + 7 + d.letter.length * cw + 2 + circ / 2, d.mod);
+        }
+        x += w;
+      });
+      const labels = ['characteristic', 'tolerance', ...ds.map((_, i) => ['1st', '2nd', '3rd'][i])];
+      x = x0;
+      cells.forEach((w, i) => { el('text', { x: x + w / 2, y: 11, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, i === 0 ? '' : labels[i]); x += w; });
+      svg.setAttribute('viewBox', `0 0 ${Math.max(360, total + 8)} 62`);
+    }
+
+    function run() {
+      const f = frame(), c = CHARS.find((x) => x.key === f.char)!;
+      const msgs = checkFrame(f), bad = msgs.some((m) => m.level === 'bad');
+      draw(f, bad);
+      const text = frameText(f);
+      root.querySelector('[data-text]')!.textContent = text;
+      const datumNote = c.datums === 'none' ? 'none: a form tolerance' : c.datums === 'optional' ? 'optional' : 'required';
+      root.querySelector('[data-out]')!.innerHTML = [
+        `<div class="readout primary ${bad ? 'bad' : msgs.some((m) => m.level === 'warn') ? 'warn' : 'ok'}"><dt>Frame</dt><dd>${bad ? 'not valid' : 'valid'} <small>${c.group}: ${c.name}</small></dd></div>`,
+        `<div class="readout"><dt>What this characteristic takes</dt><dd><small>datums ${datumNote} · ⌀ zone ${c.dia ? 'on an axis' : 'no'} · MMC/LMC ${c.mod ? 'on a feature of size' : 'no'}</small></dd></div>`,
+      ].join('');
+      root.querySelector('[data-notes]')!.innerHTML = msgs.filter((m) => m.level !== 'ok').map((m) => `<li class="${m.level}">${m.text}</li>`).join('')
+        || '<li class="ok">No rule is broken. Check that the datums and the value come from the function of the part.</li>';
+    }
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, text = root.querySelector('[data-text]')!.textContent ?? '';
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { btn.textContent = 'Select and copy'; }
+      window.setTimeout(() => (btn.textContent = 'Copy frame text'), 1500);
+    });
+    // a sensible start when the characteristic changes: no datums for form, no ⌀ or modifier where they cannot apply
+    field('c').addEventListener('change', () => {
+      const c = CHARS.find((x) => x.key === field('c').value)!;
+      if (!c.dia) (field('dia') as HTMLInputElement).checked = false;
+      if (!c.mod) field('m').value = '';
+      if (c.datums === 'none') [0, 1, 2].forEach((i) => { field(`d${i}`).value = ''; field(`dm${i}`).value = ''; });
+      else if (!field('d0').value) field('d0').value = 'A';
+    });
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    run();
+  });
+</script>

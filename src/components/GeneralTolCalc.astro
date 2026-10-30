@@ -1,0 +1,131 @@
+---
+// General tolerances to ISO 2768-1 and -2: every value that applies to one size and the title-block note. The tables
+// are drawn with the range of the size marked. Maths in src/lib/generaltol.ts (unit-tested); UI only here.
+import { LIN_CLASSES, GEO_CLASSES } from '../lib/generaltol';
+---
+
+<div class="calc gtcalc" data-gtcalc>
+  <div class="calc-head"><span>General tolerances</span><span>ISO 2768-1 and ISO 2768-2</span></div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>The dimension and the classes</legend>
+        <div class="row2">
+          <label>Nominal size or length (mm)<input name="g_d" type="number" min="0" step="any" value="150" /></label>
+          <label>Linear class (part 1)<select name="g_lin">{LIN_CLASSES.map((c) => <option value={c.key} selected={c.key === 'm'}>{c.name}</option>)}</select></label>
+          <label>Geometric class (part 2)<select name="g_geo"><option value="">none</option>{GEO_CLASSES.map((c) => <option value={c.key} selected={c.key === 'K'}>{c.name}</option>)}</select></label>
+        </div>
+        <label class="gt-check"><input type="checkbox" name="g_e" /> Envelope requirement on features of size (-E)</label>
+        <p class="hint">For an angle, enter the length of the shorter side. For perpendicularity, the length of the shorter side. For symmetry, the length of the shorter feature.</p>
+      </fieldset>
+      <div class="gt-note">
+        <span>Title-block note</span>
+        <code data-note>ISO 2768-mK</code>
+        <button type="button" class="chip" data-copy>Copy</button>
+      </div>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="gt-tables" data-tables></div>
+  <div class="calc-foot">
+    ISO 2768-1 tables 1 to 3 (linear dimensions, broken edges, angles) and ISO 2768-2 tables 1 to 4 (straightness and
+    flatness, perpendicularity, symmetry, circular runout). The column of the size and the row of the class are marked.
+  </div>
+</div>
+
+<style is:global>
+  .gtcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .gt-check { display: flex !important; align-items: center; gap: 0.4rem; }
+  .gt-check input { width: auto; }
+  .gt-note { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.6rem 0.7rem; border: 1px solid var(--rd-line); border-radius: 6px; background: var(--rd-panel2, var(--rd-panel)); }
+  .gt-note > * { margin: 0 !important; }
+  .gt-note span { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); }
+  .gt-note code { font-size: 1rem; color: var(--rd-accent); background: none; }
+  .gt-tables { padding: 0 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 0.9rem; }
+  .gt-tables > * { margin: 0 !important; min-width: 0; }
+  .gt-t p { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--rd-muted); margin: 0 0 0.3rem !important; }
+  .gt-t .wrap { overflow-x: auto; }
+  .gt-t table { width: 100%; font-size: var(--sl-text-xs); border-collapse: collapse; display: table; margin: 0 !important; }
+  .gt-t th, .gt-t td { padding: 0.2rem 0.3rem; border: 1px solid var(--rd-line); text-align: center; white-space: nowrap; font-family: var(--sl-font-mono); }
+  .gt-t th { color: var(--rd-muted); font-weight: 400; }
+  .gt-t .col { background: color-mix(in srgb, var(--rd-blue) 12%, transparent); }
+  .gt-t .row td:first-child { color: var(--rd-ink); font-weight: 600; }
+  .gt-t .hit { background: color-mix(in srgb, var(--rd-accent) 28%, transparent); color: var(--rd-ink); font-weight: 700; }
+</style>
+
+<script>
+  import { LINEAR, EDGES, ANGULAR, FLATNESS, PERPENDICULARITY, SYMMETRY, RUNOUT, lookup, dms, note, type LinClass, type GeoClass } from '../lib/generaltol';
+
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+  const pm = (v: number | null) => (v === null ? '—' : `± ${v}`);
+  const mm = (v: number | null) => (v === null ? '—' : String(v));
+  const bound = (b: number) => (Number.isFinite(b) ? String(b) : '');
+
+  document.querySelectorAll<HTMLElement>('[data-gtcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+
+    // one table of a standard, with the range of the size and the class marked
+    function table(title: string, t: { from: number; to: number[]; v: Record<string, (number | null)[]> }, classes: string[], d: number, cls: string, fmt: (v: number | null) => string) {
+      const col = t.to.findIndex((b) => d <= b), inRange = d >= t.from && col >= 0;
+      const head = t.to.map((b, i) => {
+        const lo = i === 0 ? t.from : t.to[i - 1];
+        return `<th class="${inRange && i === col ? 'col' : ''}">${Number.isFinite(b) ? `${i === 0 ? '' : '>'}${lo}–${bound(b)}` : `>${lo}`}</th>`;
+      }).join('');
+      const rows = classes.map((c) => `<tr class="${c === cls ? 'row' : ''}"><td>${c}</td>${t.v[c].map((v, i) => `<td class="${inRange && i === col ? (c === cls ? 'hit' : 'col') : ''}">${fmt(v)}</td>`).join('')}</tr>`).join('');
+      return `<div class="gt-t"><p>${title}</p><div class="wrap"><table><thead><tr><th>class</th>${head}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    }
+
+    function run() {
+      const d = +field('g_d').value, lin = field('g_lin').value as LinClass, geo = field('g_geo').value as GeoClass | '', env = (field('g_e') as HTMLInputElement).checked;
+      const n = note(lin, geo, env);
+      root.querySelector('[data-note]')!.textContent = n;
+      const rows: Row[] = [], notes: [string, string][] = [];
+      if (!(d > 0)) {
+        root.querySelector('[data-out]')!.innerHTML = '<div class="readout bad"><dt>Size</dt><dd>Enter a size above zero.</dd></div>';
+        return;
+      }
+      const l = lookup(d, lin, geo);
+      rows.push({ dt: 'Linear dimension', dd: `${pm(l.linear.value)} mm <small>${l.linear.value === null ? (d < 0.5 ? 'below 0.5 mm: give the tolerance next to the dimension' : `no value in class ${lin} for this size`) : `class ${lin}, ${l.linear.range} mm`}</small>`, primary: true, cls: l.linear.value === null ? 'warn' : '' });
+      rows.push({ dt: 'Broken edge', dd: `${pm(l.edge.value)} mm <small>external radius or chamfer height, ${l.edge.range || 'below 0.5'} mm</small>` });
+      rows.push({ dt: 'Angle', dd: `${l.angular.value === null ? '—' : `± ${dms(l.angular.value)}`} <small>shorter side ${l.angular.range} mm · ${l.angular.value === null ? '' : `${(Math.tan((l.angular.value / 60) * Math.PI / 180) * 100).toFixed(2)} mm per 100 mm`}</small>` });
+      if (geo) {
+        rows.push({ dt: 'Straightness, flatness', dd: `${mm(l.flatness!.value)} mm <small>class ${geo}, length ${l.flatness!.range} mm</small>`, cls: l.flatness!.value === null ? 'warn' : '' });
+        rows.push({ dt: 'Perpendicularity', dd: `${mm(l.perpendicularity!.value)} mm <small>shorter side ${l.perpendicularity!.range} mm</small>`, cls: l.perpendicularity!.value === null ? 'warn' : '' });
+        rows.push({ dt: 'Symmetry', dd: `${mm(l.symmetry!.value)} mm <small>shorter feature ${l.symmetry!.range} mm</small>`, cls: l.symmetry!.value === null ? 'warn' : '' });
+        rows.push({ dt: 'Circular runout', dd: `${l.runout} mm <small>all sizes</small>` });
+        notes.push(['', 'Part 2 does not give roundness or cylindricity: the size tolerance limits them. Parallelism is the larger of the size tolerance and the straightness or flatness value.']);
+        notes.push(['warn', 'ISO 22081 replaced ISO 2768-2. Many drawings and organisations still use ISO 2768. Check which standard your programme uses before you put the note in the title block.']);
+      } else notes.push(['', 'With no geometric class, part 2 does not apply. Form and orientation are then limited only by the size tolerances and the envelope, if it applies.']);
+      if (env) notes.push(['', 'The -E suffix applies the envelope requirement (Ⓔ) to all single features of size: perfect form at maximum material. ISO 8015 does not apply it by default.']);
+      notes.push(['', 'A general tolerance is for dimensions where the function accepts it. Give each functional dimension its own tolerance, and make sure the shop can hold the general class on all the others.']);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      const L = ['f', 'm', 'c', 'v'], G = ['H', 'K', 'L'];
+      const pmT = (v: number | null) => (v === null ? '—' : `±${v}`);
+      root.querySelector('[data-tables]')!.innerHTML = [
+        table('Part 1: linear dimensions (± mm)', LINEAR, L, d, lin, pmT),
+        table('Part 1: broken edges (± mm)', EDGES, L, d, lin, pmT),
+        table('Part 1: angles, by the shorter side', ANGULAR, L, d, lin, (v) => (v === null ? '—' : `±${dms(v)}`)),
+        ...(geo ? [
+          table('Part 2: straightness and flatness (mm)', FLATNESS, G, d, geo, mm),
+          table('Part 2: perpendicularity (mm)', PERPENDICULARITY, G, d, geo, mm),
+          table('Part 2: symmetry (mm)', SYMMETRY, G, d, geo, mm),
+          table('Part 2: circular runout (mm)', { from: 0, to: [Infinity], v: { H: [RUNOUT.H], K: [RUNOUT.K], L: [RUNOUT.L] } }, G, d, geo, mm),
+        ] : []),
+      ].join('');
+    }
+
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, text = root.querySelector('[data-note]')!.textContent ?? '';
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { btn.textContent = 'Select and copy'; }
+      window.setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    run();
+  });
+</script>

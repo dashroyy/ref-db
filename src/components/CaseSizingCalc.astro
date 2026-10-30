@@ -116,6 +116,10 @@ const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Ftu! > 0
       <ul class="pv-notes" data-notes></ul>
     </div>
   </div>
+  <div class="pv-cmp">
+    <p class="pv-sub">Every material at this duty</p>
+    <div data-cmp></div>
+  </div>
   <div class="calc-foot">
     Screening tool for early sizing. Membrane stress only: it does not size dome–cylinder junctions, closures, bosses,
     skirts or joints, where real cases usually fail. K<sub>IC</sub> values are indicative. Verify against your governing
@@ -125,6 +129,15 @@ const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Ftu! > 0
 </div>
 
 <style is:global>
+  .pv-cmp { padding: 0 1rem 1rem; }
+  .pv-cmp .wrap { overflow-x: auto; }
+  .pv-cmp table { width: 100%; font-size: var(--sl-text-xs); border-collapse: collapse; display: table; margin: 0 !important; }
+  .pv-cmp th, .pv-cmp td { padding: 0.25rem 0.45rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
+  .pv-cmp th:first-child, .pv-cmp td:first-child { text-align: left; white-space: normal; }
+  .pv-cmp tr.sel td { background: color-mix(in srgb, var(--rd-accent) 14%, transparent); font-weight: 600; }
+  .pv-cmp .bar { display: inline-block; height: 0.55rem; background: var(--rd-blue); opacity: 0.7; border-radius: 2px; vertical-align: middle; margin-right: 0.35rem; }
+  .pv-cmp .w { color: var(--rd-warn); }
+  .pv-cmp p.hint { margin: 0 !important; }
   .pv-sub {
     font-family: var(--sl-font-mono);
     font-size: var(--sl-text-xs);
@@ -184,6 +197,7 @@ const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Ftu! > 0
 
       // Without the programme's factors there is no required wall and no margins. With an
       // as-designed wall we can still show everything that doesn't depend on a factor.
+      compare(pf, bf, toMPa);
       if (!haveFactors && !checking) {
         root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => { if (el.dataset.r !== 'tLabel') el.textContent = '—'; });
         r('tLabel').textContent = 'Minimum wall';
@@ -247,6 +261,28 @@ const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Ftu! > 0
       if (m.maxServiceTemp < 150) notes.push(['warn', `Maximum service temperature ~${m.maxServiceTemp} °C. Confirm the insulation keeps the case below this for the whole burn and soak-back.`]);
       if (!m.weldable && +field('e').value < 1) notes.push(['warn', `${m.name} is not normally fusion-welded. A weld efficiency below 1.0 implies a weld that this alloy may not tolerate.`]);
       root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+    }
+
+    // The same case sized in every material of the list, ranked by mass (the minimum wall, not an as-designed one).
+    function compare(pf: number | null, bf: number | null, toMPa: number) {
+      const box = root.querySelector<HTMLElement>('[data-cmp]')!;
+      if (pf === null || bf === null) {
+        box.innerHTML = `<p class="hint">${awaitingMessage(['proof factor', 'burst factor'], 'every material sized for this duty')}</p>`;
+        return;
+      }
+      const sel = field('m').value, e = +field('e').value;
+      const all = Object.entries(mats).map(([key, mat]: [string, any]) => ({
+        key, m: mat,
+        r: sizeCase({ idMm: +field('id').value, lengthMm: +field('L').value, meop: +field('p').value * toMPa, proofFactor: pf, burstFactor: bf, weldEff: e, dome: field('dome').value as DomeType, material: mat }),
+      })).filter((x) => Number.isFinite(x.r.mass) && x.r.mass > 0).sort((a, b) => a.r.mass - b.r.mass);
+      if (!all.length) { box.innerHTML = '<p class="hint">No material in the list can carry this pressure.</p>'; return; }
+      const top = all.slice(0, 12), i = all.findIndex((x) => x.key === sel);
+      if (i >= 12) top.push(all[i]);
+      const max = Math.max(...top.map((x) => x.r.mass));
+      box.innerHTML = `<div class="wrap"><table><thead><tr><th>Material</th><th>Wall (mm)</th><th>Case mass (kg)</th><th>Governed by</th><th>Leak before break</th><th>Max service (°C)</th></tr></thead><tbody>${top.map((x) => {
+        const rank = all.indexOf(x) + 1, weld = e < 1 && !x.m.weldable;
+        return `<tr class="${x.key === sel ? 'sel' : ''}"><td>${rank}. ${x.m.name}${weld ? ' <span class="w">†</span>' : ''}</td><td>${f(x.r.t, 3)}</td><td><span class="bar" style="width:${(3 * x.r.mass / max).toFixed(2)}rem"></span>${f(x.r.mass, 2)}</td><td>${x.r.governs === 'burst' ? 'burst' : 'proof'}</td><td>${x.r.leakBeforeBreak === null ? '—' : x.r.leakBeforeBreak ? `yes${x.m.kicIsFamilyDefault ? '*' : ''}` : 'no'}</td><td>${x.m.maxServiceTemp ?? '—'}</td></tr>`;
+      }).join('')}</tbody></table></div><p class="hint">${all.length} materials can carry this duty. The lightest twelve${i >= 12 ? ' and your selection' : ''}, with the minimum wall for each. * fracture toughness is a family default. † not usually fusion-welded, and this case has a weld efficiency below 1. Mass is only one criterion: check the temperature, the weldability, the fracture result and the cost of each candidate.</p>`;
     }
 
     // As-designed wall, no factors entered: factor-independent results only.

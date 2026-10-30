@@ -183,6 +183,10 @@ unit system. The tab writes the input text for Abaqus, Ansys MAPDL or Nastran, a
 - The card contains the elastic constants, the density, the secant expansion, and the conductivity and specific heat
   when the library has them.
 - For a metal, enter the uniform elongation from your material data to add a true-stress plastic table.
+- For a metal, the tab also draws an **estimated S-N curve**: a Basquin line from 0.9 × the ultimate at 10³ cycles to
+  the endurance strength at its knee, corrected for surface, loading, size and reliability (the Marin factors of
+  [Fatigue](../../fundamentals/fatigue/)). Copy the points for a fatigue post-processor. It is a mean curve for
+  screening, not an allowable: use test data for a fatigue clearance.
 - A comment line in the card identifies each value that comes from a family default. The card leaves out each value
   that is not in the library, and the tab tells you which values these are.
 - The library values are typical room-temperature values. They are applicable to stiffness, mass and correlation. For
