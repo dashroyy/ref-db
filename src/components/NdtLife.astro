@@ -1,0 +1,47 @@
+---
+// Damage tolerance: the flaw that NDT can miss grows to the critical size; the service life is that life divided by
+// the life factor. Curve from the Paris law with m = 3: a^(-1/2) falls linearly with cycles.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', bad = 'var(--rd-accent)', ok = 'var(--rd-ok)', blue = 'var(--rd-blue)', steel = 'var(--rd-steel)';
+const L = 44, R = 344, T = 26, B = 176;
+const a0 = 0.3, ac = 1, wall = 1.18;
+const X = (n: number) => L + n * (R - L), Y = (a: number) => B - (a / 1.3) * (B - T);
+const aOf = (n: number) => Math.pow(Math.pow(a0, -0.5) - (Math.pow(a0, -0.5) - Math.pow(ac, -0.5)) * n, -2);
+const curve = Array.from({ length: 61 }, (_, k) => k / 60).map((n) => `${X(n).toFixed(1)},${Y(aOf(n)).toFixed(1)}`).join(' ');
+const q = 0.25;
+---
+
+<figure class="viz ndtlife">
+  <p class="viz-title">The life is counted from the flaw that NDT can miss</p>
+  <svg viewBox="0 0 360 215" role="img" aria-labelledby="ndtlife-desc" style="max-width: 560px; margin: 0 auto;">
+    <desc id="ndtlife-desc">
+      Crack depth against pressure cycles. The curve starts at the depth that the inspection can miss and rises, faster
+      and faster, to the critical depth. The cycles between the two are the analysed life. The allowed service is that
+      life divided by the life factor, here a quarter of it.
+    </desc>
+    <rect x={X(0)} y={T} width={X(q) - X(0)} height={B - T} fill={ok} fill-opacity="0.12"></rect>
+    <line x1={L} y1={B} x2={R} y2={B} stroke={ink}></line>
+    <line x1={L} y1={T} x2={L} y2={B} stroke={ink}></line>
+    <line x1={L} y1={Y(wall)} x2={R} y2={Y(wall)} stroke={steel} stroke-width="2"></line>
+    <text x={R} y={Y(wall) - 5} text-anchor="end" font-size="10" fill={steel}>wall</text>
+    <line x1={L} y1={Y(ac)} x2={R} y2={Y(ac)} stroke={bad} stroke-dasharray="6 3"></line>
+    <text x={(X(q) + R) / 2} y={Y(ac) - 5} text-anchor="middle" font-size="10" fill={bad}>critical flaw</text>
+    <line x1={L} y1={Y(a0)} x2={R} y2={Y(a0)} stroke={blue} stroke-dasharray="6 3"></line>
+    <text x={R} y={Y(a0) + 14} text-anchor="end" font-size="10" fill={blue}>flaw that NDT can miss</text>
+    <polyline points={curve} fill="none" stroke={ink} stroke-width="2.4"></polyline>
+    <circle cx={X(1)} cy={Y(ac)} r="4.5" fill={bad}></circle>
+    <line x1={X(1)} y1={Y(ac)} x2={X(1)} y2={B} stroke={bad} stroke-dasharray="3 3"></line>
+    <text x={(X(q) + X(0)) / 2} y={T + 14} text-anchor="middle" font-size="10" fill={ok}>allowed</text>
+    <text x={(X(q) + X(0)) / 2} y={T + 26} text-anchor="middle" font-size="10" fill={ok}>service</text>
+    <line x1={X(0)} y1={B + 14} x2={X(1)} y2={B + 14} stroke={muted}></line>
+    <line x1={X(0)} y1={B + 10} x2={X(0)} y2={B + 18} stroke={muted}></line>
+    <line x1={X(1)} y1={B + 10} x2={X(1)} y2={B + 18} stroke={muted}></line>
+    <text x={(X(0) + X(1)) / 2} y={B + 28} text-anchor="middle" font-size="10" fill={muted}>analysed life = cycles from missed flaw to critical</text>
+    <text x={14} y={(T + B) / 2} text-anchor="middle" font-size="11" fill={ink} transform={`rotate(-90 14 ${(T + B) / 2})`}>crack depth</text>
+    <text x={R} y={T - 10} text-anchor="end" font-size="10" fill={muted}>pressure cycles →</text>
+  </svg>
+  <figcaption>
+    The crack grows slowly at first and quickly at the end, so most of the life is spent while the crack is small. The
+    allowed service is the analysed life divided by the life factor (usually four). Reusable hardware is inspected again
+    before the end of that service, which starts the count again.
+  </figcaption>
+</figure>

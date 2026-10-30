@@ -1,0 +1,215 @@
+---
+title: NDT
+description: How to choose non-destructive testing for the flaw that you must find. What each method finds and where it is blind, probability of detection and a90/95, the 29-of-29 demonstration, damage-tolerance life from the flaw that NDT can miss, surface preparation, access and qualification, with a calculator and a worked example on the D6AC case.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import NdtBlind from '../../../components/NdtBlind.astro';
+import NdtLife from '../../../components/NdtLife.astro';
+import NdtCalc from '../../../components/NdtCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The flaw that the inspection can miss must be smaller than the critical flaw, with sufficient crack-growth life between the two. If it is not, no NDT makes the part safe.</div>
+  <div><b>Before this</b><a href="../../verify/leak-before-break/">Leak before break</a> · <a href="../../verify/proof-testing/">Proof testing</a></div>
+  <div><b>Related</b><a href="../../drawing/gauging/">Gauging</a> · <a href="../cost/">Cost</a> · <a href="../../materials/residual-stress/">Residual stress</a></div>
+</div>
+
+## Why this matters
+
+Fracture analysis gives the size of the flaw that fails the part. NDT is how you show that no flaw of that size is
+present. The two must agree: the inspection must reliably find flaws that are smaller than the critical flaw, in the
+material, orientation and location where the process makes them.
+
+Thus the question is not "which NDT do we specify?". The question is "is the critical flaw larger than the flaw that
+the inspection can miss?". If the critical flaw is smaller, more inspection does not help. Change the design, or use a
+proof test to screen the flaws ([Proof testing](../../verify/proof-testing/)).
+
+<Analogy title="A metal detector on a beach">
+  You search a beach for a lost ring with a metal detector. A large ring you find nearly every time. A small ring you
+  find only sometimes, and a ring under a rock you never find, however carefully you sweep. If someone asks "is there
+  a ring on this beach?", the honest answer is "no ring larger than this size, in the places that I could sweep". NDT
+  gives the same answer about cracks.
+</Analogy>
+
+## The methods
+
+| Method | Finds | Blind to | Materials | Indicative depth found reliably |
+| --- | --- | --- | --- | --- |
+| Visual (VT) | Damage, gross cracks, weld profile, corrosion, wrong features | Tight cracks; all flaws below the surface | All | Not a fracture-control method |
+| Fluorescent penetrant (PT) | Cracks, laps and porosity open to the surface | Flaws not open to the surface; cracks smeared shut | Non-porous metals | 0.6 mm |
+| Magnetic particle (MT) | Surface and slightly subsurface cracks | Non-magnetic alloys; cracks along the field | Ferromagnetic steels | 1.0 mm |
+| Eddy current (ET) | Small surface and near-surface cracks, through thin paint | Deep flaws; edges and changes of geometry | Conductive metals | 0.5 mm |
+| Ultrasonic (UT, PAUT) | Planar flaws in the volume: cracks, lack of fusion, laminations, delaminations | Flaws parallel to the beam; the dead zone near the surface | Most, with couplant | 0.8 mm |
+| Radiography (RT, CT) | Porosity, inclusions, voids; a permanent image | Tight cracks; planar flaws across the beam | All | About 0.7 × the wall, for cracks |
+| Leak test (LT) | Flaws that go through the wall | All flaws that are not yet through the wall | All | The wall |
+| Acoustic emission (AE) | Cracks that grow while the part is loaded, for example in proof | Flaws that do not grow during the test | All | No size |
+
+The depths are for a semi-elliptical surface crack five times as long as it is deep. They are of the order of the
+**standard NDE flaw sizes** of NASA-STD-5009. They apply only when a qualified procedure is used on a prepared surface
+by certified personnel. A smaller size needs a special demonstration on your parts.
+
+### Every method has a blind orientation
+
+<NdtBlind />
+
+- **Radiography** sees a flaw by the change in the thickness that the beam goes through. A crack parallel to the beam
+  shows. A planar flaw across the beam, such as lack of fusion on a weld side wall, can show almost nothing. Its
+  sensitivity is approximately 2% of the thickness.
+- **Ultrasonic** sees a flaw by the sound that it reflects. A flaw across the beam reflects well. A flaw parallel to
+  the beam does not, which is why welds are inspected with angled beams from two directions.
+- **Magnetic particle** sees a crack where it interrupts the field. Magnetise in two directions at approximately 90°.
+- **Penetrant** sees only what is open to the surface. Machining, grinding, blasting and peening can smear metal over a
+  crack and close it. Etch before penetrant on machined fracture-critical surfaces, and inspect before shot peening.
+
+Choose the method for the flaw that the process makes: lack of fusion and cracks in welds, laps and seams in
+forgings, porosity in castings, lack of fusion in printed parts, fatigue cracks at stress concentrations, and
+delaminations in composites.
+
+## Probability of detection
+
+No inspection finds every flaw. The probability of detection (POD) increases with the flaw size, along an S-shaped
+curve. MIL-HDBK-1823A fits a log-normal curve to the results of trials:
+
+$$
+\text{POD}(a) = \Phi\!\left(\frac{\ln a - \mu}{\sigma}\right)
+\qquad
+a_{90} = e^{\,\mu + 1.282\,\sigma}
+$$
+
+Here $\Phi$ is the standard normal distribution, $\mu$ sets the position of the curve and $\sigma$ its spread. The
+size usually quoted is $a_{90/95}$: the size found with 90% probability, at 95% confidence that the real curve is not
+worse. Thus:
+
+- **$a_{90/95}$ is not a size that is always found.** One flaw in ten of that size is missed. Damage tolerance therefore
+  assumes that a flaw of that size is present in every part, and calculates the life from it.
+- **A large spread is a bad method,** even with a good $a_{90}$: it misses some large flaws.
+- **A repeat inspection by the same method helps less than you expect.** It misses for the same reasons: orientation,
+  access, a tight crack. A second, different method helps more.
+
+### Demonstration: 29 of 29
+
+A method shows its POD by trials on real flaws of known size, inspected blind. If all of the trials find the flaw, the
+lower confidence bound on POD after $n$ trials is $(1 - C)^{1/n}$. For 90% at 95% confidence, $0.05^{1/29} = 0.902$:
+thus **29 found of 29** is the least that demonstrates 90/95 at one flaw size. One miss needs 46 flaws (45 found), and
+two misses need 61. A full POD curve needs more trials, at several sizes, and a hit/miss or signal-response analysis
+(MIL-HDBK-1823A).
+
+The trial flaws must represent the hardware: real cracks (not machined slots), in the same material, geometry, surface
+condition and access, inspected with the same procedure, equipment and people.
+
+## Damage tolerance: the life from the flaw that NDT can miss
+
+<NdtLife />
+
+The fracture-control argument for a flight part:
+
+1. Assume that a crack of the size that the inspection can miss, $a_\text{NDE}$, is present at the worst location and
+   in the worst orientation.
+2. Calculate its growth under the service loads, for example with the Paris law $da/dN = C\,\Delta K^m$, until it gets
+   to the critical size $a_\text{crit}$.
+3. The cycles between the two sizes must be at least the service life times the life factor of the programme. Flight
+   pressure vessel standards usually use four.
+
+Because the crack grows slowly at first, most of the life is spent while the crack is small. Thus a method that finds
+a smaller flaw gives much more life. When no method can find a flaw sufficiently small, a proof test can set the
+starting size instead ([Proof testing](../../verify/proof-testing/#the-flaw-screening-argument)).
+
+## Preparation, access and people
+
+- **Sequence.** Inspect after the final heat treatment, machining and straightening, and before shot peening, plating,
+  painting and insulation. A repair, rework or weld after NDT needs NDT again.
+- **Surface.** Penetrant needs a clean, open surface: etch after machining. Eddy current needs a smooth surface and
+  reference standards of the same material and geometry. Ultrasonic needs a surface for the probe and couplant.
+- **Access.** Each method sees only the surfaces it can reach. The inside of a closed motor case is reached only
+  through its openings, and the inside of a bonded assembly not at all. Plan the inspection when you design the part,
+  not after it is made.
+- **Geometry.** Edges, threads, fillets and thickness changes give false signals or dead zones. Keep the critical
+  locations of the part where a method can see them.
+- **People and procedures.** NDT personnel are certified to NAS 410 or EN 4179 (levels 1 to 3). Each inspection
+  follows a written procedure approved by a level 3. An inspection by uncertified people, or without a procedure, is
+  not evidence.
+
+## NDT for motor hardware
+
+| Part | Flaws that the process makes | Usual methods |
+| --- | --- | --- |
+| Steel case, membrane | Laminations, laps, cracks from forming and heat treatment | UT of the plate or forging; MT or ET on the outside; proof test |
+| Case welds | Lack of fusion, cracks, porosity, undercut | RT and UT together; MT or PT on the surface |
+| Closures, bosses and forgings | Forging laps, internal bursts, machining damage | UT of the forging; PT or MT after machining |
+| Threads and fasteners | Laps from rolling, cracks at the root | MT or PT; ET for rolled threads |
+| Composite case and skirts | Delaminations, voids, fibre damage | UT (C-scan), CT; acoustic emission during proof |
+| Nozzle parts, carbon and silica phenolic | Delaminations, voids, density variation | CT and RT; UT where the thickness permits |
+| Insulation and liner bonds | Unbonded areas | UT, tap test, RT of the loaded motor |
+| Printed parts | Lack of fusion, trapped powder, porosity | CT; PT after the surface is machined |
+
+## Calculator
+
+<NdtCalc />
+
+## Worked example: can NDT clear the D6AC case?
+
+This is the case of the [proof-testing example](../../verify/proof-testing/#worked-example-the-d6ac-case): 1094 MPa
+hoop stress at MEOP, a 1.377 mm wall, $K_{IC} = 70$ MPa√m, and martensitic-steel crack growth with full cycles from zero
+to MEOP. Two pressurisations follow the inspection. The life factor of 4 and the 90/95 criterion are for this example
+only. Push **Load worked example** in the calculator to load these inputs.
+
+1. **The critical flaw.** For a semi-elliptical surface crack with $a/c = 0.4$ (Newman–Raju), $K$ at the deepest point
+   reaches 70 MPa√m at a depth of **0.88 mm**: 64% of the wall.
+2. **The methods.** With the indicative depths: eddy current (0.51 mm) gives 309 cycles to critical, penetrant
+   (0.64 mm) 165 and ultrasonic (0.76 mm) 70. The requirement is $2 \times 4 = 8$. Magnetic particle (0.97 mm) and
+   radiography (0.96 mm) miss flaws that are larger than critical, so they cannot clear the membrane.
+3. **Access.** Eddy current and penetrant need the surface. The outside is easy, but the inside of a welded case is
+   reached only through its openings. From the outside, only ultrasonic sees the inner surface, and its flaw is only
+   1.15 times smaller than critical.
+4. **Sensitivity.** A 10% higher stress (a local peak at a weld) brings the critical flaw to 0.78 mm, and a cold-day
+   toughness of 56 MPa√m brings it to 0.66 mm. Ultrasonic then cannot clear the inner surface, and penetrant only just
+   clears the outer surface. Only eddy current keeps its margin.
+5. **POD.** In the **Probability of detection** tab, ultrasonic with $a_{90} = 0.76$ mm and $\sigma = 0.4$ finds a
+   0.88 mm flaw 94.9% of the time. If 20 cases each have one flaw of that size, the chance that at least one is missed
+   is **65%**. A second, independent inspection would bring this to 5%, but repeat inspections are not independent.
+6. **Demonstration.** To use 0.76 mm on this hardware, the UT procedure must find 29 of 29 real cracks of that size
+   (90.2% lower bound at 95% confidence). With 28 of 29 the bound is 84.7%, and the procedure fails.
+
+Result: NDT alone cannot carry the fracture case of this thin, high-strength membrane. The proof test does
+([Proof testing](../../verify/proof-testing/)), cold if the toughness falls at low temperature. NDT then does what it
+does well: the welds (RT and UT together), the outer surface (ET or MT), and the forgings before machining.
+
+## Where this stops
+
+- **The method depths are indicative.** Use the sizes that your NDE procedure has demonstrated on your parts, or the
+  standard sizes of your programme with their conditions.
+- **One flaw shape** for the critical size and the growth. Real flaws change shape as they grow; corner cracks at holes
+  and embedded flaws need their own solutions.
+- **No growth during proof, no growth under sustained load,** and no environment. These can shorten the life a lot.
+- **POD from one curve.** Real POD depends on the operator, the surface, the geometry and the orientation. The binomial
+  demonstration is for one flaw size only.
+
+## On the drawing
+
+- **The method and the specification,** for example fluorescent penetrant to ASTM E1417 with the type, method and
+  sensitivity level, or ultrasonic to ASTM E2375 with the class.
+- **The acceptance criteria,** for example no linear indications, or an acceptance class for the welds.
+- **The area,** where it is not the whole part: welds, threads, fillets, fracture-critical zones.
+- **The sequence:** after final heat treatment and machining; etch before penetrant; before peening, plating and
+  painting.
+- **The classification** of the part, which sets the inspection level and the records ([Gauging](../../drawing/gauging/)).
+
+## References and further reading
+
+- US Department of Defense, MIL-HDBK-1823A, *Nondestructive Evaluation System Reliability Assessment* (2009).
+- NASA, NASA-STD-5009, *Nondestructive Evaluation Requirements for Fracture Critical Metallic Components* (current
+  revision).
+- NASA, NASA-STD-5019, *Fracture Control Requirements for Spaceflight Hardware* (current revision).
+- A. P. Berens, "NDE reliability data analysis", *ASM Handbook* Vol. 17, *Nondestructive Evaluation and Quality
+  Control*, ASM International (1989).
+- G. A. Georgiou, *Probability of Detection (PoD) Curves: Derivation, Applications and Limitations*, HSE Research
+  Report 454 (2006).
+- SAE AS/NAS 410 and EN 4179, *Qualification and certification of NDT personnel* (current editions).
+
+<Aside type="note">
+  This is guidance on method from general practice, with indicative values. The inspection of your hardware comes
+  from your fracture-control plan, your NDE procedures and your programme requirements.
+</Aside>

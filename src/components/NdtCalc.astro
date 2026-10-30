@@ -1,0 +1,311 @@
+---
+// NDT in three tabs: each method against the critical flaw and the life from the flaw it can miss; the probability of
+// detection at a flaw size; and the hit/miss demonstration of POD. Maths in src/lib/ndt.ts (unit-tested); toughness
+// from the material library. UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS as D, type Material } from '../lib/materials';
+import { PARIS_CLASSES } from '../lib/proof';
+import { MAT_CLASSES, METHODS } from '../lib/ndt';
+
+const TABS = [{ key: 'screen', name: 'Method screen' }, { key: 'pod', name: 'Probability of detection' }, { key: 'demo', name: 'Demonstration' }];
+const FAM = ['steel', 'ss', 'ti', 'al', 'ni'];
+const metals = MATERIALS.filter((m: Material) => FAM.includes(m.family) && m.kic && m.Fty! > 200)
+  .map((m: Material) => ({ key: m.key, name: m.name, family: m.family, spec: m.spec, kic: m.kic, kicIsFamilyDefault: m.kicDefault, uts: m.Ftu }));
+const SIZED = METHODS.filter((m) => m.key !== 'vt' && m.key !== 'lt');
+---
+
+<div class="calc ndtcalc" data-ndtcalc>
+  <div class="calc-head"><span>NDT capability</span><span class="head-btns"><span>indicative flaw sizes · log-normal POD · binomial</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="NDT check">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="screen">
+        <legend>The part and its critical flaw</legend>
+        <label>Alloy<MaterialSelect name="m" list={metals} selected={D.caseSteel} /></label>
+        <div class="row2">
+          <label>Material class<select name="mc">{MAT_CLASSES.map((c) => <option value={c.key}>{c.name}</option>)}</select></label>
+          <label>Growth law<select name="paris">{PARIS_CLASSES.map((p) => <option value={p.key}>{p.name}</option>)}</select></label>
+          <label>K<sub>IC</sub> (MPa√m)<input name="kic" type="number" min="1" step="any" /></label>
+          <label>Stress at MEOP (MPa)<input name="s" type="number" min="1" step="any" value="1094" /></label>
+          <label>Wall (mm)<input name="t" type="number" min="0.1" step="any" value="1.377" /></label>
+          <label>Flaw shape a/c<input name="ac" type="number" min="0.1" max="1" step="0.05" value="0.4" /></label>
+          <label>Flaw location<select name="loc"><option value="surface">Open to the surface</option><option value="embedded">Inside the material</option></select></label>
+          <label>Range per cycle (× MEOP stress)<input name="rf" type="number" min="0.05" max="1" step="0.05" value="1" /></label>
+          <label>Pressurisations after inspection<input name="n" type="number" min="1" step="1" value="2" /></label>
+          <label>Life factor<input name="lf" type="number" min="1" step="0.5" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint" data-kichint></p>
+        <p class="hint">a/c = 0.4 is a semi-elliptical crack five times as long as it is deep, the shape of the standard NDE flaws. The method sizes are indicative: use the sizes your NDE procedure has demonstrated.</p>
+      </fieldset>
+
+      <fieldset data-panel="pod" hidden>
+        <legend>POD curve</legend>
+        <div class="row2">
+          <label>Method<select name="pm">{SIZED.map((m) => <option value={m.key} selected={m.key === 'ut'}>{m.name}</option>)}</select></label>
+          <label>a<sub>90</sub> (mm)<input name="a90" type="number" min="0.01" step="any" /></label>
+          <label>Spread σ of ln a<input name="sg" type="number" min="0.05" max="2" step="0.05" value="0.4" /></label>
+          <label>Flaw depth (mm)<input name="af" type="number" min="0.01" step="any" placeholder="critical, first tab" /></label>
+          <label>Flaws of this size<input name="nf" type="number" min="1" step="1" value="1" /></label>
+          <label>Independent inspections<input name="ni" type="number" min="1" max="5" step="1" value="1" /></label>
+        </div>
+        <p class="hint">The method fills a<sub>90</sub> with its indicative size. Enter a<sub>90/95</sub> for a curve that is conservative. σ of 0.3–0.6 is usual; a large σ is a method that finds some small flaws but misses some large ones. Leave the flaw depth blank to use the critical depth from the first tab.</p>
+      </fieldset>
+
+      <fieldset data-panel="demo" hidden>
+        <legend>Hit/miss trials on flaws of one size</legend>
+        <div class="row2">
+          <label>Flaws inspected<input name="dn" type="number" min="1" step="1" value="29" /></label>
+          <label>Flaws found<input name="dh" type="number" min="0" step="1" value="29" /></label>
+          <label>Target POD (%)<input name="tgt" type="number" min="50" max="99.9" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Confidence (%)<input name="conf" type="number" min="50" max="99.9" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">The target and the confidence come from your programme or the NDE standard, not from this site.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 270" data-chart role="img" aria-label="Chart for the selected NDT check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(Object.fromEntries(metals.map((m) => [m.key, m])))}></script>
+  <div class="calc-foot">
+    Screening only. Method sizes are indicative and hold only for a qualified procedure on a prepared surface. Critical
+    depth and growth: Newman–Raju surface crack with a fixed shape, Paris law, no growth during proof or under sustained
+    load. POD: log-normal curve; repeated inspections are taken as independent, which is an upper limit on their benefit.
+  </div>
+</div>
+
+<style is:global>
+  .ndtcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .ndtcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .ndtcalc .pv-notes li.bad { color: var(--rd-accent); }
+  .ndtcalc .pv-notes li.warn { color: var(--rd-warn); }
+  .ndtcalc .example-note { margin: 0.5rem 0 0 !important; }
+</style>
+
+<script>
+  import { screen, pod, a50, missChance, podLowerBound, minTrials, METHODS, type MatClass } from '../lib/ndt';
+  import { PARIS_CLASSES } from '../lib/proof';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+  import { DEFAULTS } from '../lib/materials';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const cyc = (n: number) => (!Number.isFinite(n) ? '∞' : n >= 1e6 ? `${f(n / 1e6, 1)} M` : n >= 1e4 ? `${f(n / 1e3, 0)} k` : f(n, 0));
+  const pct = (p: number) => (p >= 0.9995 && p < 1 ? '> 99.9%' : p > 0 && p < 0.0005 ? '< 0.1%' : `${f(100 * p, 1)}%`);
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+
+  document.querySelectorAll<HTMLElement>('[data-ndtcalc]').forEach((root) => {
+    const mats = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    let mode = 'screen';
+    let draw: (() => void) | null = null;
+
+    const applyMat = () => {
+      const m = mats[field('m').value];
+      if (!m) return;
+      field('kic').value = m.kic;
+      const ph = /17-4|15-5|PH|FV520|maraging/i.test(m.name);
+      field('mc').value = m.family === 'steel' || (m.family === 'ss' && ph) ? 'ferro' : m.family === 'ss' || m.family === 'ni' ? 'aus' : m.family;
+      field('paris').value = m.family === 'steel' ? (m.uts > 1100 ? 'mart' : 'fp') : m.family === 'ss' ? (ph ? 'mart' : 'aus') : m.family === 'ni' ? 'aus' : m.family;
+      root.querySelector('[data-kichint]')!.textContent =
+        `Database K_IC ${m.kic} MPa√m${m.kicIsFamilyDefault ? ' (family default)' : ''}: indicative. Use the value at the coldest service temperature.`;
+      fillA90();
+    };
+    const fillA90 = () => { const m = METHODS.find((x) => x.key === field('pm').value); const t = num('t'); if (m && t > 0) field('a90').value = f(m.depth(t)!, 2).replace(/,/g, ''); };
+
+    const screenInputs = () => {
+      const p = PARIS_CLASSES.find((x) => x.key === field('paris').value)!;
+      const i = { sigma: num('s'), t: num('t'), kic: num('kic'), ac: num('ac'), rangeFraction: num('rf'), C: p.C, m: p.m,
+        mat: field('mc').value as MatClass, embedded: field('loc').value === 'embedded', serviceCycles: Math.max(1, Math.round(num('n')) || 1), lifeFactor: readFactor(field('lf').value) };
+      return i.sigma > 0 && i.t > 0 && i.kic > 0 && i.ac >= 0.1 && i.ac <= 1 && i.rangeFraction > 0 ? i : null;
+    };
+    const critical = () => { const i = screenInputs(); return i ? screen(i).aCrit : NaN; };
+
+    // ---- method screen ----
+    function runScreen(rows: Row[], notes: [string, string][]) {
+      const i = screenInputs();
+      if (!i) { notes.push(['bad', 'Enter the toughness, the stress, the wall, a flaw shape a/c between 0.1 and 1 and the stress range.']); return null; }
+      const s = screen(i);
+      rows.push({ dt: 'Critical flaw depth', dd: `${f(s.aCrit, 2)} mm <small>${s.through ? 'the flaw reaches the back face first: see Leak before break' : `${f((100 * s.aCrit) / i.t, 0)}% of the wall`}</small>`, primary: true });
+      rows.push({ dt: 'Required life', dd: s.required === null ? '<small>needs life factor</small>' : `${f(s.required, 0)} <small>cycles: ${i.serviceCycles} × life factor ${i.lifeFactor}</small>` });
+      for (const r of s.rows.filter((x) => x.key !== 'vt' && x.key !== 'lt')) {
+        const why = !r.matOk ? 'not usable on this material' : !r.usable ? 'cannot see a flaw inside the material' : r.aNde! >= s.aCrit ? 'misses flaws larger than critical' : `life ${cyc(r.life)} cycles · critical ÷ missed ${f(r.ratio, 2)}`;
+        const cls = !r.usable ? '' : r.aNde! >= s.aCrit ? 'bad' : s.required === null ? '' : r.ok ? 'ok' : 'bad';
+        rows.push({ dt: r.name, dd: `${f(r.aNde!, 2)} mm <small>${why}</small>`, cls });
+      }
+      const good = s.rows.filter((r) => r.usable && r.aNde! < s.aCrit);
+      if (s.required === null) notes.push(['warn', `The critical flaw and the life from each method's flaw are shown. ${awaitingMessage(['life factor'], 'which methods give the required life')}`]);
+      if (!good.length) notes.push(['bad', 'No usable method reliably finds a flaw smaller than the critical flaw. Inspection cannot carry this part: lower the stress, use a tougher material, or rely on a proof test (see Proof testing).']);
+      else if (good.every((r) => r.ratio < 1.5)) notes.push(['warn', `The best usable method finds flaws only ${f(Math.max(...good.map((r) => r.ratio)), 2)} times smaller than critical. A small error in stress or toughness removes that margin.`]);
+      if (s.through) notes.push(['', 'The flaw goes through the wall before it is critical, so the part leaks before it breaks. A leak test then finds what the other methods miss.']);
+      notes.push(['', 'Each method sees only the surfaces it can reach. Penetrant and eddy current on the inside of a closed case need access through the openings.']);
+      return () => {
+        svg.replaceChildren();
+        const list = s.rows.filter((x) => x.key !== 'vt' && x.key !== 'lt');
+        const W = width(), H = 44 + list.length * 34, L = 34, R = 12, T = 16, B = 34;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const xMax = Math.max(i.t, s.aCrit, ...list.map((r) => r.aNde!)) * 1.12;
+        const X = (a: number) => L + (a / xMax) * (W - L - R);
+        const step = [0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20].find((st) => xMax / st <= 6)!;
+        for (let a = 0; a <= xMax; a += step) { el('line', { x1: X(a), x2: X(a), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(a), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(+a.toFixed(2))); }
+        list.forEach((r, k) => {
+          const y = T + 8 + k * 34, col = !r.usable ? 'var(--rd-muted)' : r.aNde! >= s.aCrit ? 'var(--rd-accent)' : 'var(--rd-ok)';
+          el('rect', { x: L, y, width: X(r.aNde!) - L, height: 16, fill: col, 'fill-opacity': r.usable ? 0.75 : 0.25 });
+          el('text', { x: L - 5, y: y + 12, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--rd-ink)' }, r.short);
+        });
+        el('line', { x1: X(i.t), x2: X(i.t), y1: T, y2: H - B, stroke: 'var(--rd-steel)', 'stroke-width': 2 });
+        el('line', { x1: X(s.aCrit), x2: X(s.aCrit), y1: T, y2: H - B, stroke: 'var(--rd-accent)', 'stroke-width': 2, 'stroke-dasharray': '6 3' });
+        const near = Math.abs(X(i.t) - X(s.aCrit)) < 44;
+        txt(X(s.aCrit) + (near && s.aCrit > i.t ? 4 : -4), T + 2, 'critical', 'var(--rd-accent)', near && s.aCrit > i.t ? 'start' : 'end');
+        txt(X(i.t) + (near && s.aCrit > i.t ? -4 : 4), T + 2, 'wall', 'var(--rd-steel)', near && s.aCrit > i.t ? 'end' : 'start');
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'flaw depth that the method can miss, mm');
+      };
+    }
+
+    // ---- probability of detection ----
+    function runPod(rows: Row[], notes: [string, string][]) {
+      const a90 = num('a90'), sg = num('sg'), afIn = num('af'), a = afIn > 0 ? afIn : critical(), n = Math.max(1, Math.round(num('nf')) || 1), k = Math.min(5, Math.max(1, Math.round(num('ni')) || 1));
+      if (!(a90 > 0 && sg > 0 && a > 0)) { notes.push(['bad', 'Enter a₉₀, the spread σ and a flaw depth (or complete the first tab).']); return null; }
+      const p = pod(a, a90, sg), m1 = missChance(a, a90, sg, n, 1), mk = missChance(a, a90, sg, n, k);
+      rows.push({ dt: `POD at ${f(a, 2)} mm${afIn > 0 ? '' : ' (critical)'}`, dd: `${pct(p)} <small>chance to miss one flaw ${pct(1 - p)}</small>`, primary: true, cls: p >= 0.9 ? 'ok' : 'bad' });
+      rows.push({ dt: 'Curve', dd: `<small>a₅₀ ${f(a50(a90, sg), 2)} mm · a₉₀ ${f(a90, 2)} mm · a₉₉ ${f(a90 * Math.exp((2.3263 - 1.2816) * sg), 2)} mm</small>` });
+      if (n > 1) rows.push({ dt: `At least one of ${n} flaws missed`, dd: `${pct(m1.anyMissed)} <small>expected number missed ${f(m1.expectedMissed, 2)}</small>`, cls: m1.anyMissed > 0.1 ? 'warn' : '' });
+      if (k > 1) rows.push({ dt: `With ${k} inspections`, dd: `${pct(mk.anyMissed)} <small>chance to miss ${n > 1 ? 'at least one' : 'the flaw'}, if the inspections are independent</small>` });
+      if (p < 0.9) notes.push(['bad', 'This flaw is below a₉₀: the method misses it more often than one time in ten. Do not use this method to clear flaws of this size.']);
+      notes.push(['', 'POD is a statement about many flaws, not one. At a₉₀, one flaw in ten is missed: damage tolerance therefore assumes that a flaw of that size is present in every part.']);
+      if (k > 1) notes.push(['warn', 'Repeat inspections by the same method miss for the same reasons (orientation, access, a tight crack). Their misses are not independent, so the real benefit is less than shown. A second, different method helps more.']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 260, L = 40, R = 12, T = 14, B = 32;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const lo = Math.log10(Math.min(a, a90) / 5), hi = Math.log10(Math.max(a, a90) * 3);
+        const X = (v: number) => L + ((Math.log10(v) - lo) / (hi - lo)) * (W - L - R), Y = (q: number) => H - B - q * (H - T - B);
+        for (let d = Math.floor(lo); d <= hi; d++) for (const mm of [1, 2, 5]) { const v = mm * 10 ** d; if (Math.log10(v) < lo || Math.log10(v) > hi) continue; el('line', { x1: X(v), x2: X(v), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(v), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(+v.toPrecision(2))); }
+        for (const q of [0, 0.5, 0.9, 1]) { el('line', { x1: L, x2: W - R, y1: Y(q), y2: Y(q), stroke: 'var(--rd-line)', 'stroke-dasharray': q === 0.9 ? '4 3' : '' }); el('text', { x: L - 4, y: Y(q) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, `${q * 100}%`); }
+        const pts = Array.from({ length: 120 }, (_, j) => 10 ** (lo + ((hi - lo) * j) / 119));
+        el('polyline', { points: pts.map((v) => `${X(v).toFixed(1)},${Y(pod(v, a90, sg)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-blue)', 'stroke-width': 2.4 });
+        if (k > 1) el('polyline', { points: pts.map((v) => `${X(v).toFixed(1)},${Y(1 - Math.pow(1 - pod(v, a90, sg), k)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-blue)', 'stroke-width': 1.4, 'stroke-dasharray': '5 3' });
+        el('line', { x1: X(a90), x2: X(a90), y1: Y(0.9), y2: H - B, stroke: 'var(--rd-blue)', 'stroke-dasharray': '3 3' });
+        txt(X(a90) + 4, H - B - 6, 'a₉₀', 'var(--rd-blue)');
+        el('line', { x1: X(a), x2: X(a), y1: T, y2: H - B, stroke: 'var(--rd-accent)', 'stroke-width': 1.8 });
+        el('circle', { cx: X(a), cy: Y(p), r: 5, fill: 'var(--rd-panel)', stroke: 'var(--rd-accent)', 'stroke-width': 2.5 });
+        txt(X(a) + (X(a) > W - 90 ? -6 : 6), Y(p) + 16, `${pct(p)}`, 'var(--rd-accent)', X(a) > W - 90 ? 'end' : 'start');
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'flaw depth, mm (log)');
+      };
+    }
+
+    // ---- demonstration ----
+    function runDemo(rows: Row[], notes: [string, string][]) {
+      const n = Math.round(num('dn')), h = Math.round(num('dh'));
+      const tgt = readFactor(field('tgt').value, 50), conf = readFactor(field('conf').value, 50);
+      if (!(n >= 1 && h >= 0 && h <= n)) { notes.push(['bad', 'Enter the number of flaws inspected and the number found (not more than inspected).']); return null; }
+      const T = tgt === null ? null : tgt / 100, C = conf === null ? null : conf / 100;
+      rows.push({ dt: 'Found', dd: `${h} of ${n} <small>${f((100 * h) / n, 1)}% of the trial flaws</small>` });
+      if (C === null) {
+        rows.unshift({ dt: 'Demonstrated POD', dd: '<small>needs confidence</small>', primary: true });
+        notes.push(['warn', awaitingMessage(T === null ? ['target POD', 'confidence'] : ['confidence'], 'the POD that these trials demonstrate')]);
+      } else {
+        const lb = podLowerBound(n, h, C);
+        rows.unshift({ dt: `Demonstrated POD at ${f(100 * C, 0)}% confidence`, dd: `${f(100 * lb, 1)}% <small>lower bound (Clopper–Pearson)</small>`, primary: true, cls: T === null ? '' : lb >= T ? 'ok' : 'bad' });
+        if (T === null) notes.push(['warn', awaitingMessage(['target POD'], 'whether the trials pass')]);
+        else {
+          rows.push({ dt: 'Flaws needed', dd: `<small>${[0, 1, 2].map((m) => `${minTrials(T, C, m)} with ${m} missed`).join(' · ')}</small>` });
+          notes.push(lb >= T ? ['', `The trials demonstrate POD ≥ ${f(100 * T, 0)}% at ${f(100 * C, 0)}% confidence for flaws of this size.`] : ['bad', `The trials do not demonstrate ${f(100 * T, 0)}% at ${f(100 * C, 0)}% confidence. Each miss needs more flaws: see the flaws needed.`]);
+        }
+      }
+      notes.push(['', 'All the trial flaws must be real, of one size and type, in the material, geometry and surface condition of the part, and inspected blind by the procedure and the people who will inspect the hardware.']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 260, L = 40, R = 12, Tp = 14, B = 32;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const nMax = Math.max(100, n + 10), y0 = 0.6;
+        const X = (v: number) => L + (v / nMax) * (W - L - R), Y = (q: number) => H - B - ((Math.max(q, y0) - y0) / (1 - y0)) * (H - Tp - B);
+        for (let v = 0; v <= nMax; v += nMax > 150 ? 50 : 20) { el('line', { x1: X(v), x2: X(v), y1: Tp, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(v), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(v)); }
+        for (const q of [0.6, 0.7, 0.8, 0.9, 1]) { el('line', { x1: L, x2: W - R, y1: Y(q), y2: Y(q), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(q) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, `${Math.round(q * 100)}%`); }
+        if (C === null) { txt((L + W - R) / 2, (Tp + H - B) / 2, 'enter the confidence', 'var(--rd-muted)', 'middle', 11); }
+        else {
+          const cols = ['var(--rd-ok)', 'var(--rd-blue)', '#9b7fd4'];
+          [0, 1, 2].forEach((m) => {
+            const pts: string[] = [];
+            for (let v = m + 1; v <= nMax; v++) pts.push(`${X(v).toFixed(1)},${Y(podLowerBound(v, v - m, C)).toFixed(1)}`);
+            el('polyline', { points: pts.join(' '), fill: 'none', stroke: cols[m], 'stroke-width': 2 });
+          });
+          txt(W - R - 4, Y(podLowerBound(nMax, nMax, C)) - 6, '0 missed', cols[0], 'end');
+          txt(W - R - 4, Y(podLowerBound(nMax, nMax - 2, C)) + 14, '1 and 2 missed', cols[1], 'end');
+          if (T !== null) { el('line', { x1: L, x2: W - R, y1: Y(T), y2: Y(T), stroke: 'var(--rd-ink)', 'stroke-dasharray': '6 4' }); txt(L + 4, Y(T) - 5, `target ${f(100 * T, 0)}%`, 'var(--rd-ink)'); }
+          const lb = podLowerBound(n, h, C);
+          el('circle', { cx: X(n), cy: Y(lb), r: 5, fill: 'var(--rd-panel)', stroke: 'var(--rd-accent)', 'stroke-width': 2.5 });
+        }
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'flaws inspected');
+      };
+    }
+
+    const RUN: Record<string, typeof runScreen> = { screen: runScreen, pod: runPod, demo: runDemo };
+    const CAPS: Record<string, string> = {
+      screen: 'The flaw depth that each method can miss, against the critical depth and the wall. Green: smaller than critical. Red: larger. Grey: the method cannot be used here.',
+      pod: 'Probability of detection against flaw depth. Dashed: with repeat inspections, if they were independent. Red: your flaw.',
+      demo: 'Lower confidence bound on POD against the number of trial flaws, with 0, 1 and 2 missed. The circle is your trial.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    field('m').addEventListener('change', applyMat);
+    field('pm').addEventListener('change', fillA90);
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['lf', 'tgt', 'conf'],
+      note: 'Worked-example criteria loaded: life factor 4, POD 90% at 95% confidence',
+      values: { m: DEFAULTS.caseSteel, mc: 'ferro', paris: 'mart', kic: '70', s: '1094', t: '1.377', ac: '0.4', loc: 'surface', rf: '1', n: '2', lf: '4',
+        pm: 'ut', a90: '0.76', sg: '0.4', af: '', nf: '20', ni: '1', dn: '29', dh: '29', tgt: '90', conf: '95' },
+    });
+    applyMat();
+    run();
+  });
+</script>

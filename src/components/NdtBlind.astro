@@ -1,0 +1,80 @@
+---
+// Every NDT method has a blind orientation or condition: radiography, ultrasonic, magnetic particle and penetrant.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', bad = 'var(--rd-accent)', ok = 'var(--rd-ok)', blue = 'var(--rd-blue)';
+const P = [{ x: 0, y: 0 }, { x: 180, y: 0 }, { x: 0, y: 140 }, { x: 180, y: 140 }];
+const arrows = [62, 78, 94];
+---
+
+<figure class="viz ndtblind">
+  <p class="viz-title">Every method has a blind orientation</p>
+  <svg viewBox="0 0 360 285" role="img" aria-labelledby="ndtblind-desc" style="max-width: 560px; margin: 0 auto;">
+    <desc id="ndtblind-desc">
+      Four panels. Radiography: a crack parallel to the beam shows, a planar flaw across the beam does not. Ultrasonic
+      with a normal probe: a lamination across the beam reflects and shows, a crack parallel to the beam does not.
+      Magnetic particle, seen from above: a crack across the field collects particles, a crack along the field does not.
+      Penetrant: an open crack holds penetrant and shows, a crack smeared shut by machining does not.
+    </desc>
+    <defs>
+      <marker id="ndtb-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill={blue}></path></marker>
+    </defs>
+
+    <!-- Radiography -->
+    <g transform={`translate(${P[0].x},${P[0].y})`}>
+      <text x="90" y="14" text-anchor="middle" font-size="12" fill={ink}>Radiography</text>
+      <path d="M84,22 L96,22 L90,30 Z" fill={blue}></path>
+      {[30, 60, 90, 120, 150].map((x) => <line x1="90" y1="30" x2={x} y2="96" stroke={blue} stroke-width="0.8" stroke-opacity="0.6"></line>)}
+      <rect x="15" y="52" width="150" height="34" fill={steel} fill-opacity="0.35"></rect>
+      <line x1="55" y1="55" x2="55" y2="80" stroke={ok} stroke-width="3"></line>
+      <line x1="100" y1="70" x2="140" y2="70" stroke={bad} stroke-width="3"></line>
+      <rect x="15" y="96" width="150" height="5" fill={muted} fill-opacity="0.5"></rect>
+      <text x="55" y="116" text-anchor="middle" font-size="11" fill={ok}>found</text>
+      <text x="120" y="116" text-anchor="middle" font-size="11" fill={bad}>missed</text>
+      <text x="90" y="131" text-anchor="middle" font-size="10" fill={muted}>planar flaw across the beam</text>
+    </g>
+
+    <!-- Ultrasonic -->
+    <g transform={`translate(${P[1].x},${P[1].y})`}>
+      <text x="90" y="14" text-anchor="middle" font-size="12" fill={ink}>Ultrasonic, normal probe</text>
+      <rect x="68" y="34" width="44" height="14" fill={blue} fill-opacity="0.8"></rect>
+      <rect x="15" y="48" width="150" height="40" fill={steel} fill-opacity="0.35"></rect>
+      <path d="M72,48 L60,88 L120,88 L108,48 Z" fill={blue} fill-opacity="0.12"></path>
+      <line x1="66" y1="72" x2="90" y2="72" stroke={ok} stroke-width="3"></line>
+      <line x1="104" y1="56" x2="104" y2="80" stroke={bad} stroke-width="3"></line>
+      <text x="62" y="116" text-anchor="middle" font-size="11" fill={ok}>found</text>
+      <text x="120" y="116" text-anchor="middle" font-size="11" fill={bad}>missed</text>
+      <text x="90" y="131" text-anchor="middle" font-size="10" fill={muted}>flaw parallel to the beam</text>
+    </g>
+
+    <!-- Magnetic particle -->
+    <g transform={`translate(${P[2].x},${P[2].y})`}>
+      <text x="90" y="14" text-anchor="middle" font-size="12" fill={ink}>Magnetic particle</text>
+      <rect x="15" y="26" width="150" height="80" fill={steel} fill-opacity="0.35"></rect>
+      {arrows.map((y) => <line x1="20" y1={y - 26} x2="160" y2={y - 26} stroke={blue} stroke-width="1" marker-end="url(#ndtb-arr)"></line>)}
+      {arrows.map((y) => <line x1="20" y1={y + 6} x2="160" y2={y + 6} stroke={blue} stroke-width="1" marker-end="url(#ndtb-arr)"></line>)}
+      <line x1="55" y1="44" x2="55" y2="90" stroke={ok} stroke-width="3"></line>
+      {[48, 56, 64, 72, 80, 88].map((y) => <g><circle cx="51" cy={y} r="1.6" fill={ok}></circle><circle cx="59" cy={y - 3} r="1.6" fill={ok}></circle></g>)}
+      <line x1="98" y1="62" x2="146" y2="62" stroke={bad} stroke-width="3"></line>
+      <text x="55" y="122" text-anchor="middle" font-size="11" fill={ok}>found</text>
+      <text x="122" y="122" text-anchor="middle" font-size="11" fill={bad}>missed</text>
+      <text x="90" y="137" text-anchor="middle" font-size="10" fill={muted}>crack along the field</text>
+    </g>
+
+    <!-- Penetrant -->
+    <g transform={`translate(${P[3].x},${P[3].y})`}>
+      <text x="90" y="14" text-anchor="middle" font-size="12" fill={ink}>Penetrant</text>
+      <path d="M15,44 L48,44 L53,44 L55,86 L57,44 L120,44 L165,44 L165,96 L15,96 Z" fill={steel} fill-opacity="0.35"></path>
+      <path d="M50,44 L55,86 L60,44 Z" fill={ok} fill-opacity="0.85"></path>
+      <ellipse cx="55" cy="40" rx="9" ry="3.5" fill={ok} fill-opacity="0.5"></ellipse>
+      <line x1="125" y1="47" x2="127" y2="86" stroke={bad} stroke-width="2.4"></line>
+      <path d="M114,44 Q125,40 136,44 L136,47 L114,47 Z" fill={steel} fill-opacity="0.9"></path>
+      <line x1="15" y1="44" x2="165" y2="44" stroke={ink} stroke-width="1"></line>
+      <text x="55" y="122" text-anchor="middle" font-size="11" fill={ok}>found</text>
+      <text x="125" y="122" text-anchor="middle" font-size="11" fill={bad}>missed</text>
+      <text x="90" y="137" text-anchor="middle" font-size="10" fill={muted}>crack smeared shut</text>
+    </g>
+  </svg>
+  <figcaption>
+    The magnetic particle panel is seen from above; the others are sections. Choose the method for the flaw that the process makes, in the orientation that it makes it. Magnetic particle needs
+    two field directions. Penetrant on a machined or peened surface needs an etch first, to open the crack again.
+  </figcaption>
+</figure>
