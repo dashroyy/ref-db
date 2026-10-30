@@ -1,0 +1,142 @@
+---
+title: Cost
+description: What makes motor hardware expensive, and what a designer can change. Material and buy-to-fly, setups and cycle time, tolerances and surface finish, inspection and special processes, non-recurring cost, quantity and the learning curve, with design-for-cost rules, a calculator and a worked example on the aft closure and a programme of 50 motors.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CornerRadius from '../../../components/CornerRadius.astro';
+import CostCalc from '../../../components/CostCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Setups dominate the cost of one part, material and cycle time dominate production, and tight tolerances multiply both. Most of the cost is fixed by the drawing.</div>
+  <div><b>Before this</b><a href="../process-and-am/">Process & AM</a> · <a href="../../drawing/fits-and-limits/">Fits & limits</a> · <a href="../../drawing/surface-finish/">Surface finish</a></div>
+  <div><b>Related</b><a href="../../motor/hardware/">Rocket motor hardware</a> · <a href="../../materials/selection/">Materials</a></div>
+</div>
+
+## Why this matters
+
+When the drawing is released, most of the cost of the part is fixed: the material, the product form, the number of
+setups, the tolerances, the finish, the special processes and the inspection. A buyer can negotiate the rate, but not
+these. Thus a designer who understands what drives the cost can save more than any later effort can.
+
+Cost is not a reason to accept less margin. It is a reason to put precision, special processes and inspection where the
+function needs them, and nowhere else.
+
+<Analogy title="A tailor-made suit">
+  The cloth is a small part of the price of a tailored suit. Most of the price is the fittings, the hand finishing and
+  the time of a skilled person. Ask for hand-stitched buttonholes on every pocket and the price goes up, whatever the
+  cloth. A drawing with a tight tolerance on every face is the same: you pay for the precision, not for the steel.
+</Analogy>
+
+## Where the money goes
+
+| Item | What drives it | What the designer controls |
+| --- | --- | --- |
+| Material | Mass bought × price. Expensive alloys (titanium, nickel) make buy-to-fly the largest term | Product form near the final shape; a forging for production ([Process & AM](../process-and-am/)) |
+| Setup | Each new fixture: new datums, probing, first-part checks. Shared over the batch | Put the critical features on faces that one setup reaches |
+| Cycle time | Material removed, cutter size, the tightest tolerance and the finest finish | Corner radii, pocket depth, only the precision that the function needs |
+| Special processes | Heat treatment, plating, peening, welding, each with its own specification and certificate | Use them where the function needs them, not as a habit |
+| Inspection and NDT | Each tight feature is measured; fracture-critical parts get full NDT | Fewer tight features; a classification agreed early ([Gauging](../../drawing/gauging/)) |
+| Non-recurring | Design, analysis, qualification tests, tooling, first-article inspection | Reuse of qualified parts and processes |
+| Quantity | Tooling and setup shared over the parts; learning | Batch sizes; a stable design |
+
+## Tolerance and finish
+
+The cost of a feature increases quickly as its tolerance and finish get tighter, because each step needs a slower
+operation, an extra operation (grinding, honing) or more inspection. The usual rule: each step to a tighter IT grade or
+a finer Ra can double the cost of that feature. One unnecessary ±0.01 mm can double the price of a small part.
+
+- **Give precision only to the features that need it.** A seal bore needs ±0.03 mm and Ra 0.4 µm. The outside of the
+  same closure does not.
+- **Use a general tolerance** for all other dimensions ([Fits & limits](../../drawing/fits-and-limits/#general-tolerances-iso-2768)).
+- **Do not ask for a finer finish than the function needs.** Below Ra 0.8 µm most surfaces need an extra operation
+  ([Surface finish](../../drawing/surface-finish/)).
+
+## Design for machining
+
+<CornerRadius />
+
+- **Fewer setups.** Each setup is new datums, time and risk. Put the critical features on faces that one orientation
+  reaches, and dimension them from the same datums.
+- **Internal corner radii** of at least a third of the pocket depth, one common radius on the part, and a little larger
+  than a stock cutter.
+- **Pocket depth** under about four times the cutter diameter.
+- **Thin walls** under about 1 mm in aluminium, or 0.5 mm in steel, chatter and distort. Make them thicker, or support
+  them during machining.
+- **Standard features:** standard thread sizes, standard drill sizes for holes, and standard tool angles for chamfers.
+- **Buy stock near the final size,** and batch the parts so that the setup is shared.
+
+## Quantity and the learning curve
+
+The cost of the first unit of a new part is high. Later units cost less, because the shop learns: fixtures improve,
+programs are optimised and fewer parts are scrapped. The Wright learning curve gives the cost of unit $n$:
+
+$$
+T_n = T_1\, n^{\,b}
+\qquad
+b = \log_2(\text{learning rate})
+$$
+
+With an 85% learning rate, each doubling of the quantity multiplies the unit cost by 0.85. Typical rates are 80–85% for
+assembly, and 90–95% for machining, which is already automated. A change of design, of supplier, or a long gap in
+production loses part of the learning.
+
+On a motor programme, the **non-recurring cost** (design, analysis, qualification tests, tooling) is often larger than
+the cost of all the hardware. This is why a qualified design, a qualified process and a qualified supplier are worth so
+much: changing any of them repeats part of the non-recurring cost.
+
+## Calculator
+
+<CostCalc />
+
+## Worked example: the aft closure and a programme of 50 motors
+
+The starting values in each tab of the calculator are the values of this example. All costs are illustrative.
+
+1. **The closure from bar.** D6AC at £12/kg and 7850 kg/m³ (from the material library), a ⌀320 × 80 mm bar of 50.5 kg,
+   4 hours of cycle time at £90/h, 6 hours of setup, a batch of 20. The tightest feature is the seal bore, ±0.0315 mm
+   and Ra 0.4 µm, so the cycle time is multiplied by 1.28 × 1.6 = 2.05. Each closure costs approximately **£1,889**:
+   material £606, machining £739, setup £27, heat treatment £150, inspection £120 and margin £246. One closure alone
+   costs £2,479, because it carries all of the setup.
+2. **What the precision costs.** In the **Tolerance & finish** tab, the same part at ±0.1 mm and Ra 1.6 µm costs £1,494:
+   21% less. This is the upper end of the saving, because the factor in this model applies to the full cycle. The seal
+   bore must keep its tolerance and finish. But if a drawing gives ±0.03 mm and Ra 0.4 µm to faces that do not need it,
+   this is the order of the cost.
+3. **Compare with Process & AM.** The bar route on [Process & AM](../process-and-am/#worked-example-the-aft-closure-and-a-port-manifold)
+   gave £1,476 without treatment, inspection and margin. The two estimates agree within the accuracy of the inputs.
+4. **The programme.** Design and analysis £250,000, qualification tests £150,000 and tooling £50,000; the first motor
+   case set costs £12,000; learning rate 85%; 50 units. The 50th unit costs **£4,795**, and the average of the
+   recurring cost is £6,123. With the non-recurring cost, the average is **£15,123** per unit, and the non-recurring
+   cost is 60% of the total. At this quantity, the qualification of the design costs more than all the hardware.
+
+## Where this stops
+
+- **Rough order of magnitude.** The factors for tolerance, finish and complexity are typical, and they apply to the
+  full cycle time. Use quotes for decisions.
+- **No overhead structure, scrap, lead time or currency.** These can change the result a lot.
+- **One learning rate** for all the recurring cost. Material does not learn; labour does.
+- **Cost is not the only criterion.** Properties, qualification, risk and lead time often decide.
+
+## On the drawing
+
+- **A general tolerance** in the title block, and individual tolerances only where the function needs them.
+- **The finish** on the surfaces that need it, and a general finish for the rest.
+- **Common internal radii** and standard thread and hole sizes.
+- **Special processes** only where the function needs them, each with its specification.
+- **The inspection level** that agrees with the classification of the part.
+
+## References and further reading
+
+- G. Boothroyd, P. Dewhurst and W. Knight, *Product Design for Manufacture and Assembly*, 3rd ed., CRC Press (2011).
+- T. P. Wright, "Factors affecting the cost of airplanes", *Journal of the Aeronautical Sciences* 3 (1936) 122–128.
+- NASA, *Cost Estimating Handbook* (current edition), learning curves and parametric estimating.
+- M. F. Ashby, *Materials Selection in Mechanical Design*, 5th ed., Butterworth-Heinemann (2017) (cost of materials and
+  processes).
+
+<Aside type="note">
+  This is guidance on method from general practice, with illustrative values. Costs for your hardware come from your
+  suppliers, your estimating function and your programme.
+</Aside>

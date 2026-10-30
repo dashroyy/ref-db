@@ -1,0 +1,37 @@
+---
+// Design for machining: the internal corner radius of a pocket sets the cutter, and the cutter sets the time.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', bad = 'var(--rd-accent)', warn = 'var(--rd-warn)', ok = 'var(--rd-ok)';
+const cases = [
+  { x: 10, r: 0, cut: 0, c: bad, t1: 'sharp corner', t2: 'cannot be milled: EDM' },
+  { x: 130, r: 4, cut: 8, c: warn, t1: 'small radius', t2: 'small cutter, slow' },
+  { x: 250, r: 14, cut: 26, c: ok, t1: 'R ≥ depth ÷ 3', t2: 'stock cutter, fast' },
+];
+const W = 100, top = 40, bot = 140;
+---
+
+<figure class="viz cornr">
+  <p class="viz-title">The corner radius sets the cutter</p>
+  <svg viewBox="0 0 360 200" role="img" aria-labelledby="cornr-desc" style="max-width: 520px; margin: 0 auto;">
+    <desc id="cornr-desc">
+      Three pockets seen from above. Left: a sharp internal corner, which no rotating cutter can make, so it needs EDM.
+      Middle: a small radius, which needs a small cutter that removes material slowly and deflects. Right: a radius of at
+      least one third of the pocket depth, which a standard cutter makes quickly.
+    </desc>
+    {cases.map((k) => (
+      <g>
+        <rect x={k.x} y={top} width={W} height={bot - top} fill={steel} fill-opacity="0.35"></rect>
+        <path d={`M${k.x + 15},${top + 15} L${k.x + W - 15 - k.r},${top + 15} ${k.r ? `A${k.r},${k.r} 0 0 1 ${k.x + W - 15},${top + 15 + k.r}` : ''} L${k.x + W - 15},${bot - 15} L${k.x + 15},${bot - 15} Z`} fill="var(--rd-panel)" stroke={ink} stroke-width="1.4"></path>
+        {k.cut > 0 && <circle cx={k.x + W - 15 - k.cut / 2} cy={top + 15 + k.cut / 2} r={k.cut / 2} fill="none" stroke={k.c} stroke-width="2"></circle>}
+        {k.cut === 0 && <circle cx={k.x + W - 15} cy={top + 15} r="6" fill="none" stroke={k.c} stroke-width="2"></circle>}
+        <text x={k.x + W / 2} y={bot + 22} text-anchor="middle" font-size="13" fill={k.c}>{k.t1}</text>
+        <text x={k.x + W / 2} y={bot + 40} text-anchor="middle" font-size="11" fill={muted}>{k.t2}</text>
+      </g>
+    ))}
+    <text x="180" y="24" text-anchor="middle" font-size="13" fill={ink}>pockets seen from above; circles: the cutter</text>
+  </svg>
+  <figcaption>
+    Use one common internal radius on the part, at least a third of the pocket depth and a little larger than a stock
+    cutter (R5.2 is better than R5: the cutter does not stop in the corner). A pocket deeper than about four cutter
+    diameters needs a long tool that chatters and cuts slowly.
+  </figcaption>
+</figure>

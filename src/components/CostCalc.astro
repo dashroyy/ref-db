@@ -1,0 +1,278 @@
+---
+// Cost in three tabs: a rough estimate for a machined part with its breakdown against batch size; what a tolerance or
+// a finish costs, against a relaxed alternative; and a programme with non-recurring cost and a learning curve. Maths in
+// src/lib/cost.ts (unit-tested); material price and density from the library. Illustrative values; UI only here.
+import { COMPLEXITY } from '../lib/cost';
+import MaterialSelect from './MaterialSelect.astro';
+import { withProps, DEFAULTS as D } from '../lib/materials';
+
+const TABS = [{ key: 'part', name: 'Machined part' }, { key: 'tol', name: 'Tolerance & finish' }, { key: 'prog', name: 'Programme' }];
+const PRICED = withProps(['rho'], ['metal']).filter((m) => m.price);
+const MAT = Object.fromEntries(PRICED.map((m) => [m.key, { price: m.price, rho: m.rho }]));
+---
+
+<div class="calc costcalc" data-costcalc>
+  <div class="calc-head"><span>Cost estimate</span><span>rough order of magnitude</span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Cost check">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="part">
+        <legend>The part, from stock</legend>
+        <label>Material<MaterialSelect name="m" list={PRICED} selected={D.caseSteel} /></label>
+        <div class="row2">
+          <label>Price (£/kg)<input name="price" type="number" min="0" step="any" /></label>
+          <label>Density (kg/m³)<input name="rho" type="number" min="1" step="any" /></label>
+          <label>Stock<select name="shape"><option value="bar">Round bar or forging</option><option value="block">Plate or block</option></select></label>
+          <label data-bar>Diameter (mm)<input name="d" type="number" min="1" step="any" value="320" /></label>
+          <label>Length (mm)<input name="l" type="number" min="1" step="any" value="80" /></label>
+          <label data-block hidden>Width (mm)<input name="w" type="number" min="1" step="any" value="200" /></label>
+          <label data-block hidden>Height (mm)<input name="h" type="number" min="1" step="any" value="50" /></label>
+          <label>Batch quantity<input name="q" type="number" min="1" step="1" value="20" /></label>
+          <label>Cycle time (min/part)<input name="cy" type="number" min="0" step="any" value="240" /></label>
+          <label>Shop rate (£/h)<input name="rate" type="number" min="0" step="any" value="90" /></label>
+          <label>Setup (h/batch)<input name="setup" type="number" min="0" step="any" value="6" /></label>
+          <label>Tightest tolerance ± (mm)<input name="tol" type="number" min="0.001" step="any" value="0.0315" /></label>
+          <label>Finest finish Ra (µm)<input name="ra" type="number" min="0.05" step="any" value="0.4" /></label>
+          <label>Treatment (£/part)<input name="tr" type="number" min="0" step="any" value="150" /></label>
+          <label>Inspection, NDT (£/part)<input name="ins" type="number" min="0" step="any" value="120" /></label>
+          <label>Margin (%)<input name="mg" type="number" min="0" step="any" value="15" /></label>
+        </div>
+        <label>Complexity<select name="cx">{COMPLEXITY.map((c) => <option value={c.k} selected={c.key === 'moderate'}>{c.name}</option>)}</select></label>
+        <p class="hint">The cycle time is for a part at ±0.1 mm and Ra 3.2 µm; the tolerance, finish and complexity scale it. Illustrative values: use quotes for decisions.</p>
+      </fieldset>
+
+      <fieldset data-panel="tol" hidden>
+        <legend>Relax the tightest feature</legend>
+        <div class="row2">
+          <label>Relaxed tolerance ± (mm)<input name="tol2" type="number" min="0.001" step="any" value="0.1" /></label>
+          <label>Relaxed finish Ra (µm)<input name="ra2" type="number" min="0.05" step="any" value="1.6" /></label>
+        </div>
+        <p class="hint">Compares the part of the first tab with the same part at the relaxed values. Relax only where the function permits: see Fits & limits and Surface finish.</p>
+      </fieldset>
+
+      <fieldset data-panel="prog" hidden>
+        <legend>Non-recurring and recurring cost</legend>
+        <div class="row2">
+          <label>Design and analysis (£)<input name="nd" type="number" min="0" step="any" value="250000" /></label>
+          <label>Qualification tests (£)<input name="nq" type="number" min="0" step="any" value="150000" /></label>
+          <label>Tooling and fixtures (£)<input name="nt" type="number" min="0" step="any" value="50000" /></label>
+          <label>First unit (£)<input name="t1" type="number" min="0" step="any" value="12000" /></label>
+          <label>Learning rate (%)<input name="lr" type="number" min="50" max="100" step="any" value="85" /></label>
+          <label>Units<input name="n" type="number" min="1" step="1" value="50" /></label>
+        </div>
+        <p class="hint">Learning rate: the cost after each doubling of the quantity, as a percentage of the cost before. Typical values are 80–85% for assembly and 90–95% for machining.</p>
+      </fieldset>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 270" data-chart role="img" aria-label="Chart for the selected cost check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-mat set:html={JSON.stringify(MAT)}></script>
+  <div class="calc-foot">
+    Rough order of magnitude for design decisions, not a quote: stock material, setup shared over the batch, cycle time
+    scaled by typical factors for tolerance, finish and complexity, treatment, inspection and margin. Programme: Wright
+    learning curve on the recurring cost.
+  </div>
+</div>
+
+<style is:global>
+  .hc-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.75rem 1rem 0; }
+  .hc-tabs > * { margin: 0 !important; }
+  .calc .hc-tabs button.chip[aria-selected='true'] { border-color: var(--rd-accent); color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .costcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .hc-fig { margin: 0.9rem 0 0 !important; }
+  .hc-fig svg { width: 100%; height: auto; font-family: var(--sl-font-mono); }
+  .hc-fig figcaption { font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .costcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+</style>
+
+<script>
+  import { partCost, tolFactor, finishFactor, unitCost, programme, type PartInputs } from '../lib/cost';
+  import { PROCESSES } from '../lib/process';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const money = (v: number) => (Number.isFinite(v) ? `£${Math.round(v).toLocaleString('en-GB')}` : '—');
+  const short = (v: number) => (v >= 1e6 ? `£${f(v / 1e6, 1)}M` : v >= 1e3 ? `£${f(v / 1e3, v >= 1e4 ? 0 : 1)}k` : `£${Math.round(v)}`);
+  const PARTS: [string, string][] = [['material', 'material'], ['setup', 'setup'], ['machining', 'machining'], ['treatment', 'treatment'], ['inspection', 'inspection'], ['margin', 'margin']];
+  const COL: Record<string, string> = { material: 'var(--rd-steel)', setup: '#9b7fd4', machining: 'var(--rd-blue)', treatment: '#d4a017', inspection: 'var(--rd-ok)', margin: 'var(--rd-muted)' };
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+
+  document.querySelectorAll<HTMLElement>('[data-costcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const MAT: Record<string, { price: number; rho: number }> = JSON.parse(root.querySelector('[data-mat]')!.textContent!);
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 11) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const fillMat = () => { const m = MAT[field('m').value]; if (m) { field('price').value = String(m.price); field('rho').value = String(m.rho); } };
+    let mode = 'part';
+    let draw: (() => void) | null = null;
+
+    const inputs = (): PartInputs | null => {
+      const shape = field('shape').value as 'bar' | 'block';
+      root.querySelectorAll<HTMLElement>('[data-bar]').forEach((e) => (e.hidden = shape !== 'bar'));
+      root.querySelectorAll<HTMLElement>('[data-block]').forEach((e) => (e.hidden = shape !== 'block'));
+      const i: PartInputs = {
+        stock: shape === 'bar' ? { shape, d: num('d'), l: num('l') } : { shape, l: num('l'), w: num('w'), h: num('h') },
+        rho: num('rho'), pricePerKg: num('price'), qty: Math.max(1, Math.round(num('q')) || 1), cycleMin: num('cy'), rate: num('rate'), setupHours: num('setup') || 0,
+        tol: num('tol'), ra: num('ra'), complexity: +field('cx').value, treatment: num('tr') || 0, inspection: num('ins') || 0, margin: (num('mg') || 0) / 100,
+      };
+      return [i.rho, i.pricePerKg, i.cycleMin, i.rate, i.tol, i.ra].every((v) => Number.isFinite(v) && v >= 0) && i.tol > 0 && i.ra > 0 ? i : null;
+    };
+
+    // ---- machined part ----
+    function runPart(rows: Row[], notes: [string, string][]) {
+      const i = inputs();
+      if (!i) { notes.push(['bad', 'Enter the material price and density, the stock size, the cycle time, the rate, the tolerance and the finish.']); return null; }
+      const r = partCost(i);
+      rows.push({ dt: `Each, in a batch of ${i.qty}`, dd: `${money(r.total)} <small>batch ${money(r.total * i.qty)}</small>`, primary: true });
+      rows.push({ dt: 'Breakdown', dd: `<small>${PARTS.map(([k, n]) => `${n} ${money((r as any)[k])}`).join(' · ')}</small>` });
+      rows.push({ dt: 'Cycle-time factor', dd: `× ${f(r.k, 2)} <small>tolerance × ${f(r.kTol, 2)} · finish × ${f(r.kFinish, 2)} · complexity × ${f(i.complexity, 2)}</small>`, cls: r.k > 2 ? 'warn' : '' });
+      rows.push({ dt: 'Stock', dd: `${f(r.mass, 1)} kg <small>${money(r.material)} at £${f(i.pricePerKg, 2)}/kg</small>` });
+      const one = partCost({ ...i, qty: 1 }), many = partCost({ ...i, qty: Math.max(100, i.qty * 5) });
+      rows.push({ dt: 'Quantity', dd: `<small>one part ${money(one.total)} · ${Math.max(100, i.qty * 5)} parts ${money(many.total)} each</small>` });
+      const big = PARTS.map(([k, n]) => ({ n, v: (r as any)[k] as number })).sort((a, b) => b.v - a.v)[0];
+      notes.push(['', `The largest item is ${big.n} (${f((100 * big.v) / r.total, 0)}%). Work on that one first.`]);
+      if (r.kTol * r.kFinish > 1.8) notes.push(['warn', 'The tolerance and the finish nearly double the machining. Check that every tight feature needs it: see the Tolerance & finish tab.']);
+      if (r.material > r.machining) notes.push(['', 'Material costs more than machining: buy stock nearer to the final size, or forge it (see Process & AM).']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 270, L = 46, R = 10, T = W < 360 ? 44 : 30, B = 32;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const qs = [1, 5, 20, 100, 500];
+        if (!qs.includes(i.qty)) { qs.push(i.qty); qs.sort((a, b) => a - b); }
+        const data = qs.map((q) => ({ q, r: partCost({ ...i, qty: q }) })), max = Math.max(...data.map((d) => d.r.total)) * 1.08;
+        const bw = Math.min(40, ((W - L - R) / data.length) * 0.6), X = (k: number) => L + ((k + 0.5) * (W - L - R)) / data.length, Y = (v: number) => H - B - (v / max) * (H - T - B);
+        const step = 10 ** Math.floor(Math.log10(max / 4)), tick = [1, 2, 5].map((m) => m * step).find((s) => max / s <= 6)!;
+        for (let v = 0; v <= max; v += tick) { el('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(v) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, short(v)); }
+        data.forEach((d, k) => {
+          let y = H - B;
+          for (const [key] of PARTS) { const v = (d.r as any)[key] as number, h = (v / max) * (H - T - B); if (h > 0) el('rect', { x: X(k) - bw / 2, y: y - h, width: bw, height: h, fill: COL[key], 'fill-opacity': d.q === i.qty ? 0.95 : 0.6 }); y -= h; }
+          el('text', { x: X(k), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: d.q === i.qty ? 'var(--rd-accent)' : 'var(--rd-muted)' }, String(d.q));
+          txt(X(k), Y(d.r.total) - 4, short(d.r.total), d.q === i.qty ? 'var(--rd-accent)' : 'var(--rd-ink)', 'middle', 10);
+        });
+        let lx = 6, ly = 7;
+        for (const [key, n] of PARTS) { const w = 18 + n.length * 5.9; if (lx + w > W - 4) { lx = 6; ly += 12; } el('rect', { x: lx, y: ly, width: 8, height: 8, fill: COL[key] }); txt(lx + 11, ly + 8, n, 'var(--rd-ink)', 'start', 9.5); lx += w; }
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'batch quantity: cost per part');
+      };
+    }
+
+    // ---- tolerance & finish ----
+    function runTol(rows: Row[], notes: [string, string][]) {
+      const i = inputs(), t2 = num('tol2'), ra2 = num('ra2');
+      if (!i || !(t2 > 0 && ra2 > 0)) { notes.push(['bad', 'Complete the first tab, and enter the relaxed tolerance and finish.']); return null; }
+      const a = partCost(i), b = partCost({ ...i, tol: t2, ra: ra2 }), save = a.total - b.total;
+      const proc = (t: number, ra: number) => PROCESSES.filter((p) => p.family === 'machining').sort((x, y) => y.tol[1] - x.tol[1]).find((p) => t >= p.tol[1] && ra >= Math.sqrt(p.ra[1] * p.ra[2]))?.name ?? 'grinding or honing with care';
+      rows.push({ dt: 'Saving', dd: `${money(save)} per part <small>${f((100 * save) / a.total, 0)}% · ${money(save * i.qty)} on the batch of ${i.qty}</small>`, primary: true, cls: save > 0 ? 'ok' : '' });
+      rows.push({ dt: `As drawn, ±${i.tol} and Ra ${i.ra}`, dd: `${money(a.total)} <small>cycle × ${f(a.k, 2)} · usual process: ${proc(i.tol, i.ra)}</small>` });
+      rows.push({ dt: `Relaxed, ±${t2} and Ra ${ra2}`, dd: `${money(b.total)} <small>cycle × ${f(b.k, 2)} · usual process: ${proc(t2, ra2)}</small>` });
+      notes.push(['', 'Only the features that need precision should have it. One tight bore does not make the part a precision part: the factor applies to the operations on that feature, so this estimate is the upper end of the saving.']);
+      notes.push(['warn', 'Relax a tolerance only after the tolerance stack, the fit and the function permit it (Tolerance stack, Fits & limits, Surface finish).']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 270, L = 40, R = 10, T = 22, B = 32;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const lx0 = Math.log10(0.002), lx1 = Math.log10(0.3), ymax = 4.3;
+        const X = (t: number) => W - R - ((Math.log10(t) - lx0) / (lx1 - lx0)) * (W - L - R), Y = (k: number) => H - B - ((k - 0.5) / (ymax - 0.5)) * (H - T - B);
+        for (const t of [0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.3]) { el('line', { x1: X(t), x2: X(t), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(t), y: H - B + 13, 'text-anchor': t === 0.002 ? 'end' : t === 0.3 ? 'start' : 'middle', 'font-size': 9.5, fill: 'var(--rd-muted)' }, String(t)); }
+        for (const k of [1, 2, 3, 4]) { el('line', { x1: L, x2: W - R, y1: Y(k), y2: Y(k), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(k) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, `×${k}`); }
+        // process bands along the top
+        const bands: [number, number, string][] = [[0.3, 0.05, 'mill'], [0.05, 0.025, 'turn'], [0.025, 0.008, 'fine turn'], [0.008, 0.002, 'grind, hone']];
+        bands.forEach(([a, b, n], k) => { el('rect', { x: X(a), y: T, width: X(b) - X(a), height: H - B - T, fill: k % 2 ? 'var(--rd-blue)' : 'transparent', 'fill-opacity': 0.06 }); txt((X(a) + X(b)) / 2, T + 11, n, 'var(--rd-muted)', 'middle', 9.5); });
+        const ts = Array.from({ length: 80 }, (_, k) => 10 ** (lx0 + ((lx1 - lx0) * k) / 79));
+        el('polyline', { points: ts.map((t) => `${X(t).toFixed(1)},${Y(tolFactor(t)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-blue)', 'stroke-width': 2.2 });
+        el('polyline', { points: ts.map((t) => `${X(t).toFixed(1)},${Y(tolFactor(t) * finishFactor(i.ra)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-accent)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' });
+        el('circle', { cx: X(i.tol), cy: Y(tolFactor(i.tol) * finishFactor(i.ra)), r: 5, fill: 'var(--rd-accent)' });
+        el('circle', { cx: X(t2), cy: Y(tolFactor(t2) * finishFactor(ra2)), r: 5, fill: 'var(--rd-ok)' });
+        el('line', { x1: X(i.tol), y1: Y(tolFactor(i.tol) * finishFactor(i.ra)), x2: X(t2), y2: Y(tolFactor(t2) * finishFactor(ra2)), stroke: 'var(--rd-ok)', 'stroke-dasharray': '3 3' });
+        txt(L + 4, H - B - 8, 'blue: tolerance · dashed: with finish', 'var(--rd-muted)', 'start', 9.5);
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'tolerance ± (mm), tighter to the right');
+      };
+    }
+
+    // ---- programme ----
+    function runProg(rows: Row[], notes: [string, string][]) {
+      const nre = (num('nd') || 0) + (num('nq') || 0) + (num('nt') || 0), t1 = num('t1'), lr = num('lr') / 100, n = Math.max(1, Math.round(num('n')) || 1);
+      if (!(t1 > 0 && lr > 0.5 && lr <= 1)) { notes.push(['bad', 'Enter the first-unit cost and a learning rate between 50% and 100%.']); return null; }
+      const p = programme({ nre, t1, lr, n });
+      rows.push({ dt: `Average per unit, ${n} units`, dd: `${money(p.avgWithNre)} <small>with the non-recurring cost · ${money(p.avgUnit)} recurring only</small>`, primary: true });
+      rows.push({ dt: 'Programme total', dd: `${money(p.total)} <small>non-recurring ${money(nre)} (${f(100 * p.nreShare, 0)}%) · recurring ${money(p.recurring)}</small>` });
+      rows.push({ dt: `Unit ${n}`, dd: `${money(p.unitN)} <small>${f((100 * p.unitN) / t1, 0)}% of the first unit</small>` });
+      if (p.nreShare > 0.5) notes.push(['warn', 'More than half the cost is non-recurring. At this quantity, design and qualification cost more than the hardware: reuse qualified designs and parts where you can.']);
+      notes.push(['', 'The learning curve assumes a stable design and process. A design change, a new supplier or a gap in production loses part of the learning.']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 270, L = 50, R = 10, T = 26, B = 32;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const nMax = Math.max(10, n * 4), ns = Array.from({ length: 60 }, (_, k) => Math.max(1, Math.round(10 ** ((Math.log10(nMax) * k) / 59))));
+        const avgN = (m: number) => programme({ nre, t1, lr, n: m }).avgWithNre;
+        const vals = ns.flatMap((m) => [unitCost(t1, m, lr), avgN(m)]), y0 = Math.log10(Math.min(...vals) * 0.8), y1 = Math.log10(Math.max(...vals) * 1.2);
+        const X = (m: number) => L + (Math.log10(m) / Math.log10(nMax)) * (W - L - R), Y = (v: number) => H - B - ((Math.log10(v) - y0) / (y1 - y0)) * (H - T - B);
+        for (let d = 0; d <= Math.log10(nMax); d++) { const m = 10 ** d; el('line', { x1: X(m), x2: X(m), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(m), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(m)); }
+        for (let d = Math.ceil(y0); d <= y1; d++) { el('line', { x1: L, x2: W - R, y1: Y(10 ** d), y2: Y(10 ** d), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(10 ** d) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, short(10 ** d)); }
+        el('polyline', { points: ns.map((m) => `${X(m).toFixed(1)},${Y(unitCost(t1, m, lr)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-blue)', 'stroke-width': 2.2 });
+        el('polyline', { points: ns.map((m) => `${X(m).toFixed(1)},${Y(avgN(m)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-accent)', 'stroke-width': 2.2 });
+        el('line', { x1: X(n), x2: X(n), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '4 3' });
+        txt(L + 4, 14, 'blue: each unit · red: average, all costs', 'var(--rd-muted)', 'start', 9.5);
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'units (log)');
+      };
+    }
+
+    const RUN: Record<string, typeof runPart> = { part: runPart, tol: runTol, prog: runProg };
+    const CAPS: Record<string, string> = {
+      part: 'Cost per part for different batch sizes, by item. Setup is shared over the batch, so it disappears at high quantity; your batch is marked.',
+      tol: 'Cycle-time factor against the tightest tolerance (tighter to the right), with the usual process for each band. Red: as drawn. Green: relaxed.',
+      prog: 'Cost of each unit and the average cost per unit including the non-recurring cost, against the number of units.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    field('m').addEventListener('change', fillMat);
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    fillMat();
+    run();
+  });
+</script>

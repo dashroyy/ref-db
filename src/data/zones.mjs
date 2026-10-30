@@ -81,6 +81,7 @@ export const REBUILT = {
   gauge: 'drawing/gauging',
   galvanic: 'materials/galvanic',
   process: 'make/process-and-am',
+  cost: 'make/cost',
   margins: 'verify/margin-policy',
   vibration: 'verify/random-vibration',
   buckling: 'verify/shell-buckling',
