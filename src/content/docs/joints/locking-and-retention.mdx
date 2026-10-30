@@ -103,6 +103,35 @@ fastener from falling out.
 - **Epoxy staking.** A fillet of epoxy connects the fastener head and the part. It is mostly used on small fasteners, up
   to approximately M4 or #8, and on electronics, where NASA-STD-8739.1 applies.
 
+## Retaining rings
+
+A retaining ring (circlip, spiral ring or lock ring) sits in a groove and holds a part against a shoulder. Small
+rings retain bearings, pins and actuator parts. Large internal rings and segmented key rings can retain a closure
+against the full pressure end load of a motor. A ring has no preload, so the questions are different from those for a
+bolt:
+
+- **The groove usually decides the capacity, not the ring.** The edge of the groove yields in bearing, or the land
+  behind the groove shears out, before the ring fails. In an aluminium housing, groove-edge yield governs well before
+  ring shear. Two first checks, with $D$ the groove diameter, $h$ the depth of the groove that the ring bears on and $L$
+  the land from the groove to the end of the part:
+  $$
+  \sigma_\text{bearing} = \frac{F}{\pi D h}
+  \qquad
+  \tau_\text{land} = \frac{F}{\pi D L}
+  $$
+- **The abutting part must be square and sharp.** A chamfer or a radius on the part that pushes on the ring makes the
+  ring dish (cone) and come out of its groove at a much lower load. The catalogue capacity of a ring usually assumes a
+  sharp, square abutment. If the part must have a chamfer, use the reduced capacity that the ring maker gives for it.
+- **Keep the groove edge sharp,** with a small radius in the root only. A large edge break is a ramp that the ring
+  climbs.
+- **Speed and vibration.** External rings can open at high rotation speed, and rings with a gap can walk round in
+  vibration. Use a ring with a locking feature, or a full ring, where this can occur.
+- **Assembly and inspection.** Make sure that the ring is fully seated: a ring that sits on the groove edge looks
+  correct and holds almost nothing. Give an inspection method, for example a gauge or a visual check of the ring gap.
+- **High thrust.** For a high axial load, a shoulder, a threaded retainer or a bolted ring is usually better. A
+  retaining ring in a pressure closure needs the same analysis, proof test and inspection as a bolted joint (see
+  [Load paths & joints](../load-paths/)).
+
 ## Requirements for spaceflight hardware
 
 NASA-STD-5020B §4.6 gives the rules for NASA spaceflight hardware. Other programmes have equivalent rules:

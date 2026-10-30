@@ -84,6 +84,42 @@ The **grid convergence index**, $\text{GCI} = 1.25\,|(f_2 - f_1)/f_1|\,/\,(r^p -
   several elements across the zone where they change. For a shell edge, this zone is $\pi/\beta \approx 2.4\sqrt{rt}$
   from [Hand calcs](../../fundamentals/hand-calcs/#thin-shells).
 
+## Element choice and mesh quality
+
+Convergence tells you that the mesh is fine enough. The element type and the shape of each element tell you if the
+mesh can give the correct answer at all.
+
+**Select the element for the task:**
+
+| Task | Use | Avoid | Why |
+| --- | --- | --- | --- |
+| Thin walls: case, skirt, dome | Shell elements | One linear solid through the thickness | A single linear solid layer cannot bend correctly |
+| Solid parts with a stress concentration | Second-order (10-node) tetrahedra, or second-order hexahedra | First-order (4-node) tetrahedra | First-order tetrahedra are too stiff (see below) |
+| Bending of solid parts | Second-order or incompatible-mode hexahedra | First-order fully integrated hexahedra | Shear locking makes them too stiff in bending |
+| Rubber and propellant | Hybrid (mixed) formulation | Standard displacement elements | Volumetric locking near ν = 0.5 ([FEA cards](../fea-cards/)) |
+| Contact surfaces | Matched, refined meshes on the two sides | A coarse mesh on one side | Contact pressure and the gap need several elements across the contact |
+| Bolts in a joint model | Beam or solid bolt with a pretension section | Rigid links that carry no preload | The joint behaviour depends on the preload ([Bolted joints](../../joints/bolted-joints/)) |
+
+**The first-order tetrahedron problem.** The 4-node tetrahedron has a constant strain. It is much too stiff in bending,
+so it predicts too little displacement and too little stress, which is the dangerous direction. Automatic meshers use it
+by default because it fills any shape. A dense first-order mesh that looks correct can be 20–30% low on a bending stress.
+Use second-order tetrahedra, or hexahedra where the shape permits.
+
+**Check the shape of the elements.** Each solver reports these metrics. A single bad element at a fillet can set the
+peak stress that you report. The limits below are typical starting values; your analysis procedure sets the real ones.
+
+| Metric | Good | Marginal | Reject | What it does |
+| --- | --- | --- | --- | --- |
+| Aspect ratio (longest ÷ shortest edge) | under 3 | 3–10 | over 10 in a stress gradient | Long elements cannot follow a fast change of stress across their short side |
+| Jacobian ratio | over 0.7 | 0.3–0.7 | under 0.3, or negative | Distortion of the element from its ideal shape; a negative value is an inverted element |
+| Corner angles, triangles and tetrahedra | 30° or more | 20–30° | under 15° | Small angles give poor stress results |
+| Corner angles, quadrilaterals and hexahedra | 45°–135° | 30°–150° | outside 20°–160° | Very distorted corners give poor stress results |
+| Warpage of quadrilateral faces | under 5° | 5–15° | over 15° | A warped shell or face is not flat, and bends incorrectly |
+| Mid-side node position (second-order) | on the straight line or the surface | small offset | far from the middle | Curved edges that do not follow the geometry give false stresses |
+
+Look at the metrics where the stress is high, not only as a summary for the full model. A poor element far from the
+point of interest is usually acceptable; one at the peak is not.
+
 ## Singularities
 
 At some points, the stress does not converge. At a sharp internal corner, the elastic stress is infinite. Near the
