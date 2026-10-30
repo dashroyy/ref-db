@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyseGland, stretchedCs, extrusionLimit, suggestGroove, nearestId, designGland, sectionFor, pointSqueeze, type ORingInputs } from '../src/lib/oring.ts';
+import { analyseGland, stretchedCs, extrusionLimit, suggestGroove, nearestId, designGland, sectionFor, pointSqueeze, glandAt, type ORingInputs } from '../src/lib/oring.ts';
 import data from '../src/data/orings.json' with { type: 'json' };
 
 const close = (a: number, b: number, rel = 1e-3) =>
@@ -100,4 +100,16 @@ test('point squeeze agrees with the worst case at the corners', () => {
   // smallest ring, most stretch (smallest ID onto the largest root), deepest gland, cold
   const s = pointSqueeze({ ...i, groove: { min: i.groove.max, max: i.groove.max } }, x, i.tMin);
   assert.ok(Math.abs(s - g.sqMinCold) < 0.01, `${s} vs ${g.sqMinCold}`);
+});
+
+test('the gland at a corner agrees with the worst-case analysis', () => {
+  const g = analyseGland(base);
+  close(glandAt(base, 'min', base.tMin).squeeze, g.sqMinCold, 1e-9);
+  close(glandAt(base, 'min', base.tMin).squeezeEol, g.sqMinEol, 1e-9);
+  close(glandAt(base, 'max', base.tMax).squeeze, g.sqMax, 1e-9);
+  const n = glandAt(base, 'nom', 20);
+  assert.ok(Math.abs(n.squeeze - g.sqNom) < 0.01, `${n.squeeze} vs ${g.sqNom}`);
+  const opened = glandAt({ ...base, opening: 0.25 }, 'min', base.tMin, true);
+  close(opened.squeezeEol, analyseGland({ ...base, opening: 0.25 }).sqMinPressurised, 1e-9);
+  assert.ok(glandAt(base, 'max', 20).gap === 0, 'the tight side of an off-centre fit has no gap');
 });

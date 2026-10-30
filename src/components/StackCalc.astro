@@ -1,9 +1,10 @@
 ---
 // Tolerance stacks in four tabs: a linear stack built row by row as the drawing gives each dimension (any tolerance
 // format, GD&T controls with the MMC bonus, distributions, correlated groups, thermal growth from the material library),
-// tolerance allocation to meet a target, a radial stack of offsets that add as vectors, and fastener checks. Process
-// capability, limits, targets and coverage are the programme's and start blank. Maths in src/lib/stack.ts and
-// src/lib/gdt.ts (unit-tested); UI only here.
+// tolerance allocation to meet a target, a radial stack of offsets that add as vectors, and fastener checks. The linear
+// tab shows the stack working: simulated assemblies drawn one at a time, each part's deviation inside its band, and the
+// result building a histogram against the limits. Process capability, limits, targets and coverage are the programme's
+// and start blank. Maths in src/lib/stack.ts and src/lib/gdt.ts (unit-tested); UI only here.
 import { TOL_FORMATS, GDT_CONTROLS } from '../lib/stack';
 import { withProps, grouped } from '../lib/materials';
 
@@ -28,32 +29,34 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
     <form data-form onsubmit="return false">
       <fieldset data-panel="lin">
         <legend>The loop: one row for each arrow</legend>
-        <div class="sk-rows" data-rows></div>
+        <div class="sk-list" data-rows></div>
         <div class="sk-btns">
           <button type="button" class="chip" data-act="add">+ Add a row</button>
           <button type="button" class="chip" data-act="seal">Seal example</button>
           <button type="button" class="chip" data-act="clear">Clear</button>
         </div>
+        <p class="hint">Select a row to edit it. The <b>+ / −</b> button sets the direction of the arrow in the loop. The bar shows the share of the variance.</p>
         <details class="sk-text">
           <summary>Rows as text: copy, or paste a table</summary>
           <textarea name="l_text" rows="6" spellcheck="false" wrap="off" aria-label="Rows as text"></textarea>
           <div class="sk-btns"><button type="button" class="chip" data-act="import">Use this text</button></div>
-          <p class="hint">One line for each row: name, sensitivity, low limit, high limit, and “, u” for a uniform part. A spreadsheet can make these lines.</p>
+          <p class="hint">One line for each row: name, sensitivity, low limit, high limit, and “, u” for a uniform part.</p>
         </details>
-        <div class="row2">
-          <label>Process Cpk of the parts<input name="l_cpk" type="number" min="0" step="any" placeholder="your process data" autocomplete="off" /></label>
-          <label>Lower limit on the result<input name="l_lsl" type="number" step="any" placeholder="your requirement" autocomplete="off" /></label>
-          <label>Upper limit on the result<input name="l_usl" type="number" step="any" placeholder="your requirement" autocomplete="off" /></label>
-          <label>Monte Carlo assemblies<select name="l_n"><option value="20000">20,000</option><option value="100000" selected>100,000</option><option value="500000">500,000</option></select></label>
+        <div class="sk-box">
+          <p class="sk-sub">Requirement and process</p>
+          <div class="row2">
+            <label>Lower limit on the result<input name="l_lsl" type="number" step="any" placeholder="your requirement" autocomplete="off" /></label>
+            <label>Upper limit on the result<input name="l_usl" type="number" step="any" placeholder="your requirement" autocomplete="off" /></label>
+            <label>Process Cpk of the parts<input name="l_cpk" type="number" min="0" step="any" placeholder="your process data" autocomplete="off" /></label>
+            <label>Monte Carlo assemblies<select name="l_n"><option value="20000">20,000</option><option value="100000" selected>100,000</option><option value="500000">500,000</option></select></label>
+          </div>
+          <label class="sk-check"><input type="checkbox" name="l_th" /> Thermal growth (select a material on the rows)</label>
+          <div class="row2" data-thermal hidden>
+            <label>Assembly temperature (°C)<input name="l_t0" type="number" step="any" value="20" /></label>
+            <label>Coldest (°C)<input name="l_tc" type="number" step="any" value="-40" /></label>
+            <label>Hottest (°C)<input name="l_th2" type="number" step="any" value="60" /></label>
+          </div>
         </div>
-        <label class="sk-check"><input type="checkbox" name="l_th" /> Include thermal growth (select a material on each row)</label>
-        <div class="row2" data-thermal hidden>
-          <label>Assembly temperature (°C)<input name="l_t0" type="number" step="any" value="20" /></label>
-          <label>Coldest (°C)<input name="l_tc" type="number" step="any" value="-40" /></label>
-          <label>Hottest (°C)<input name="l_th2" type="number" step="any" value="60" /></label>
-        </div>
-        <label>Chart<select name="l_chart"><option value="dist">Distribution of the result</option><option value="share">Contribution of each row</option></select></label>
-        <p class="hint">Direction: + if the arrow points in the positive direction of the loop. × is the sensitivity: ½ for a diameter whose radius is in the loop, cos θ for a dimension at an angle. A <b>group</b> letter puts rows that change together (one setup, one tool, one batch) into a worst-case group. <b>Fixed</b> keeps a bought part's tolerance in the Allocate tab.</p>
       </fieldset>
 
       <fieldset data-panel="alloc" hidden>
@@ -62,8 +65,8 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
           <label>Target on the result, ± (mm)<input name="a_t" type="number" min="0" step="any" placeholder="your requirement" autocomplete="off" /></label>
           <label>Basis<select name="a_b"><option value="wc">Worst case</option><option value="rss">RSS</option></select></label>
           <label>Method<select name="a_m">
-            <option value="scale">Scale: keep the present proportions</option>
-            <option value="size">By size: the same IT grade on each row</option>
+            <option value="scale">Scale: keep the proportions</option>
+            <option value="size">By size: same IT grade</option>
             <option value="equal">Equal effect on the result</option>
           </select></label>
         </div>
@@ -88,7 +91,7 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
         <div class="row2">
           <label>Case<select name="f_case">
             <option value="float">Floating: clearance holes in both parts</option>
-            <option value="fixed">Fixed: one part threaded or pressed, projected zone</option>
+            <option value="fixed">Fixed: one part threaded, projected zone</option>
             <option value="noproj">Fixed, without a projected zone</option>
           </select></label>
           <label>Clearance hole at MMC, H (mm)<input name="f_h" type="number" min="0" step="any" value="11" /></label>
@@ -103,10 +106,20 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
       <p class="hint example-note" data-example-note hidden></p>
     </form>
     <div>
+      <div class="sk-head" data-head></div>
       <dl class="readouts" data-out></dl>
       <div class="sk-table" data-table></div>
+      <div class="sk-views" data-views>
+        <button type="button" class="chip" data-view="asm" aria-pressed="true">Assemble</button>
+        <button type="button" class="chip" data-view="share" aria-pressed="false">Budget</button>
+      </div>
       <figure class="hc-fig" data-fig>
-        <svg viewBox="0 0 420 250" data-chart role="img" aria-label="Chart for the selected stack"></svg>
+        <svg viewBox="0 0 420 300" data-chart role="img" aria-label="Chart for the selected stack"></svg>
+        <div class="sk-play" data-play>
+          <button type="button" class="chip" data-act="play">▶ Build assemblies</button>
+          <button type="button" class="chip" data-act="fill">Run all</button>
+          <span class="sk-count" data-count></span>
+        </div>
         <figcaption data-cap></figcaption>
       </figure>
       <ul class="pv-notes" data-notes></ul>
@@ -127,51 +140,85 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
   .hc-tabs > * { margin: 0 !important; }
   .calc .hc-tabs button.chip[aria-selected='true'] { border-color: var(--rd-accent); color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
   .stcalc .readout dd small { display: block; margin-top: 0.15rem; }
-  .stcalc .nc { text-transform: none; }
   .stcalc textarea { width: 100%; font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); background: var(--rd-panel2, var(--rd-panel)); color: var(--rd-ink); border: 1px solid var(--rd-line); border-radius: 4px; padding: 0.4rem; resize: vertical; }
+  .stcalc .calc-body { grid-template-columns: minmax(0, 1fr); }
+  .stcalc .calc-body > * { min-width: 0; }
   .stcalc fieldset { min-width: 0; }
-  .sk-rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; margin: 0 0 0.5rem !important; min-width: 0; }
-  .sk-row { border: 1px solid var(--rd-line); border-radius: 6px; padding: 0.45rem; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 0.35rem; margin: 0 !important; background: color-mix(in srgb, var(--rd-panel) 85%, transparent); }
-  .sk-row.off { opacity: 0.55; }
-  .sk-row > * { margin: 0 !important; }
+
+  /* the row list: one compact line per arrow, with an editor under the selected one */
+  .sk-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; margin: 0 !important; min-width: 0; }
+  .sk-item { display: grid; grid-template-columns: 2rem minmax(0, 1fr); align-items: stretch; border: 1px solid var(--rd-line); border-radius: 6px; margin: 0 !important; background: color-mix(in srgb, var(--rd-panel) 85%, transparent); overflow: hidden; }
+  .sk-item.sel { border-color: var(--rd-accent); }
+  .sk-item.off { opacity: 0.5; }
+  .sk-item > * { margin: 0 !important; }
+  .sk-dir { border: 0; border-right: 1px solid var(--rd-line); background: transparent; color: var(--rd-ink); font: 600 1rem var(--sl-font-mono); cursor: pointer; }
+  .sk-dir:hover, .sk-main:hover { background: color-mix(in srgb, var(--rd-accent) 10%, transparent); }
+  .sk-main { border: 0; background: transparent; color: var(--rd-ink); text-align: left; padding: 0.35rem 0.5rem 0.3rem; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 0.5rem; font: inherit; min-width: 0; }
+  .sk-main > * { margin: 0 !important; }
+  .sk-n { font-size: var(--sl-text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sk-v { font: var(--sl-text-xs) var(--sl-font-mono); color: var(--rd-muted); white-space: nowrap; align-self: center; }
+  .sk-bar { grid-column: 1 / -1; height: 3px; background: var(--rd-line); border-radius: 2px; margin-top: 0.3rem !important; }
+  .sk-bar i { display: block; height: 100%; background: var(--rd-accent); border-radius: 2px; }
+  .sk-edit { border: 1px solid var(--rd-accent); border-top: 0; border-radius: 0 0 6px 6px; margin: -0.3rem 0 0.15rem !important; padding: 0.55rem 0.5rem 0.5rem; display: grid; gap: 0.45rem; background: color-mix(in srgb, var(--rd-accent) 5%, var(--rd-panel)); }
+  .sk-edit > * { margin: 0 !important; min-width: 0; }
+  .sk-edit { min-width: 0; overflow: hidden; }
+  .stcalc .sk-edit input[type='number'] { flex: 1 1 3.5rem; width: 3.5rem; }
   .stcalc .sk-l { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
   .stcalc .sk-l > * { margin: 0 !important; min-width: 0; }
   .stcalc .sk-l input, .stcalc .sk-l select { width: auto; min-width: 0; padding: 0.3rem 0.4rem; }
   .stcalc .sk-l input[type='checkbox'] { flex: 0 0 auto; width: auto; }
-  .stcalc .sk-l input[type='text'] { flex: 1 1 5rem; }
+  .stcalc .sk-l input[type='text'] { flex: 1 1 7rem; }
   .stcalc .sk-l input[type='number'] { flex: 1 1 4.6rem; width: 4.6rem; }
   .stcalc .sk-l select { flex: 1 1 8rem; }
-  .stcalc .sk-l .sk-narrow { flex: 0 0 3.4rem !important; width: 3.4rem !important; }
-  .stcalc .sk-l .sk-grp { flex: 0 1 4.4rem; width: 4.4rem; }
-  .stcalc .sk-l .sk-mat { flex: 1 1 9rem; }
+  .stcalc .sk-l .sk-narrow { flex: 0 0 3.6rem !important; width: 3.6rem !important; }
+  .stcalc .sk-l .sk-grp { flex: 0 1 4.6rem; width: 4.6rem; }
   .stcalc .sk-l label { display: inline-flex; align-items: center; gap: 0.25rem; font-size: var(--sl-text-xs); color: var(--rd-muted); }
-  .stcalc .sk-l label > input { margin: 0 !important; display: inline-block; }
-  .stcalc .sk-pm { color: var(--rd-muted); }
-  .sk-ibtn { padding: 0.1rem 0.3rem !important; min-width: 1.6rem; }
+  .stcalc .sk-l label > input, .stcalc .sk-l label > select { margin: 0 !important; display: inline-block; }
+  .sk-pm { color: var(--rd-muted); }
+  .sk-ibtn { padding: 0.1rem 0.45rem !important; }
   .sk-conv { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); color: var(--rd-muted); }
   .sk-conv b { color: var(--rd-ink); font-weight: 600; }
   .sk-conv .w { color: var(--rd-warn); }
-  .sk-btns { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 !important; }
+  .sk-btns { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.2rem 0 0 !important; }
   .sk-btns > * { margin: 0 !important; }
-  .sk-check { display: flex !important; align-items: center; gap: 0.4rem; margin: 0.4rem 0 !important; }
+  .sk-box { border-top: 1px solid var(--rd-line); padding-top: 0.6rem; display: grid; gap: 0.5rem; }
+  .sk-box > * { margin: 0 !important; }
+  .sk-sub { font: var(--sl-text-xs) var(--sl-font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); }
+  .sk-check { display: flex !important; align-items: center; gap: 0.4rem; }
   .sk-check input { width: auto; }
-  .sk-text { margin: 0.5rem 0 !important; }
   .sk-text summary { cursor: pointer; font-size: var(--sl-text-sm); color: var(--rd-muted); }
-  .sk-table { overflow-x: auto; margin: 0.6rem 0 0 !important; }
+
+  /* results */
+  .sk-head { margin: 0 0 0.6rem !important; padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-line); }
+  .sk-head:empty { display: none; }
+  .sk-head.ok { border-left-color: var(--rd-ok); } .sk-head.bad { border-left-color: var(--rd-accent); } .sk-head.warn { border-left-color: var(--rd-warn); }
+  .sk-head b { font: 600 1.35rem var(--sl-font-mono); display: block; }
+  .sk-head span { font-size: var(--sl-text-sm); color: var(--rd-muted); }
+  .sk-table { overflow-x: auto; margin: 0.4rem 0 0 !important; }
+  .sk-table:empty { display: none; }
   .sk-table table { width: 100%; font-size: var(--sl-text-xs); border-collapse: collapse; display: table; }
-  .sk-table th, .sk-table td { padding: 0.25rem 0.4rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
+  .sk-table th, .sk-table td { padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
   .sk-table th:first-child, .sk-table td:first-child { text-align: left; white-space: normal; }
-  .sk-table td.hi { color: var(--rd-accent); font-weight: 600; }
-  .hc-fig { margin: 0.9rem 0 0 !important; }
+  .sk-table td.hi, .sk-table td.bad { color: var(--rd-accent); font-weight: 600; }
+  .sk-table td.ok { color: var(--rd-ok); }
+  .sk-table td.warn { color: var(--rd-warn); }
+  .sk-views, .sk-play { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin: 0.8rem 0 0 !important; }
+  .sk-views > *, .sk-play > * { margin: 0 !important; }
+  .sk-views .chip[aria-pressed='true'] { border-color: var(--rd-accent); color: var(--rd-accent); }
+  .sk-count { font: var(--sl-text-xs) var(--sl-font-mono); color: var(--rd-muted); }
+  .hc-fig { margin: 0.5rem 0 0 !important; }
   .hc-fig svg { width: 100%; height: auto; font-family: var(--sl-font-mono); }
-  .hc-fig figcaption { font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .hc-fig figcaption { font-size: var(--sl-text-xs); color: var(--rd-muted); margin-top: 0.4rem !important; }
   .stcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .stcalc .sk-dot { transition: cx 0.35s ease-out; }
+  .motion-off .stcalc .sk-dot { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .stcalc .sk-dot { transition: none; } }
 </style>
 
 <script>
   import {
     capability, radialStack, parseOffsets, rowLimits, toContributors, groupedStack, groupedMonteCarlo, thermalShift,
-    allocate, itGrade, rowsToText, rowsFromText, type StackRow, type TolFormat, type GdtKey, type AllocMethod,
+    allocate, itGrade, rowsToText, rowsFromText, rng, gauss, sigmaOf, type StackRow, type TolFormat, type GdtKey, type AllocMethod,
   } from '../lib/stack';
   import { floatingTolerance, fixedTotal, holeWithoutProjection } from '../lib/gdt';
   import { itValue } from '../lib/fits';
@@ -182,8 +229,10 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
   const g4 = (v: number) => String(Number(v.toPrecision(6)));
   const pct = (v: number) => (v <= 0 ? '0%' : v < 1e-7 ? 'under 0.1 ppm' : v < 1e-4 ? `${f(1e6 * v, v < 1e-5 ? 1 : 0)} ppm` : v < 0.01 ? `${f(100 * v, 2)}%` : `${f(100 * v, 1)}%`);
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const calm = () => document.documentElement.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
   type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
   type Mat = { key: string; name: string; alpha: number };
+  type C = ReturnType<typeof toContributors>[number];
   const shares = (s: [string, number][]) => {
     const top = s.slice(0, 3).map(([n, v], i) => `${i === 0 ? '<b>' : ''}${esc(n)} ${f(100 * v, 0)}%${i === 0 ? '</b>' : ''}`), rest = s.slice(3);
     return `<small>${top.join(' · ')}${rest.length ? ` · ${rest.length} more, ${f(100 * rest.reduce((a, [, v]) => a + v, 0), 0)}% together` : ''}</small>`;
@@ -197,36 +246,53 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
     { name: 'Root runout to pilot', on: true, dir: -1, format: 'gdt', gdt: 'runout', zone: 0.05, nom: 0 },
   ];
 
+  /** One simulated assembly: each part's deviation from its mean in the direction of the loop, and the result's. */
+  function sampleOnce(cs: C[], cpk: number, r: () => number) {
+    const gz = new Map<string, number>(), gu = new Map<string, number>();
+    const devs = cs.map((c) => {
+      const sgn = Math.sign(c.sens) || 1, mid = (c.lo + c.hi) / 2;
+      if (c.group && !gz.has(c.group)) { gz.set(c.group, gauss(r)); gu.set(c.group, r()); }
+      let x: number;
+      if (c.dist === 'uniform') x = c.lo + (c.hi - c.lo) * (c.group ? (sgn > 0 ? gu.get(c.group)! : 1 - gu.get(c.group)!) : r());
+      else x = mid + sigmaOf(c, cpk) * (c.group ? sgn * gz.get(c.group)! : gauss(r));
+      return c.sens * (x - mid);
+    });
+    return { devs, sum: devs.reduce((a, v) => a + v, 0) };
+  }
+
   document.querySelectorAll<HTMLElement>('[data-stcalc]').forEach((root) => {
     const form = root.querySelector<HTMLFormElement>('[data-form]')!;
     const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
     const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
     const fig = root.querySelector<HTMLElement>('[data-fig]')!, table = root.querySelector<HTMLElement>('[data-table]')!;
+    const head = root.querySelector<HTMLElement>('[data-head]')!, views = root.querySelector<HTMLElement>('[data-views]')!;
+    const playBar = root.querySelector<HTMLElement>('[data-play]')!, countEl = root.querySelector<HTMLElement>('[data-count]')!;
     const box = root.querySelector<HTMLElement>('[data-rows]')!;
     const MATS: { label: string; items: Mat[] }[] = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
     const OPTS = JSON.parse(root.querySelector('[data-opts]')!.textContent!) as { formats: { key: TolFormat; name: string }[]; gdt: { key: GdtKey; name: string; mmc: boolean }[] };
     const alphaOf = (k: string) => MATS.flatMap((g) => g.items).find((m) => m.key === k)?.alpha;
-    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+    const el = (tag: string, a: Record<string, string | number>, text?: string, parent: Element = svg) => {
       const e = document.createElementNS(NS, tag);
       for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
       if (text !== undefined) e.textContent = text;
-      svg.append(e);
+      parent.append(e);
       return e;
     };
     const halo = { stroke: 'var(--rd-panel)', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' };
     const criterion = (name: string, what: string) => `<small>Enter your programme's ${name} to ${what}. It comes from your governing requirement, not from this site. Or press “Load worked example”.</small>`;
-    let mode = 'lin';
+    let mode = 'lin', view = 'asm';
     let draw: (() => void) | null = null;
     let rows: StackRow[] = SEAL.map((r) => ({ ...r }));
+    let selected = -1;
 
-    // ---- the row editor ----
+    // ---- the row list ----
     const sel = (k: string, opts: [string, string][], v: string, label: string, cls = '') =>
       `<select data-k="${k}" aria-label="${label}"${cls ? ` class="${cls}"` : ''}>${opts.map(([a, b]) => `<option value="${a}"${a === v ? ' selected' : ''}>${esc(b)}</option>`).join('')}</select>`;
     const inp = (k: string, v: number | undefined, label: string, ph = '', cls = '') =>
       `<input type="number" step="any" data-k="${k}" value="${Number.isFinite(v) ? g4(v as number) : ''}" placeholder="${ph}" aria-label="${label}"${cls ? ` class="${cls}"` : ''} />`;
     const matSel = (v: string | undefined) =>
-      `<select data-k="mat" class="sk-mat" aria-label="Material for thermal growth"><option value="">no material</option>${MATS.map((g) => `<optgroup label="${esc(g.label)}">${g.items.map((m) => `<option value="${m.key}"${m.key === v ? ' selected' : ''}>${esc(m.name)}</option>`).join('')}</optgroup>`).join('')}</select>`;
+      `<select data-k="mat" aria-label="Material for thermal growth"><option value="">no material (does not grow)</option>${MATS.map((g) => `<optgroup label="${esc(g.label)}">${g.items.map((m) => `<option value="${m.key}"${m.key === v ? ' selected' : ''}>${esc(m.name)}</option>`).join('')}</optgroup>`).join('')}</select>`;
     function fieldsFor(r: StackRow) {
       switch (r.format) {
         case 'uneq': return inp('nom', r.nom, 'Nominal', 'nominal') + inp('plus', r.plus, 'Plus tolerance', '+a') + inp('minus', r.minus, 'Minus tolerance', '−b');
@@ -238,65 +304,81 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
         default: return inp('nom', r.nom, 'Nominal', 'nominal') + `<span class="sk-pm">${r.format === 'uniPlus' ? '+' : r.format === 'uniMin' ? '−' : '±'}</span>` + inp('tol', r.tol, 'Tolerance', 't');
       }
     }
-    function conv(r: StackRow) {
+    const conv = (r: StackRow) => {
       const l = rowLimits(r);
       return `→ <b>${g4(l.mean)} ± ${g4(l.half)}</b> × ${r.dir < 0 ? '−' : '+'}${g4(r.sens ?? 1)}${l.note ? ` · <span class="${Math.abs(l.shift) > 1e-12 ? 'w' : ''}">${esc(l.note)}</span>` : ''}`;
-    }
-    function rowHtml(r: StackRow, i: number) {
-      return `<div class="sk-row${r.on === false ? ' off' : ''}" data-i="${i}">
-        <div class="sk-l"><input type="checkbox" data-k="on"${r.on !== false ? ' checked' : ''} aria-label="Include this row" />
-          <input type="text" data-k="name" value="${esc(r.name)}" aria-label="Name" />
-          ${sel('dir', [['1', '+'], ['-1', '−']], String(r.dir), 'Direction in the loop', 'sk-narrow')}
-          <button type="button" class="chip sk-ibtn" data-act="up" aria-label="Move up">↑</button><button type="button" class="chip sk-ibtn" data-act="down" aria-label="Move down">↓</button><button type="button" class="chip sk-ibtn" data-act="del" aria-label="Remove row">×</button></div>
+    };
+    const valText = (r: StackRow) => { const l = rowLimits(r); return `${g4(Number(l.mean.toFixed(4)))} ± ${g4(Number(l.half.toFixed(4)))}${(r.sens ?? 1) !== 1 ? ` ×${g4(r.sens ?? 1)}` : ''}`; };
+    let varShare: number[] = [];
+    function itemHtml(r: StackRow, i: number) {
+      const k = rows.slice(0, i + 1).filter((x) => x.on !== false).length - 1, share = r.on === false ? 0 : (varShare[k] ?? 0);
+      const editor = i !== selected ? '' : `<div class="sk-edit" data-i="${i}">
+        <div class="sk-l"><input type="text" data-k="name" value="${esc(r.name)}" aria-label="Name" />
+          <label><input type="checkbox" data-k="on"${r.on !== false ? ' checked' : ''} /> include</label>
+          <button type="button" class="chip sk-ibtn" data-act="up" aria-label="Move up">↑</button><button type="button" class="chip sk-ibtn" data-act="down" aria-label="Move down">↓</button><button type="button" class="chip sk-ibtn" data-act="del">Delete</button></div>
         <div class="sk-l">${sel('format', OPTS.formats.map((x) => [x.key, x.name]), r.format, 'Tolerance format')}${fieldsFor(r)}</div>
-        <div class="sk-l"><label>×${inp('sens', r.sens ?? 1, 'Sensitivity', '1', 'sk-narrow')}</label>
-          ${sel('dist', [['normal', 'normal'], ['uniform', 'uniform']], r.dist ?? 'normal', 'Distribution')}
+        <div class="sk-l"><label>sensitivity ×${inp('sens', r.sens ?? 1, 'Sensitivity', '1', 'sk-narrow')}</label>
+          <label>${sel('dist', [['normal', 'normal'], ['uniform', 'uniform']], r.dist ?? 'normal', 'Distribution')}</label>
           <input type="text" data-k="group" class="sk-grp" value="${esc(r.group ?? '')}" placeholder="group" aria-label="Correlation group" />
-          <label><input type="checkbox" data-k="locked"${r.locked ? ' checked' : ''} /> fixed</label>${matSel(r.mat)}</div>
+          <label><input type="checkbox" data-k="locked"${r.locked ? ' checked' : ''} /> fixed (bought part)</label></div>
+        <div class="sk-l">${matSel(r.mat)}</div>
         <div class="sk-conv" data-conv>${conv(r)}</div></div>`;
+      return `<div class="sk-item${i === selected ? ' sel' : ''}${r.on === false ? ' off' : ''}" data-i="${i}">
+        <button type="button" class="sk-dir" data-act="dir" aria-label="Direction: ${r.dir < 0 ? 'negative' : 'positive'}. Select to change">${r.dir < 0 ? '−' : '+'}</button>
+        <button type="button" class="sk-main" data-act="sel" aria-expanded="${i === selected}"><span class="sk-n">${esc(r.name)}</span><span class="sk-v" data-val>${valText(r)}</span><span class="sk-bar"><i style="width:${(100 * share).toFixed(1)}%"></i></span></button>
+      </div>${editor}`;
     }
-    const render = () => { box.innerHTML = rows.map(rowHtml).join('') || '<p class="hint">No rows. Add a row, or load the seal example.</p>'; };
-    const rowOf = (e: Element) => e.closest<HTMLElement>('[data-i]');
+    const render = () => { box.innerHTML = rows.map(itemHtml).join('') || '<p class="hint">No rows. Add a row, or load the seal example.</p>'; };
     function readField(e: HTMLInputElement | HTMLSelectElement) {
-      const host = rowOf(e); if (!host) return false;
-      const r = rows[+host.dataset.i!], k = e.dataset.k!;
+      const host = e.closest<HTMLElement>('.sk-edit'); if (!host) return false;
+      const i = +host.dataset.i!, r = rows[i], k = e.dataset.k!;
       if (e instanceof HTMLInputElement && e.type === 'checkbox') (r as any)[k] = e.checked;
       else if (k === 'name' || k === 'group' || k === 'mat' || k === 'gdt' || k === 'dist') (r as any)[k] = e.value;
-      else if (k === 'dir') r.dir = e.value === '-1' ? -1 : 1;
       else if (k === 'format') {
         const l = rowLimits(r), nf = e.value as TolFormat;
         Object.assign(r, nf === 'limits' ? { max: l.hi, min: l.lo } : nf === 'eq' ? { nom: l.mean, tol: l.half } : nf === 'uneq' ? { nom: l.mean, plus: l.half, minus: l.half } : nf === 'gdt' ? { zone: 2 * l.half, nom: l.mean, gdt: r.gdt ?? 'pos' } : { nom: nf === 'uniPlus' ? l.lo : l.hi, tol: 2 * l.half });
         r.format = nf;
-        return true; // structure changed
+        return true;
       } else (r as any)[k] = e.value.trim() === '' ? undefined : +e.value;
-      host.classList.toggle('off', r.on === false);
+      const item = box.querySelector<HTMLElement>(`.sk-item[data-i="${i}"]`);
+      if (item) { item.classList.toggle('off', r.on === false); item.querySelector('.sk-n')!.textContent = r.name; item.querySelector('[data-val]')!.textContent = valText(r); }
       const c = host.querySelector('[data-conv]'); if (c) c.innerHTML = conv(r);
-      return k === 'gdt';
+      return k === 'gdt' || k === 'on';
     }
     box.addEventListener('input', (ev) => { const t = ev.target as HTMLInputElement; if (t.dataset.k && t.type !== 'checkbox' && t.tagName !== 'SELECT') readField(t); });
-    box.addEventListener('change', (ev) => { const t = ev.target as HTMLInputElement; if (t.dataset.k && readField(t)) render(); });
+    box.addEventListener('change', (ev) => { const t = ev.target as HTMLInputElement; if (t.dataset.k && readField(t)) { render(); run(); } });
     root.addEventListener('click', (ev) => {
       const b = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-act]'); if (!b || !root.contains(b)) return;
-      const act = b.dataset.act!, host = rowOf(b), i = host ? +host.dataset.i! : -1;
-      if (act === 'add') rows.push({ name: `Row ${rows.length + 1}`, on: true, dir: 1, format: 'eq', nom: 10, tol: 0.05 });
-      else if (act === 'seal') rows = SEAL.map((r) => ({ ...r }));
-      else if (act === 'clear') rows = [];
-      else if (act === 'del') rows.splice(i, 1);
-      else if (act === 'up' && i > 0) [rows[i - 1], rows[i]] = [rows[i], rows[i - 1]];
-      else if (act === 'down' && i >= 0 && i < rows.length - 1) [rows[i + 1], rows[i]] = [rows[i], rows[i + 1]];
+      const act = b.dataset.act!, host = b.closest<HTMLElement>('[data-i]'), i = host ? +host.dataset.i! : -1;
+      if (act === 'play') { play(); return; }
+      if (act === 'fill') { fillAll(); return; }
+      if (act === 'sel') selected = selected === i ? -1 : i;
+      else if (act === 'dir') rows[i].dir = rows[i].dir < 0 ? 1 : -1;
+      else if (act === 'add') { rows.push({ name: `Row ${rows.length + 1}`, on: true, dir: 1, format: 'eq', nom: 10, tol: 0.05 }); selected = rows.length - 1; }
+      else if (act === 'seal') { rows = SEAL.map((r) => ({ ...r })); selected = -1; }
+      else if (act === 'clear') { rows = []; selected = -1; }
+      else if (act === 'del') { rows.splice(i, 1); selected = -1; }
+      else if (act === 'up' && i > 0) { [rows[i - 1], rows[i]] = [rows[i], rows[i - 1]]; selected = i - 1; }
+      else if (act === 'down' && i >= 0 && i < rows.length - 1) { [rows[i + 1], rows[i]] = [rows[i], rows[i + 1]]; selected = i + 1; }
       else if (act === 'import') {
         const p = rowsFromText(field('l_text').value);
-        if (p.rows.length) rows = p.rows;
+        if (p.rows.length) { rows = p.rows; selected = -1; }
         if (p.bad.length) window.setTimeout(() => { root.querySelector('[data-notes]')!.insertAdjacentHTML('afterbegin', `<li class="bad">Not read: ${p.bad.map((x) => `“${esc(x)}”`).join(', ')}.</li>`); }, 0);
-      } else if (act === 'apply') { applyAllocation(); }
+      } else if (act === 'apply') applyAllocation();
       else return;
-      render(); run();
+      stopPlay(); run(); render();
     });
     root.querySelector('.sk-text')!.addEventListener('toggle', () => { field('l_text').value = rowsToText(rows); });
+    views.addEventListener('click', (ev) => {
+      const b = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-view]'); if (!b) return;
+      view = b.dataset.view!;
+      views.querySelectorAll('[data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      stopPlay(); run();
+    });
 
     // ---- chart helpers ----
     const nice = (span: number) => { const m = 10 ** Math.floor(Math.log10(span / 5)); return [1, 2, 2.5, 5, 10].map((x) => x * m).find((x) => span / x <= 6)!; };
-    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const width = () => Math.round(Math.min(620, Math.max(300, svg.clientWidth || 420)));
     function frame(o: { x0: number; x1: number; y0: number; y1: number; xl: string; yl: string }) {
       svg.replaceChildren();
       const W = width(), H = 250, L = 64, R = 20, T = 30, B = 40;
@@ -326,23 +408,25 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
         x += 37 + name.length * 7.2;
       }
     };
-    const bars = (items: [string, number, number][], xl: string) => {
+    const bars = (items: [string, number, number][], xl: string, legendA = 'variance', legendB = 'worst case') => {
       svg.replaceChildren();
-      const W = width(), H = 250, Lx = 112, R = 16, T = 28, B = 34, n = Math.max(1, items.length);
+      const W = width(), Lx = Math.min(140, W * 0.34), R = 16, T = 30, B = 34, n = Math.max(1, items.length), row = Math.max(26, Math.min(40, 200 / n)), H = T + B + n * row;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      const X = (v: number) => Lx + Math.min(1, v) * (W - Lx - R), row = (H - T - B) / n;
+      const X = (v: number) => Lx + Math.min(1, v) * (W - Lx - R);
       for (const v of [0, 0.25, 0.5, 0.75, 1]) {
         el('line', { x1: X(v), x2: X(v), y1: T, y2: H - B, stroke: v === 0.5 ? 'var(--rd-warn)' : 'var(--rd-line)', 'stroke-dasharray': v === 0.5 ? '4 3' : '' });
         el('text', { x: X(v), y: H - B + 14, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, `${v * 100}%`);
       }
       items.forEach(([name, a, b], i) => {
-        const y = T + i * row, h = Math.min(12, row * 0.36);
-        el('rect', { x: Lx, y: y + row / 2 - h - 1, width: Math.max(1, X(a) - Lx), height: h, fill: 'var(--rd-accent)', 'fill-opacity': 0.85 });
-        el('rect', { x: Lx, y: y + row / 2 + 1, width: Math.max(1, X(b) - Lx), height: h, fill: 'var(--rd-steel)', 'fill-opacity': 0.8 });
-        el('text', { x: Lx - 6, y: y + row / 2 + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--rd-ink)' }, name.length > 14 ? `${name.slice(0, 13)}…` : name);
+        const y = T + i * row, h = Math.min(11, row * 0.34);
+        el('rect', { x: Lx, y: y + row / 2 - h - 1, width: Math.max(1, X(a) - Lx), height: h, rx: 2, fill: 'var(--rd-accent)', 'fill-opacity': 0.85 });
+        el('rect', { x: Lx, y: y + row / 2 + 1, width: Math.max(1, X(b) - Lx), height: h, rx: 2, fill: 'var(--rd-steel)', 'fill-opacity': 0.8 });
+        el('text', { x: Math.min(X(a) + 4, W - R - 30), y: y + row / 2 - 2, 'font-size': 10, fill: 'var(--rd-ink)', ...halo }, `${f(100 * a, 0)}%`);
+        const nm = Lx < 120 ? 12 : 17;
+        el('text', { x: Lx - 6, y: y + row / 2 + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--rd-ink)' }, name.length > nm ? `${name.slice(0, nm - 1)}…` : name);
       });
-      el('rect', { x: 8, y: 8, width: 12, height: 8, fill: 'var(--rd-accent)' }); el('text', { x: 24, y: 16, 'font-size': 11, fill: 'var(--rd-ink)' }, 'variance');
-      el('rect', { x: 100, y: 8, width: 12, height: 8, fill: 'var(--rd-steel)' }); el('text', { x: 116, y: 16, 'font-size': 11, fill: 'var(--rd-ink)' }, 'worst case');
+      el('rect', { x: 8, y: 9, width: 12, height: 8, rx: 2, fill: 'var(--rd-accent)' }); el('text', { x: 24, y: 17, 'font-size': 11, fill: 'var(--rd-ink)' }, legendA);
+      el('rect', { x: 110, y: 9, width: 12, height: 8, rx: 2, fill: 'var(--rd-steel)' }); el('text', { x: 126, y: 17, 'font-size': 11, fill: 'var(--rd-ink)' }, legendB);
       el('text', { x: (Lx + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, xl);
     };
 
@@ -352,27 +436,146 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
       const cpkIn = num('l_cpk'), hasCpk = cpkIn > 0, cpk = hasCpk ? cpkIn : 1;
       return { cs, cpk, hasCpk, st: cs.length ? groupedStack(cs, cpk) : null };
     }
+
+    // the "Assemble" view: one band per part (its ± in the loop), the result line, and the histogram building below
+    let asm: { cs: C[]; st: NonNullable<ReturnType<typeof stackState>['st']>; cpk: number; lsl?: number; usl?: number; mcSorted: Float64Array; N: number } | null = null;
+    let sums: number[] = [], fails = 0, timer = 0, playing = false, rand = rng(7);
+    let geo: { X: (d: number) => number; rowY: (i: number) => number; resY: number; histTop: number; histBot: number; nb: number; d0: number; d1: number } | null = null;
+    let dots: SVGCircleElement[] = [], resDot: SVGCircleElement | null = null, bars0: SVGRectElement[] = [], binCounts: number[] = [];
+    function drawAssemble(showFull: boolean) {
+      if (!asm) return;
+      svg.replaceChildren();
+      const { cs, st, lsl, usl } = asm, n = cs.length;
+      const W = width(), Lx = Math.min(132, W * 0.32), R = 14, rowH = n > 8 ? 16 : 20, T = 26;
+      const resY = T + n * rowH + 22, histTop = resY + 24, histBot = histTop + 92, H = histBot + 34;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const lim = [lsl, usl].filter((v): v is number => v !== undefined).map((v) => Math.abs(v - st.nominal));
+      const D = Math.max(st.wc, ...lim, 1e-9) * 1.12, d0 = -D, d1 = D;
+      const X = (d: number) => Lx + ((d - d0) / (d1 - d0)) * (W - Lx - R), rowY = (i: number) => T + i * rowH + rowH / 2;
+      geo = { X, rowY, resY, histTop, histBot, nb: 50, d0, d1 };
+      // grid in result units
+      let step = nice(2 * D);
+      while ((2 * D) / step > (W - Lx - R) / 52) step *= 2;
+      const dp = step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
+      for (let v = Math.ceil(d0 / step) * step; v <= d1 + 1e-9; v += step) {
+        el('line', { x1: X(v), x2: X(v), y1: T - 4, y2: histBot, stroke: 'var(--rd-line)', 'stroke-opacity': Math.abs(v) < 1e-12 ? 1 : 0.6 });
+        el('text', { x: X(v), y: histBot + 14, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, f(st.nominal + v, dp + 1));
+      }
+      el('text', { x: (Lx + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'result');
+      // part bands
+      dots = [];
+      cs.forEach((c, i) => {
+        const h = Math.abs(c.sens) * (c.hi - c.lo) / 2, y = rowY(i), nm = Lx < 110 ? 11 : 16;
+        el('text', { x: Lx - 6, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--rd-ink)' }, c.name.length > nm ? `${c.name.slice(0, nm - 1)}…` : c.name);
+        el('rect', { x: X(-h), y: y - 4, width: Math.max(1.5, X(h) - X(-h)), height: 8, rx: 4, fill: c.dist === 'uniform' ? 'var(--rd-warn)' : 'var(--rd-steel)', 'fill-opacity': 0.55 });
+        dots.push(el('circle', { cx: X(0), cy: y, r: 4, fill: 'var(--rd-accent)', class: 'sk-dot', opacity: 0 }) as SVGCircleElement);
+      });
+      // result line: worst-case and RSS bands, limits
+      el('line', { x1: Lx - 2, x2: W - R, y1: resY - 13, y2: resY - 13, stroke: 'var(--rd-line)' });
+      el('text', { x: Lx - 6, y: resY + 4, 'text-anchor': 'end', 'font-size': 11, 'font-weight': 600, fill: 'var(--rd-ink)' }, 'Result');
+      el('rect', { x: X(-st.wc), y: resY - 6, width: X(st.wc) - X(-st.wc), height: 12, rx: 6, fill: 'var(--rd-muted)', 'fill-opacity': 0.25 });
+      el('rect', { x: X(st.rssMin - st.nominal), y: resY - 6, width: X(st.rssMax - st.nominal) - X(st.rssMin - st.nominal), height: 12, rx: 6, fill: 'var(--rd-blue)', 'fill-opacity': 0.45 });
+      resDot = el('circle', { cx: X(0), cy: resY, r: 5.5, fill: 'var(--rd-ink)', stroke: 'var(--rd-panel)', 'stroke-width': 1.5, class: 'sk-dot', opacity: 0 }) as SVGCircleElement;
+      for (const v of [lsl, usl]) if (v !== undefined) {
+        el('line', { x1: X(v - st.nominal), x2: X(v - st.nominal), y1: resY - 12, y2: histBot, stroke: 'var(--rd-accent)', 'stroke-width': 2 });
+      }
+      // histogram base
+      el('line', { x1: Lx, x2: W - R, y1: histBot, y2: histBot, stroke: 'var(--rd-ink)', 'stroke-opacity': 0.5 });
+      bars0 = []; binCounts = new Array(geo.nb).fill(0);
+      const bw = (W - Lx - R) / geo.nb;
+      for (let b = 0; b < geo.nb; b++) bars0.push(el('rect', { x: Lx + b * bw + 0.4, y: histBot, width: Math.max(0.8, bw - 0.8), height: 0, fill: 'var(--rd-steel)', 'fill-opacity': 0.6 }) as SVGRectElement);
+      // legend
+      const lgY = 16, lgX = Math.max(Lx, W - 210);
+      el('rect', { x: lgX, y: lgY - 8, width: 12, height: 8, rx: 4, fill: 'var(--rd-muted)', 'fill-opacity': 0.4 }); el('text', { x: lgX + 16, y: lgY, 'font-size': 10, fill: 'var(--rd-muted)' }, 'worst');
+      el('rect', { x: lgX + 58, y: lgY - 8, width: 12, height: 8, rx: 4, fill: 'var(--rd-blue)', 'fill-opacity': 0.6 }); el('text', { x: lgX + 74, y: lgY, 'font-size': 10, fill: 'var(--rd-muted)' }, 'RSS');
+      if (lsl !== undefined || usl !== undefined) { el('line', { x1: lgX + 112, x2: lgX + 112, y1: lgY - 9, y2: lgY + 1, stroke: 'var(--rd-accent)', 'stroke-width': 2 }); el('text', { x: lgX + 117, y: lgY, 'font-size': 10, fill: 'var(--rd-muted)' }, 'limit'); }
+      if (showFull) histFrom(asm.mcSorted, asm.N, true); else histFrom(Float64Array.from(sums), sums.length, false);
+    }
+    function histFrom(vals: Float64Array | number[], N: number, full: boolean) {
+      if (!geo || !asm) return;
+      binCounts = new Array(geo.nb).fill(0);
+      const span = geo.d1 - geo.d0;
+      let out = 0;
+      for (const v of vals) {
+        const d = v - (full ? asm.st.nominal : 0);
+        const b = Math.floor(((d - geo.d0) / span) * geo.nb); if (b >= 0 && b < geo.nb) binCounts[b]++;
+        const y = (full ? v : asm.st.nominal + v);
+        if ((asm.lsl !== undefined && y < asm.lsl) || (asm.usl !== undefined && y > asm.usl)) out++;
+      }
+      paintHist();
+      countEl.textContent = full
+        ? `${N.toLocaleString('en-GB')} assemblies${asm.lsl !== undefined || asm.usl !== undefined ? ` · ${out.toLocaleString('en-GB')} outside the limits` : ''}`
+        : `${N} assemblies${asm.lsl !== undefined || asm.usl !== undefined ? ` · ${out} outside the limits` : ''}`;
+      fails = out;
+    }
+    function paintHist() {
+      if (!geo) return;
+      const top = Math.max(1, ...binCounts), hh = geo.histBot - geo.histTop;
+      bars0.forEach((r, b) => { const h = (binCounts[b] / top) * hh; r.setAttribute('y', String(geo!.histBot - h)); r.setAttribute('height', String(h)); });
+    }
+    function step1() {
+      if (!asm || !geo) return;
+      const s = sampleOnce(asm.cs, asm.cpk, rand);
+      s.devs.forEach((d, i) => { const c = dots[i]; if (c) { c.setAttribute('cx', String(geo!.X(d))); c.setAttribute('opacity', '1'); } });
+      const y = asm.st.nominal + s.sum, bad = (asm.lsl !== undefined && y < asm.lsl) || (asm.usl !== undefined && y > asm.usl);
+      if (resDot) { resDot.setAttribute('cx', String(geo.X(s.sum))); resDot.setAttribute('opacity', '1'); resDot.setAttribute('fill', bad ? 'var(--rd-accent)' : 'var(--rd-ink)'); }
+      sums.push(s.sum); if (bad) fails++;
+      const b = Math.floor(((s.sum - geo.d0) / (geo.d1 - geo.d0)) * geo.nb); if (b >= 0 && b < geo.nb) binCounts[b]++;
+      paintHist();
+      countEl.textContent = `${sums.length} assemblies${asm.lsl !== undefined || asm.usl !== undefined ? ` · ${fails} outside the limits` : ''} · this one: ${f(y)}`;
+    }
+    function stopPlay() { playing = false; window.clearTimeout(timer); const b = root.querySelector<HTMLButtonElement>('[data-act="play"]'); if (b) b.textContent = '▶ Build assemblies'; }
+    function play() {
+      if (!asm) return;
+      if (playing) { stopPlay(); return; }
+      if (calm()) { fillAll(); return; }
+      sums = []; fails = 0; rand = rng(7); drawAssemble(false);
+      playing = true;
+      root.querySelector<HTMLButtonElement>('[data-act="play"]')!.textContent = '⏸ Pause';
+      // slow at first so each part can be seen moving, then faster
+      const tick = () => {
+        if (!playing) return;
+        const k = sums.length, batch = k < 12 ? 1 : k < 60 ? 2 : k < 400 ? 12 : 60;
+        for (let j = 0; j < batch; j++) step1();
+        if (sums.length >= 3000) { stopPlay(); return; }
+        timer = window.setTimeout(tick, k < 12 ? 650 : k < 60 ? 220 : 60);
+      };
+      tick();
+    }
+    function fillAll() { stopPlay(); if (!asm) return; drawAssemble(true); }
+
     function runLin(out: Row[], notes: [string, string][]) {
       (root.querySelector('[data-thermal]') as HTMLElement).hidden = !(field('l_th') as HTMLInputElement).checked;
       const { cs, cpk, hasCpk, st } = stackState();
-      if (!st) { notes.push(['bad', 'Add at least one row in the loop.']); return null; }
+      if (!st) { notes.push(['bad', 'Add at least one row in the loop.']); varShare = []; head.innerHTML = ''; table.innerHTML = ''; asm = null; return null; }
       const lsl = Number.isFinite(num('l_lsl')) ? num('l_lsl') : undefined, usl = Number.isFinite(num('l_usl')) ? num('l_usl') : undefined;
       const hasLim = lsl !== undefined || usl !== undefined, N = +field('l_n').value || 100000;
       const mc = groupedMonteCarlo(cs, { n: N, seed: 1, cpk });
       const inside = (a: number, b: number) => (lsl === undefined || a >= lsl - 1e-12) && (usl === undefined || b <= usl + 1e-12);
-      const verdict = (a: number, b: number) => (hasLim ? (inside(a, b) ? 'ok' : 'bad') : '');
+      const mark = (a: number, b: number) => (hasLim ? (inside(a, b) ? '<td class="ok">✓ meets</td>' : '<td class="bad">✗ misses</td>') : '<td>—</td>');
       const uniform = cs.some((c) => c.dist === 'uniform');
-      out.push({ dt: 'Nominal', dd: `${f(st.nominal)} <small>every part at the middle of its limits</small>`, primary: true });
-      out.push({ dt: 'Worst case', dd: `${f(st.wcMin)} to ${f(st.wcMax)} <small>± ${f(st.wc)}: every part at its worst limit at once</small>`, cls: verdict(st.wcMin, st.wcMax) });
-      out.push({ dt: 'RSS', dd: `${f(st.rssMin)} to ${f(st.rssMax)} <small>± ${f(st.rss)} = √Σ(s·t)²${st.groups.length ? `, groups ${st.groups.map(esc).join(', ')} worst case inside` : ''}: each part normal, centred, its tolerance ±3σ</small>`, cls: verdict(st.rssMin, st.rssMax) });
-      out.push({ dt: 'Bender (1.5 × RSS)', dd: `${f(st.nominal - st.bender)} to ${f(st.nominal + st.bender)} <small>an allowance for parts that are not centred, when you have no process data</small>`, cls: verdict(st.nominal - st.bender, st.nominal + st.bender) });
+      const outside = (lsl === undefined ? 0 : mc.below(lsl)) + (usl === undefined ? 0 : mc.above(usl));
+      varShare = st.rows.map((r) => r.varShare);
+      asm = { cs, st, cpk, lsl, usl, mcSorted: mc.sorted, N };
+
+      // headline: the worst case against the limits
+      const wcOk = hasLim ? inside(st.wcMin, st.wcMax) : null, rssOk = hasLim ? inside(st.rssMin, st.rssMax) : null;
+      head.className = `sk-head ${wcOk === null ? '' : wcOk ? 'ok' : rssOk ? 'warn' : 'bad'}`;
+      head.innerHTML = `<b>${f(st.nominal)}</b><span>nominal · worst case ${f(st.wcMin)} to ${f(st.wcMax)}${hasLim ? ` · ${wcOk ? 'every assembly meets the limit' : rssOk ? 'the worst case misses the limit, the statistics meet it' : 'misses the limit'}` : ' · enter the limits to check them'}</span>`;
+
+      // one table for all the methods
+      const trs: string[] = [];
+      trs.push(`<tr><td>Worst case</td><td>${f(st.wcMin)} to ${f(st.wcMax)}</td><td>± ${f(st.wc)}</td>${mark(st.wcMin, st.wcMax)}</tr>`);
+      trs.push(`<tr><td>RSS${st.groups.length ? ` (groups ${st.groups.map(esc).join(', ')})` : ''}</td><td>${f(st.rssMin)} to ${f(st.rssMax)}</td><td>± ${f(st.rss)}</td>${mark(st.rssMin, st.rssMax)}</tr>`);
+      trs.push(`<tr><td>Bender 1.5 × RSS</td><td>${f(st.nominal - st.bender)} to ${f(st.nominal + st.bender)}</td><td>± ${f(st.bender)}</td>${mark(st.nominal - st.bender, st.nominal + st.bender)}</tr>`);
       if (hasCpk || uniform) {
         const c = capability(st.nominal, st.sigma, lsl, usl);
-        out.push({ dt: hasCpk ? `Parts at Cpk ${f(cpk, 2)}` : 'With the uniform parts', dd: `${f(st.cpkMin)} to ${f(st.cpkMax)} <small>±3σ, σ = ${f(st.sigma, 4)}${hasLim ? ` · assembly Cpk ${f(c.cpk, 2)}, ${pct(c.below + c.above)} predicted outside` : ''}</small>`, cls: verdict(st.cpkMin, st.cpkMax) });
-      } else out.push({ dt: 'Cpk-based', dd: '<small>Enter the parts’ process Cpk (from your suppliers’ measured process data, not from this site) to base the statistics on it. Or press “Load worked example”.</small>' });
-      const outside = (lsl === undefined ? 0 : mc.below(lsl)) + (usl === undefined ? 0 : mc.above(usl));
-      out.push({ dt: 'Monte Carlo', dd: `${f(mc.quantile(0.00135))} to ${f(mc.quantile(0.99865))} <small>middle 99.73% of ${N.toLocaleString('en-GB')} assemblies${hasCpk ? '' : ', normal parts at Cpk 1'}${hasLim ? (outside > 0 ? ` · ${pct(outside)} outside the limits (${Math.round(outside * N).toLocaleString('en-GB')})` : ' · none outside the limits') : ''}</small>`, cls: hasLim ? (outside > 0 ? 'warn' : 'ok') : '' });
-      if (!hasLim) out.push({ dt: 'Requirement', dd: criterion('limit on the result', 'check each method against it') });
+        trs.push(`<tr><td>${hasCpk ? `Parts at Cpk ${f(cpk, 2)}` : 'With uniform parts'}</td><td>${f(st.cpkMin)} to ${f(st.cpkMax)}</td><td>± ${f(st.cpkBand)}</td>${hasLim ? `<td class="${c.below + c.above > 0.0027 ? 'bad' : 'ok'}">Cpk ${f(c.cpk, 2)}</td>` : '<td>—</td>'}</tr>`);
+      }
+      trs.push(`<tr><td>Monte Carlo, 99.73%</td><td>${f(mc.quantile(0.00135))} to ${f(mc.quantile(0.99865))}</td><td>${N.toLocaleString('en-GB')}</td>${hasLim ? `<td class="${outside > 0 ? 'warn' : 'ok'}">${outside > 0 ? pct(outside) + ' out' : 'none out'}</td>` : '<td>—</td>'}</tr>`);
+      table.innerHTML = `<table><thead><tr><th>Method</th><th>Range</th><th>Band</th><th>Limit</th></tr></thead><tbody>${trs.join('')}</tbody></table>`;
+      if (!hasLim) out.push({ dt: 'Requirement', dd: criterion('limits on the result', 'check each method against them') });
+      if (!hasCpk && !uniform) out.push({ dt: 'Cpk-based', dd: '<small>Enter the parts’ process Cpk (from measured process data) to base the statistics on it.</small>' });
 
       // thermal growth at the two extremes
       if ((field('l_th') as HTMLInputElement).checked) {
@@ -380,41 +583,23 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
         for (const [lbl, T] of [['Coldest', num('l_tc')], ['Hottest', num('l_th2')]] as const) {
           if (!Number.isFinite(T) || !Number.isFinite(t0)) continue;
           const th = thermalShift(rows, alphaOf, T - t0), a = st.wcMin + th.total, b = st.wcMax + th.total;
-          out.push({ dt: `${lbl}, ${f(T, 0)} °C`, dd: `${th.total >= 0 ? '+' : ''}${f(th.total, 4)} <small>thermal shift of the result · worst case ${f(a)} to ${f(b)}${withMat ? '' : ' · select a material on the rows'}</small>`, cls: verdict(a, b) });
+          out.push({ dt: `${lbl}, ${f(T, 0)} °C`, dd: `${th.total >= 0 ? '+' : ''}${f(th.total, 4)} <small>thermal shift · worst case ${f(a)} to ${f(b)}${withMat ? '' : ' · select a material on the rows'}</small>`, cls: hasLim ? (inside(a, b) ? 'ok' : 'bad') : '' });
         }
-        if (!withMat) notes.push(['warn', 'No row has a material. Select one on each row whose length changes with temperature; rows without a material do not grow.']);
-        notes.push(['', 'Thermal growth moves the result; it is not a tolerance. Each row grows by L·α·ΔT from the assembly temperature, with α from the material library.']);
+        if (!withMat) notes.push(['warn', 'No row has a material. Select one in the row editor; rows without a material do not grow.']);
       }
 
-      // contribution table
       const order = st.rows.map((r, i) => ({ ...r, c: cs[i] })).sort((a, b) => b.varShare - a.varShare);
-      table.innerHTML = `<table><thead><tr><th>Row</th><th>±</th><th>× s</th><th>Worst case</th><th>Variance</th></tr></thead><tbody>${order.map((r, i) =>
-        `<tr><td>${esc(r.name)}${r.c.group ? ` <small>(${esc(r.c.group)})</small>` : ''}${r.c.dist === 'uniform' ? ' <small>u</small>' : ''}</td><td>${f(r.half, 4)}</td><td>${g4(r.c.sens)}</td><td>${f(100 * r.wcShare, 0)}%</td><td class="${i === 0 && r.varShare > 0.5 ? 'hi' : ''}">${f(100 * r.varShare, 0)}%</td></tr>`).join('')}</tbody></table>`;
-      out.push({ dt: 'Largest shares of the variance', dd: shares(order.map((r): [string, number] => [r.name, r.varShare])) });
-
       if (order[0].varShare > 0.5) notes.push(['warn', `${esc(order[0].name)} is ${f(100 * order[0].varShare, 0)}% of the variance (${f(100 * order[0].wcShare, 0)}% of the worst case). Tightening anything else barely moves the result.`]);
-      if (hasLim && inside(st.wcMin, st.wcMax)) notes.push(['ok', 'The worst case meets the limit: every assembly of in-tolerance parts does, whatever the distributions. No statistics needed.']);
-      else if (hasLim && inside(st.rssMin, st.rssMax)) notes.push(['warn', 'The worst case fails and the statistics pass. Accepting that is a decision, not a calculation: it needs process data showing the parts are centred, independent and as capable as assumed (and a failure that is tolerable at the predicted rate, or that inspection will catch).']);
-      else if (hasLim) notes.push(['bad', 'Even the statistical stack misses the limit: change the design or the tolerances that dominate. The Allocate tab shows the tolerances that would meet it.']);
-      if (rows.some((r) => r.on !== false && r.format === 'gdt' && r.gdt === 'pos')) notes.push(['', 'A diametral position zone ⌀t acts by its radius, ±t/2, in one direction. Using ±t doubles its effect. At MMC, add the bonus that the feature can have: up to its size tolerance.']);
-      if (uniform) notes.push(['', 'Uniform parts (tool wear, an uncontrolled feature, a lot whose mean can sit anywhere) have a σ 1.7 times the normal one, and widen the statistical result.']);
-      if (!st.groups.length) notes.push(['', 'RSS and Monte Carlo assume independent parts. Features made in the same setup, by the same tool or from the same batch change together: give them a group letter.']);
+      if (hasLim && inside(st.wcMin, st.wcMax)) notes.push(['ok', 'The worst case meets the limit: every assembly of in-tolerance parts does, whatever the distributions.']);
+      else if (hasLim && inside(st.rssMin, st.rssMax)) notes.push(['warn', 'The worst case fails and the statistics pass. Accepting that is a decision, not a calculation: it needs process data showing the parts are centred, independent and as capable as assumed.']);
+      else if (hasLim) notes.push(['bad', 'Even the statistical stack misses the limit. The Allocate tab shows the tolerances that would meet it.']);
+      if (rows.some((r) => r.on !== false && r.format === 'gdt' && r.gdt === 'pos')) notes.push(['', 'A diametral position zone ⌀t acts by its radius, ±t/2, in one direction. At MMC, add the bonus that the feature can have.']);
+      if (uniform) notes.push(['', 'Uniform parts (tool wear, an uncontrolled feature) have a σ 1.7 times the normal one: shown in amber in the Assemble view.']);
+      if (!st.groups.length) notes.push(['', 'RSS and Monte Carlo assume independent parts. Features made in one setup, by one tool or from one batch change together: give them a group letter in the row editor.']);
 
       return () => {
-        if (field('l_chart').value === 'share') { bars(order.map((r) => [r.name, r.varShare, r.wcShare]), 'share of the variance and of the worst case'); return; }
-        let x0 = Math.min(st.wcMin, mc.min), x1 = Math.max(st.wcMax, mc.max);
-        if (lsl !== undefined) x0 = Math.min(x0, lsl); if (usl !== undefined) x1 = Math.max(x1, usl);
-        const pad = 0.06 * (x1 - x0 || 1); x0 -= pad; x1 += pad;
-        const nb = 44, bw = (x1 - x0) / nb, bins = new Array(nb).fill(0);
-        for (const v of mc.sorted) bins[Math.min(nb - 1, Math.max(0, Math.floor((v - x0) / bw)))]++;
-        const top = (100 * Math.max(...bins)) / N;
-        const c = frame({ x0, x1, y0: 0, y1: top * 1.18, xl: 'stack result', yl: 'assemblies per bin (%)' });
-        bins.forEach((b, i) => { if (b) el('rect', { x: c.X(x0 + i * bw) + 0.5, y: c.Y((100 * b) / N), width: Math.max(1, c.X(x0 + bw) - c.X(x0) - 1), height: c.Y(0) - c.Y((100 * b) / N), fill: 'var(--rd-steel)', 'fill-opacity': 0.55 }); });
-        const vline = (v: number, color: string, dash = '') => el('line', { x1: c.X(v), x2: c.X(v), y1: c.T, y2: c.H - c.B, stroke: color, 'stroke-width': 2, ...(dash ? { 'stroke-dasharray': dash } : {}) });
-        vline(st.wcMin, 'var(--rd-muted)', '5 4'); vline(st.wcMax, 'var(--rd-muted)', '5 4');
-        vline(st.rssMin, 'var(--rd-blue)'); vline(st.rssMax, 'var(--rd-blue)');
-        if (lsl !== undefined) vline(lsl, 'var(--rd-accent)'); if (usl !== undefined) vline(usl, 'var(--rd-accent)');
-        legend([['worst case', 'var(--rd-muted)', '5 4'], ['RSS', 'var(--rd-blue)'], ...(hasLim ? [['limit', 'var(--rd-accent)'] as [string, string]] : [])]);
+        if (view === 'share') { bars(order.map((r) => [r.name, r.varShare, r.wcShare]), 'share of the stack'); return; }
+        if (sums.length && !playing) drawAssemble(false); else if (!playing) drawAssemble(true);
       };
     }
 
@@ -434,24 +619,24 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
     }
     function runAlloc(out: Row[], notes: [string, string][]) {
       const a = allocInputs();
-      if (!a) { notes.push(['bad', 'Add rows on the linear tab first.']); table.innerHTML = ''; return null; }
-      if (!(a.target > 0) || !Number.isFinite(a.target)) { out.push({ dt: 'Target', dd: criterion('target on the result', 'share it among the rows') }); table.innerHTML = ''; lastAlloc = null; return null; }
+      if (!a) { notes.push(['bad', 'Add rows on the linear tab first.']); return null; }
+      if (!(a.target > 0) || !Number.isFinite(a.target)) { out.push({ dt: 'Target', dd: criterion('target on the result', 'share it among the rows') }); lastAlloc = null; return null; }
       const basis = field('a_b').value as 'wc' | 'rss', method = field('a_m').value as AllocMethod;
       const r = allocate(a.ar, a.target, basis, method);
       lastAlloc = r;
       const now = basis === 'wc' ? a.st.wc : a.st.rss;
-      out.push({ dt: 'Target', dd: `± ${f(a.target, 4)} <small>from ${a.src} · ${basis === 'wc' ? 'worst case' : 'RSS'} now ± ${f(now, 4)}</small>`, primary: true, cls: now <= a.target + 1e-12 ? 'ok' : 'bad' });
-      if (!r.ok) { notes.push(['bad', `The fixed rows alone use ± ${f(r.used, 4)}, which is the full target or more. Change a fixed part, or the design.`]); table.innerHTML = ''; return null; }
+      head.className = `sk-head ${now <= a.target + 1e-12 ? 'ok' : 'bad'}`;
+      head.innerHTML = `<b>± ${f(a.target, 4)}</b><span>target from ${a.src} · ${basis === 'wc' ? 'worst case' : 'RSS'} now ± ${f(now, 4)}</span>`;
+      if (!r.ok) { notes.push(['bad', `The fixed rows alone use ± ${f(r.used, 4)}, which is the full target or more. Change a fixed part, or the design.`]); return null; }
       out.push({ dt: method === 'scale' ? 'Scale factor' : 'Factor', dd: `${f(r.k, method === 'scale' ? 3 : 4)} <small>${method === 'scale' ? (r.k >= 1 ? 'the tolerances can open by this factor' : 'every free tolerance must close by this factor') : 'applied to the weight of each row'} · fixed rows use ± ${f(r.used, 4)}</small>`, cls: method === 'scale' ? (r.k >= 1 ? 'ok' : 'warn') : '' });
       table.innerHTML = `<table><thead><tr><th>Row</th><th>Now ±</th><th>New ±</th><th>Change</th><th>Grade</th></tr></thead><tbody>${r.rows.map((x, i) => {
         const it = x.locked || a.ar[i].gdt ? undefined : itGrade(x.mean, 2 * x.newHalf, itValue);
         return `<tr><td>${esc(x.name)}${x.locked ? ' <small>fixed</small>' : ''}</td><td>${f(x.half, 4)}</td><td>${f(x.newHalf, 4)}</td><td class="${!x.locked && x.newHalf < x.half ? 'hi' : ''}">${x.locked ? '—' : `×${f(x.newHalf / x.half, 2)}`}</td><td>${it ? `IT${it}` : '—'}</td></tr>`;
       }).join('')}</tbody></table>`;
-      notes.push(['', 'Grade: the coarsest ISO 286 grade whose width fits inside the new tolerance at the size of the row. It shows how hard each tolerance is to make: IT6 and finer needs grinding or honing, IT7–IT8 fine turning or boring, IT9–IT11 normal machining.']);
-      if (method === 'size') notes.push(['', 'By size gives each row the same IT grade, so each process works equally hard. It is usually the most economic first allocation.']);
-      if (method === 'equal') notes.push(['', 'Equal effect gives a ½-sensitivity diameter twice the tolerance of a length. It suits rows made by similar processes.']);
-      notes.push(['', '“Apply to the rows” writes the new tolerances back to the linear tab, about the present mean of each row. Check the result there.']);
-      return () => bars(r.rows.map((x) => [x.name, Math.min(1, x.newHalf / Math.max(...r.rows.map((y) => Math.max(y.half, y.newHalf)))), Math.min(1, x.half / Math.max(...r.rows.map((y) => Math.max(y.half, y.newHalf))))]), 'new (red) and present (grey) tolerance, relative');
+      notes.push(['', 'Grade: the coarsest ISO 286 grade whose width fits inside the new tolerance at the size of the row. IT6 and finer needs grinding or honing, IT7–IT8 fine turning or boring, IT9–IT11 normal machining.']);
+      notes.push(['', '“Apply to the rows” writes the new tolerances back to the linear tab, about the present mean of each row.']);
+      const big = Math.max(...r.rows.map((y) => Math.max(y.half, y.newHalf)));
+      return () => bars(r.rows.map((x) => [x.name, x.newHalf / big, x.half / big]), 'tolerance, relative to the largest', 'new', 'now');
     }
     function applyAllocation() {
       const a = allocInputs();
@@ -477,19 +662,21 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
       const hasP = pIn > 0 && pIn < 100, hasL = lim > 0, qp = hasP ? q(pIn / 100) : NaN;
       const extra = (d: number) => [F > 0 ? `${f(F * d, 1)} N·m at ${f(F, 1)} kN` : '', lever > 0 ? `${f((Math.atan(d / lever) * 180) / Math.PI, 3)}° over ${f(lever, 0)} mm` : ''].filter(Boolean).join(' · ');
       const vs = (d: number) => (hasL ? (d <= lim ? 'ok' : 'bad') : '');
+      head.className = `sk-head ${hasP && hasL ? (qp <= lim ? 'ok' : 'bad') : ''}`;
+      head.innerHTML = hasP ? `<b>${f(qp)} mm</b><span>${f(pIn, pIn % 1 ? 2 : 0)}% of assemblies are within this offset${hasL ? ` · limit ${f(lim)} mm` : ''}</span>` : `<b>${f(s.wc)} mm</b><span>worst case, every offset in line</span>`;
       out.push({ dt: 'Worst case', dd: `${f(s.wc)} mm <small>every offset in line · ${extra(s.wc)}</small>`, cls: vs(s.wc) });
       out.push({ dt: 'RSS of the radii', dd: `${f(s.rssRadii)} mm <small>exceeded by ${pct(s.mc.above(s.rssRadii))} of assemblies, not a bound for vectors</small>`, cls: 'warn' });
       out.push({ dt: 'Monte Carlo median', dd: `${f(q(0.5))} mm <small>half of ${N.toLocaleString('en-GB')} assemblies are better · largest seen ${f(s.mc.max)} mm</small>` });
-      if (hasP) out.push({ dt: `Covering ${f(pIn, pIn % 1 ? 2 : 0)}%`, dd: `${f(qp)} mm <small>${extra(qp)}</small>`, cls: vs(qp), primary: true });
+      if (hasP) out.push({ dt: `Covering ${f(pIn, pIn % 1 ? 2 : 0)}%`, dd: `${f(qp)} mm <small>${extra(qp)}</small>`, cls: vs(qp) });
       else out.push({ dt: 'Coverage', dd: criterion('fraction of assemblies to cover', 'read the offset they stay within') });
       if (hasL) out.push({ dt: `Over ${f(lim)} mm`, dd: `${pct(s.mc.above(lim))} of assemblies <small>${Math.round(s.mc.above(lim) * N).toLocaleString('en-GB')} of ${N.toLocaleString('en-GB')}</small>`, cls: s.mc.above(lim) > 0 ? 'warn' : 'ok' });
       else out.push({ dt: 'Requirement', dd: criterion('limit on the offset', 'check the stack against it') });
       const order = [...s.shares].sort((a, b) => b.wcShare - a.wcShare);
       out.push({ dt: 'Largest shares of the worst case', dd: shares(order.map((r): [string, number] => [r.name, r.wcShare])) });
       notes.push(['warn', `Offsets in random directions add as vectors. The RSS of the radii, ${f(s.rssRadii)} mm, treats each like a ±3σ dimension; a clearance taken up fully is nothing like that, and ${pct(s.mc.above(s.rssRadii))} of assemblies exceed it. Use the Monte Carlo.`]);
-      if (p.rows.some((o) => o.kind === 'fixed')) notes.push(['', 'Fixed offsets all point the same way (to the right in the chart) and add arithmetically, like a worst case, before the random ones spread around them.']);
+      if (p.rows.some((o) => o.kind === 'fixed')) notes.push(['', 'Fixed offsets all point the same way (to the right in the chart) and add arithmetically before the random ones spread around them.']);
       if (hasL && s.wc > lim && hasP && qp <= lim) notes.push(['warn', 'The worst case exceeds the limit but the required coverage meets it. That is acceptable only where the programme accepts a statistical requirement, and is best backed by measuring the alignment of every motor.']);
-      if (p.rows.some((o) => o.kind === 'shift')) notes.push(['', 'A clearance shift is frozen when the bolts are tightened. Assembling in a fixture that centres the part removes it; assembling horizontally turns it into a fixed offset downwards.']);
+      if (p.rows.some((o) => o.kind === 'shift')) notes.push(['', 'A clearance shift is frozen when the bolts are tightened. A centring fixture removes it; horizontal assembly turns it into a fixed offset downwards.']);
       return () => {
         svg.replaceChildren();
         const W = width(), H = 250, T = 30, B = 26;
@@ -513,24 +700,21 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
       const kind = field('f_case').value, H = num('f_h'), F = num('f_f'), t1 = num('f_t1'), t2 = num('f_t2'), P = num('f_p'), D = num('f_d');
       root.querySelectorAll<HTMLElement>('[data-fx]').forEach((e) => (e.hidden = kind === 'float'));
       root.querySelectorAll<HTMLElement>('[data-np]').forEach((e) => (e.hidden = kind !== 'noproj'));
-      table.innerHTML = '';
       if (!(H > 0 && F > 0)) { notes.push(['bad', 'Enter the hole and the fastener sizes at MMC.']); return null; }
       if (H <= F) { out.push({ dt: 'Clearance', dd: 'none <small>the hole at MMC is not larger than the fastener</small>', cls: 'bad', primary: true }); return null; }
       if (kind === 'float') {
         const T = floatingTolerance(H, F);
-        out.push({ dt: 'Position, each part', dd: `⌀${f(T)} at MMC <small>T = H − F, in both parts</small>`, primary: true });
+        head.className = 'sk-head'; head.innerHTML = `<b>⌀${f(T)}</b><span>position at MMC in each part: T = H − F</span>`;
         notes.push(['', 'Floating fasteners: both parts have clearance holes, so each part can use the full difference between the hole and the fastener.']);
       } else if (kind === 'fixed') {
         const T = fixedTotal(H, F), a = Number.isFinite(t1) ? Math.min(T, t1) : T / 2, b = T - a;
-        out.push({ dt: 'Total, both parts', dd: `⌀${f(T)} <small>T₁ + T₂ = H − F</small>`, primary: true });
-        out.push({ dt: 'Clearance holes T₁', dd: `⌀${f(a)} at MMC <small>${Number.isFinite(t1) ? 'your value' : 'half of the total'}</small>` });
+        head.className = `sk-head ${b > 0 ? 'ok' : 'bad'}`; head.innerHTML = `<b>⌀${f(a)} + ⌀${f(b)}</b><span>clearance holes T₁ + threaded holes T₂ = H − F = ${f(T)}</span>`;
         out.push({ dt: 'Threaded holes T₂', dd: `⌀${f(b)} at MMC, projected <small>the zone projects over the thickness of the clamped part</small>`, cls: b > 0 ? 'ok' : 'bad' });
         notes.push(['', 'Fixed fasteners: one part holds the fastener, so the two parts share the clearance. Give the threaded holes a projected tolerance zone (Ⓟ) equal to the maximum thickness of the clamped part.']);
       } else {
         if (!(P > 0 && D > 0 && t2 >= 0)) { notes.push(['bad', 'Enter T₂, the projection P and the engagement D.']); return null; }
-        const a = Number.isFinite(t1) ? t1 : fixedTotal(H, F) - t2, Hneed = holeWithoutProjection(F, a, t2, P, D);
-        out.push({ dt: 'Clearance hole needed', dd: `⌀${f(Hneed)} at MMC <small>H = F + T₁ + T₂(1 + 2P/D), with T₁ ${f(a)}</small>`, primary: true, cls: Hneed <= H + 1e-9 ? 'ok' : 'bad' });
-        out.push({ dt: 'Your hole', dd: `⌀${f(H)} <small>${Hneed <= H + 1e-9 ? 'large enough' : `${f(Hneed - H)} too small: use a projected zone, or a larger hole`}</small>`, cls: Hneed <= H + 1e-9 ? 'ok' : 'bad' });
+        const a = Number.isFinite(t1) ? t1 : fixedTotal(H, F) - t2, Hneed = holeWithoutProjection(F, a, t2, P, D), ok = Hneed <= H + 1e-9;
+        head.className = `sk-head ${ok ? 'ok' : 'bad'}`; head.innerHTML = `<b>⌀${f(Hneed)}</b><span>clearance hole needed at MMC: H = F + T₁ + T₂(1 + 2P/D) · your hole ⌀${f(H)} ${ok ? 'is large enough' : `is ${f(Hneed - H)} too small`}</span>`;
         notes.push(['warn', 'Without a projected zone, a perpendicularity error of the threaded hole tilts the fastener, and the tilt grows over the height of the clamped part. Specify Ⓟ on the threaded holes instead.']);
       }
       return null;
@@ -538,28 +722,43 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
 
     const RUN: Record<string, typeof runLin> = { lin: runLin, alloc: runAlloc, rad: runRad, fast: runFast };
     const CAPS: Record<string, string> = {
-      lin: 'The Monte Carlo result as a histogram, with the worst-case and RSS bands and the limits once entered. Or each row’s share of the variance and of the worst case.',
-      alloc: 'The new tolerance of each row against its present tolerance, relative to the largest.',
+      lin: '',
+      alloc: 'The new tolerance of each row (red) against its present tolerance (grey), relative to the largest.',
       rad: 'Where the axis lands in simulated assemblies, with the worst case, the RSS of the radii and (once entered) the coverage and the limit.',
       fast: '',
     };
+    const capLin = () => (view === 'share'
+      ? 'Each row’s share of the variance (red) and of the worst case (grey). The dashed line is 50%: a row past it controls the stack.'
+      : 'Each part varies inside its band (grey; amber for a uniform part). Press “Build assemblies” to draw assemblies one at a time: each red dot is a part, the black dot is the result, and the histogram builds below against the worst-case and RSS bands and the limits. “Run all” shows the full Monte Carlo.');
 
     function run() {
       const out: Row[] = [], notes: [string, string][] = [];
+      head.innerHTML = ''; head.className = 'sk-head';
       if (mode !== 'lin' && mode !== 'alloc') table.innerHTML = '';
+      if (mode === 'alloc') table.innerHTML = '';
+      if (mode === 'lin' && !playing) { sums = []; fails = 0; }
       draw = RUN[mode](out, notes);
       root.querySelector('[data-out]')!.innerHTML = out.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
       root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
-      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      root.querySelector('[data-cap]')!.textContent = mode === 'lin' ? capLin() : CAPS[mode];
+      views.hidden = mode !== 'lin';
+      playBar.hidden = !(mode === 'lin' && view === 'asm' && draw);
       fig.hidden = !draw;
       if (draw) draw(); else svg.replaceChildren();
+      if (mode === 'lin') { // refresh the share bars in the list without rebuilding the editor
+        box.querySelectorAll<HTMLElement>('.sk-item').forEach((it) => {
+          const i = +it.dataset.i!, k = rows.slice(0, i + 1).filter((x) => x.on !== false).length - 1;
+          const bar = it.querySelector<HTMLElement>('.sk-bar i'); if (bar) bar.style.width = `${(100 * (rows[i].on === false ? 0 : varShare[k] ?? 0)).toFixed(1)}%`;
+        });
+      }
     }
 
     const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
     function select(key: string, focus = false) {
-      mode = key;
+      mode = key; stopPlay();
       tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
       root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      if (key === 'lin') render();
       run();
     }
     tabs.forEach((b, i) => {
@@ -572,17 +771,17 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
     });
     if ('ResizeObserver' in window) {
       let w = 0;
-      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && !playing && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
     }
     wireWorkedExample({
-      root, onLoad: () => { rows = SEAL.map((r) => ({ ...r })); render(); run(); }, factorFields: ['l_cpk', 'l_lsl', 'r_p', 'r_lim'],
+      root, onLoad: () => { rows = SEAL.map((r) => ({ ...r })); selected = -1; stopPlay(); run(); render(); }, factorFields: ['l_cpk', 'l_lsl', 'r_p', 'r_lim'],
       note: 'Worked-example values loaded: parts at Cpk 1.33, squeeze at least 0.74 mm, 99.73% of motors within 0.45 mm',
       values: { l_cpk: '1.33', l_lsl: '0.74', r_p: '99.73', r_lim: '0.45' },
     });
-    let timer = 0;
-    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 200); });
-    form.addEventListener('change', run);
-    render();
+    let deb = 0;
+    form.addEventListener('input', (ev) => { if ((ev.target as HTMLElement).closest('.sk-edit')) { window.clearTimeout(deb); deb = window.setTimeout(() => { stopPlay(); run(); }, 250); return; } window.clearTimeout(deb); deb = window.setTimeout(() => { stopPlay(); run(); }, 200); });
+    form.addEventListener('change', (ev) => { if ((ev.target as HTMLElement).closest('.sk-edit')) return; stopPlay(); run(); });
     run();
+    render();
   });
 </script>

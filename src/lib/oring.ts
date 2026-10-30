@@ -223,3 +223,42 @@ export function pointSqueeze(i: ORingInputs, x: number[], T: number) {
   const c = stretchedCs(cs, stretch) * (1 + i.alphaE * dT) * (dT > 0 ? Math.cbrt(1 + i.swell) : 1);
   return (c - g * (1 + i.alphaM * dT)) / c;
 }
+
+// ---------- The gland at one corner and one temperature (for the live section view) ----------
+
+export type Corner = 'nom' | 'min' | 'max';
+/**
+ * The gland of one assembly: nominal, the corner of least squeeze (smallest ring, most stretch, deepest gland, widest
+ * groove, the deep side of an off-centre fit) or the corner of most squeeze (largest ring, least stretch, shallowest
+ * gland, narrowest groove, swollen). At a temperature, optionally with the joint opened by pressure. The corners are
+ * those of analyseGland, so the squeezes agree with the checks. Returns the section c, the local depth g, the width w,
+ * the squeeze (and after compression set), the fill, and the radial extrusion gap on the side drawn.
+ */
+export function glandAt(i: ORingInputs, corner: Corner, T: number, pressurised = false) {
+  const mid = (r: Range) => (r.min + r.max) / 2, dT = T - i.tAssembly, e = i.eccentric && i.arrangement !== 'face';
+  const cs = corner === 'min' ? i.cs - i.csTol : corner === 'max' ? i.cs + i.csTol : i.cs;
+  const id = corner === 'min' ? i.id - i.idTol : corner === 'max' ? i.id + i.idTol : i.id;
+  let g: number, gap: number, onto: number | null;
+  if (i.arrangement === 'piston') {
+    if (corner === 'nom') { g = (mid(i.bore) - mid(i.groove)) / 2; gap = (mid(i.bore) - mid(i.shaft)) / 2; onto = mid(i.groove); }
+    else if (corner === 'min') { g = e ? i.bore.max - (i.shaft.min + i.groove.min) / 2 : (i.bore.max - i.groove.min) / 2; gap = e ? i.bore.max - i.shaft.min : (i.bore.max - i.shaft.min) / 2; onto = i.groove.max; }
+    else { g = e ? (i.shaft.min - i.groove.max) / 2 : (i.bore.min - i.groove.max) / 2; gap = e ? 0 : (i.bore.min - i.shaft.max) / 2; onto = i.groove.min; }
+  } else if (i.arrangement === 'rod') {
+    if (corner === 'nom') { g = (mid(i.groove) - mid(i.shaft)) / 2; gap = (mid(i.bore) - mid(i.shaft)) / 2; onto = mid(i.shaft); }
+    else if (corner === 'min') { g = e ? (i.groove.max + i.bore.max) / 2 - i.shaft.min : (i.groove.max - i.shaft.min) / 2; gap = e ? i.bore.max - i.shaft.min : (i.bore.max - i.shaft.min) / 2; onto = i.shaft.max; }
+    else { g = e ? (i.groove.min - i.bore.max) / 2 : (i.groove.min - i.shaft.max) / 2; gap = e ? 0 : (i.bore.min - i.shaft.max) / 2; onto = i.shaft.min; }
+  } else {
+    const gp = corner === 'nom' ? mid(i.faceGap) : corner === 'min' ? i.faceGap.max : i.faceGap.min;
+    g = (corner === 'nom' ? mid(i.groove) : corner === 'min' ? i.groove.max : i.groove.min) + gp;
+    gap = gp; onto = null;
+  }
+  if (pressurised) { g += i.opening; gap += i.opening; }
+  const stretch = onto === null ? 0 : Math.max(0, (onto - id) / id);
+  const c = stretchedCs(cs, stretch) * (1 + i.alphaE * dT) * (corner === 'max' ? Math.cbrt(1 + i.swell) : 1); // swell only where it hurts
+  const gT = g * (1 + i.alphaM * dT), w = corner === 'min' ? i.width.max : corner === 'max' ? i.width.min : mid(i.width);
+  const squeeze = (c - gT) / c;
+  return {
+    c, g: gT, w, stretch, squeeze, squeezeEol: corner === 'nom' ? squeeze : squeeze * (1 - i.compressionSet),
+    fill: ((Math.PI / 4) * c * c) / (w * gT), gap: Math.max(0, gap * (1 + i.alphaM * dT)),
+  };
+}
