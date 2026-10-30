@@ -97,6 +97,18 @@ with the mass index, they show the real trade: how much toughness you lose for e
 Select the item that you design, select families, and apply the necessary properties. Then click a point (or a table
 row) to make it the reference for the guideline. Hover to see the values.
 
+- **Find a material** marks the materials whose names contain the text, also when the filters dim them.
+- **Colour by index value** colours each passing material on a scale from the lowest index (blue) to the highest (red).
+  Materials that fail a filter are grey.
+- **Swap X and Y** exchanges the axes.
+- **Service conditions** move the comparison away from room temperature:
+  - **Design temperature.** Yield and ultimate strength are scaled with a family-typical retention curve, and materials
+    whose maximum service temperature is lower are removed. Alloys in one family can differ a lot: 2219 aluminium
+    keeps its strength much better than 7075. Use the curve to screen, and the allowable at temperature to design.
+  - **Fatigue.** For metals, an estimated fatigue strength from the ultimate, with the Marin factors for surface,
+    loading, size and reliability ([Fatigue](../../fundamentals/fatigue/)), and a Goodman reduction for a mean stress.
+    The two fatigue indices rank materials for parts that cycle many times. These are mean estimates, not allowables.
+
 <MaterialChart />
 
 ## Worked example: choosing a case material

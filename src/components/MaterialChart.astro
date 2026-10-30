@@ -3,6 +3,7 @@
 // src/lib/selection.ts (unit-tested), so the chart and the ranking table always agree.
 import data from '../data/materials.json';
 import { INDICES, PROPERTIES } from '../lib/selection';
+import { SURFACES, LOADS, RELIABILITY } from '../lib/fatigue';
 
 const FAMILIES: [string, string, string][] = [
   ['steel', 'Steels', '#e05a47'], ['ss', 'Stainless', '#6fa8a0'], ['ti', 'Titanium', '#9b7fd4'], ['al', 'Aluminium', '#4e9fd1'],
@@ -25,10 +26,15 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
           </select>
         </label>
         <p class="hint" data-idxuse></p>
-        <div class="row2">
+        <div class="row2 mc-axes">
           <label>X axis<select name="x">{PROPERTIES.map((p) => <option value={p.key}>{p.label}</option>)}</select></label>
           <label>Y axis<select name="y">{PROPERTIES.map((p) => <option value={p.key}>{p.label}</option>)}</select></label>
         </div>
+        <div class="mc-tools">
+          <button type="button" class="chip" data-swap>Swap X and Y</button>
+          <label>Colour by<select name="col"><option value="fam">Family</option><option value="idx">Index value (heat map)</option></select></label>
+        </div>
+        <label>Find a material<input name="q" type="search" placeholder="for example 7075 or Ti-6Al" autocomplete="off" /></label>
       </fieldset>
       <fieldset>
         <legend>Families</legend>
@@ -49,13 +55,26 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
         <label class="inline"><input type="checkbox" name="weld" checked /> Weldable only</label>
         <label class="inline"><input type="checkbox" name="hidek" checked /> Hide family-default toughness (fracture indices)</label>
       </fieldset>
+      <fieldset>
+        <legend>Service conditions</legend>
+        <div class="row2">
+          <label>Design temperature (°C)<input name="T" type="number" step="10" value="20" /></label>
+          <label>Mean stress for fatigue (MPa)<input name="sm" type="number" min="0" step="any" value="0" /></label>
+          <label>Surface<select name="sf">{SURFACES.map((x) => <option value={x.key} selected={x.key === 'machined'}>{x.name}</option>)}</select></label>
+          <label>Loading<select name="ld">{LOADS.map((x) => <option value={x.key} selected={x.key === 'axial'}>{x.name}</option>)}</select></label>
+          <label>Section size (mm)<input name="dd" type="number" min="1" step="any" value="10" /></label>
+          <label>Reliability<select name="rl">{RELIABILITY.map((x) => <option value={x.key} selected={x.key === '50'}>{x.name}</option>)}</select></label>
+        </div>
+        <p class="hint">Strengths are scaled to the design temperature with a family-typical curve, and the fatigue strength is estimated from the ultimate (metals only). Both are screening values.</p>
+      </fieldset>
     </form>
     <div class="mc-plot">
       <svg viewBox="0 0 640 470" data-chart role="img" aria-label="Material property chart"></svg>
       <div class="mc-tip" data-tip hidden></div>
-      <div class="mc-legend">
+      <div class="mc-legend" data-famleg>
         {FAMILIES.map(([k, n, c]) => <span data-leg={k} style={`--fc:${c}`}><i></i>{n}</span>)}
       </div>
+      <div class="mc-heat" data-heatleg hidden><span data-hlo></span><i></i><span data-hhi></span><em>index value, passing materials</em></div>
     </div>
   </div>
   <div class="mc-detail" data-detail></div>
@@ -95,6 +114,14 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
   .mc-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 0.8rem; margin-top: 0.4rem !important; font-size: 0.68rem; color: var(--sl-color-gray-3); }
   .mc-legend span { display: inline-flex; align-items: center; gap: 0.3rem; margin: 0 !important; }
   .mc-legend span.off { opacity: 0.35; }
+  .mc-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; margin: 0.4rem 0 !important; }
+  .mc-tools > * { margin: 0 !important; }
+  .mc-tools label { flex: 1 1 10rem; }
+  .mc-plot .pt.hit { stroke: var(--sl-color-white); stroke-width: 2.5; }
+  .mc-heat { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem !important; font-size: 0.68rem; color: var(--sl-color-gray-3); font-family: var(--sl-font-mono); }
+  .mc-heat > * { margin: 0 !important; }
+  .mc-heat i { flex: 0 1 12rem; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #3b6ea8, #2fb5ad, #d4a017, #e05a47); }
+  .mc-heat em { font-style: normal; opacity: 0.8; }
   .mc-legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--fc); }
   .mc-detail { padding: 0 1rem; }
   .mc-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 1rem; padding: 0.75rem 0.9rem; margin: 0 !important;
@@ -116,13 +143,20 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
 </style>
 
 <script>
-  import { INDICES, prop, index, rank, guideline, type Material, type Index } from '../lib/selection';
+  import { INDICES, prop, index, rank, guideline, withConditions, type Material, type Index } from '../lib/selection';
 
   const NS = 'http://www.w3.org/2000/svg';
   const fmt = (v: number) => (!Number.isFinite(v) ? '—' : v >= 1000 ? v.toFixed(0) : v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toPrecision(2));
 
   document.querySelectorAll<HTMLElement>('[data-mcalc]').forEach((root) => {
-    const { materials, FAMILIES } = JSON.parse(root.querySelector('[data-data]')!.textContent!) as { materials: Material[]; FAMILIES: [string, string, string][] };
+    const { materials: RAW, FAMILIES } = JSON.parse(root.querySelector('[data-data]')!.textContent!) as { materials: Material[]; FAMILIES: [string, string, string][] };
+    let materials: (Material & { retention?: number })[] = RAW;
+    // heat-map colour for a value t in [0, 1]: blue, teal, amber, red
+    const HEAT = [[59, 110, 168], [47, 181, 173], [212, 160, 23], [224, 90, 71]];
+    const heat = (t: number) => {
+      const x = Math.min(1, Math.max(0, t)) * (HEAT.length - 1), i = Math.min(HEAT.length - 2, Math.floor(x)), f = x - i;
+      return `rgb(${HEAT[i].map((c, k) => Math.round(c + (HEAT[i + 1][k] - c) * f)).join(',')})`;
+    };
     const famColor = Object.fromEntries(FAMILIES.map(([k, , c]) => [k, c]));
     const famName = Object.fromEntries(FAMILIES.map(([k, n]) => [k, n]));
     const form = root.querySelector<HTMLFormElement>('[data-form]')!;
@@ -146,12 +180,15 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
     };
 
     function state() {
+      const T = Number.isFinite(+field('T').value) && field('T').value !== '' ? +field('T').value : 20;
+      materials = withConditions(RAW, { T, surface: field('sf').value, load: field('ld').value, dMm: +field('dd').value || 10, reliability: field('rl').value, meanStress: +field('sm').value || 0 });
       const fams = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="fam"]:checked')).map((i) => i.value);
       const idxKey = field('idx').value;
       const idx = idxKey ? index(idxKey) : null;
       return {
         fams, idx, x: prop(field('x').value), y: prop(field('y').value),
-        filters: { families: fams, minServiceTemp: +field('tmin').value || -1e9, weldableOnly: (field('weld') as HTMLInputElement).checked,
+        T, colour: field('col').value, q: field('q').value.trim().toLowerCase(),
+        filters: { families: fams, minServiceTemp: Math.max(+field('tmin').value || -1e9, T), weldableOnly: (field('weld') as HTMLInputElement).checked,
           hideDefaultToughness: (field('hidek') as HTMLInputElement).checked },
         labels: +field('lab').value,
       };
@@ -215,11 +252,23 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
         svg.append(el('text', { x: lblX, y: Math.max(T + 12, Math.min(H - B - 6, Y(guideline(10 ** ((Math.log10(10 ** lx0) + Math.log10(10 ** lx1)) / 2), x0, y0, s.idx.slope)) - 6)), 'font-size': 10, fill: 'var(--pc, var(--sl-color-accent))' }, 'equal performance · better ↖ above'));
       }
 
-      // points: passing materials bright, filtered-out ones dimmed
+      // points: passing materials bright, filtered-out ones dimmed; colour by family or by index value
       const order = [...pts].sort((a, b) => (pass.has(a.m.name) ? 1 : 0) - (pass.has(b.m.name) ? 1 : 0));
+      const byIdx = s.colour === 'idx' && !!s.idx && ranked.length > 1;
+      const lv = byIdx ? ranked.map((r) => Math.log10(r.v)) : [], vmin = Math.min(...lv), vmax = Math.max(...lv);
+      const valOf = new Map(ranked.map((r) => [r.m.name, r.v]));
+      const colourOf = (m: Material) => {
+        if (!byIdx) return famColor[m.family];
+        const v = valOf.get(m.name);
+        return v === undefined ? 'var(--sl-color-gray-4)' : heat((Math.log10(v) - vmin) / Math.max(1e-9, vmax - vmin));
+      };
+      (root.querySelector('[data-famleg]') as HTMLElement).hidden = byIdx;
+      (root.querySelector('[data-heatleg]') as HTMLElement).hidden = !byIdx;
+      if (byIdx) { root.querySelector('[data-hlo]')!.textContent = fmt(10 ** vmin); root.querySelector('[data-hhi]')!.textContent = fmt(10 ** vmax); }
+      const hits = s.q ? new Set(pts.filter((p) => p.m.name.toLowerCase().includes(s.q)).map((p) => p.m.name)) : new Set<string>();
       for (const p of order) {
-        const c = el('circle', { cx: X(p.x), cy: Y(p.y), r: p.m.name === refName ? 6.5 : 4.6, fill: famColor[p.m.family],
-          class: `pt${p.m.name === refName ? ' ref' : ''}${pass.has(p.m.name) ? '' : ' dim'}` });
+        const c = el('circle', { cx: X(p.x), cy: Y(p.y), r: p.m.name === refName || hits.has(p.m.name) ? 6.5 : 4.6, fill: colourOf(p.m),
+          class: `pt${p.m.name === refName ? ' ref' : ''}${hits.has(p.m.name) ? ' hit' : ''}${pass.has(p.m.name) || hits.has(p.m.name) ? '' : ' dim'}` });
         c.addEventListener('mouseenter', (e) => showTip(e as MouseEvent, p.m, s.idx));
         c.addEventListener('mousemove', (e) => moveTip(e as MouseEvent));
         c.addEventListener('mouseleave', () => (tip.hidden = true));
@@ -241,7 +290,18 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
         svg.append(el('text', { x: lx, y: ly, 'font-size': 9.5, fill: 'var(--sl-color-white)', 'paint-order': 'stroke', stroke: 'var(--hud-plate)', 'stroke-width': 3 }, txt));
       });
 
-      detail(ref, s.idx, ranked);
+      // labels for the materials that match the search
+      if (hits.size) [...hits].slice(0, 8).forEach((name) => {
+        const p = pts.find((q) => q.m.name === name)!;
+        let lx = X(p.x) + 9, ly = Y(p.y) + 14;
+        const w = name.length * 5.7;
+        if (lx + w > W - R) lx = X(p.x) - 9 - w;
+        svg.append(el('text', { x: lx, y: ly, 'font-size': 10, fill: 'var(--sl-color-white)', 'font-weight': 600, 'paint-order': 'stroke', stroke: 'var(--hud-plate)', 'stroke-width': 3 }, name));
+      });
+      if (s.q && !hits.size) svg.append(el('text', { x: W - R - 4, y: T + 14, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--sl-color-gray-3)' }, `no plotted material matches “${s.q}”`));
+      if (s.q && hits.size === 1 && refName !== [...hits][0]) { refName = [...hits][0]; }
+
+      detail(materials.find((m) => m.name === refName) ?? ref, s.idx, ranked);
       table(ranked, s);
     }
 
@@ -268,7 +328,7 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
         <h4>${m.name}</h4>
         <span class="mc-idx">${idx && v !== undefined ? `#${pos + 1} · M = ${fmt(v)}` : ''}</span>
         <p class="mc-sum">${m.summary}. ${m.spec}</p>
-        <p class="mc-props">${['density', 'yield', 'uts', 'E', 'kic', 'tmax', 'cte', 'k'].map(p).filter(Boolean).join(' · ')}${m.weldable ? ' · weldable' : ''}${m.kicIsFamilyDefault ? ' · K<sub>IC</sub> is a family default' : ''}</p>
+        <p class="mc-props">${['density', 'yield', 'uts', 'fatigue', 'E', 'kic', 'tmax', 'cte', 'k'].map(p).filter(Boolean).join(' · ')}${(m as any).retention !== undefined && (m as any).retention < 1 ? ` · strengths at ${field('T').value} °C: ${Math.round(100 * (m as any).retention)}% of room temperature` : ''}${m.weldable ? ' · weldable' : ''}${m.kicIsFamilyDefault ? ' · K<sub>IC</sub> is a family default' : ''}</p>
       </div>`;
     }
 
@@ -287,6 +347,10 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
     }
 
     field('idx').addEventListener('change', applyIndex);
+    root.querySelector('[data-swap]')!.addEventListener('click', () => {
+      const x = field('x').value; field('x').value = field('y').value; field('y').value = x;
+      run();
+    });
     form.addEventListener('input', run);
     form.addEventListener('change', run);
     applyIndex();

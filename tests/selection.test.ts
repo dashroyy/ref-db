@@ -41,3 +41,20 @@ test('worked example on the selection page: mass index then crack at yield', () 
   close(crack('Ti-6Al-4V ELI'), 3.68, 0.01);
   close(crack('D6AC'), 0.59, 0.02);
 });
+
+import { retention, withConditions, ROOM } from '../src/lib/selection.ts';
+test('service conditions: strength retention with temperature and an estimated fatigue strength', () => {
+  assert.equal(retention('steel', 20), 1); assert.equal(retention('al', 150), 0.75);
+  close(retention('al', 175), 0.625); assert.equal(retention('cc', 2000), 1); assert.equal(retention('unknown', 500), 1);
+  const d6 = get('D6AC');
+  const room = withConditions([d6], ROOM)[0];
+  assert.equal(room.yield, d6.yield); assert.ok(room.fatigue! > 0 && room.fatigue! < 0.5 * d6.uts);
+  const hot = withConditions([d6], { ...ROOM, T: 400 })[0];
+  close(hot.yield, 0.8 * d6.yield); assert.ok(hot.fatigue! < room.fatigue!);
+  const mean = withConditions([d6], { ...ROOM, meanStress: 0.5 * d6.uts })[0];
+  close(mean.fatigue!, 0.5 * room.fatigue!, 1e-9);
+  const cfrp = withConditions(mats.filter((m) => m.family === 'comp').slice(0, 1), ROOM)[0];
+  assert.equal(cfrp.fatigue, undefined, 'no fatigue estimate for composites');
+  const r = rank(withConditions(mats, ROOM), index('fatigueTie'), { families: ['steel', 'ti', 'al'], minServiceTemp: -1e9, weldableOnly: false, hideDefaultToughness: false });
+  assert.ok(r.length > 10 && r.every((x) => ['steel', 'ti', 'al'].includes(x.m.family)));
+});
