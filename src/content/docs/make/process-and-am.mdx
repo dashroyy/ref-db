@@ -1,0 +1,195 @@
+---
+title: Process & AM
+description: Choosing the manufacturing process for motor hardware. Product form and grain flow, what machining, forming, casting and additive manufacturing can hold in tolerance and finish, flow-formed and welded cases, design rules and post-processing for laser powder bed fusion, and how tooling, buy-to-fly and quantity set the cost of a part, with a calculator and a worked example on the aft closure and a port manifold.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ProcessGrain from '../../../components/ProcessGrain.astro';
+import ProcessCalc from '../../../components/ProcessCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Select the process from the quantity, the material and the tightest feature. Then design the rest of the part to what that process does naturally.</div>
+  <div><b>Before this</b><a href="../../drawing/surface-finish/">Surface finish</a> · <a href="../../drawing/fits-and-limits/">Fits & limits</a> · <a href="../../materials/specification/">Material specification</a></div>
+  <div><b>Related</b><a href="../../motor/hardware/">Rocket motor hardware</a> · <a href="../../materials/allowables/">Allowables</a></div>
+</div>
+
+## Why this matters
+
+The process decides more than the cost. It decides the properties of the material (grain flow, porosity, residual
+stress), the tolerance and finish that the shop holds without extra work, the inspection that the part needs, and
+the lead time. A drawing that ignores the process can ask for a tolerance that only grinding holds on a feature that a
+forging leaves rough, or for an internal passage that no tool can reach.
+
+Most of a motor is machined: closures, bosses, nozzle housings, joint rings. The material for these parts comes as
+plate, bar, forging or ring. Cases are welded from rolled sheet, flow formed, or wound in composite. Additive
+manufacturing (AM) has a place where it removes joints or makes internal passages possible, not where it makes a
+machinable part more expensively.
+
+<Analogy title="Carving and moulding">
+  A sculptor can carve a figure from a block of wood, or mould it in clay and fire it. Carving is quick to start but
+  wastes most of the block, and the grain of the wood runs straight through the arms and the neck, where it is weak.
+  Moulding needs a mould, which costs time and money, but each figure after the first is cheap and the shape can be
+  anything. Machining from bar, forging and casting are the same choice, made with steel.
+</Analogy>
+
+## Product form and grain
+
+<ProcessGrain />
+
+- **Plate and bar** are quick to get and need no tooling. But much of the material becomes chips (a high
+  **buy-to-fly ratio**, the mass bought divided by the finished mass), and the part cuts across the grain. In thick plate
+  the **short-transverse** direction, through the thickness, has the lowest strength, elongation and toughness.
+- **Forgings** put the grain along the shape, and give better short-transverse properties and fatigue resistance at the
+  fillets. The cost is the die and a lead time of months. Specify the grain flow or a macro-etch acceptance on the
+  drawing where it matters.
+- **Rolled rings** give circumferential grain for flanges, joint rings and skirt rings.
+- **The allowables must be for the form that you buy.** A forging allowable does not apply to a part machined from
+  plate, and a thin-section allowable does not apply to a thick section, because the quench rate is lower. See
+  [Allowables](../../materials/allowables/) and [Material specification](../../materials/specification/).
+- **Peripheral coarse grain** in some aluminium extrusions and forgings must be machined off loaded surfaces. Size the
+  starting material for it ([Rocket motor hardware](../../motor/hardware/)).
+
+## What each process can hold
+
+The calculator plots these values. They are typical for a good shop on a 25–100 mm dimension. "Best" needs extra
+care, time or an extra operation.
+
+| Process | Tolerance ± (mm), best / usual | Ra (µm), best / usual | Economic quantity | Use on a motor |
+| --- | --- | --- | --- | --- |
+| Grinding | 0.002 / 0.008 | 0.05 / 0.2–0.8 | any | Seal faces, bearing seats, fatigue-critical fillets |
+| Honing and lapping | 0.001 / 0.005 | 0.025 / 0.05–0.4 | any | Bores and flat faces |
+| Turning and boring | 0.005 / 0.025 | 0.2 / 0.8–3.2 | any | Closures, bosses, housings, seal bores |
+| Milling | 0.01 / 0.05 | 0.4 / 0.8–6.3 | up to thousands | Brackets, flats, pockets |
+| Wire EDM | 0.003 / 0.01 | 0.2 / 0.8–3.2 | small | Hard materials, sharp internal profiles |
+| Flow forming | 0.03 / 0.1 (wall) | 0.4 / 0.8–1.6 | from a few | Seamless thin-walled cases |
+| Closed-die forging | 0.25 / 0.5 | 3.2 / 6.3–12.5 | from about 50 | Closures and bosses, then machined |
+| Ring rolling | 0.5 / 1 | 6.3 / 12.5–25 | from a few | Flanges and joint rings, then machined |
+| Investment casting | 0.1 / 0.2 | 0.8 / 1.6–3.2 | from about 25 | Complex shapes; a casting factor usually applies |
+| Sand casting | 0.5 / 1 | 6.3 / 12.5–25 | low | Large parts, ground equipment |
+| LPBF, as built | 0.05 / 0.15 | 3.2 / 6.3–15 | up to hundreds | Internal passages, consolidated parts |
+| Directed energy deposition | 0.5 / 1 | 12.5 / 25–50 | very low | Large near-net preforms, then machined |
+| Sheet forming, laser cutting | 0.1 / 0.2 | 0.8 / 1.6–3.2 | from about 10 | Brackets, covers, heat shields |
+
+**Design rule.** Give precision only to the features that need it. One seal bore at ±0.03 mm does not make the rest
+of the part a ±0.03 mm part. The general tolerance covers the rest ([Fits & limits](../../drawing/fits-and-limits/#general-tolerances-iso-2768)).
+
+## Thin-walled cases
+
+- **Rolled and welded.** Sheet is rolled into a cylinder and welded along its length, then welded to forged domes or
+  rings. The welds need a qualified procedure, full NDT and a joint efficiency in the sizing
+  ([Case sizing](../../motor/case-sizing/)). Steels such as 15CDV6 and maraging steels are used because they tolerate
+  welding.
+- **Flow formed.** A thick tubular preform, often a forging, is pressed onto a mandrel by rollers that reduce its wall
+  in several passes. The case has no longitudinal weld, and cold work increases its strength. Wall reductions of 60–80%
+  are usual. The wall tolerance is good, but the properties are directional, so test coupons from the formed
+  direction.
+- **Filament wound.** Fibre in resin is wound onto a mandrel over the metal bosses. With composites, the process is
+  the material: the fibre and resin, the winding pattern, the tension and the cure are all part of the definition
+  ([Rocket motor hardware](../../motor/hardware/)).
+
+## Additive manufacturing
+
+**Use AM where it removes assemblies or makes internal geometry possible.** Good candidates have internal channels,
+several parts and joints that one part can replace, lattices or topology-optimised shapes, and a low quantity. Poor
+candidates are simple prismatic parts, large flat sealing faces, high quantities, and parts with no route to
+qualification.
+
+**Laser powder bed fusion (LPBF) rules of thumb:**
+
+- Surfaces steeper than about 45° from the build plate support themselves. Shallower down-facing surfaces need
+  supports, which leave marks and must be removed.
+- Horizontal holes up to approximately 6–8 mm build without support. Larger holes need a teardrop shape, or support,
+  and machining.
+- The thinnest wall is approximately 0.3–0.5 mm, depending on the machine.
+- Internal channels need a path for the powder to come out, and a way to inspect them. Below approximately 1 mm the
+  powder cannot be removed reliably.
+- The build orientation sets the anisotropy: properties in the build direction are usually different.
+
+**Post-processing is part of the process:** stress relief before the part comes off the plate; hot isostatic pressing
+(HIP) to close porosity in fatigue-loaded parts; machining of every sealing face, thread and datum; and CT inspection of
+internal features. The as-built surface (Ra 6–15 µm) has a large effect on fatigue: machine or polish the critical
+surfaces.
+
+<Aside type="caution" title="Allowables belong to the process, not to the alloy">
+  AM properties depend on the machine, the powder and the qualified parameter set. A different supplier or a change to
+  the parameters needs new data. For spaceflight hardware, NASA-STD-6030 and MSFC-STD-3716 define the classification,
+  the qualification of the process and the controls on each build.
+</Aside>
+
+## Cost and quantity
+
+The cost of one part by a route is:
+
+$$
+C = \frac{C_\text{tooling}}{N} + \text{BTF}\cdot m\cdot p + C_\text{process} + h\cdot r
+$$
+
+with $N$ the quantity, BTF the buy-to-fly ratio, $m$ the finished mass, $p$ the material price, $h$ the machining
+hours and $r$ the hourly rate. A route with tooling (a forging die, a casting pattern) is expensive at low quantity
+and cheaper at high quantity. The **break-even quantity** between a route $a$ without tooling and a route $b$ with
+tooling is the tooling cost of $b$ divided by the saving of $b$ on each part. For expensive materials such as titanium
+and nickel alloys, the buy-to-fly ratio is usually the largest term.
+
+## Calculator
+
+<ProcessCalc />
+
+## Worked example: the aft closure and a port manifold
+
+The starting values in each tab of the calculator are the values of this example. The route costs are illustrative.
+
+1. **The tightest feature of the closure** is the nozzle seal bore: ⌀150 H8 (±0.0315 mm) and Ra 0.4 µm
+   ([Surface finish](../../drawing/surface-finish/#worked-example-the-surfaces-of-the-300-mm-motor)). In the **Process
+   screen**, grinding and honing hold this as usual; turning, milling and EDM hold it only with care. Forging, casting
+   and AM hold it only after machining. Thus the route is a forging or bar, turned, with the seal bore finish-turned
+   under tool control or honed.
+2. **The cost.** The closure is D6AC, 6 kg finished, at £12/kg from the material library and £90/h. At 20 closures,
+   **bar** costs approximately **£1,476** each, an investment casting £1,533, a forging £2,190 and LPBF £2,819. The
+   casting is cheaper than bar above 23 parts, and the forging above 47 parts. At 200 parts, the forging costs £1,065.
+3. **The decision.** A cast pressure closure needs a casting factor, more inspection and a qualification of the
+   foundry, so the cost of the casting route is higher than the table shows. For a development batch of 20, buy bar
+   and machine it. For production, forge it: the grain then follows the boss, and the short-transverse properties at
+   the fillets are better.
+4. **A port manifold in AM.** The pressure transducer, the leak-check port and the vent of the aft closure use three
+   fittings and two drilled cross-holes. One LPBF part in 316L or Ti-6Al-4V can replace them, with internal channels of
+   ⌀3 mm and 150 mm long. In the **AM design check**: the channels have L/D 50, which is at the limit for removing the
+   powder, so add exits and plan CT. The lowest overhang is 40°, which is possible but rough: turn the part, or add a
+   chamfer. The ⌀7 mm horizontal port sags at the top: ream it, and machine every sealing face of the ports.
+
+## Where this stops
+
+- **Typical capabilities.** Shops and machines differ. Use the capability data of your supplier, demonstrated on your
+  material.
+- **Simple cost model.** No scrap, inspection, lead time or overhead, and one batch. Use quotes for decisions.
+- **AM rules of thumb.** They are for common metal powders on common machines. The qualified parameter set and the
+  design guide of your supplier give the real limits.
+- **No propellant processing.** The casting and curing of propellant are energetics processes, outside the scope of
+  this site.
+
+## On the drawing
+
+- **The product form** and its specification: plate, bar, forging or casting, with the forging grain flow or a
+  macro-etch acceptance where it matters.
+- **Machining allowances** and the condition of the surfaces that stay as forged, cast or built.
+- **For AM parts:** the classification, the qualified process specification, the build orientation where it matters,
+  HIP and heat treatment, the surfaces to machine, and the inspection (CT, witness coupons).
+- **For cast parts:** the casting quality class, the radiographic acceptance and the casting factor in the analysis.
+- **Only the precision that the function needs,** with the general tolerance for the rest.
+
+## References and further reading
+
+- M. F. Ashby, *Materials Selection in Mechanical Design*, 5th ed., Butterworth-Heinemann (2017) (process selection
+  charts).
+- K. G. Swift and J. D. Booker, *Manufacturing Process Selection Handbook*, Butterworth-Heinemann (2013).
+- ASM Handbook, Vol. 14A *Metalworking: Bulk Forming* and Vol. 24 *Additive Manufacturing Processes*.
+- NASA-STD-6030, *Additive Manufacturing Requirements for Spaceflight Systems*; MSFC-STD-3716, *Standard for Additively
+  Manufactured Spaceflight Hardware by Laser Powder Bed Fusion in Metals*.
+- ASTM F3301 (post-processing of powder bed fusion parts) and ISO/ASTM 52900 (AM terminology).
+
+<Aside type="note">
+  This is guidance on method from general practice, with typical values. The process, the qualification and the
+  acceptance for your hardware come from your programme requirements, your suppliers and the applicable standards.
+</Aside>

@@ -1,0 +1,298 @@
+---
+// Process selection in three tabs: screen the processes against a requirement on a capability map; the cost of a part
+// by route against quantity; and design checks for laser powder bed fusion with a live section sketch. Maths in
+// src/lib/process.ts (unit-tested); prices from the material library. UI only here.
+import { ROUTES } from '../lib/process';
+import MaterialSelect from './MaterialSelect.astro';
+import { withProps, DEFAULTS as D } from '../lib/materials';
+
+const TABS = [{ key: 'screen', name: 'Process screen' }, { key: 'cost', name: 'Cost by route' }, { key: 'am', name: 'AM design check' }];
+const PRICED = withProps(['rho'], ['metal']).filter((m) => m.price);
+const PRICE = Object.fromEntries(PRICED.map((m) => [m.key, m.price]));
+---
+
+<div class="calc prcalc2" data-procalc>
+  <div class="calc-head"><span>Process selection</span><span>capability · cost · additive</span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Process check">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="screen">
+        <legend>The tightest feature on the part</legend>
+        <div class="row2">
+          <label>Tolerance ± (mm)<input name="s_tol" type="number" min="0.0005" step="any" value="0.03" /></label>
+          <label>Surface finish, Ra max (µm)<input name="s_ra" type="number" min="0.01" step="any" value="0.4" /></label>
+          <label>Quantity<input name="s_q" type="number" min="1" step="1" value="20" /></label>
+          <label>Largest dimension (mm)<input name="s_d" type="number" min="1" step="any" value="310" /></label>
+        </div>
+        <label class="pc-check"><input type="checkbox" name="s_int" /> Closed internal passages (no line of sight for a tool)</label>
+        <p class="hint">Enter the tightest tolerance and the finest finish that the part needs, not the general tolerance. Only the features that need precision should get it.</p>
+      </fieldset>
+
+      <fieldset data-panel="cost" hidden>
+        <legend>The part and the routes</legend>
+        <label>Material<MaterialSelect name="c_m" list={PRICED} selected={D.caseSteel} /></label>
+        <div class="row2">
+          <label>Finished mass (kg)<input name="c_mass" type="number" min="0.01" step="any" value="6" /></label>
+          <label>Material price (£/kg)<input name="c_price" type="number" min="0" step="any" /></label>
+          <label>Machining rate (£/h)<input name="c_rate" type="number" min="0" step="any" value="90" /></label>
+          <label>Quantity<input name="c_q" type="number" min="1" step="1" value="20" /></label>
+        </div>
+        <div class="pc-routes">
+          <span>Route</span><span>Buy-to-fly</span><span>Tooling (£)</span><span>Process (£/part)</span><span>Machining (h)</span>
+          {ROUTES.map((r, i) => (
+            <>
+              <span class="pc-rn">{r.name}</span>
+              <input name={`r_b${i}`} type="number" min="1" step="any" value={r.btf} aria-label={`${r.name}: buy-to-fly`} />
+              <input name={`r_t${i}`} type="number" min="0" step="any" value={r.tooling} aria-label={`${r.name}: tooling`} />
+              <input name={`r_p${i}`} type="number" min="0" step="any" value={r.processPerPart} aria-label={`${r.name}: process cost`} />
+              <input name={`r_h${i}`} type="number" min="0" step="any" value={r.machiningHours} aria-label={`${r.name}: machining hours`} />
+            </>
+          ))}
+        </div>
+        <p class="hint">Illustrative values for a machined closure. Replace them with quotes. Buy-to-fly is the mass bought divided by the finished mass.</p>
+      </fieldset>
+
+      <fieldset data-panel="am" hidden>
+        <legend>Laser powder bed fusion</legend>
+        <div class="row2">
+          <label>Lowest overhang from the plate (°)<input name="a_o" type="number" min="0" max="90" step="1" value="40" /></label>
+          <label>Largest horizontal hole ⌀ (mm)<input name="a_h" type="number" min="0" step="any" value="7" /></label>
+          <label>Thinnest wall (mm)<input name="a_w" type="number" min="0" step="any" value="0.8" /></label>
+          <label>Smallest channel ⌀ (mm)<input name="a_c" type="number" min="0" step="any" value="3" /></label>
+          <label>Longest channel (mm)<input name="a_l" type="number" min="0" step="any" value="150" /></label>
+          <label>Build height (mm)<input name="a_z" type="number" min="0" step="any" value="180" /></label>
+          <label>Machine build height (mm)<input name="a_m" type="number" min="1" step="any" value="350" /></label>
+        </div>
+        <p class="hint">Rules of thumb for titanium, nickel and steel powders. Your machine, powder and qualified parameter set give the real limits.</p>
+      </fieldset>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 300" data-chart role="img" aria-label="Chart for the selected process check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-price set:html={JSON.stringify(PRICE)}></script>
+  <div class="calc-foot">
+    Typical process capabilities for screening, not supplier guarantees. Costs: tooling shared over the quantity, material
+    as bought, a process cost and finish machining for each part. LPBF checks: general rules of thumb, not a qualified
+    design guide.
+  </div>
+</div>
+
+<style is:global>
+  .hc-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.75rem 1rem 0; }
+  .hc-tabs > * { margin: 0 !important; }
+  .calc .hc-tabs button.chip[aria-selected='true'] { border-color: var(--rd-accent); color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .prcalc2 .readout dd small { display: block; margin-top: 0.15rem; }
+  .prcalc2 fieldset { min-width: 0; }
+  .pc-check { display: flex !important; align-items: center; gap: 0.4rem; }
+  .pc-check input { width: auto; }
+  .pc-routes { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); gap: 0.3rem; align-items: center; font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .pc-routes > * { margin: 0 !important; min-width: 0; }
+  .pc-routes input { padding: 0.25rem 0.3rem; }
+  .pc-rn { color: var(--rd-ink); }
+  .hc-fig { margin: 0.9rem 0 0 !important; }
+  .hc-fig svg { width: 100%; height: auto; font-family: var(--sl-font-mono); }
+  .hc-fig figcaption { font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .prcalc2 .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  @container (max-width: 30rem) {
+    .pc-routes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .pc-routes > span:not(.pc-rn) { display: none; }
+    .pc-rn { grid-column: 1 / -1; margin-top: 0.3rem !important; }
+  }
+</style>
+
+<script>
+  import { PROCESSES, screen, ROUTES, routeCost, breakEven, amChecks, type Route } from '../lib/process';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const money = (v: number) => (Number.isFinite(v) ? `£${Math.round(v).toLocaleString('en-GB')}` : '—');
+  const FAMC: Record<string, string> = { machining: 'var(--rd-blue)', forming: 'var(--rd-accent)', casting: '#d4a017', additive: '#9b7fd4', fabrication: 'var(--rd-ok)' };
+  const ROUTEC = ['var(--rd-steel)', 'var(--rd-accent)', '#d4a017', '#9b7fd4'];
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+
+  document.querySelectorAll<HTMLElement>('[data-procalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const PRICE: Record<string, number> = JSON.parse(root.querySelector('[data-price]')!.textContent!);
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 11) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    let mode = 'screen';
+    let draw: (() => void) | null = null;
+
+    // ---- screen ----
+    function runScreen(rows: Row[], notes: [string, string][]) {
+      const r = { tol: num('s_tol'), ra: num('s_ra'), qty: num('s_q'), size: num('s_d'), internal: (field('s_int') as HTMLInputElement).checked };
+      if (!(r.tol > 0 && r.ra > 0 && r.qty >= 1 && r.size > 0)) { notes.push(['bad', 'Enter the tolerance, the finish, the quantity and the size.']); return null; }
+      const s = screen(r);
+      const asMade = s.filter((x) => x.ok && x.asMade !== 'no'), finish = s.filter((x) => x.ok && x.asMade === 'no' && x.p.netShape);
+      const name = (x: (typeof s)[number]) => `${x.p.name}${x.asMade === 'care' ? ' (with care)' : ''}${x.qty ? '' : ' (quantity outside its usual range)'}`;
+      rows.push({ dt: 'Makes it as made', dd: asMade.length ? `${name(asMade[0])} <small>${asMade.slice(1, 5).map(name).join(' · ') || 'no other process'}</small>` : 'none <small>no process holds this as made: add a finishing operation, or open the requirement</small>', primary: true, cls: asMade.length ? 'ok' : 'warn' });
+      if (finish.length) rows.push({ dt: 'Then finish machining', dd: `<small>${finish.map((x) => x.p.name).join(' · ')}: near-net shape, then machine the precise features</small>` });
+      const out = s.filter((x) => !x.ok);
+      if (out.length) rows.push({ dt: 'Cannot be used', dd: `<small>${out.map((x) => `${x.p.name} (${!x.size ? 'too large' : 'no internal passages'})`).join(' · ')}</small>` });
+      if (r.internal) notes.push(['', 'Closed internal passages need a powder bed process or a casting core. Plan how the powder or the core comes out, and how you inspect the inside (CT).']);
+      if (r.tol < 0.01) notes.push(['warn', `±${r.tol} mm needs grinding, honing or EDM, temperature control and a gauge with a TUR of at least 4 (see Gauging). Check that the function needs it.`]);
+      notes.push(['', 'Each step to a tighter tolerance or a finer finish usually adds an operation and doubles the cost of the feature. Give precision only to the features that need it.']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 300, L = 46, R = 10, T = 14, B = 34;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const lx0 = -3, lx1 = 0.5, ly0 = -1.7, ly1 = 1.8;
+        const X = (v: number) => L + ((Math.log10(v) - lx0) / (lx1 - lx0)) * (W - L - R), Y = (v: number) => H - B - ((Math.log10(v) - ly0) / (ly1 - ly0)) * (H - T - B);
+        for (const v of [0.001, 0.01, 0.1, 1]) { el('line', { x1: X(v), x2: X(v), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(v), y: H - B + 13, 'text-anchor': v === 0.001 ? 'start' : 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(v)); }
+        for (const v of [0.025, 0.1, 0.4, 1.6, 6.3, 25]) { el('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(v) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(v)); }
+        // the region that meets the requirement: a tighter tolerance (left) and a finer finish (below)
+        el('rect', { x: L, y: Y(r.ra), width: Math.max(0, X(r.tol) - L), height: Math.max(0, H - B - Y(r.ra)), fill: 'var(--rd-ok)', 'fill-opacity': 0.1 });
+        const order = [...s].reverse();
+        for (const x of order) {
+          const p = x.p, good = x.ok && x.asMade !== 'no';
+          el('rect', { x: X(p.tol[0]), y: Y(p.ra[2]), width: Math.max(2, X(p.tol[1]) - X(p.tol[0])), height: Math.max(2, Y(p.ra[0]) - Y(p.ra[2])), rx: 3,
+            fill: FAMC[p.family], 'fill-opacity': good ? 0.35 : 0.08, stroke: FAMC[p.family], 'stroke-opacity': good ? 1 : 0.35, 'stroke-width': good ? 1.6 : 1 });
+        }
+        for (const x of order) if (x.ok && x.asMade !== 'no') txt(X(Math.sqrt(x.p.tol[0] * x.p.tol[1])), Y(Math.sqrt(x.p.ra[0] * x.p.ra[2])) + 4, x.p.name.split(/[ ,(]/)[0], 'var(--rd-ink)', 'middle', 10);
+        el('line', { x1: X(r.tol), x2: X(r.tol), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '4 3' });
+        el('line', { x1: L, x2: W - R, y1: Y(r.ra), y2: Y(r.ra), stroke: 'var(--rd-ink)', 'stroke-dasharray': '4 3' });
+        el('circle', { cx: X(r.tol), cy: Y(r.ra), r: 5, fill: 'var(--rd-accent)', stroke: 'var(--rd-panel)', 'stroke-width': 1.5 });
+        txt(Math.min(X(r.tol) + 7, W - R - 80), Y(r.ra) - 8, 'your feature', 'var(--rd-accent)', 'start', 11);
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'tolerance ± (mm), log');
+        el('text', { x: 11, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 11 ${(T + H - B) / 2})` }, 'Ra (µm), log');
+      };
+    }
+
+    // ---- cost ----
+    const routes = (): Route[] => ROUTES.map((r, i) => ({ ...r, btf: num(`r_b${i}`) || 1, tooling: num(`r_t${i}`) || 0, processPerPart: num(`r_p${i}`) || 0, machiningHours: num(`r_h${i}`) || 0 }));
+    function runCost(rows: Row[], notes: [string, string][]) {
+      if (!field('c_price').value) field('c_price').value = String(PRICE[field('c_m').value] ?? '');
+      const o = { mass: num('c_mass'), pricePerKg: num('c_price'), rate: num('c_rate') }, q = Math.max(1, Math.round(num('c_q')) || 1);
+      if (!(o.mass > 0 && o.pricePerKg >= 0 && o.rate >= 0)) { notes.push(['bad', 'Enter the mass, the material price and the machining rate.']); return null; }
+      const rs = routes(), costs = rs.map((r) => ({ r, c: routeCost(r, { ...o, qty: q }) })).sort((a, b) => a.c.total - b.c.total);
+      const best = costs[0];
+      rows.push({ dt: `Lowest cost at ${q}`, dd: `${best.r.name} <small>${money(best.c.total)} each: tooling ${money(best.c.tooling)}, material ${money(best.c.material)}, process ${money(best.c.process)}, machining ${money(best.c.machining)}</small>`, primary: true });
+      costs.slice(1).forEach((x) => rows.push({ dt: x.r.name, dd: `${money(x.c.total)} <small>${f(x.c.total / best.c.total, 2)} × the lowest</small>` }));
+      const be = rs.slice(1).map((r) => ({ r, n: breakEven(rs[0], r, o) }));
+      rows.push({ dt: 'Break-even against bar', dd: `<small>${be.map((x) => `${x.r.name.split(',')[0]}: ${Number.isFinite(x.n) ? (x.n < 1 ? 'always cheaper' : `above ${Math.ceil(x.n)} parts`) : 'never'}`).join(' · ')}</small>` });
+      notes.push(['', 'Cost is only one criterion. A forging gives grain flow and better short-transverse properties; a casting usually needs a casting factor and more inspection; an AM part needs its own qualification. Compare the routes that give the properties you need.']);
+      notes.push(['warn', 'The route values are illustrative. Use quotes for your part, material and quantity, and include inspection, scrap and lead time.']);
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 300, L = 54, R = 10, T = 30, B = 34;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        const qs = Array.from({ length: 61 }, (_, i) => 10 ** ((3 * i) / 60));
+        const all = rs.flatMap((r) => qs.map((n) => routeCost(r, { ...o, qty: n }).total));
+        const y0 = Math.log10(Math.min(...all) * 0.8), y1 = Math.log10(Math.max(...all.filter((v) => v < 1e9)) * 1.2);
+        const X = (n: number) => L + (Math.log10(n) / 3) * (W - L - R), Y = (v: number) => H - B - ((Math.log10(v) - y0) / (y1 - y0)) * (H - T - B);
+        for (const n of [1, 10, 100, 1000]) { el('line', { x1: X(n), x2: X(n), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(n), y: H - B + 13, 'text-anchor': n === 1000 ? 'end' : 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(n)); }
+        for (let d = Math.ceil(y0); d <= y1; d++) { el('line', { x1: L, x2: W - R, y1: Y(10 ** d), y2: Y(10 ** d), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(10 ** d) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, money(10 ** d)); }
+        rs.forEach((r, i) => el('polyline', { points: qs.map((n) => `${X(n).toFixed(1)},${Y(routeCost(r, { ...o, qty: n }).total).toFixed(1)}`).join(' '), fill: 'none', stroke: ROUTEC[i], 'stroke-width': 2.2 }));
+        el('line', { x1: X(Math.min(1000, q)), x2: X(Math.min(1000, q)), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '4 3' });
+        rs.forEach((r, i) => { const c = routeCost(r, { ...o, qty: Math.min(1000, q) }).total; el('circle', { cx: X(Math.min(1000, q)), cy: Y(c), r: 4, fill: ROUTEC[i] }); });
+        let lx = 6;
+        rs.forEach((r, i) => { const n = r.name.split(/[ ,]/)[0]; el('rect', { x: lx, y: 8, width: 10, height: 4, fill: ROUTEC[i] }); txt(lx + 13, 13, n, 'var(--rd-ink)', 'start', 10); lx += 22 + n.length * 6.4; });
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'quantity (log)');
+        el('text', { x: 11, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 11 ${(T + H - B) / 2})` }, 'cost per part (log)');
+      };
+    }
+
+    // ---- AM checks ----
+    function runAm(rows: Row[], notes: [string, string][]) {
+      const i = { overhang: num('a_o'), hole: num('a_h'), wall: num('a_w'), channel: num('a_c'), channelLength: num('a_l'), height: num('a_z'), machineHeight: num('a_m') };
+      if (Object.values(i).some((v) => !Number.isFinite(v))) { notes.push(['bad', 'Enter all the values.']); return null; }
+      const a = amChecks(i), NAME: Record<string, string> = { overhang: 'Overhang', hole: 'Horizontal hole', wall: 'Wall', channel: 'Internal channel', height: 'Build height' };
+      rows.push({ dt: 'Build', dd: a.worst === 'ok' ? 'no rule broken' : a.worst === 'warn' ? 'possible, with care' : 'change the design or the orientation', primary: true, cls: a.worst });
+      a.checks.forEach((c) => rows.push({ dt: NAME[c.key], dd: `<small>${c.text}</small>`, cls: c.level === 'ok' ? '' : c.level }));
+      notes.push(['', 'Post-processing is part of the process: stress relief before removal from the plate, HIP for fatigue-loaded parts, machining of every sealing face, thread and datum, and CT for internal features.']);
+      notes.push(['warn', 'Allowables belong to the qualified machine, powder and parameter set, not to the alloy. A different supplier or different parameters need new data (NASA-STD-6030 and MSFC-STD-3716 for spaceflight hardware).']);
+      const lv = Object.fromEntries(a.checks.map((c) => [c.key, c.level]));
+      const col = (l: string) => (l === 'ok' ? 'var(--rd-ok)' : l === 'warn' ? 'var(--rd-warn)' : 'var(--rd-accent)');
+      return () => {
+        svg.replaceChildren();
+        const W = width(), H = 300, base = H - 40;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        // build plate and direction
+        el('rect', { x: 10, y: base, width: W - 20, height: 10, fill: 'var(--rd-steel)' });
+        txt(14, base + 24, 'build plate', 'var(--rd-muted)', 'start', 10);
+        el('line', { x1: W - 18, x2: W - 18, y1: base - 10, y2: 40, stroke: 'var(--rd-muted)', 'marker-end': '' });
+        el('path', { d: `M${W - 22},48 L${W - 18},38 L${W - 14},48 Z`, fill: 'var(--rd-muted)' });
+        txt(W - 24, 34, 'build', 'var(--rd-muted)', 'end', 10);
+        // an overhang: a block with a down-facing face at the overhang angle
+        const ang = Math.max(5, Math.min(90, i.overhang)) * Math.PI / 180, x0 = 30, top = 70, colH = base - top, reach = Math.min(120, 70 / Math.tan(ang));
+        el('path', { d: `M${x0},${base} L${x0 + 40},${base} L${x0 + 40},${top + 70} L${x0 + 40 + reach},${top} L${x0},${top} Z`, fill: 'var(--rd-steel)', 'fill-opacity': 0.45, stroke: 'var(--rd-steel)' });
+        el('line', { x1: x0 + 40, y1: top + 70, x2: x0 + 40 + reach, y2: top, stroke: col(lv.overhang), 'stroke-width': 3.5 });
+        txt(x0 + 46, top + 92, `${i.overhang}° overhang`, col(lv.overhang), 'start', 11);
+        // a wall with a horizontal hole
+        const wx = Math.min(W - 120, x0 + 60 + reach + 20), ww = 70, hr = Math.max(3, Math.min(28, i.hole * 2.4));
+        el('rect', { x: wx, y: top, width: ww, height: colH, fill: 'var(--rd-steel)', 'fill-opacity': 0.45, stroke: 'var(--rd-steel)' });
+        el('circle', { cx: wx + ww / 2, cy: top + 50, r: hr, fill: 'var(--rd-panel)', stroke: col(lv.hole), 'stroke-width': 2.5 });
+        if (lv.hole !== 'ok') el('path', { d: `M${wx + ww / 2 - hr * 0.7},${top + 50 - hr * 0.7} L${wx + ww / 2},${top + 50 - hr * 1.45} L${wx + ww / 2 + hr * 0.7},${top + 50 - hr * 0.7}`, fill: 'none', stroke: col(lv.hole), 'stroke-dasharray': '3 2', 'stroke-width': 1.5 });
+        txt(wx + ww / 2, top + 50 + hr + 20, `⌀${i.hole} hole`, col(lv.hole), 'middle', 11);
+        // an internal channel
+        el('line', { x1: wx + 10, y1: base - 40, x2: wx + ww - 10, y2: base - 40, stroke: col(lv.channel), 'stroke-width': Math.max(2, Math.min(10, i.channel * 2)), 'stroke-linecap': 'round' });
+        txt(wx + ww / 2, base - 52, `⌀${i.channel} channel`, col(lv.channel), 'middle', 11);
+        // thin wall
+        const tx = wx + ww + 16, tw = Math.max(2, Math.min(14, i.wall * 6));
+        el('rect', { x: tx, y: top + 30, width: tw, height: colH - 30, fill: col(lv.wall), 'fill-opacity': 0.7 });
+        const wlab = `${i.wall} mm wall`;
+        if (tx + tw + 6 + wlab.length * 6.8 < W) txt(tx + tw + 4, top + 44, wlab, col(lv.wall), 'start', 11);
+        else txt(W - 6, top + 20, wlab, col(lv.wall), 'end', 11);
+        txt(14, 20, `height ${i.height} of ${i.machineHeight} mm`, col(lv.height), 'start', 11);
+      };
+    }
+
+    const RUN: Record<string, typeof runScreen> = { screen: runScreen, cost: runCost, am: runAm };
+    const CAPS: Record<string, string> = {
+      screen: 'Each process as a box from its best to its usual capability, coloured by family. Bright boxes can make your feature as made; the green area meets the requirement.',
+      cost: 'Cost per part against quantity for each route. Tooling makes forging and casting expensive at low quantity; material and machining decide at high quantity.',
+      am: 'Section through a build, not to scale: the overhang, a horizontal hole, an internal channel and the thinnest wall, coloured by the checks.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    field('c_m').addEventListener('change', () => { field('c_price').value = String(PRICE[field('c_m').value] ?? ''); });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    run();
+  });
+</script>
