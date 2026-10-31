@@ -1,0 +1,51 @@
+---
+// What each finish costs the design: a matrix of finishes against the five side effects to check.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', warn = 'var(--rd-warn)';
+const cols = ['Size', 'Fatigue', 'Friction', 'Insulates', 'Hydrogen'];
+// 0 none or negligible, 1 some: check it, 2 large: design for it
+const rows: [string, number[]][] = [
+  ['Sulphuric anodise', [1, 1, 0, 2, 0]],
+  ['Hard anodise', [2, 2, 1, 2, 0]],
+  ['Conversion coating', [0, 0, 0, 0, 0]],
+  ['Zinc-nickel plate', [1, 0, 1, 0, 2]],
+  ['Zinc flake', [1, 0, 1, 0, 0]],
+  ['Electroless nickel', [1, 1, 0, 0, 1]],
+  ['Hard chrome', [2, 2, 1, 0, 2]],
+  ['Passivation', [0, 0, 0, 0, 0]],
+  ['Primer and paint', [2, 0, 1, 2, 0]],
+  ['Dry film lubricant', [1, 0, 2, 1, 0]],
+];
+const x0 = 140, dx = 48, y0 = 46, dy = 18;
+---
+
+<figure class="viz coatingcosts">
+  <p class="viz-title">What each finish costs you</p>
+  <svg viewBox="0 0 360 260" role="img" aria-labelledby="coatingcosts-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="coatingcosts-desc">
+      A matrix of ten finishes against five side effects: change of size, fatigue debit, change of friction, electrical
+      insulation and hydrogen embrittlement risk. Large effects: hard anodise on size, fatigue and insulation; hard
+      chrome on size, fatigue and hydrogen; zinc-nickel electroplate on hydrogen; primer and paint on size and
+      insulation; dry film lubricant on friction. Conversion coating and passivation have no large effects.
+    </desc>
+    {cols.map((c, k) => <text x={x0 + k * dx} y="30" text-anchor="middle" font-size="9" fill={ink}>{c}</text>)}
+    {rows.map(([n, v], j) => (
+      <g>
+        {j % 2 === 0 && <rect x="4" y={y0 + j * dy - 12} width="352" height={dy} fill={muted} fill-opacity="0.08"></rect>}
+        <text x="8" y={y0 + j * dy + 1} font-size="10" fill={ink}>{n}</text>
+        {v.map((s, k) => s === 0
+          ? <line x1={x0 + k * dx - 4} x2={x0 + k * dx + 4} y1={y0 + j * dy - 3} y2={y0 + j * dy - 3} stroke={muted}></line>
+          : <circle cx={x0 + k * dx} cy={y0 + j * dy - 3} r={s === 2 ? 6 : 3.5} fill={s === 2 ? accent : warn} fill-opacity={s === 2 ? 0.9 : 0.8}></circle>)}
+      </g>
+    ))}
+    <circle cx="14" cy="238" r="6" fill={accent} fill-opacity="0.9"></circle>
+    <text x="24" y="242" font-size="10" fill={ink}>large: design for it</text>
+    <circle cx="162" cy="238" r="3.5" fill={warn} fill-opacity="0.8"></circle>
+    <text x="170" y="242" font-size="10" fill={ink}>some: check it</text>
+    <line x1="266" x2="274" y1="238" y2="238" stroke={muted}></line>
+    <text x="280" y="242" font-size="10" fill={ink}>negligible</text>
+  </svg>
+  <figcaption>
+    General practice for typical thicknesses. Hydrogen risk is for high-strength steel substrates. Each effect depends
+    on the substrate and the process: confirm the values for your part with the coating specification and test data.
+  </figcaption>
+</figure>

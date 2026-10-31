@@ -81,6 +81,7 @@ export const REBUILT = {
   surf: 'drawing/surface-finish',
   gauge: 'drawing/gauging',
   galvanic: 'materials/galvanic',
+  coat: 'materials/coatings',
   process: 'make/process-and-am',
   cost: 'make/cost',
   weld: 'make/welding',

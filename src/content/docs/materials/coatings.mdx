@@ -1,0 +1,233 @@
+---
+title: Coatings
+description: How to choose and specify a coating or surface treatment, and what it does to the part besides protecting it. Anodising, conversion coatings, platings, zinc flake, electroless nickel, hard chrome, passivation, paint, dry film lubricants and shot peening; their effect on dimensions, fatigue, friction and torque, conductivity and hydrogen embrittlement; and corrosion life, with a calculator and a worked example on the aft closure bolts.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CoatingCosts from '../../../components/CoatingCosts.astro';
+import CoatingGrowth from '../../../components/CoatingGrowth.astro';
+import CoatCalc from '../../../components/CoatCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Every coating changes the size, the friction, the fatigue strength or the conductivity of the part. Choose the coating for its function, and write on the drawing which of these effects you accept.</div>
+  <div><b>Before this</b><a href="../galvanic/">Galvanic</a> · <a href="../../fundamentals/metallurgy/">Metallurgy</a></div>
+  <div><b>Related</b><a href="../../joints/threads/">Threads</a> · <a href="../../joints/bolted-joints/">Bolted joints</a> · <a href="../../fundamentals/fatigue/">Fatigue</a></div>
+</div>
+
+## Why this matters
+
+A finish is often the last line on the drawing, and it is often chosen last. But a coating is a layer of a
+different material on the surface of the part, where fatigue cracks start, where threads engage, where seals sit and
+where electrical bonds are made. A thread that no longer accepts its gauge, a bolt that breaks days after assembly, a
+joint that lost a quarter of its preload, a bracket that cracks early: each can come from the finish.
+
+Choose the coating for a function (corrosion, wear, friction, insulation, appearance) and then check what else it
+does. The drawing must say both.
+
+<Analogy title="Painting a door">
+  Paint a door three times and it no longer closes: each coat added to its size. Paint the hinges and they stick.
+  Paint over the lock and the key does not turn. A coating on a part works in the same way: it is a protection, and
+  it is also a change to every surface it covers.
+</Analogy>
+
+## The common finishes
+
+| Finish | On | For | Watch | Typical specification |
+| --- | --- | --- | --- | --- |
+| Sulphuric anodise (Type II) | Aluminium | Corrosion; base for paint and adhesive | Size; some fatigue debit; insulates | MIL-A-8625 Type II |
+| Hard anodise (Type III) | Aluminium | Wear | Large fatigue debit; half grows outward; brittle at edges | MIL-A-8625 Type III |
+| Chromic or thin-film anodise | Aluminium | Corrosion with a smaller fatigue debit | Hexavalent chromium is restricted; replacements exist | MIL-A-8625 Type I, IC |
+| Conversion coating | Aluminium | Corrosion, paint base, electrical bonding | Thin; damaged easily | MIL-DTL-5541 (Type II is trivalent) |
+| Zinc-nickel electroplate | Steel | Sacrificial protection; replaces cadmium | Hydrogen embrittlement of high-strength steel | ASTM B841, AMS 2417 |
+| Zinc flake | Steel fasteners | Sacrificial protection with no hydrogen from the process | Thickness on threads; friction set by its topcoat | ISO 10683 |
+| Electroless nickel | Steel, aluminium | Uniform wear and corrosion layer, even in holes | Fatigue debit; hardness changes with heat treatment | AMS 2404, ASTM B733 |
+| Hard chrome | Steel | Wear, rebuilding worn surfaces | Large fatigue debit; hydrogen; often ground after plating | AMS 2460 |
+| Passivation | Stainless steel | Removes free iron; restores the passive layer | Almost no cost, but it must be specified | AMS 2700, ASTM A967 |
+| Primer and paint | All | Barrier against corrosion | Thickness; insulates; creeps under bolt heads | MIL-PRF-23377 primer |
+| Dry film lubricant | All | Prevents galling of threads and sliding parts | Changes the torque–preload relation | AS5272 |
+| Shot peening | Steel, aluminium, titanium | Compressive surface stress: fatigue and stress-corrosion resistance | Roughness; needs intensity and coverage control | AMS 2430, SAE J2441 |
+
+<CoatingCosts />
+
+## Size: where the thickness goes
+
+A plating sits on top of the surface. An anodise converts the aluminium into oxide, so part of it grows into the
+metal: approximately one third grows outward for Type II and one half for Type III (MIL-A-8625).
+
+<CoatingGrowth />
+
+- **A diameter changes by twice the build-up.** A shaft becomes larger and a bore smaller.
+- **A thread pitch diameter changes by four times it.** On a 60° flank, a coating of thickness $t$ moves the flank
+  by $2t$ along the axis on each side ([Threads](../../joints/threads/#plating-galling-and-lubrication)). ISO 965-1
+  gives the positions g, f and e for external threads to leave room for a coating. After coating, the thread must
+  still accept the GO gauge of position h.
+- **Say when the dimension applies.** The drawing must say whether each dimension applies before or after coating.
+  If not, the machinist and the inspector make different assumptions.
+- **The thickness range uses the tolerance.** A coating of 40 to 60 µm on a diameter takes 40 µm of its tolerance
+  (with a build-up fraction of 1), whatever the nominal thickness. Tight fits are often machined or ground after
+  coating.
+- **Mask what must not be coated:** threads that a plating would close, seal faces and O-ring glands, bond surfaces,
+  and electrical contact points.
+
+## Fatigue
+
+Most hard coatings decrease the fatigue strength of the part, because the crack starts in the coating and grows into
+the metal:
+
+- **Anodise** is a brittle oxide on the surface. Thick and hard anodise cause a large debit on high-strength
+  aluminium; thin sulphuric and chromic anodise a smaller one.
+- **Hard chrome and electroless nickel** have tensile residual stress and microcracks. Shot peen high-strength steel
+  before plating to recover most of the debit.
+- **Shot peening** gives a layer of compressive residual stress that increases the fatigue strength
+  ([Residual stress](../residual-stress/)). Specify the intensity (Almen) and the coverage.
+
+Use fatigue data for the coated condition where the part is fatigue-critical ([Fatigue](../../fundamentals/fatigue/)).
+
+## Hydrogen embrittlement
+
+Electroplating and acid cleaning put hydrogen into the steel. In high-strength steel (approximately 39 HRC and above,
+about 1200 MPa), the hydrogen causes delayed brittle fracture under a sustained stress, sometimes days after
+assembly ([Metallurgy](../../fundamentals/metallurgy/#diffusion)).
+
+- **Bake soon after plating.** ASTM B850 and ISO 9588 give the temperature and time, usually 190 to 220 °C for
+  hours, started within a short time after plating. The bake is a heat exposure too: it must stay below the temper
+  of the steel.
+- **Avoid the hydrogen.** Zinc flake and mechanical plating put no hydrogen into the steel. ISO 4042 warns against
+  electroplating fasteners of class 12.9 and above.
+- **Test it.** ASTM F519 tests notched specimens under sustained load to qualify a plating process.
+
+## Friction and torque
+
+A coating or a lubricant on the thread and under the head changes the friction coefficient $\mu$, and most of the
+torque goes into friction ([Bolted joints](../../joints/bolted-joints/#torque-and-preload)). At the same torque, a
+lower friction gives more preload, and a higher friction less. VDI 2230 groups surfaces into friction classes:
+
+| Class | $\mu$ | Examples |
+| --- | --- | --- |
+| A | 0.04 to 0.10 | Solid lubricants (MoS₂, graphite), waxes |
+| B | 0.08 to 0.16 | Most lubricated threads; zinc flake with an integral lubricant; phosphate and oil |
+| C | 0.14 to 0.24 | Dry zinc platings; some dry surfaces |
+| D | 0.20 to 0.35 | Dry austenitic stainless steel |
+| E | 0.30 and above | Dry aluminium and magnesium; hot-dip galvanising |
+
+Change the finish, and you change the torque that gives the design preload. Set the torque from a torque–tension
+test of the coated parts (ISO 16047), and put the torque and the finish on the drawing together.
+
+## Corrosion protection
+
+Coatings protect in three ways:
+
+- **Barrier:** paint, anodise and sealers keep water away from the metal. They work while they are intact; a scratch
+  is a bare spot.
+- **Sacrificial:** zinc and cadmium corrode in place of the steel, and protect it at scratches and cut edges. They
+  are consumed, so their life depends on the thickness and the environment.
+- **Inhibiting:** chromate and other inhibitors in conversion coatings and primers slow corrosion at damage.
+
+ISO 9223 classifies environments from C1 (heated indoors) to CX (offshore) and gives the corrosion rate of zinc in
+each:
+
+| Category | Environment | Zinc, µm/year |
+| --- | --- | --- |
+| C1 | Heated, dry indoors | 0.1 or less |
+| C2 | Unheated indoors; dry rural | 0.1 to 0.7 |
+| C3 | Urban; light coastal | 0.7 to 2.1 |
+| C4 | Industrial; coastal | 2.1 to 4.2 |
+| C5 | Marine; aggressive industrial | 4.2 to 8.4 |
+| CX | Offshore; tropical marine | 8.4 to 25 |
+
+The life of a sacrificial coating is approximately its thickness divided by the rate. Dissimilar metals in contact
+need their own check ([Galvanic](../galvanic/)).
+
+## Conductivity and bonding
+
+Anodise and paint insulate. A part that must be electrically bonded (for static discharge, lightning, or the
+grounding of the igniter circuit and instrumentation) needs a masked contact area with a conductive finish, usually a
+conversion coating, and a bonding resistance that is measured. Write the bonding points on the drawing.
+
+## Coatings on motor hardware
+
+- **The case exterior** is primed and painted for storage and handling. The interior is prepared for the insulation
+  bond by the bond procedure (cleaning, grit blast, primer), not painted.
+- **Seal surfaces and O-ring glands** are masked or finished to the surface roughness that the seal needs, after any
+  coating ([O-ring design](../../seals/o-ring-design/)).
+- **Closure and nozzle bolts** of high-strength steel get zinc flake or another finish that puts no hydrogen into
+  them, and the torque is set for that finish.
+- **Stainless steel parts** are passivated. **Aluminium housings** are anodised or conversion-coated, with masked
+  bonding points.
+- **Carbon parts against metal** need sealed and insulated joints ([Galvanic](../galvanic/#coatings-platings-and-carbon-fibre)).
+
+## Calculator
+
+<CoatCalc />
+
+## Worked example: the aft closure bolts
+
+The aft closure has 30 M10 class 12.9 bolts, tightened to 60 N·m. The joint was sized with a lubricated friction of
+0.12, which gives 36.5 kN of preload ([Bolted joints](../../joints/bolted-joints/#worked-example-the-aft-closure)).
+The bolts need protection for storage. The values in this example (the coating thickness and friction range, the
+environment and the 10 year requirement) are **for this example only**. Push **Load worked example** in the
+calculator to load them.
+
+1. **The finish.** Class 12.9 is approximately 39 to 44 HRC. Electroplated zinc-nickel would put hydrogen into a
+   steel that is sensitive to it, and ISO 4042 warns against it. The bolts get **zinc flake** to ISO 10683, 8 to
+   12 µm, with an integral lubricant. The process puts no hydrogen into the steel.
+2. **The thread.** After coating, the pitch diameter must not be above the basic size (it must accept the 6h GO
+   gauge) and not below the 6g minimum: 8.862 to 9.026 mm. The coating adds 32 to 48 µm. Before coating, the pitch
+   diameter must be **8.830 to 8.978 mm**, a tolerance of 148 µm. A bolt made to 6g (8.862 to 8.994 mm) can be up to
+   16 µm too large: 8 µm of coating uses all of the 6g allowance. Order the bolts with the thread to 6e before
+   coating (8.827 to 8.959 mm), or limit the coating to 8 µm.
+3. **The torque.** The coating maker gives a friction of 0.09 to 0.14. At 60 N·m, the preload is **31.9 to 46.4 kN**:
+   12% less to 27% more than designed. The top of that range is above the 45.6 kN that the yield margin of the joint
+   was checked with. The torque at the mean friction of 0.115 for the design preload is **57.9 N·m**. Confirm it with
+   a torque–tension test of the coated bolts.
+4. **The life.** The motor is stored in an unheated building near a city: category C3. Ten micrometres of zinc lasts
+   **4.8 to 14 years** there, against the 10 years required: only at the low end of the rate. In a controlled
+   store (C2), it lasts more than 14 years. Either the store is controlled, or the bolts need a topcoat whose rate
+   the coating maker can show.
+5. **What not to coat.** The closure's O-ring glands and seal faces, the insulation bond surface inside the case and
+   the electrical bonding point are masked.
+
+The finish changed the thread tolerance, the torque and the storage requirement. Each goes on the drawing with it.
+
+## Where this stops
+
+- **Uniform thickness.** Electroplate is thicker on edges and thinner in holes and on internal threads. Electroless
+  nickel and zinc flake are more uniform.
+- **One build-up fraction.** The fraction of anodise that grows outward changes with the alloy and the process.
+- **One friction coefficient** for the thread and the head. Real parts have scatter, and the first tightening
+  differs from later ones.
+- **Constant zinc corrosion rates.** ISO 9223 gives first-year rates; the long-term rate is often lower. Chlorides,
+  wetness and contact with other metals change it.
+- **No fatigue debit values.** These depend on the alloy, the coating, the thickness and the process. Use test data.
+
+## On the drawing
+
+- **The finish and its specification,** with type, class and thickness, for example "zinc flake to ISO 10683, 8 to
+  12 µm, with integral lubricant".
+- **Before or after coating** for each dimension that the coating changes, and the thread class before coating.
+- **Masking:** threads, seal faces, bond surfaces and electrical contact points.
+- **The hydrogen embrittlement bake** for plated high-strength steel, with its standard and the time limit to start
+  it, or a statement that electroplating is not permitted.
+- **The torque for the coated parts,** with the finish it belongs to.
+- **Shot peening** intensity and coverage, and the sequence (peen before plating).
+- **Bonding points** and their resistance.
+
+## References and further reading
+
+- MIL-A-8625 (anodic coatings), MIL-DTL-5541 (chemical conversion coatings on aluminium).
+- ASTM B841 and AMS 2417 (zinc-nickel), ISO 10683 (zinc flake on fasteners), ISO 4042 (electroplated fasteners).
+- AMS 2404 and ASTM B733 (electroless nickel), AMS 2460 (chromium plating), AMS 2700 and ASTM A967 (passivation).
+- ASTM B850 and ISO 9588 (hydrogen embrittlement relief), ASTM F519 (hydrogen embrittlement testing).
+- AMS 2430 and SAE J2441 (shot peening).
+- ISO 9223 (corrosivity of atmospheres), ISO 965-1 (metric thread tolerances), ISO 16047 (torque–clamp force
+  testing), VDI 2230 Part 1 (friction classes).
+- ASM Handbook, Vol. 5, *Surface Engineering*, ASM International (1994).
+
+<Aside type="note">
+  This is guidance on method from public standards and general practice, with typical values. The finishes,
+  thicknesses, friction values and corrosion requirements for your hardware come from your programme, the coating
+  specification and test data.
+</Aside>

@@ -1,0 +1,47 @@
+---
+// Where the thickness of a coating goes: plating builds up on the surface, anodising grows partly into the metal; and
+// on a 60° thread flank, a coating of thickness t moves the pitch diameter by 4t.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)';
+const panels = [
+  { x: 14, name: 'Plating', sub: 'all outward', out: 1 },
+  { x: 92, name: 'Anodise II', sub: '⅓ outward', out: 1 / 3 },
+  { x: 170, name: 'Anodise III', sub: '½ outward', out: 0.5 },
+];
+const base = 110, t = 30, w = 64;
+// thread flank, 60° profile: a coating normal to the flank moves the flank by t/sin30° = 2t along the axis
+const fx = 252, fy = 150;
+---
+
+<figure class="viz coatinggrowth">
+  <p class="viz-title">Where the coating thickness goes</p>
+  <svg viewBox="0 0 360 230" role="img" aria-labelledby="coatinggrowth-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="coatinggrowth-desc">
+      Three sections through a surface with the original surface marked by a dashed line. A plating sits entirely above
+      the original surface. A Type II sulphuric anodise grows about one third above it and two thirds into the metal. A
+      Type III hard anodise grows half above and half into it. Right: a 60 degree thread profile. A coating of
+      thickness t on each flank moves the flank by 2t along the axis, so the pitch diameter of an external thread
+      increases by 4t.
+    </desc>
+    {panels.map((p) => (
+      <g>
+        <rect x={p.x} y={base + t * (1 - p.out)} width={w} height={80 - t * (1 - p.out)} fill={steel} fill-opacity="0.4"></rect>
+        <rect x={p.x} y={base - t * p.out} width={w} height={t} fill={p.out === 1 ? blue : accent} fill-opacity="0.55"></rect>
+        <line x1={p.x - 4} x2={p.x + w + 4} y1={base} y2={base} stroke={ink} stroke-dasharray="4 3"></line>
+        <text x={p.x + w / 2} y="40" text-anchor="middle" font-size="10" fill={ink}>{p.name}</text>
+        <text x={p.x + w / 2} y="54" text-anchor="middle" font-size="10" fill={muted}>{p.sub}</text>
+      </g>
+    ))}
+    <text x="14" y="206" font-size="10" fill={muted}>dashed: the surface before coating</text>
+    <polygon points={`${fx},${fy} ${fx + 30},${fy - 52} ${fx + 50},${fy - 52} ${fx + 80},${fy}`} fill={steel} fill-opacity="0.4" stroke={ink}></polygon>
+    <polygon points={`${fx - 7},${fy} ${fx + 26},${fy - 57} ${fx + 54},${fy - 57} ${fx + 87},${fy} ${fx + 80},${fy} ${fx + 50},${fy - 52} ${fx + 30},${fy - 52} ${fx},${fy}`} fill={blue} fill-opacity="0.55"></polygon>
+    <line x1={fx + 15} x2={fx + 65} y1={fy - 26} y2={fy - 26} stroke={muted} stroke-dasharray="2 2"></line>
+    <text x={fx + 40} y="40" text-anchor="middle" font-size="10" fill={ink}>60° thread flank</text>
+    <text x={fx + 40} y="54" text-anchor="middle" font-size="10" fill={muted}>pitch dia. +4t</text>
+    <text x={fx + 40} y={fy + 18} text-anchor="middle" font-size="10" fill={ink}>t on each flank</text>
+    <text x={fx + 40} y={fy + 32} text-anchor="middle" font-size="10" fill={ink}>moves it 2t axially</text>
+  </svg>
+  <figcaption>
+    A diameter changes by twice the build-up, and a thread pitch diameter by four times it. Anodise grows partly into
+    the metal, so only its build-up changes the size. Conversion coatings and passivation are too thin to matter.
+  </figcaption>
+</figure>
