@@ -1,0 +1,51 @@
+---
+// Strength against ageing time for a precipitation-hardened alloy at two temperatures, with the under-aged, peak-aged
+// (T6) and over-aged (T73) conditions.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)';
+const X = (l: number) => 48 + ((l + 1) / 5) * 300, Y = (s: number) => 190 - (s / 100) * 150;
+const ls = Array.from({ length: 81 }, (_, k) => -1 + k / 16);
+const hump = (l: number, mu: number, amp: number) => 30 + amp * Math.exp(-((l - mu) ** 2) / (2 * 0.75 ** 2));
+const low = ls.map((l) => [l, hump(l, 1.6, 52)]), high = ls.map((l) => [l, hump(l, 0.5, 40)]);
+const pts = (a: number[][]) => a.map(([l, s]) => `${X(l).toFixed(1)},${Y(s).toFixed(1)}`).join(' ');
+const marks: [number, string, string][] = [[0.7, 'under-aged', 'end'], [1.6, 'T6: peak', 'middle'], [2.6, 'T73: over-aged', 'start']];
+---
+
+<figure class="viz ageingcurve">
+  <p class="viz-title">The ageing curve</p>
+  <svg viewBox="0 0 360 240" role="img" aria-labelledby="ageingcurve-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="ageingcurve-desc">
+      Strength against the logarithm of ageing time for a precipitation-hardened alloy, at a lower and a higher
+      temperature. Each curve rises as fine precipitates form, reaches a peak, and falls as they coarsen. The lower
+      temperature gives a higher peak, later. On the lower-temperature curve, the under-aged condition is before the
+      peak, T6 is at the peak, and T73 is past it: weaker, but much more resistant to stress-corrosion cracking.
+    </desc>
+    {[-1, 0, 1, 2, 3, 4].map((l) => (
+      <g>
+        <line x1={X(l)} x2={X(l)} y1="30" y2="190" stroke="var(--rd-line)"></line>
+        <text x={X(l)} y="203" text-anchor="middle" font-size="10" fill={muted}>{['0.1', '1', '10', '100', '1000', '10⁴'][l + 1]}</text>
+      </g>
+    ))}
+    <line x1="48" x2="348" y1="190" y2="190" stroke={muted}></line>
+    <text x="198" y="220" text-anchor="middle" font-size="10" fill={ink}>ageing time, h (log)</text>
+    <text x="16" y="110" text-anchor="middle" font-size="10" fill={ink} transform="rotate(-90 16 110)">strength</text>
+    <polyline points={pts(high)} fill="none" stroke={blue} stroke-width="1.8" stroke-dasharray="5 3"></polyline>
+    <polyline points={pts(low)} fill="none" stroke={accent} stroke-width="2.4"></polyline>
+    {marks.map(([l, n, a]) => {
+      const s = hump(l, 1.6, 52);
+      return (
+        <g>
+          <circle cx={X(l)} cy={Y(s)} r="4.5" fill="var(--rd-panel)" stroke={ink} stroke-width="2"></circle>
+          <text x={X(l) + (a === 'end' ? -8 : a === 'start' ? 8 : 0)} y={Y(s) - (a === 'middle' ? 10 : 4)} text-anchor={a} font-size="10" fill={ink}>{n}</text>
+        </g>
+      );
+    })}
+    <text x={X(-0.9)} y="158" font-size="10" fill={accent}>lower temperature: higher peak, later</text>
+    <text x={X(-0.9)} y="171" font-size="10" fill={blue}>higher temperature: lower peak, sooner</text>
+    <text x={X(-0.9)} y="184" font-size="10" fill={muted}>start: solution treated and quenched</text>
+  </svg>
+  <figcaption>
+    Schematic. Ageing is time at temperature, so a peak-aged part held hot in service moves down the right-hand side
+    of its curve. 7075-T73 gives up approximately 10 to 15% of the T6 strength for a large gain in resistance to
+    stress-corrosion cracking.
+  </figcaption>
+</figure>

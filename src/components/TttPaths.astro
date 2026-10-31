@@ -1,0 +1,56 @@
+---
+// Schematic isothermal transformation (TTT) diagram of a low-alloy steel with three heat treatments: quench to
+// martensite, quench and hold for bainite, and hold high for pearlite.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)', ok = 'var(--rd-ok)', warn = 'var(--rd-warn)';
+const X = (lt: number) => 52 + ((lt + 1) / 5) * 296, Y = (T: number) => 210 - (T / 900) * 180;
+const start: [number, number][] = [[700, 2.6], [670, 1.6], [630, 0.9], [590, 0.55], [550, 0.42], [510, 0.55], [470, 0.85], [430, 1.2], [390, 1.6], [350, 2.0], [310, 2.4]];
+const finish = start.map(([T, l]) => [T, l + 1.3] as [number, number]);
+const pts = (a: [number, number][]) => a.map(([T, l]) => `${X(l).toFixed(1)},${Y(T).toFixed(1)}`).join(' ');
+const path = (a: [number, number][]) => a.map(([l, T]) => `${X(l).toFixed(1)},${Y(T).toFixed(1)}`).join(' ');
+---
+
+<figure class="viz tttpaths">
+  <p class="viz-title">One steel, three microstructures</p>
+  <svg viewBox="0 0 360 250" role="img" aria-labelledby="tttpaths-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="tttpaths-desc">
+      A schematic isothermal transformation diagram: temperature against the logarithm of time. Above A1 at 727 °C,
+      austenite is stable. Below it, two C-shaped curves mark the start and the end of the transformation, with a nose
+      at approximately 550 °C and one second. A fast quench passes to the left of the nose and through the martensite
+      start line, Ms: the result is martensite. A quench to approximately 400 °C and a hold crosses the curves below the
+      nose: the result is bainite. A hold at approximately 650 °C crosses them above the nose: the result is pearlite.
+    </desc>
+    {[-1, 0, 1, 2, 3, 4].map((l) => (
+      <g>
+        <line x1={X(l)} x2={X(l)} y1="30" y2="210" stroke="var(--rd-line)"></line>
+        <text x={X(l)} y="223" text-anchor="middle" font-size="10" fill={muted}>{['0.1', '1', '10', '100', '1000', '10⁴'][l + 1]}</text>
+      </g>
+    ))}
+    {[300, 600, 900].map((T) => <text x="48" y={Y(T) + 3} text-anchor="end" font-size="10" fill={muted}>{T}</text>)}
+    <text x="200" y="240" text-anchor="middle" font-size="10" fill={ink}>time at temperature, s (log)</text>
+    <text x="14" y="120" text-anchor="middle" font-size="10" fill={ink} transform="rotate(-90 14 120)">°C</text>
+    <line x1="52" x2="348" y1={Y(727)} y2={Y(727)} stroke={ink} stroke-dasharray="5 3"></line>
+    <text x="344" y={Y(727) - 5} text-anchor="end" font-size="10" fill={ink}>A1 727</text>
+    <text x={X(1.5)} y={Y(810)} text-anchor="middle" font-size="10" fill={ink}>austenite, stable</text>
+    <polyline points={pts(start)} fill="none" stroke={ink} stroke-width="1.8"></polyline>
+    <polyline points={pts(finish)} fill="none" stroke={ink} stroke-width="1.2" stroke-dasharray="4 3"></polyline>
+    <line x1="52" x2="348" y1={Y(300)} y2={Y(300)} stroke={accent} stroke-width="1.2"></line>
+    <line x1="52" x2="348" y1={Y(150)} y2={Y(150)} stroke={accent} stroke-width="1" stroke-dasharray="3 3"></line>
+    <text x="344" y={Y(300) - 4} text-anchor="end" font-size="10" fill={accent}>Ms</text>
+    <text x="344" y={Y(150) - 4} text-anchor="end" font-size="10" fill={accent}>Mf</text>
+    <text x={X(0.9)} y={Y(220)} text-anchor="middle" font-size="10" fill={accent}>martensite</text>
+    <polyline points={path([[-1, 860], [0.15, 20]])} fill="none" stroke={accent} stroke-width="2.2"></polyline>
+    <polyline points={path([[-1, 860], [-0.55, 400], [3.9, 400]])} fill="none" stroke={ok} stroke-width="2.2"></polyline>
+    <polyline points={path([[-1, 860], [-0.65, 650], [3.9, 650]])} fill="none" stroke={blue} stroke-width="2.2"></polyline>
+    <text x={X(3.9)} y={Y(650) + 13} text-anchor="end" font-size="10" fill={blue}>pearlite</text>
+    <text x={X(3.9)} y={Y(400) - 6} text-anchor="end" font-size="10" fill={ok}>bainite</text>
+    <text x={X(0.75)} y={Y(560)} font-size="9" fill={muted}>nose</text>
+    <text x={X(2.05)} y={Y(500)} font-size="9" fill={muted}>start</text>
+    <text x={X(3.25)} y={Y(500)} font-size="9" fill={muted}>end</text>
+    <circle cx={X(-1)} cy={Y(860)} r="3" fill={warn}></circle>
+  </svg>
+  <figcaption>
+    Schematic. Alloying elements (Cr, Mo, Ni, Mn) move the curves to the right, so a slower quench or a thicker section
+    still misses the nose: this is hardenability. Carbon sets how hard the martensite is. Martensite is too brittle to use
+    as quenched, so it is always tempered.
+  </figcaption>
+</figure>

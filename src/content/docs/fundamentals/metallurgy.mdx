@@ -1,0 +1,238 @@
+---
+title: Metallurgy
+description: Why metals behave as their datasheets say. Crystal structure and the ductile-to-brittle transition, the six ways to strengthen a metal, the iron–carbon diagram, quenching, hardenability and tempering, precipitation hardening, and diffusion (case hardening, decarburisation, hydrogen), with a calculator and a worked example on the heat treatment of the D6AC case.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CrystalDbtt from '../../../components/CrystalDbtt.astro';
+import TttPaths from '../../../components/TttPaths.astro';
+import AgeingCurve from '../../../components/AgeingCurve.astro';
+import MetalCalc from '../../../components/MetalCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Each temper code and heat treatment is a position on a small number of diagrams. Learn the diagrams and the designations stop being arbitrary.</div>
+  <div><b>Then</b><a href="../../materials/selection/">Material selection</a> · <a href="../../materials/specification/">Material specs</a></div>
+  <div><b>Related</b><a href="../../materials/residual-stress/">Residual stress</a> · <a href="../../make/welding/">Welding</a> · <a href="../../materials/allowables/">Allowables</a></div>
+</div>
+
+## Why this matters
+
+The same steel can be soft enough to machine, hard enough to cut glass, or tough enough to contain a motor. Only the
+heat treatment is different. The same aluminium alloy can be strong and crack in a damp store, or a little weaker and
+safe. The datasheet gives one condition; your part gets the condition that its processing gave it.
+
+The designer controls this through a few lines on the drawing: the material specification and its condition, the
+heat treatment, the hardness or strength to verify, and the limits on later heat. Each line makes sense once you can
+see which diagram it refers to.
+
+<Analogy title="Cooking, not chemistry">
+  Bread, toast and a burnt crust are the same flour. The recipe and the oven, not the ingredients, decide which one
+  you eat. A steel is the same: carbon and alloy elements are the ingredients, and the heat treatment is the recipe.
+  Like cooking, the time matters as much as the temperature, and you cannot undo a burnt result by cooling it.
+</Analogy>
+
+## Crystals, grains and dislocations
+
+Metal atoms sit in a repeating crystal lattice. A part is made of many small crystals, the **grains**. Metals yield
+because lines of misfit in the lattice, the **dislocations**, move through the grains. Anything that stops
+dislocations from moving makes the metal stronger, and usually less ductile.
+
+<CrystalDbtt />
+
+| Lattice | Metals | What it means for the design |
+| --- | --- | --- |
+| Body-centred cubic (BCC) | Ferritic and martensitic steels, molybdenum, tungsten | Ductile-to-brittle transition: specify an impact test at the lowest service temperature |
+| Face-centred cubic (FCC) | Aluminium, nickel, copper, austenitic stainless steel | No transition; tough at cryogenic temperatures |
+| Hexagonal close-packed (HCP) | Titanium (α), magnesium, zinc | Fewer slip systems: properties change with direction (texture) in plate and forgings |
+
+**The most important result:** a BCC steel that is tough at room temperature can break in a brittle way when cold.
+FCC metals do not do this, which is why cryogenic hardware uses aluminium, austenitic stainless steel and nickel
+alloys. Nickel at 9% moves the transition of a ferritic steel far enough down to use it for liquefied natural gas.
+
+## The six ways to make a metal stronger
+
+| Mechanism | How it works | Examples | Survives heat? |
+| --- | --- | --- | --- |
+| Solid solution | Dissolved atoms of a different size strain the lattice | Mg in 5xxx aluminium, Mo and Cr in nickel alloys | Yes: it cannot over-age |
+| Work hardening | Plastic strain multiplies dislocations until they block each other | H tempers of aluminium, cold-drawn bar, flow-formed cases | No: lost by annealing or in a weld HAZ |
+| Grain refinement | Grain boundaries block dislocations | Normalised steels, fine-grained castings | Lost if the grains grow |
+| Precipitation hardening | Fine particles formed by ageing block dislocations | 2xxx, 6xxx and 7xxx aluminium, 17-4PH, maraging steel, Inconel 718 | No: over-ages at temperature |
+| Transformation (martensite) | Carbon trapped in a distorted lattice by a fast quench | Quenched-and-tempered steels: 4130, 4340, D6AC | Tempers further above its temper temperature |
+| Dispersion | Stable oxide particles that do not dissolve | Oxide-dispersion-strengthened alloys | Yes, to very high temperature |
+
+Grain refinement is the only mechanism that increases strength **and** toughness together. The yield strength follows
+the Hall–Petch relation, $\sigma_y = \sigma_0 + k/\sqrt{d}$, with $d$ the grain size. All the others trade
+toughness or ductility for strength.
+
+## Iron and carbon
+
+The iron–carbon diagram is the map underneath every steel. Carbon content sets which phases can exist; temperature
+sets which of them do. The important points:
+
+- **Austenite (γ, FCC)** dissolves up to 2.1% carbon. All hardening of steel starts by heating into austenite.
+- **Ferrite (α, BCC)** dissolves almost no carbon (0.022%). On slow cooling, the carbon leaves as **cementite**
+  (Fe₃C), in layers with ferrite called **pearlite**.
+- **The eutectoid** is at 0.77% carbon and 727 °C (A1). Structural and aerospace steels are below it, at 0.25 to 0.5%
+  carbon: enough to make useful martensite, not so much that the steel cracks on quenching or welding.
+- **Ac1 and Ac3** are the temperatures where austenite starts and finishes forming on heating. Alloying moves them.
+  Steels are austenitised a little above Ac3, so that all the steel is austenite, but not so high that the grains grow.
+
+The **lever rule** gives the phase fractions. A slowly cooled steel with carbon content $C$ below the eutectoid has a
+pearlite fraction of $(C - 0.022)/(0.77 - 0.022)$.
+
+## Quenching, hardenability and martensite
+
+What a steel becomes depends on how fast it cools from austenite. A transformation diagram shows the time that
+austenite needs to change at each temperature.
+
+<TttPaths />
+
+- **Martensite** forms when the quench misses the nose of the curve. The carbon is trapped, and the lattice distorts
+  to body-centred tetragonal. It is very hard and very brittle. It starts to form at the **Ms** temperature.
+- **Hardness comes from carbon.** Fully martensitic steel has approximately $35 + 50\,C$ HRC (for 0.1 to 0.6% C).
+  Alloying does not increase it.
+- **Hardenability comes from alloying.** Chromium, molybdenum, nickel and manganese move the curves to the right, so
+  a thick section or a slower (oil or gas) quench still makes martensite at its centre. The Jominy test (ASTM A255)
+  measures it. This is why 4340 hardens through a thick forging and a plain carbon steel of the same carbon does not.
+- **Quenching is violent.** The surface turns to martensite first and the core later, with a volume increase each
+  time. Sharp corners, sudden changes of section and holes near edges cause quench cracks and distortion.
+
+## Tempering
+
+As-quenched martensite is too brittle to use. **Tempering** reheats it below Ac1, so that fine carbides form and the
+lattice relaxes. Strength and hardness decrease; toughness increases. Time and temperature trade against each other
+through the Hollomon–Jaffe parameter:
+
+$$
+P = T\,(C + \log_{10} t)
+$$
+
+Here $T$ is the absolute temperature in K, $t$ the time in hours, and $C \approx 20$ for low-alloy steels. Two
+tempers with the same $P$ give approximately the same hardness. Three results for the design:
+
+- **Later heat tempers the steel further.** A stress relief, a coating or insulation cure, or a hydrogen bake adds
+  to the temper. If its parameter is near the temper's, the strength decreases. Keep later heat a margin below the
+  temper temperature (often 15 to 30 °C).
+- **Some temperature ranges are brittle.** Tempering at approximately 250 to 400 °C can cause tempered-martensite
+  embrittlement, and slow cooling through approximately 375 to 575 °C can cause temper embrittlement in some steels.
+  The material specification sets the temper to avoid them.
+- **Double tempering** changes retained austenite to martensite in the first temper and tempers that martensite in
+  the second.
+
+## Precipitation hardening
+
+Precipitation-hardened alloys are heated to dissolve the alloying elements (solution treatment), quenched to keep
+them in solution, then aged so that fine precipitates form.
+
+<AgeingCurve />
+
+- **The temper code is the position on the curve.** T4 is naturally aged at room temperature. T6 is artificially aged
+  to the peak. T73 and T76 are over-aged for resistance to stress-corrosion cracking and exfoliation. The second and
+  third digits (T7351) add the stress relief by stretching after the quench.
+- **Service heat continues the ageing.** A peak-aged alloy that is held hot moves down the right-hand side of its
+  curve. Elevated-temperature data after exposure come from this.
+- **Steels and nickel alloys too.** 17-4PH is aged to H900 (strongest), H1025 or H1150 (tougher, more resistant to
+  stress-corrosion cracking). Maraging steel is soft after solution treatment, so it is formed and welded, then aged.
+  Inconel 718 ages slowly enough to weld.
+
+## Diffusion
+
+Atoms move through the lattice by diffusion, faster at high temperature: $D = D_0\,e^{-Q/RT}$. With a constant
+concentration at the surface, the depth that the change reaches grows with $\sqrt{Dt}$:
+
+$$
+\frac{c(x) - c_0}{c_s - c_0} = \operatorname{erfc}\!\left(\frac{x}{2\sqrt{Dt}}\right)
+$$
+
+Twice the depth needs four times the time. Three processes on the drawing follow from this:
+
+- **Case hardening.** Carburising adds carbon to the surface of a low-carbon steel in austenite, then quenches it: a
+  hard case on a tough core, for gears and bearing surfaces. Nitriding adds nitrogen at a lower temperature, with
+  little distortion.
+- **Decarburisation.** Hot steel in air loses carbon from its surface. The surface becomes soft, with low fatigue
+  strength. Heat-treat in vacuum or a protective atmosphere, leave material to machine off, and state the allowed
+  depth on the drawing.
+- **Hydrogen embrittlement.** Hydrogen enters high-strength steel from plating, pickling, welding or corrosion, and
+  causes delayed brittle fracture under stress. Steels harder than approximately 39 HRC get a bake soon after
+  plating (ISO 9588, ASTM B850), so the hydrogen diffuses out before it does damage.
+
+## Calculator
+
+<MetalCalc />
+
+## Worked example: the heat treatment of the D6AC case
+
+The 300 mm motor's case is D6AC ([Case sizing](../../motor/case-sizing/)). The heat of steel has 0.46 C, 0.75 Mn,
+0.22 Si, 0.55 Ni, 1.05 Cr, 1.0 Mo and 0.08 V (typical values inside AMS 6431). The temper of 565 °C for 2 + 2 h is
+illustrative. The criteria for this example only: later heat stays 25 °C below the temper, and the allowed
+decarburisation is 0.08 mm. Push **Load worked example** in the calculator to load these inputs.
+
+1. **On the diagram.** Slowly cooled, the steel is 41% ferrite and 59% pearlite: soft enough to form and machine.
+   Ac1 is **730 °C** and Ac3 **814 °C**, so it is austenitised at approximately 845 to 875 °C. Ms is **292 °C**. Fully
+   martensitic, it has approximately **58 HRC**: this is the hardness of the as-quenched case, before tempering.
+2. **The temper.** 565 °C for 4 h in total gives $P = 838 \times (20 + \log_{10} 4) = 17\,268$. This is the condition
+   that the allowables of the case belong to ([Allowables](../../materials/allowables/)).
+3. **The insulation cure.** The case-bonded insulation cures at 160 °C for 6 h. Its parameter is 9000: the same as a
+   few microseconds at 565 °C. It has **no effect** on the temper.
+4. **A stress relief after a weld repair.** At 540 °C for 2 h, the parameter is 16 508, the same as **30 minutes** more
+   at 565 °C. The total parameter increases by 43, and the exposure is below the limit (the temper made 25 °C colder,
+   $P = 16\,753$). The hottest 2 h stress relief inside the margin is **552 °C**.
+5. **The wrong stress relief.** At 600 °C for 2 h, the parameter is 17 726: the same as **14 hours** more at 565 °C.
+   The steel tempers further and its strength falls below the allowables. The case must be hardened and tempered
+   again, then tested. A note on the drawing prevents this: the maximum temperature of later heat.
+6. **Decarburisation.** One hour in air at 900 °C (normalising, or austenitising without protection) decarburises
+   **0.34 mm** of each surface, to the depth where the carbon is back to 90% of the core value. The wall is 1.377 mm:
+   a quarter of it on each side would be soft, with a low fatigue strength, and the wall is not machined after
+   hardening. The 0.08 mm allowed is reached in **200 seconds**. The case is heat-treated in vacuum or a protective
+   atmosphere, and a hardness traverse on a test piece shows the depth.
+
+Every number here changes the drawing, not the analysis: the condition and its test, the maximum temperature of
+later processes, and the decarburisation limit.
+
+## Where this stops
+
+- **The binary iron–carbon diagram.** Alloying elements move the lines and the eutectoid. Use the diagrams and
+  transformation data of the alloy.
+- **Andrews' formulas** are empirical, for low-alloy steels with 0.1 to 0.6% carbon, and give approximately ±20 °C.
+  The heating rate also moves Ac1 and Ac3.
+- **One Hollomon–Jaffe constant.** $C$ depends on the carbon content, and the parameter does not apply to secondary
+  hardening steels (high Mo, V or W) or to precipitation-hardened alloys. Use the tempering curves of the alloy.
+- **Diffusion into a semi-infinite solid** with a constant surface concentration and one diffusion coefficient. In
+  a thin wall, both surfaces change and the profiles meet. Carbon diffusion in austenite increases with carbon
+  content. Hydrogen in high-strength steel is slowed by traps.
+- **No grain size, inclusions or texture.** These come from the melting and working of the material, controlled by
+  the material specification ([Material specs](../../materials/specification/)).
+
+## On the drawing
+
+- **The material specification and its condition** at delivery and after heat treatment, for example AMS 6431, or
+  7075-T7351 to AMS-QQ-A-250/12.
+- **The heat treatment specification,** for example AMS 2759/2 for low-alloy steel above 1517 MPa (220 ksi), or
+  AMS 2770 for aluminium, with pyrometry to AMS 2750.
+- **What to verify:** hardness or tensile strength, on the part or on test pieces that go through the furnace with
+  it ([Certs & trace](../../make/certs/)).
+- **The decarburisation limit** and how it is checked.
+- **The maximum temperature of later processes:** stress relief, cures, coatings, bakes.
+- **The hydrogen embrittlement bake** after plating or pickling, with the time limit to start it.
+
+## References and further reading
+
+- W. D. Callister and D. G. Rethwisch, *Materials Science and Engineering: An Introduction*, 10th ed., Wiley (2018).
+- G. Krauss, *Steels: Processing, Structure, and Performance*, 2nd ed., ASM International (2015).
+- D. A. Porter, K. E. Easterling and M. Y. Sherif, *Phase Transformations in Metals and Alloys*, 3rd ed., CRC Press
+  (2009).
+- ASM Handbook, Vol. 4A, *Steel Heat Treating Fundamentals and Processes*, ASM International (2013).
+- J. H. Hollomon and L. D. Jaffe, "Time-temperature relations in tempering steel", *Trans. AIME* 162 (1945) 223–249.
+- K. W. Andrews, "Empirical formulae for the calculation of some transformation temperatures", *J. Iron Steel Inst.*
+  203 (1965) 721–727.
+- ASTM A255 (end-quench hardenability), ASTM E112 (grain size), ASTM B850 and ISO 9588 (hydrogen embrittlement
+  relief).
+
+<Aside type="note">
+  The diagrams are schematic and the formulas empirical, with typical values. The transformation temperatures, heat
+  treatments and tempers for your hardware come from the material specification, the heat-treatment specification and
+  your programme.
+</Aside>
