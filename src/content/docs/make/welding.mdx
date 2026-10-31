@@ -1,0 +1,323 @@
+---
+title: Welding
+description: How a weld changes the metal next to it, and how to design and specify welded joints that do not crack, distort or fail in fatigue. Heat input, the heat-affected zone, hydrogen cracking and preheat (EN 1011-2), cooling time t8/5, weld flaws, joint efficiency, IIW fatigue classes and shrinkage, with a calculator and a worked example on the girth welds of a heavyweight test case.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import WeldZones from '../../../components/WeldZones.astro';
+import WeldDefects from '../../../components/WeldDefects.astro';
+import WeldCalc from '../../../components/WeldCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A weld is a small casting made inside your part and quenched by it. Design for the metal it makes: control hydrogen and cooling, inspect for the flaws it leaves, and keep it out of the highest stress.</div>
+  <div><b>Before this</b><a href="../../materials/residual-stress/">Residual stress</a> · <a href="../../fundamentals/fatigue/">Fatigue</a></div>
+  <div><b>Related</b><a href="../ndt/">NDT</a> · <a href="../../motor/case-sizing/">Case sizing</a> · <a href="../certs/">Certs & trace</a></div>
+</div>
+
+## Why this matters
+
+Welds join the cylinders, domes, skirts and bosses of metal motor cases, and they hold together much of the test
+hardware: heavyweight cases, stands and pressure lines. A weld is not parent metal. It has a different
+microstructure, residual stress near yield, a heat-affected zone that can be harder or softer than the plate, and
+flaws that the process leaves.
+
+Most weld failures start from one of three causes: a crack from hydrogen in a hard heat-affected zone, a flaw that
+inspection did not find, or a weld put at a point of high cyclic stress. Each cause is controlled on the drawing and
+in the welding procedure, not after the part is made.
+
+<Analogy title="A casting inside the part">
+  Making a weld is like pouring a small ingot into a mould cut in your part. The mould is cold metal, so it quenches
+  the ingot and the metal next to it. A good foundry controls the temperature of the mould, keeps the melt dry and
+  clean, and X-rays the casting. A welder does the same with preheat, dry consumables and NDT.
+</Analogy>
+
+## The weld and its heat-affected zone
+
+The arc puts heat into the joint along a moving line. The **heat input** of one pass is:
+
+$$
+Q = k\,\frac{U\,I}{v}
+$$
+
+Here $U$ is the arc voltage, $I$ the current, $v$ the travel speed and $k$ the thermal efficiency of the process: 0.6
+for TIG, 0.8 for manual metal arc and MIG/MAG, and 1.0 for submerged arc (EN 1011-1). The usual unit is kJ/mm.
+
+The metal next to the weld pool does not melt, but it gets one fast thermal cycle. This band is the
+**heat-affected zone** (HAZ). Each point gets a different peak temperature, so the HAZ has bands with different
+microstructures.
+
+<WeldZones />
+
+In hardenable steels, the **cooling time from 800 to 500 °C**, $t_{8/5}$, sets the microstructure of the HAZ. A short
+time gives hard martensite that cracks easily. A long time gives soft, coarse grains with low toughness. The heat
+input, the thickness and the preheat set $t_{8/5}$. In aluminium alloys and in quenched-and-tempered steels, the heat
+over-ages or over-tempers the HAZ, which becomes **softer** than the plate.
+
+## Hydrogen cracking and preheat
+
+Hydrogen cracking (cold cracking) occurs when four conditions are present together:
+
+1. **Hydrogen** in the weld, from moisture in the consumables, the flux, the shielding gas or the joint surface.
+2. **A hard, susceptible microstructure,** usually martensite in the HAZ.
+3. **Tensile stress,** from restraint and the residual stress of the weld.
+4. **A low temperature,** below approximately 150 °C.
+
+The crack can appear hours after welding, as the hydrogen diffuses to the hard zone. Remove one condition and it does
+not occur. **Preheat** slows the cooling, which makes the HAZ softer, and keeps the joint warm while the hydrogen
+diffuses out.
+
+EN 1011-2 gives two methods to calculate the minimum preheat. Method B uses the carbon equivalent:
+
+$$
+\text{CET} = \text{C} + \frac{\text{Mn} + \text{Mo}}{10} + \frac{\text{Cr} + \text{Cu}}{20} + \frac{\text{Ni}}{40}
+$$
+
+$$
+T_p = 697\,\text{CET} + 160\tanh\!\left(\frac{d}{35}\right) + 62\,\text{HD}^{0.35} + (53\,\text{CET} - 32)\,Q - 328
+$$
+
+Here $T_p$ is in °C, $d$ is the plate thickness in mm, HD the diffusible hydrogen in ml per 100 g of weld metal and
+$Q$ the heat input in kJ/mm. The method applies for CET 0.2 to 0.5, $d$ 10 to 90 mm, HD 1 to 20 and $Q$ 0.5 to
+4.0 kJ/mm. Method A uses the IIW carbon equivalent
+$\text{CEV} = \text{C} + \text{Mn}/6 + (\text{Cr} + \text{Mo} + \text{V})/5 + (\text{Ni} + \text{Cu})/15$ and charts.
+
+| Hydrogen scale | HD, ml/100 g | Typical source |
+| --- | --- | --- |
+| A | More than 15 | Cellulosic electrodes |
+| B | 10 to 15 | Rutile electrodes; poorly stored consumables |
+| C | 5 to 10 | Some flux-cored wires; basic electrodes not baked |
+| D | 3 to 5 | Baked basic electrodes; MIG/MAG with solid wire |
+| E | 3 or less | TIG; vacuum-packed electrodes |
+
+The hydrogen level is the easiest part to control. Store and bake consumables as their maker specifies, and weld on a
+clean, dry joint. Steels with a CET above 0.5, such as D6AC and 4340, are outside method B. They need a high
+preheat, a controlled interpass temperature, and a stress relief or temper before the weld cools to room temperature.
+
+## Cooling time
+
+EN 1011-2 Annex D gives $t_{8/5}$ for two cases. In thick plate, heat flows in three directions (3D); in thin plate,
+it flows in two (2D):
+
+$$
+t_{8/5}^{\,3D} = (6700 - 5T_0)\,Q\left(\frac{1}{500 - T_0} - \frac{1}{800 - T_0}\right)F_3
+$$
+
+$$
+t_{8/5}^{\,2D} = (4300 - 4.3T_0)\times10^5\,\frac{Q^2}{d^2}\left[\left(\frac{1}{500 - T_0}\right)^2 - \left(\frac{1}{800 - T_0}\right)^2\right]F_2
+$$
+
+Here $T_0$ is the preheat or interpass temperature in °C, and $F_2$ and $F_3$ are factors for the shape of the joint
+(1 for a bead on plate, 0.9 for the fill passes of a butt weld, less for fillet welds). Below the **transition
+thickness**, the 2D equation applies and a thinner plate cools more slowly. Above it, the thickness does not change
+$t_{8/5}$.
+
+The welding procedure qualification gives the acceptable window of $t_{8/5}$ for a steel and a consumable, through
+hardness and impact tests of the HAZ. The window converts directly to a range of heat input for each thickness and
+preheat.
+
+## The processes
+
+| Process | Heat input | Hydrogen | Used for | Watch |
+| --- | --- | --- | --- | --- |
+| TIG (GTAW, 141) | Low to medium, $k = 0.6$ | Very low | Thin walls, roots, titanium, aluminium, high-strength steels | Slow; shielding of the root and of titanium |
+| MIG/MAG (GMAW, 131/135) | Medium, $k = 0.8$ | Low | Structural steel and aluminium, fast fill | Lack of fusion with short-circuit transfer |
+| Manual metal arc (111) | Medium, $k = 0.8$ | Depends on the electrode | Site work and repairs | Electrode storage; slag inclusions |
+| Submerged arc (121) | High, $k = 1.0$ | Depends on the flux | Thick plate, long seams | Coarse HAZ; flux storage |
+| Electron beam (51) | Very low, deep and narrow | Very low (vacuum) | Deep welds with little distortion, in high-strength alloys | Fit-up; needs a vacuum chamber |
+| Laser (52) | Very low | Low | Thin parts, small welds | Fit-up; fast cooling of the HAZ |
+| Friction stir (43) | Solid state, no melting | None | Aluminium alloys, including 2219 and Al-Li | Large forces and fixtures; a keyhole at the end |
+
+Each process has a different heat input and a different set of flaws. Choose the process with the joint, not after.
+
+## Flaws and weld quality
+
+<WeldDefects />
+
+ISO 5817 gives three quality levels for steel welds: **B** (stringent), **C** (intermediate) and **D** (moderate).
+Each sets limits for each type of flaw, for example the size of porosity, the depth of undercut and the misalignment.
+For aerospace fusion welds, AWS D17.1 gives classes A, B and C, with Class A for welds whose failure would cause the
+loss of the vehicle. The class sets the NDT, as in [NDT](../ndt/).
+
+- **Planar flaws are the dangerous ones.** Lack of fusion and cracks are sharp. Porosity is round and usually less
+  important for strength, but it shows a process that is not under control.
+- **A repair weld is a new weld.** It has its own heat cycle, residual stress and HAZ, often in a part that was
+  already heat-treated. Limit the number of repairs at one location, and repeat the NDT.
+
+## Joint efficiency and strength
+
+Pressure-vessel codes reduce the allowable stress of a welded joint with a **joint efficiency** $\eta$. It depends on
+the joint type and on how much of the weld is inspected. ASME VIII Division 1, Table UW-12, gives:
+
+| Butt joint | Full radiography | Spot | None |
+| --- | --- | --- | --- |
+| Double-welded, or with the root made equal to it | 1.00 | 0.85 | 0.70 |
+| Single-welded with a backing strip left in | 0.90 | 0.80 | 0.65 |
+
+The efficiency is a factor for the uncertainty of the flaws, not a statement of the strength of the weld metal. It
+enters the case wall directly ([Case sizing](../../motor/case-sizing/)). Two further effects can make the joint weaker:
+
+- **HAZ softening.** Aluminium alloys in the T6 and T8 tempers lose much of their strength in the HAZ. Eurocode 9 uses
+  HAZ factors of approximately 0.5 to 0.65 for 6xxx alloys. The welded strength comes from the welding code or from
+  tests of the procedure, not from the parent data.
+- **Weld metal strength.** A filler that is weaker than the plate (undermatching) puts the strain into the weld. For
+  high-strength steels, the usual answer is to weld before the final heat treatment, so the weld and the plate harden
+  and temper together.
+
+## Fatigue of welded joints
+
+A welded joint fails in fatigue at a much lower stress range than the parent metal. The weld toe is a sharp notch,
+there are small flaws at it from the start, and the residual stress is near yield. For these reasons, the fatigue
+strength of a welded joint **does not increase with the strength of the steel**, and the mean stress has little
+effect.
+
+Codes give S–N curves by **detail class**. In the IIW recommendations, the FAT class is the stress range in MPa for
+2 million cycles, on a slope of 3:
+
+$$
+N = 2\times10^6\left(\frac{\text{FAT}}{\Delta\sigma}\right)^3
+$$
+
+| Detail (steel) | FAT |
+| --- | --- |
+| Butt weld ground flush, NDT | 112 |
+| Butt weld from the shop, flat, toe angle 30° or less, NDT | 90 |
+| Other butt weld, NDT | 80 |
+| Butt weld welded from one side, root checked by NDT | 71 |
+| Butt weld welded from one side, root not checked | 36 |
+| Load-carrying fillet weld, failure through the throat | 36 |
+
+Aluminium classes are approximately 0.4 of the steel values. Three effects change the stress range at the weld:
+
+- **Misalignment.** An axial offset $e$ between two plates of thickness $t$ adds bending. For equal thicknesses, the
+  stress increases by $k_m = 1 + 3e/t$. The class already includes 1.15 to 1.3; more than that adds to the stress
+  range.
+- **Shell bending.** Near a flange, a closure or a change of thickness, the wall bends
+  ([Hand calcs](../../fundamentals/hand-calcs/#thin-shells)). Include this bending in the stress range at the weld.
+- **Thickness.** Above 25 mm, the class decreases by $(25/t)^n$.
+
+Weld toe grinding, hammer or needle peening, and HFMI treatment can increase the fatigue strength of the toe. They do
+not help a crack that starts at the root.
+
+## Shrinkage and distortion
+
+The weld metal contracts as it cools, and the plate next to it holds it. The result is residual stress near yield
+along the weld ([Residual stress](../../materials/residual-stress/)) and distortion of the part. For a butt weld in
+steel, Blodgett gives the transverse shrinkage as:
+
+$$
+s = 0.2\,\frac{A_w}{t} + 0.05\,g
+$$
+
+Here $A_w$ is the area of the weld cross-section, $t$ the thickness and $g$ the root gap. A smaller groove makes less
+shrinkage, so a narrow groove, a double-V groove or a beam process distorts less. A girth weld makes a cylinder shorter
+and pulls its diameter in at the weld. Thus:
+
+- **Add the shrinkage to the cut length,** and take it into the length stack ([Tolerance stack](../../drawing/tolerance-stack/)).
+- **Machine the datums after welding** and after the heat treatment, where the tolerances are tight.
+- **Weld in a balanced sequence,** in a fixture, and control the interpass temperature.
+
+## Welding motor hardware
+
+- **High-strength steel cases** (D6AC, 4340 types) are welded with TIG or electron beam before the final hardening and
+  tempering. The weld gets a preheat and a stress relief before it cools, then the full case is hardened and tempered,
+  then inspected. A repair weld after the final heat treatment needs its own qualified procedure.
+- **Maraging steels** weld well in the solution-annealed condition, because the martensite is soft. The case is aged
+  after welding.
+- **Weldable low-alloy steels** such as 15CDV6 are welded in the hardened condition, with a modest preheat and a stress
+  relief below the tempering temperature. They suit test hardware and some flight cases.
+- **Titanium** needs a full inert shield on both sides of the weld until it is below approximately 400 °C. The colour
+  of the weld shows contamination: silver or light straw is acceptable; blue, grey or white is not.
+- **Aluminium alloys** such as 2219 weld with TIG, variable-polarity plasma arc or friction stir. Design for the
+  welded strength of the HAZ.
+- **Qualify everything.** The welding procedure is qualified by test (ISO 15614-1, or AWS D17.1 for aerospace) and the
+  welders are qualified to it (ISO 9606-1). ISO 3834 sets the quality system of the welding shop.
+
+## Calculator
+
+<WeldCalc />
+
+## Worked example: the girth welds of a heavyweight test case
+
+The ground tests of the 300 mm motor ([Hand calcs](../../fundamentals/hand-calcs/#worked-example-hand-checks-for-the-300-mm-motors-test-campaign))
+use a heavyweight case: a thick steel case that is used again for many firings. It is a 15CDV6 tube, 300 mm inside
+diameter with a 12 mm wall, with a forged weld-neck flange at each end. A girth weld joins each flange to the tube:
+single-V, welded from the outside with TIG, with no backing. The MEOP is 10 MPa. The criteria for this example only:
+a $t_{8/5}$ window of 8 to 20 s, a partial factor $\gamma_{Mf} = 1.25$, and 1000 cycles (250 firings × 4). Push
+**Load worked example** in the calculator to load these inputs.
+
+1. **The steel.** The certificate of the heat gives 0.15 C, 1.0 Mn, 1.4 Cr, 0.9 Mo, 0.25 V, 0.1 Ni and 0.1 Cu
+   (typical values for this example). CET is **0.42**, inside method B. CEV is 0.84, which shows a hardenable steel.
+2. **Heat input.** The fill passes use 12 V, 200 A and 1.3 mm/s. The arc energy is 1.85 kJ/mm; with $k = 0.6$ for
+   TIG, $Q$ is **1.11 kJ/mm**.
+3. **Preheat.** With a 12 mm plate and scale D hydrogen (5 ml/100 g), the minimum preheat is **114 °C**. The
+   procedure says 125 °C, to allow for the measurement. With damp filler at 10 ml/100 g, it would need 144 °C; with
+   3 ml/100 g, 96 °C.
+4. **Cooling time.** At 125 °C, the fill passes cool from 800 to 500 °C in **14.2 s**, inside the window. The plate is
+   below the transition thickness of 16.9 mm, so the heat flows in 2D. The root pass (10 V, 100 A, 1.0 mm/s, so
+   0.6 kJ/mm) cools in **4.2 s**: too fast. The window needs 0.83 to 1.32 kJ/mm at this preheat. Either increase the
+   heat input of the root pass, or show with hardness tests in the procedure qualification that the next passes temper
+   the root HAZ enough.
+5. **Shrinkage.** A 60° groove with a 2 mm gap and a 1.5 mm root face has an area of 88 mm². Each girth weld shortens
+   the case by approximately **1.6 mm**, so 3.1 mm for the two. Cut the tube long by that amount, and machine the
+   flange faces and the seal grooves after welding and stress relief.
+6. **Fatigue, as designed.** Each firing is one pressure cycle. The axial membrane stress across the girth weld is
+   $pr/2t = 10 \times 156 / 24 = 65$ MPa. The flange stops the growth of the tube, so the wall bends near it. With a
+   rigid flange, the edge bending is 201 MPa at the flange and falls to zero 26 mm away. The weld sits at the end of
+   the hub, 60 mm from the flange, where the bending is −40 MPa: the range at the outer surface is **105 MPa**. The
+   root is checked by RT, so the detail is FAT 71. The drawing allows 1 mm of offset: $k_m = 1.25$, which the class
+   includes. The design life is **317 000 cycles**, against 1000 required (damage 0.003).
+7. **Fatigue, the wrong way.** Put the same weld at the root of the flange, and do not check the root. The range is
+   now $65 + 201 = 266$ MPa on FAT 36. The life is **2550 cycles**, 124 times less, and below the $10^4$ cycles where
+   the S–N data starts. With 2 mm of offset, it is 1660 cycles. The cure costs nothing on the drawing: a weld-neck
+   flange that moves the weld away from the flange, and an inspected root.
+
+The heavyweight case passes by a large margin, as designed. The two decisions that made it pass were made on the
+drawing: where the weld is, and how the root is inspected.
+
+## Where this stops
+
+- **EN 1011-2 method B is for non-alloy, fine-grained and low-alloy steels** inside its range. High-hardenability
+  steels (CET above 0.5), stainless steels, nickel alloys, titanium and aluminium need their own procedures.
+- **The cooling-time equations** assume a single pass on a uniform plate. Multi-pass welds temper earlier passes, and
+  real joints have different thicknesses on each side.
+- **Blodgett's shrinkage rule** is an empirical rule for steel butt welds. Distortion of a real part depends on the
+  sequence, the fixtures and the restraint. Measure the first parts.
+- **The IIW curves** are for the nominal stress method with constant-amplitude loading, in air, below 1.5 × yield.
+  For corrosion, high temperature, a few cycles at high stress or a known flaw, use fracture mechanics
+  ([Leak before break](../../verify/leak-before-break/)).
+- **No weld-metal or HAZ toughness.** The procedure qualification shows these by test.
+
+## On the drawing
+
+- **The weld symbols** to ISO 2553 or AWS A2.4: the joint, the groove, the size and the process.
+- **The welding standard and quality level,** for example AWS D17.1 Class A, or ISO 5817 level B, with ISO 3834.
+- **The qualified procedure and welder qualification** that the shop must use, or the requirement for them.
+- **Preheat, interpass and post-weld heat treatment,** where the design depends on them, or the procedure that sets
+  them.
+- **The NDT of each weld,** with its method, extent, acceptance standard and the delay after welding.
+- **The geometry that the fatigue analysis assumes:** the maximum offset, a flush-ground surface or toe treatment where
+  needed, and the root condition.
+- **Repair limits:** how many repairs are allowed at one location, and that each repair needs approval and repeat NDT.
+- **Machining after welding** for datums and seal surfaces, with the allowance for shrinkage.
+
+## References and further reading
+
+- EN 1011-1 and EN 1011-2, *Welding: recommendations for welding of metallic materials* (heat input, preheat by
+  method A and B, cooling time).
+- ISO 15614-1 (welding procedure qualification), ISO 9606-1 (welder qualification), ISO 3834 (quality requirements),
+  ISO 5817 (quality levels for imperfections), ISO 2553 (symbols).
+- AWS D17.1, *Specification for Fusion Welding for Aerospace Applications*.
+- ASME Boiler and Pressure Vessel Code, Section VIII, Division 1, UW-12 (joint efficiencies).
+- A. Hobbacher, *Recommendations for Fatigue Design of Welded Joints and Components*, IIW document, 2nd ed., Springer
+  (2016).
+- O. W. Blodgett, *Design of Welded Structures*, James F. Lincoln Arc Welding Foundation (1966).
+- S. Kou, *Welding Metallurgy*, 2nd ed., Wiley (2003).
+- J. F. Lancaster, *Metallurgy of Welding*, 6th ed., Abington (1999).
+
+<Aside type="note">
+  This is guidance on method from public standards and general practice, with typical values. The welding procedures,
+  quality levels and fatigue criteria for your hardware come from your programme and your qualified procedures.
+</Aside>

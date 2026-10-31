@@ -1,0 +1,67 @@
+---
+// A section through a butt weld with the zones of the heat-affected zone, and the thermal cycle of the coarse-grained
+// zone with the cooling time t8/5.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', accent = 'var(--rd-accent)', warn = 'var(--rd-warn)', blue = 'var(--rd-blue)';
+// single-V groove: centre 100, top half-width 36 at y 80, root half-width 5 at y 150; zones are the groove widened by o
+const groove = (o: number) => `${64 - o},80 ${136 + o},80 ${105 + o * 0.6},150 ${95 - o * 0.6},150`;
+const zones: [number, string, number, string][] = [
+  [20, blue, 0.18, 'subcritical, below Ac1: tempered'],
+  [14, warn, 0.3, 'intercritical, Ac1 to Ac3'],
+  [9, warn, 0.55, 'fine grain, Ac3 to 1100 °C'],
+  [4, accent, 0.7, 'coarse grain, above 1100 °C'],
+];
+// thermal cycle: 1350 °C peak at 3 s, then T = 20 + 1330·(3/t)^0.9
+const X = (t: number) => 228 + (t / 30) * 122, Y = (T: number) => 200 - (T / 1400) * 150;
+const cyc = [[0, 20], [1, 500], [2, 1100], [3, 1350], ...Array.from({ length: 28 }, (_, k) => { const t = 3 + k; return [t, 20 + 1330 * (3 / t) ** 0.9]; })];
+const t8 = 3 / (780 / 1330) ** (1 / 0.9), t5 = 3 / (480 / 1330) ** (1 / 0.9);
+---
+
+<figure class="viz weldzones">
+  <p class="viz-title">The heat-affected zone and its thermal cycle</p>
+  <svg viewBox="0 0 360 250" role="img" aria-labelledby="weldzones-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="weldzones-desc">
+      Left: a section through a single-V butt weld between two plates. Next to the weld metal, the heat-affected zone
+      has four bands: coarse grain where the peak temperature was above 1100 °C, fine grain between Ac3 and 1100 °C,
+      intercritical between Ac1 and Ac3, and subcritical below Ac1. Right: the temperature against time at the coarse
+      grain zone. It rises to approximately 1350 °C in a few seconds and then cools. The time to cool from 800 to
+      500 °C is the cooling time t8/5.
+    </desc>
+    <rect x="10" y="80" width="180" height="70" fill={steel} fill-opacity="0.35"></rect>
+    {zones.map(([o, c, a]) => <polygon points={groove(o)} fill={c} fill-opacity={a}></polygon>)}
+    <polygon points={groove(0)} fill="var(--rd-panel)"></polygon>
+    <polygon points={groove(0)} fill={ink} fill-opacity="0.28" stroke={ink} stroke-width="1.2"></polygon>
+    <path d="M62,80 Q100,68 138,80" fill={ink} fill-opacity="0.28" stroke={ink} stroke-width="1.2"></path>
+    <path d="M86,120 Q100,113 114,120 M76,100 Q100,92 124,100 M68,86 Q100,78 132,86" fill="none" stroke={ink} stroke-opacity="0.5"></path>
+    <text x="100" y="60" text-anchor="middle" font-size="10" fill={ink}>weld metal</text>
+    <text x="14" y="164" font-size="10" fill={muted}>plate</text>
+    <rect x="10" y="176" width="10" height="9" fill={ink} fill-opacity="0.28"></rect>
+    <text x="25" y="184" font-size="10" fill={ink}>weld metal: melted</text>
+    {[...zones].reverse().map(([, c, a, n], k) => (
+      <g>
+        <rect x="10" y={192 + k * 14} width="10" height="9" fill={c} fill-opacity={a}></rect>
+        <text x="25" y={200 + k * 14} font-size="10" fill={ink}>{n}</text>
+      </g>
+    ))}
+    {[0, 500, 1000].map((T) => (
+      <g>
+        <line x1="228" x2="350" y1={Y(T)} y2={Y(T)} stroke="var(--rd-line)"></line>
+        <text x="224" y={Y(T) + 3} text-anchor="end" font-size="10" fill={muted}>{T}</text>
+      </g>
+    ))}
+    {[0, 10, 20, 30].map((t) => <text x={X(t)} y="213" text-anchor="middle" font-size="10" fill={muted}>{t}</text>)}
+    <text x="289" y="228" text-anchor="middle" font-size="10" fill={ink}>time, s</text>
+    <text x="228" y="38" font-size="10" fill={ink}>°C at the coarse grain</text>
+    <line x1="228" x2="350" y1={Y(800)} y2={Y(800)} stroke={muted} stroke-dasharray="3 3"></line>
+    <text x="350" y={Y(800) - 4} text-anchor="end" font-size="10" fill={muted}>800</text>
+    <polyline points={cyc.map(([t, T]) => `${X(t).toFixed(1)},${Y(T).toFixed(1)}`).join(' ')} fill="none" stroke={accent} stroke-width="2.2"></polyline>
+    <line x1={X(t8)} x2={X(t8)} y1={Y(800)} y2={Y(0)} stroke={ink} stroke-dasharray="2 2"></line>
+    <line x1={X(t5)} x2={X(t5)} y1={Y(500)} y2={Y(0)} stroke={ink} stroke-dasharray="2 2"></line>
+    <line x1={X(t8)} x2={X(t5)} y1="180" y2="180" stroke={ink} stroke-width="1.4"></line>
+    <text x={X(t5) + 4} y="184" font-size="10" fill={ink}>t8/5</text>
+  </svg>
+  <figcaption>
+    Each point of the heat-affected zone gets one thermal cycle, with a peak temperature that falls with the distance
+    from the fusion line. The coarse-grained zone next to the fusion line is usually the hardest and least tough. The
+    cooling time t8/5 sets its microstructure: short gives hard martensite, long gives soft, coarse ferrite and bainite.
+  </figcaption>
+</figure>

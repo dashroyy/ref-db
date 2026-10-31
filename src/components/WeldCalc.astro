@@ -1,0 +1,301 @@
+---
+// Welding in three tabs: preheat against hydrogen cracking (EN 1011-2 method B); cooling time t8/5 and transverse
+// shrinkage; and fatigue of the joint with IIW FAT classes. Maths in src/lib/weld.ts (unit-tested); UI only here.
+import { PROCESSES, JOINTS, FAT_CLASSES } from '../lib/weld';
+
+const TABS = [{ key: 'pre', name: 'Preheat' }, { key: 'cool', name: 'Cooling and shrinkage' }, { key: 'fat', name: 'Fatigue' }];
+---
+
+<div class="calc weldcalc" data-weldcalc>
+  <div class="calc-head"><span>Welded joint</span><span class="head-btns"><span>EN 1011-2 · IIW</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Welded joint">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>The weld</legend>
+        <div class="row2">
+          <label>Process<select name="pr">{PROCESSES.map((p) => <option value={p.key} selected={p.key === 'tig'}>{p.name}, k {p.k}</option>)}</select></label>
+          <label>Plate thickness (mm)<input name="d" type="number" min="0.5" step="any" value="12" /></label>
+          <label>Arc voltage (V)<input name="U" type="number" min="1" step="any" value="12" /></label>
+          <label>Current (A)<input name="I" type="number" min="1" step="any" value="200" /></label>
+          <label>Travel speed (mm/s)<input name="v" type="number" min="0.01" step="any" value="1.3" /></label>
+        </div>
+        <p class="hint">Heat input is k·U·I/v, with the thermal efficiency k of the process (EN 1011-1). Use the values of one pass from the welding procedure.</p>
+      </fieldset>
+
+      <fieldset data-panel="pre">
+        <legend>Steel and hydrogen</legend>
+        <div class="row2">
+          <label>C (%)<input name="C" type="number" min="0" step="any" value="0.15" /></label>
+          <label>Mn (%)<input name="Mn" type="number" min="0" step="any" value="1.0" /></label>
+          <label>Cr (%)<input name="Cr" type="number" min="0" step="any" value="1.4" /></label>
+          <label>Mo (%)<input name="Mo" type="number" min="0" step="any" value="0.9" /></label>
+          <label>V (%)<input name="V" type="number" min="0" step="any" value="0.25" /></label>
+          <label>Ni (%)<input name="Ni" type="number" min="0" step="any" value="0.1" /></label>
+          <label>Cu (%)<input name="Cu" type="number" min="0" step="any" value="0.1" /></label>
+          <label>Diffusible hydrogen (ml/100 g)<input name="hd" type="number" min="0.1" step="any" value="5" /></label>
+        </div>
+        <p class="hint">Use the composition from the certificate of the heat, not the specification maximums. The hydrogen value comes from the consumable classification (scale D is 5 ml/100 g or less) and its storage.</p>
+      </fieldset>
+
+      <fieldset data-panel="cool" hidden>
+        <legend>Cooling and the groove</legend>
+        <div class="row2">
+          <label>Preheat or interpass (°C)<input name="t0" type="number" min="0" max="400" step="any" value="125" /></label>
+          <label>Joint<select name="jt">{JOINTS.map((j) => <option value={j.key} selected={j.key === 'butt'}>{j.name}</option>)}</select></label>
+          <label>t8/5 minimum (s)<input name="tmin" type="number" min="0" step="any" placeholder="your value" /></label>
+          <label>t8/5 maximum (s)<input name="tmax" type="number" min="0" step="any" placeholder="your value" /></label>
+          <label>Groove included angle (°)<input name="ang" type="number" min="0" max="120" step="any" value="60" /></label>
+          <label>Root gap (mm)<input name="gap" type="number" min="0" step="any" value="2" /></label>
+          <label>Root face (mm)<input name="rf" type="number" min="0" step="any" value="1.5" /></label>
+        </div>
+        <p class="hint">The t8/5 window comes from the procedure qualification or the steel maker: short times give a hard heat-affected zone, long times a soft and coarse one.</p>
+      </fieldset>
+
+      <fieldset data-panel="fat" hidden>
+        <legend>Fatigue of the joint</legend>
+        <div class="row2">
+          <label class="wide">Detail (IIW FAT class, steel)<select name="cls">{FAT_CLASSES.map((c) => <option value={c.key} selected={c.key === 'root'}>FAT {c.fat}: {c.name}</option>)}</select></label>
+          <label>Stress range at the weld (MPa)<input name="ds" type="number" min="0" step="any" value="105" /></label>
+          <label>Axial offset (mm)<input name="e" type="number" min="0" step="any" value="1" /></label>
+          <label>Partial factor γ<sub>Mf</sub><input name="gam" type="number" min="1" step="any" placeholder="your value" /></label>
+          <label>Required cycles<input name="nreq" type="number" min="1" step="any" placeholder="your value" /></label>
+        </div>
+        <p class="hint">The stress range is the nominal range across the weld, with the shell bending near a flange or closure included. The required cycles include your scatter factor.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 260" data-chart role="img" aria-label="Chart for the selected weld check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening only: EN 1011-2 method B and Annex D for non-alloy, fine-grained and low-alloy steels, Blodgett's
+    shrinkage rule for steel butt welds, and IIW nominal-stress S–N curves for steel. The governing values come from
+    your qualified welding procedure (ISO 15614-1) and your fatigue standard.
+  </div>
+</div>
+
+<style is:global>
+  .weldcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .weldcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .weldcalc .pv-notes li.bad { color: var(--rd-accent); }
+  .weldcalc .pv-notes li.warn { color: var(--rd-warn); }
+  .weldcalc .example-note { margin: 0.5rem 0 0 !important; }
+  .weldcalc label.wide { grid-column: 1 / -1; }
+  .weldcalc select { max-width: 100%; }
+</style>
+
+<script>
+  import { proc, heatInput, arcEnergy, cet, cev, hydrogenScale, preheat, PREHEAT_RANGE, t85, heatForT85, joint, vGrooveArea, transverseShrinkage, fatigue, rangeFor, N_FAT } from '../lib/weld';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const SUP: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const big = (n: number) => (!Number.isFinite(n) ? '—' : n >= 1e7 ? `${f(n / 1e6, 0)} million` : n >= 1e4 ? f(Math.round(n / 100) * 100) : f(n, 0));
+  const pow = (e: number) => `10${String(e).split('').map((c) => SUP[c]).join('')}`;
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+
+  document.querySelectorAll<HTMLElement>('[data-weldcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => { const s = field(n).value.trim(); return s === '' ? NaN : +s; };
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const frame = (H: number) => { svg.replaceChildren(); const W = width(); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); return W; };
+    const nice = (m: number) => { const e = 10 ** Math.floor(Math.log10(m)); return [1, 2, 2.5, 5, 10].map((k) => k * e).find((s) => m / s <= 6)!; };
+    function linAxes(W: number, H: number, x0: number, x1: number, y0: number, y1: number, xl: string, yl: string) {
+      const L = 46, R = 12, T = 14, B = 32;
+      const X = (v: number) => L + ((v - x0) / (x1 - x0)) * (W - L - R), Y = (v: number) => H - B - ((v - y0) / (y1 - y0)) * (H - T - B);
+      const sx = nice(x1 - x0), sy = nice(y1 - y0);
+      for (let x = Math.ceil(x0 / sx) * sx; x <= x1 + 1e-9; x += sx) { el('line', { x1: X(x), x2: X(x), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(x), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(+x.toFixed(2))); }
+      for (let y = Math.ceil(y0 / sy) * sy; y <= y1 + 1e-9; y += sy) { el('line', { x1: L, x2: W - R, y1: Y(y), y2: Y(y), stroke: 'var(--rd-line)' }); if (Y(y) < H - B - 6) el('text', { x: L - 4, y: Y(y) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(+y.toFixed(2))); }
+      el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, xl);
+      el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, yl);
+      return { X, Y, L, R, T, B };
+    }
+    const line = (pts: [number, number][], c: string, w = 2, dash = '') => el('polyline', { points: pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '), fill: 'none', stroke: c, 'stroke-width': w, 'stroke-dasharray': dash });
+    let mode = 'pre';
+    let draw: (() => void) | null = null;
+
+    // shared weld inputs
+    const weld = () => {
+      const p = proc(field('pr').value), U = num('U'), I = num('I'), v = num('v'), d = num('d');
+      const ok = U > 0 && I > 0 && v > 0 && d > 0;
+      return { p, d, ok, arc: ok ? arcEnergy(U, I, v) : NaN, q: ok ? heatInput(U, I, v, p.k) : NaN };
+    };
+    const heatRow = (w: ReturnType<typeof weld>): Row => ({ dt: 'Heat input', dd: `${f(w.q, 2)} kJ/mm <small>arc energy ${f(w.arc, 2)} kJ/mm × k ${w.p.k}</small>` });
+
+    // ---- preheat ----
+    function runPre(rows: Row[], notes: [string, string][]) {
+      const w = weld(), hd = num('hd');
+      const comp = { C: num('C'), Mn: num('Mn') || 0, Cr: num('Cr') || 0, Mo: num('Mo') || 0, V: num('V') || 0, Ni: num('Ni') || 0, Cu: num('Cu') || 0 };
+      if (!w.ok || !(comp.C >= 0) || !(hd > 0)) { notes.push(['bad', 'Enter the weld values, the carbon content and the diffusible hydrogen.']); return null; }
+      const C = cet(comp), r = preheat({ cet: C, d: w.d, hd, q: w.q });
+      rows.push({ dt: 'Minimum preheat and interpass', dd: `${r.tp <= 20 ? 'none above 20' : f(r.tp)} °C <small>${r.valid ? 'EN 1011-2 method B' : `outside method B: ${r.outside.join(', ')}`}</small>`, primary: true, cls: r.valid ? '' : 'warn' });
+      rows.push(heatRow(w));
+      rows.push({ dt: 'Carbon equivalents', dd: `CET ${f(C, 3)} · CEV ${f(cev(comp), 2)} <small>CET for method B (0.2 to 0.5); CEV for method A</small>`, cls: C > PREHEAT_RANGE.cet[1] ? 'warn' : '' });
+      rows.push({ dt: 'Hydrogen', dd: `${f(hd, 1)} ml/100 g <small>scale ${hydrogenScale(hd)}</small>` });
+      if (!r.valid) notes.push(['warn', `The inputs are outside the range of method B (CET 0.2 to 0.5, thickness 10 to 90 mm, hydrogen 1 to 20 ml/100 g, heat input 0.5 to 4 kJ/mm). The number is an extrapolation: get the preheat from the steel maker or a weldability test.`]);
+      if (C > 0.5) notes.push(['bad', 'A CET above 0.5 is a high-hardenability steel (for example D6AC or 4340). These need a high preheat, control of the interpass temperature, and a stress relief or temper before the weld cools to room temperature.']);
+      notes.push(['', `Each part of the equation: CET ${f(r.parts.cet)} °C, thickness ${f(r.parts.d)} °C, hydrogen ${f(r.parts.hd)} °C, heat input ${f(r.parts.q)} °C. Hydrogen is the part you control most easily: dry consumables and a clean joint.`]);
+      return () => {
+        const H = 250, W = frame(H);
+        const ds = Array.from({ length: 50 }, (_, k) => 5 + (95 * k) / 49), hs: [number, string][] = [[3, 'E 3'], [5, 'D 5'], [10, 'C 10'], [15, 'B 15']];
+        const curves = hs.map(([h]) => ds.map((d) => preheat({ cet: C, d, hd: h, q: w.q }).tp));
+        const all = [...curves.flat(), r.tp];
+        const y0 = Math.min(0, Math.floor(Math.min(...all) / 50) * 50), y1 = Math.max(100, Math.ceil(Math.max(...all) / 50) * 50);
+        const A = linAxes(W, H, 0, 100, y0, y1, 'plate thickness, mm', 'preheat, °C');
+        el('rect', { x: A.X(0), y: A.T, width: A.X(10) - A.X(0), height: H - A.B - A.T, fill: 'var(--rd-muted)', 'fill-opacity': 0.12 });
+        el('rect', { x: A.X(90), y: A.T, width: A.X(100) - A.X(90), height: H - A.B - A.T, fill: 'var(--rd-muted)', 'fill-opacity': 0.12 });
+        // labels at the curve ends, at least 12 apart and inside the plot
+        const ly = curves.map((cv) => A.Y(cv[49]) - 4);
+        for (let k = 1; k < ly.length; k++) ly[k] = Math.min(ly[k], ly[k - 1] - 12);
+        ly[ly.length - 1] = Math.max(ly[ly.length - 1], A.T + 10);
+        for (let k = ly.length - 2; k >= 0; k--) ly[k] = Math.max(ly[k], ly[k + 1] + 12);
+        curves.forEach((cv, k) => {
+          const on = hydrogenScale(hd) === hs[k][1][0];
+          line(ds.map((d, i) => [A.X(d), A.Y(cv[i])]), on ? 'var(--rd-accent)' : 'var(--rd-blue)', on ? 2.4 : 1.4, on ? '' : '4 3');
+          txt(A.X(100) - 4, ly[k], hs[k][1], on ? 'var(--rd-accent)' : 'var(--rd-blue)', 'end');
+        });
+        if (w.d <= 100) el('circle', { cx: A.X(w.d), cy: A.Y(r.tp), r: 5, fill: 'var(--rd-panel)', stroke: 'var(--rd-ink)', 'stroke-width': 2 });
+        if (y0 < 20 && y1 > 20) el('line', { x1: A.L, x2: W - A.R, y1: A.Y(20), y2: A.Y(20), stroke: 'var(--rd-muted)', 'stroke-dasharray': '2 3' });
+        txt(A.X(50), A.T + 10, `hydrogen scale and ml/100 g · CET ${f(C, 2)}`, 'var(--rd-ink)', 'middle');
+      };
+    }
+
+    // ---- cooling and shrinkage ----
+    function runCool(rows: Row[], notes: [string, string][]) {
+      const w = weld(), t0 = num('t0'), j = joint(field('jt').value), ang = num('ang'), gap = num('gap') || 0, rf = num('rf') || 0;
+      if (!w.ok || !(t0 >= 0 && t0 < 450)) { notes.push(['bad', 'Enter the weld values and a preheat or interpass temperature below 450 °C.']); return null; }
+      const c = t85({ q: w.q, d: w.d, t0, f2: j.f2, f3: j.f3 });
+      const tmin = readFactor(field('tmin').value, 0), tmax = readFactor(field('tmax').value, 0);
+      const have = tmin !== null && tmax !== null && tmax > tmin;
+      const cls = !have ? '' : c.t < tmin! || c.t > tmax! ? 'bad' : 'ok';
+      rows.push({ dt: 'Cooling time t8/5', dd: `${f(c.t, 1)} s <small>${c.regime === '2D' ? 'thin plate (2D heat flow)' : 'thick plate (3D heat flow)'}${have ? ` · window ${f(tmin!, 0)} to ${f(tmax!, 0)} s: ${cls === 'ok' ? 'inside' : 'outside'}` : ''}</small>`, primary: true, cls });
+      rows.push(heatRow(w));
+      rows.push({ dt: 'Transition thickness', dd: `${f(c.dt, 1)} mm <small>thinner plate cools more slowly; above it the thickness does not matter</small>` });
+      if (have) rows.push({ dt: 'Heat input for the window', dd: `${f(heatForT85(tmin!, { d: w.d, t0, f2: j.f2, f3: j.f3 }), 2)} to ${f(heatForT85(tmax!, { d: w.d, t0, f2: j.f2, f3: j.f3 }), 2)} kJ/mm <small>at ${f(t0)} °C</small>` });
+      else { rows.push({ dt: 'Heat input for the window', dd: '<small>needs t8/5 minimum and maximum</small>' }); notes.push(['warn', awaitingMessage(['t8/5 minimum', 't8/5 maximum'], 'whether the cooling time is inside the window, and the heat input that gives it')]); }
+      if (ang >= 0 && w.d > rf) {
+        const A = vGrooveArea(w.d, ang, gap, rf), s = transverseShrinkage(A, w.d, gap);
+        rows.push({ dt: 'Transverse shrinkage', dd: `${f(s, 2)} mm <small>single-V groove of ${f(A, 0)} mm² · steel butt weld</small>` });
+        notes.push(['', `A girth weld makes the part ${f(s, 1)} mm shorter, and pulls the diameter in at the weld. Add the shrinkage to the cut length, or machine the datums after welding.`]);
+      }
+      if (cls === 'bad' && c.t < tmin!) notes.push(['bad', 'The weld cools too fast: the heat-affected zone can be hard and crack-sensitive. Increase the heat input or the preheat.']);
+      if (cls === 'bad' && c.t > tmax!) notes.push(['bad', 'The weld cools too slowly: the heat-affected zone can be soft and coarse-grained, with low toughness. Decrease the heat input or the interpass temperature.']);
+      return () => {
+        const H = 250, W = frame(H), qs = Array.from({ length: 50 }, (_, k) => 0.3 + (2.7 * k) / 49);
+        const at = (q: number, T: number) => t85({ q, d: w.d, t0: T, f2: j.f2, f3: j.f3 }).t;
+        const cur = qs.map((q) => at(q, t0)), cold = qs.map((q) => at(q, 20));
+        const yMax = Math.min(Math.max(...cur, have ? tmax! * 1.3 : 0, c.t * 1.2), Math.max(60, c.t * 2));
+        const A = linAxes(W, H, 0, 3, 0, Math.ceil(yMax / 5) * 5, 'heat input, kJ/mm', 't8/5, s');
+        const yTop = Math.ceil(yMax / 5) * 5, clip = (v: number) => A.Y(Math.min(v, yTop));
+        if (have) {
+          el('rect', { x: A.L, y: clip(tmax!), width: W - A.L - A.R, height: Math.max(0, clip(tmin!) - clip(tmax!)), fill: 'var(--rd-ok)', 'fill-opacity': 0.14 });
+          txt(W - A.R - 4, clip(tmax!) + 12, 'window', 'var(--rd-ok)', 'end');
+        }
+        line(qs.map((q, i) => [A.X(q), clip(cold[i])]), 'var(--rd-blue)', 1.4, '4 3');
+        line(qs.map((q, i) => [A.X(q), clip(cur[i])]), 'var(--rd-accent)', 2.4);
+        if (w.q <= 3 && c.t <= yTop) el('circle', { cx: A.X(w.q), cy: A.Y(c.t), r: 5, fill: 'var(--rd-panel)', stroke: 'var(--rd-ink)', 'stroke-width': 2 });
+        txt(A.L + 6, A.T + 10, `solid: ${f(t0)} °C · dashed: 20 °C · ${f(w.d, 1)} mm`, 'var(--rd-ink)');
+      };
+    }
+
+    // ---- fatigue ----
+    function runFat(rows: Row[], notes: [string, string][]) {
+      const w = weld(), ds = num('ds'), e = num('e') || 0;
+      if (!(w.d > 0 && ds > 0)) { notes.push(['bad', 'Enter the plate thickness and the stress range at the weld.']); return null; }
+      const gam = readFactor(field('gam').value, 1), nReq = readFactor(field('nreq').value, 1);
+      const r = fatigue({ cls: field('cls').value, ds, e, t: w.d, gamma: gam ?? 1, nReq: nReq ?? undefined });
+      const ok = gam !== null && nReq !== null;
+      rows.push({ dt: gam === null ? 'Life, no partial factor' : 'Design life', dd: `${big(r.life)} cycles <small>FAT ${r.c.fat}${r.ft < 1 ? ` × ${f(r.ft, 3)} for thickness` : ''}${gam !== null ? ` ÷ ${f(gam, 2)}` : ''} = ${f(r.fatD, 1)} MPa</small>`, primary: true, cls: ok ? (r.damage <= 1 ? 'ok' : 'bad') : '' });
+      if (ok) rows.push({ dt: 'Damage at the required cycles', dd: `${f(r.damage, 3)} <small>${big(nReq!)} required · allowable range ${f(r.allowRange)} MPa: margin ${r.margin >= 0 ? '+' : ''}${f(r.margin * 100)}%</small>`, cls: r.damage <= 1 ? 'ok' : 'bad' });
+      else { rows.push({ dt: 'Damage at the required cycles', dd: '<small>needs partial factor and required cycles</small>' }); notes.push(['warn', awaitingMessage([...(gam === null ? ['partial factor γMf'] : []), ...(nReq === null ? ['required cycles'] : [])], 'the design life and the damage')]); }
+      rows.push({ dt: 'Stress range used', dd: `${f(r.dsEff, 1)} MPa <small>${Number.isFinite(r.c.kmCov) ? `offset k<sub>m</sub> = ${f(r.km, 2)}; ${f(r.c.kmCov, 2)} is in the class, so × ${f(r.kmExtra, 3)}` : 'axial offset does not apply to this detail'}</small>`, cls: r.kmExtra > 1 ? 'warn' : '' });
+      if (r.life < 1e4) notes.push(['warn', 'Below 10⁴ cycles the S–N curve is outside its data, and the stress may be near yield. For a few cycles at high stress, check the largest flaw that NDT can miss with fracture mechanics instead.']);
+      if (r.c.key === 'noroot') notes.push(['bad', 'A one-sided weld whose root nobody checks is FAT 36: half the class of the same weld with the root checked. Specify the root inspection or a backing.']);
+      notes.push(['', 'The class includes the residual stress of an as-welded joint, so the life depends on the stress range, not on the mean stress.']);
+      return () => {
+        const H = 250, W = frame(H), L = 50, R = 12, T = 14, B = 32;
+        const x0 = 3, x1 = 8, y0 = 1, y1 = 3;
+        const X = (n: number) => L + ((Math.log10(n) - x0) / (x1 - x0)) * (W - L - R), Y = (s: number) => H - B - ((Math.log10(s) - y0) / (y1 - y0)) * (H - T - B);
+        for (let e = x0; e <= x1; e++) { el('line', { x1: X(10 ** e), x2: X(10 ** e), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(10 ** e), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, pow(e)); }
+        for (const s of [10, 20, 50, 100, 200, 500, 1000]) { el('line', { x1: L, x2: W - R, y1: Y(s), y2: Y(s), stroke: 'var(--rd-line)' }); if (Y(s) < H - B - 6) el('text', { x: L - 4, y: Y(s) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(s)); }
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'cycles');
+        el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, 'stress range, MPa');
+        const ns = Array.from({ length: 60 }, (_, k) => 10 ** (x0 + ((x1 - x0) * k) / 59));
+        const curve = (fat: number) => ns.map((n): [number, number] => [X(n), Y(Math.min(Math.max(rangeFor(fat, n), 10 ** y0), 10 ** y1))]);
+        el('rect', { x: L, y: T, width: X(1e4) - L, height: H - B - T, fill: 'var(--rd-muted)', 'fill-opacity': 0.12 });
+        line(curve(r.c.fat), 'var(--rd-blue)', 1.4, '4 3');
+        line(curve(r.fatD), 'var(--rd-accent)', 2.4);
+        if (ok && nReq! >= 10 ** x0 && nReq! <= 10 ** x1) { el('line', { x1: X(nReq!), x2: X(nReq!), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '3 3' }); txt(X(nReq!) + 4, H - B - 6, 'required', 'var(--rd-ink)'); }
+        const lx = Math.min(Math.max(r.life, 10 ** x0), 10 ** x1), ly = Math.min(Math.max(r.dsEff, 10 ** y0), 10 ** y1);
+        el('circle', { cx: X(lx), cy: Y(ly), r: 5, fill: 'var(--rd-panel)', stroke: 'var(--rd-ink)', 'stroke-width': 2 });
+        el('circle', { cx: X(N_FAT), cy: Y(r.c.fat), r: 3, fill: 'var(--rd-blue)' });
+        txt(W - R - 4, T + 10, `dashed: FAT ${r.c.fat} · solid: design`, 'var(--rd-ink)', 'end');
+      };
+    }
+
+    const RUN: Record<string, typeof runPre> = { pre: runPre, cool: runCool, fat: runFat };
+    const CAPS: Record<string, string> = {
+      pre: 'Minimum preheat against plate thickness for four hydrogen levels, at your CET and heat input. Your level is solid. Grey: outside the thickness range of method B.',
+      cool: 'Cooling time from 800 to 500 °C against heat input, at your thickness and preheat (solid) and with no preheat (dashed). Green: your window.',
+      fat: 'S–N curve of the class (dashed) and the design curve with the thickness and partial factors (solid). The point is your stress range and life. Grey: below 10⁴ cycles, outside the data.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['tmin', 'tmax', 'gam', 'nreq'],
+      note: 'Worked-example criteria loaded: t8/5 window 8 to 20 s, γMf 1.25, 1000 cycles',
+      values: { pr: 'tig', d: '12', U: '12', I: '200', v: '1.3', C: '0.15', Mn: '1.0', Cr: '1.4', Mo: '0.9', V: '0.25', Ni: '0.1', Cu: '0.1', hd: '5',
+        t0: '125', jt: 'butt', tmin: '8', tmax: '20', ang: '60', gap: '2', rf: '1.5', cls: 'root', ds: '105', e: '1', gam: '1.25', nreq: '1000' },
+    });
+    run();
+  });
+</script>

@@ -82,6 +82,7 @@ export const REBUILT = {
   galvanic: 'materials/galvanic',
   process: 'make/process-and-am',
   cost: 'make/cost',
+  weld: 'make/welding',
   ndt: 'make/ndt',
   leak: 'make/leak-testing',
   certs: 'make/certs',

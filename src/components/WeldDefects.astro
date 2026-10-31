@@ -1,0 +1,67 @@
+---
+// The usual flaws of a butt weld on one section, each with the NDT methods that find it.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', accent = 'var(--rd-accent)';
+// single-V groove between plates at y 50..120, centre x 180; the right plate is offset 6 down (misalignment)
+const flaws: [number, string, string, number, number][] = [
+  [1, 'Toe crack', 'MT, PT, UT', 232, 30],
+  [2, 'Undercut', 'VT', 128, 30],
+  [3, 'Porosity', 'RT', 180, 30],
+  [4, 'Lack of side fusion', 'UT', 118, 90],
+  [5, 'Slag inclusion', 'RT, UT', 205, 104],
+  [6, 'Lack of root penetration', 'RT, VT of root', 150, 138],
+  [7, 'Hydrogen crack in the HAZ', 'UT, MT, after a delay', 262, 76],
+  [8, 'Misalignment', 'VT, gauge', 288, 138],
+];
+---
+
+<figure class="viz welddefects">
+  <p class="viz-title">Weld flaws and the methods that find them</p>
+  <svg viewBox="0 0 360 258" role="img" aria-labelledby="welddefects-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="welddefects-desc">
+      A section through a single-V butt weld with eight flaws. 1, a crack at the weld toe, found by magnetic particle,
+      penetrant or ultrasonic testing. 2, undercut at the other toe, found visually. 3, porosity in the weld metal,
+      found by radiography. 4, lack of fusion on the side wall, found by ultrasonic testing. 5, a slag inclusion, found
+      by radiography or ultrasonic testing. 6, lack of penetration at the root, found by radiography or a visual check
+      of the root. 7, a hydrogen crack in the heat-affected zone, found by ultrasonic or magnetic particle testing after
+      a delay. 8, misalignment of the two plates, found visually or with a gauge.
+    </desc>
+    <rect x="20" y="50" width="160" height="70" fill={steel} fill-opacity="0.35"></rect>
+    <rect x="180" y="56" width="160" height="70" fill={steel} fill-opacity="0.35"></rect>
+    <polygon points="140,50 220,56 186,126 175,120" fill={ink} fill-opacity="0.28" stroke={ink} stroke-width="1.2"></polygon>
+    <path d="M138,50 Q180,38 222,56" fill={ink} fill-opacity="0.28" stroke={ink} stroke-width="1.2"></path>
+    <path d="M143,50 a4,4 0 0 0 -8,0" fill="var(--rd-panel)"></path>
+    <path d="M222,56 l3,6 l-2,4 l4,7" fill="none" stroke={accent} stroke-width="1.8"></path>
+    {[[174, 72], [186, 80], [178, 88], [190, 70]].map(([x, y]) => <circle cx={x} cy={y} r="2.2" fill="var(--rd-panel)" stroke={ink}></circle>)}
+    <line x1="150" y1="70" x2="161" y2="94" stroke={accent} stroke-width="2.4"></line>
+    <ellipse cx="200" cy="96" rx="6" ry="2.2" fill={ink} transform="rotate(-60 200 96)"></ellipse>
+    <rect x="176" y="114" width="9" height="7" fill="var(--rd-panel)" stroke={accent}></rect>
+    <path d="M234,72 l3,5 l-2,4 l3,6 l-1,5" fill="none" stroke={accent} stroke-width="1.6"></path>
+    <line x1="300" y1="120" x2="300" y2="126" stroke={ink}></line>
+    <line x1="292" y1="120" x2="340" y2="120" stroke={muted} stroke-dasharray="2 2"></line>
+    {flaws.map(([n, , , x, y]) => (
+      <g>
+        <circle cx={x} cy={y} r="7" fill="var(--rd-panel)" stroke={ink}></circle>
+        <text x={x} y={y + 3.5} text-anchor="middle" font-size="9" fill={ink}>{n}</text>
+      </g>
+    ))}
+    <line x1="232" y1="37" x2="226" y2="56" stroke={muted}></line>
+    <line x1="128" y1="37" x2="136" y2="48" stroke={muted}></line>
+    <line x1="180" y1="37" x2="180" y2="68" stroke={muted}></line>
+    <line x1="125" y1="90" x2="153" y2="80" stroke={muted}></line>
+    <line x1="211" y1="104" x2="203" y2="98" stroke={muted}></line>
+    <line x1="157" y1="134" x2="176" y2="120" stroke={muted}></line>
+    <line x1="255" y1="77" x2="238" y2="80" stroke={muted}></line>
+    <line x1="294" y1="132" x2="300" y2="126" stroke={muted}></line>
+    {flaws.map(([n, name, how], k) => (
+      <g>
+        <text x={k < 4 ? 8 : 184} y={160 + (k % 4) * 26} font-size="10" fill={ink}><tspan font-weight="600">{n}</tspan> {name}</text>
+        <text x={k < 4 ? 18 : 194} y={173 + (k % 4) * 26} font-size="10" fill={muted}>{how}</text>
+      </g>
+    ))}
+  </svg>
+  <figcaption>
+    No one method finds all of them. Radiography finds volume (pores, slag, lack of penetration); ultrasonic testing
+    finds planar flaws such as lack of fusion and cracks; surface methods find what breaks the surface. Hydrogen cracks
+    can appear hours after welding, so inspect after a delay, often 48 hours, for high-strength steels.
+  </figcaption>
+</figure>
