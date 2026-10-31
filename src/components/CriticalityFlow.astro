@@ -1,0 +1,51 @@
+---
+// The screening decision: consequence of failure sets the class; a catastrophic part is fracture-critical unless it
+// is shown to be fail-safe, and a pressure vessel always is. What each class drives.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', warn = 'var(--rd-warn)', ok = 'var(--rd-ok)';
+const cols = [
+  { x: 8, w: 120, q: 'Catastrophic', cls: 'Class A', c: accent, drive: ['A-basis · 100% NDT', 'independent check'] },
+  { x: 136, w: 96, q: 'Mission loss', cls: 'Class B', c: warn, drive: ['A/B-basis · NDT', 'design authority'] },
+  { x: 240, w: 112, q: 'Degraded or none', cls: 'Class C', c: ok, drive: ['B-basis · sample', 'normal release'] },
+];
+---
+
+<figure class="viz critflow">
+  <p class="viz-title">Classify by consequence</p>
+  <svg viewBox="0 0 360 260" role="img" aria-labelledby="critflow-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="critflow-desc">
+      A decision chart. The question is what happens if the part fails. A catastrophic failure makes the part Class A;
+      it is fracture-critical unless it is fail-safe, and a pressure vessel always is. A
+      loss of the mission makes it Class B. A degraded performance or no effect makes it Class C. Class A needs A-basis
+      allowables, 100% NDT and an independent check; Class B needs A- or B-basis allowables, NDT and design-authority
+      approval; Class C needs B-basis allowables, sample inspection and the normal release route.
+    </desc>
+    <defs>
+      <marker id="cf-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path></marker>
+    </defs>
+    <rect x="96" y="10" width="168" height="28" rx="5" fill="var(--rd-panel)" stroke={ink}></rect>
+    <text x="180" y="28" text-anchor="middle" font-size="10.5" fill={ink}>What happens if it fails?</text>
+    {cols.map((c) => (
+      <g>
+        <path d={`M180,38 L${c.x + c.w / 2},62`} fill="none" stroke={muted} marker-end="url(#cf-arr)"></path>
+        <text x={c.x + c.w / 2} y="78" text-anchor="middle" font-size="10" fill={ink}>{c.q}</text>
+        <line x1={c.x + c.w / 2} x2={c.x + c.w / 2} y1="84" y2="104" stroke={muted} marker-end="url(#cf-arr)"></line>
+        <rect x={c.x} y="106" width={c.w} height="28" rx="5" fill={c.c} fill-opacity="0.7"></rect>
+        <text x={c.x + c.w / 2} y="124" text-anchor="middle" font-size="11" font-weight="600" fill={ink}>{c.cls}</text>
+        <text x={c.x + c.w / 2} y="232" text-anchor="middle" font-size="9.5" fill={ink}>{c.drive[0]}</text>
+        <text x={c.x + c.w / 2} y="245" text-anchor="middle" font-size="9.5" fill={muted}>{c.drive[1]}</text>
+      </g>
+    ))}
+    <line x1="68" x2="68" y1="134" y2="150" stroke={accent} marker-end="url(#cf-arr)"></line>
+    <rect x="8" y="152" width="120" height="62" rx="5" fill="none" stroke={accent} stroke-dasharray="4 3"></rect>
+    <text x="68" y="166" text-anchor="middle" font-size="9.5" fill={accent}>fracture-critical</text>
+    <text x="68" y="179" text-anchor="middle" font-size="9.5" fill={accent}>unless fail-safe;</text>
+    <text x="68" y="192" text-anchor="middle" font-size="9.5" fill={accent}>a pressure vessel</text>
+    <text x="68" y="205" text-anchor="middle" font-size="9.5" fill={accent}>always is</text>
+    <line x1="4" x2="356" y1="220" y2="220" stroke="var(--rd-line)"></line>
+  </svg>
+  <figcaption>
+    A generic scheme: your programme's classes and their names will differ, but the logic is the same. The class is set
+    by the consequence, not by how hard the part is to make. It sets the allowable basis, the inspection and who signs
+    the drawing.
+  </figcaption>
+</figure>

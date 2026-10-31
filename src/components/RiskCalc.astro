@@ -1,0 +1,286 @@
+---
+// Criticality in three tabs: a screening classification by consequence (with the pressure-vessel definition);
+// FMEA scoring with severity first; and a pair of seals with and without a test of each seal. Maths in
+// src/lib/risk.ts (unit-tested); UI only here.
+import { CONSEQUENCES } from '../lib/risk';
+import { MEDIA } from '../lib/proof';
+
+const TABS = [{ key: 'cls', name: 'Classify' }, { key: 'fmea', name: 'FMEA' }, { key: 'pair', name: 'Redundancy' }];
+const ROWS = [
+  ['Primary O-ring cut at assembly', 10, 4, 3],
+  ['Closure bolt preload low', 10, 3, 5],
+  ['Seal groove corrosion in storage', 8, 3, 6],
+  ['Insulation debond at the closure', 10, 2, 7],
+  ['Wrong O-ring compound', 10, 2, 4],
+] as const;
+---
+
+<div class="calc riskcalc" data-riskcalc>
+  <div class="calc-head"><span>Criticality</span><span class="head-btns"><span>consequence · FMEA · β-factor</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Criticality">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="cls">
+        <legend>The part and its failure</legend>
+        <label>Worst consequence of failure<select name="cons">{CONSEQUENCES.map((c) => <option value={c.key}>{c.name}</option>)}</select></label>
+        <label class="check"><input name="fs" type="checkbox" /> Shown to be fail-safe (a redundant load path, or leak before break)</label>
+        <label class="check"><input name="pz" type="checkbox" checked /> Holds pressure</label>
+        <div class="row2">
+          <label>Pressure (MPa gauge)<input name="p" type="number" min="0" step="any" value="11" /></label>
+          <label>Volume (L)<input name="V" type="number" min="0" step="any" value="85" /></label>
+          <label>Fluid<select name="med">{MEDIA.map((m) => <option value={m.key} selected={m.key === 'n2'}>{m.name}</option>)}</select></label>
+        </div>
+        <label class="check"><input name="hz" type="checkbox" /> Contents hazardous if released</label>
+        <p class="hint">Classify by what happens when the part fails, not by how hard it is to make. The pressure, volume and fluid are those of the worst condition: the proof test, if it uses gas.</p>
+      </fieldset>
+
+      <fieldset data-panel="fmea" hidden>
+        <legend>Failure modes (score 1 to 10)</legend>
+        <div class="fmgrid">
+          <span class="hint">Function fails by</span><span class="hint">S</span><span class="hint">O</span><span class="hint">D</span>
+          {ROWS.map((r, k) => (
+            <>
+              <input name={`m${k}`} type="text" value={r[0]} aria-label={`Failure mode ${k + 1}`} autocomplete="off" />
+              <input name={`s${k}`} type="number" min="1" max="10" step="1" value={r[1]} aria-label={`Mode ${k + 1}, severity`} />
+              <input name={`o${k}`} type="number" min="1" max="10" step="1" value={r[2]} aria-label={`Mode ${k + 1}, occurrence`} />
+              <input name={`d${k}`} type="number" min="1" max="10" step="1" value={r[3]} aria-label={`Mode ${k + 1}, detection`} />
+            </>
+          ))}
+        </div>
+        <label>RPN for action<input name="thr" type="number" min="1" max="1000" step="1" placeholder="your value" /></label>
+        <p class="hint">S severity, O occurrence, D detection (10 is not detected). Score severity without looking at occurrence: a rare catastrophic mode is still catastrophic.</p>
+      </fieldset>
+
+      <fieldset data-panel="pair" hidden>
+        <legend>Two seals in series</legend>
+        <div class="row2">
+          <label>Random failure, each seal<input name="q" type="text" inputmode="decimal" value="1e-4" autocomplete="off" /></label>
+          <label>Assembly defect, each seal<input name="dd" type="text" inputmode="decimal" value="1e-2" autocomplete="off" /></label>
+          <label>Test finds a defect (0 to 1)<input name="cv" type="number" min="0" max="1" step="any" value="0.99" /></label>
+          <label>Common-cause share β<input name="beta" type="number" min="0" max="1" step="any" value="0.05" /></label>
+          <label>Port between the seals<select name="port"><option value="yes">Yes: each seal tested</option><option value="no">No: only the pair tested</option></select></label>
+          <label>Allowed failure probability<input name="qa" type="text" inputmode="decimal" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Probabilities per mission. Without a port, the joint passes its leak test when either seal holds, so a defect in one seal is never found.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 240" data-chart role="img" aria-label="Chart for the selected criticality check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening only: a generic three-class scheme, the pressure-vessel definition of NASA-STD-5019 and AIAA S-080, FMEA
+    by severity, occurrence and detection, and a β-factor model of common-cause failure. Your programme's criticality
+    classes, fracture-control plan and FMEA procedure govern.
+  </div>
+</div>
+
+<style is:global>
+  .riskcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .riskcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .riskcalc .pv-notes li.bad { color: var(--rd-accent); }
+  .riskcalc .pv-notes li.warn { color: var(--rd-warn); }
+  .riskcalc .example-note { margin: 0.5rem 0 0 !important; }
+  .riskcalc label.check { display: flex; gap: 0.5rem; align-items: center; margin: 0.4rem 0; font-size: var(--sl-text-sm); }
+  .riskcalc select, .riskcalc input[type='text'] { width: 100%; }
+  .riskcalc .fmgrid { display: grid; grid-template-columns: minmax(0, 1fr) 3.2rem 3.2rem 3.2rem; gap: 0.35rem 0.4rem; align-items: center; margin: 0.4rem 0 0.6rem; }
+  .riskcalc .fmgrid input { width: 100%; min-width: 0; }
+</style>
+
+<script>
+  import { classify, fluidEnergy, fmea, sealPair, PV_ENERGY, CLASSES } from '../lib/risk';
+  import { MEDIA } from '../lib/proof';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const SUP: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const sci = (v: number, d = 1) => {
+    if (!Number.isFinite(v)) return '—';
+    if (v === 0) return '0';
+    const e = Math.floor(Math.log10(Math.abs(v))), m = v / 10 ** e;
+    return e >= -2 && e <= 3 ? (+v.toPrecision(d + 1)).toLocaleString('en-GB') : `${m.toFixed(d)} × 10${String(e).split('').map((c) => SUP[c]).join('')}`;
+  };
+  const energy = (j: number) => (j >= 1e6 ? `${f(j / 1e6, 2)} MJ` : j >= 1e3 ? `${f(j / 1e3, 1)} kJ` : `${f(j, 1)} J`);
+  const pow = (e: number) => `10${String(e).split('').map((c) => SUP[c]).join('')}`;
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+
+  document.querySelectorAll<HTMLElement>('[data-riskcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => { const s = field(n).value.trim().replace(/\s/g, '').replace(/×10\^?/i, 'e'); return s === '' ? NaN : +s; };
+    const checked = (n: string) => (field(n) as HTMLInputElement).checked;
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const frame = (H: number) => { svg.replaceChildren(); const W = width(); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); return W; };
+    // horizontal log bars: [label, value, colour]
+    function logBars(W: number, top: number, bars: [string, number, string][], ref: number | null, refLabel: string, unit: string) {
+      const L = 96, R = 14, rh = 26;
+      const vals = [...bars.map((b) => b[1]), ref ?? NaN].filter((v) => v > 0 && Number.isFinite(v));
+      const e0 = Math.floor(Math.log10(Math.min(...vals))), e1 = Math.max(e0 + 1, Math.ceil(Math.log10(Math.max(...vals))));
+      const X = (v: number) => L + ((Math.log10(Math.max(v, 10 ** e0)) - e0) / (e1 - e0)) * (W - L - R);
+      const bottom = top + bars.length * rh;
+      const step = Math.max(1, Math.ceil((e1 - e0) / 6));
+      for (let e = e0; e <= e1; e += step) { el('line', { x1: X(10 ** e), x2: X(10 ** e), y1: top, y2: bottom, stroke: 'var(--rd-line)' }); el('text', { x: X(10 ** e), y: bottom + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, pow(e)); }
+      bars.forEach(([n, v, c], k) => {
+        const y = top + k * rh;
+        el('text', { x: L - 6, y: y + 16, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-ink)' }, n);
+        el('rect', { x: L, y: y + 5, width: Math.max(1.5, X(v) - L), height: 15, rx: 3, fill: c, 'fill-opacity': 0.7 });
+      });
+      if (ref !== null) { el('line', { x1: X(ref), x2: X(ref), y1: top - 6, y2: bottom, stroke: 'var(--rd-accent)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }); txt(Math.min(X(ref) + 4, W - R - 4), top - 8, refLabel, 'var(--rd-accent)', X(ref) + 4 > W - R - 90 ? 'end' : 'start'); }
+      el('text', { x: (L + W - R) / 2, y: bottom + 28, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, unit);
+      return bottom + 32;
+    }
+    let mode = 'cls';
+    let draw: (() => void) | null = null;
+
+    // ---- classify ----
+    function runCls(rows: Row[], notes: [string, string][]) {
+      const pz = checked('pz'), p = num('p'), V = num('V');
+      if (pz && !(p >= 0 && V > 0)) { notes.push(['bad', 'Enter the pressure and the volume, or clear "Holds pressure".']); return null; }
+      const r = classify({ cons: field('cons').value, failSafe: checked('fs'), pressurised: pz, p, V, medium: field('med').value, hazardous: checked('hz') });
+      rows.push({ dt: 'Classification', dd: `${r.info.name} <small>${r.fracture ? 'fracture-critical: damage tolerance and NDT of every part' : r.c.rank >= 3 ? 'not fracture-critical: fail-safe shown' : 'by the consequence of failure'}</small>`, primary: true, cls: r.cls === 'A' ? 'bad' : r.cls === 'B' ? 'warn' : 'ok' });
+      if (pz && r.energy) rows.push({ dt: 'Stored energy', dd: `${energy(r.energy.E)} <small>approximately ${f(r.energy.tnt * 1000, r.energy.tnt < 0.01 ? 1 : 0)} g of TNT in ${r.energy.medium.name.toLowerCase()} · ${r.pv ? `a pressure vessel by its ${r.pvWhy.join(' and ')}` : 'below the pressure-vessel limits'}</small>`, cls: r.pv ? 'warn' : '' });
+      rows.push({ dt: 'Allowable basis', dd: `<small>${r.info.basis}</small>` });
+      rows.push({ dt: 'Inspection and approval', dd: `<small>${r.info.inspect}. ${r.info.approve}.</small>` });
+      if (r.pv) notes.push(['warn', `The fracture-control standards treat a part as a pressure vessel above ${f(PV_ENERGY)} J of stored energy, above ${f(0.69, 2)} MPa, or with hazardous contents. Proof test it, and treat its burst as catastrophic.`]);
+      if (pz && r.energy && r.energy.medium.kind === 'gas') notes.push(['', `A liquid at the same pressure stores ${f(r.energy.E / fluidEnergy(p, V, 'water').E)} times less energy. Proof-test with liquid wherever possible.`]);
+      notes.push(['', 'Assign the class at concept. Changing it after release means new analysis and new inspection of everything that is already made.']);
+      return () => {
+        const W = width();
+        let H = 92;
+        const bars: [string, number, string][] = pz && p > 0 ? MEDIA.map((m) => [m.name.split(' ')[0], fluidEnergy(p, V, m.key).E, m.key === field('med').value ? 'var(--rd-accent)' : 'var(--rd-blue)']) : [];
+        if (bars.length) H += 40 + bars.length * 26 + 32;
+        frame(H);
+        const bw = (W - 28) / 3;
+        (['A', 'B', 'C'] as const).forEach((k, i) => {
+          const on = k === r.cls, x = 14 + i * bw;
+          el('rect', { x: x + 3, y: 14, width: bw - 6, height: 54, rx: 6, fill: on ? (k === 'A' ? 'var(--rd-accent)' : k === 'B' ? 'var(--rd-warn)' : 'var(--rd-ok)') : 'var(--rd-muted)', 'fill-opacity': on ? 0.75 : 0.12 });
+          el('text', { x: x + bw / 2, y: 38, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 600, fill: 'var(--rd-ink)' }, k);
+          el('text', { x: x + bw / 2, y: 57, 'text-anchor': 'middle', 'font-size': 9.5, fill: 'var(--rd-ink)' }, CLASSES[k].name.split(': ')[1]);
+        });
+        if (r.fracture) txt(W / 2, 86, 'fracture-critical', 'var(--rd-accent)', 'middle', 11);
+        if (bars.length) logBars(W, 132, bars, PV_ENERGY, `${f(PV_ENERGY / 1000, 1)} kJ limit`, `stored energy, J, at ${f(p, 1)} MPa in ${f(V)} L`);
+      };
+    }
+
+    // ---- FMEA ----
+    function runFmea(rows: Row[], notes: [string, string][]) {
+      const input = Array.from({ length: 5 }, (_, k) => ({ mode: field(`m${k}`).value.trim(), s: num(`s${k}`), o: num(`o${k}`), d: num(`d${k}`) }));
+      const thr = readFactor(field('thr').value, 1);
+      const r = fmea(input, thr ?? undefined);
+      if (!r.rows.length) { notes.push(['bad', 'Enter at least one failure mode with S, O and D from 1 to 10.']); return null; }
+      rows.push({ dt: 'Modes that need a named control', dd: `${r.actions} of ${r.rows.length} <small>severity 9 or 10${thr !== null ? `, or RPN ${f(thr)} and above` : ''}</small>`, primary: true, cls: r.actions ? 'warn' : 'ok' });
+      rows.push({ dt: 'Act on first', dd: `${r.act[0].mode} <small>S ${r.act[0].s} · RPN ${r.act[0].rpn}</small>` });
+      rows.push({ dt: 'Highest RPN', dd: `${r.byRpn[0].mode} <small>RPN ${r.byRpn[0].rpn} · S ${r.byRpn[0].s}</small>` });
+      if (thr === null) notes.push(['warn', awaitingMessage(['RPN for action'], 'which modes your FMEA procedure flags by RPN')]);
+      const lowSevHigh = r.byRpn.findIndex((x) => !x.sev), sevAfter = r.byRpn.slice(lowSevHigh + 1).some((x) => x.sev);
+      if (lowSevHigh >= 0 && sevAfter) notes.push(['bad', `By RPN alone, "${r.byRpn[lowSevHigh].mode}" (S ${r.byRpn[lowSevHigh].s}) ranks above modes with a higher severity. RPN multiplies scores that are not on one scale; act on severity first (AIAG-VDA action priority does the same).`]);
+      notes.push(['', 'For every severity 9 or 10 line, name the design feature or the test that controls it, and the person who owns it.']);
+      return () => {
+        const H = 250, W = frame(H), L = 40, R = 14, T = 14, B = 34;
+        const X = (o: number) => L + ((o - 0.5) / 10) * (W - L - R), Y = (s: number) => H - B - ((s - 0.5) / 10) * (H - T - B);
+        el('rect', { x: X(0.5), y: Y(10.5), width: X(10.5) - X(0.5), height: Y(8.5) - Y(10.5), fill: 'var(--rd-accent)', 'fill-opacity': 0.1 });
+        for (let k = 1; k <= 10; k++) {
+          el('line', { x1: X(k), x2: X(k), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(k), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(k));
+          el('line', { x1: L, x2: W - R, y1: Y(k), y2: Y(k), stroke: 'var(--rd-line)' }); el('text', { x: L - 6, y: Y(k) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(k));
+        }
+        txt(W - R - 4, Y(10.5) + 11, 'severity 9 to 10: always act', 'var(--rd-accent)', 'end', 9);
+        const seen = new Map<string, number>();
+        r.rows.forEach((x) => {
+          const key = `${x.s},${x.o}`, n = seen.get(key) ?? 0; seen.set(key, n + 1);
+          const cx = X(x.o) + n * 7, cy = Y(x.s) - n * 7, act = x.sev || x.over;
+          el('circle', { cx, cy, r: 4 + x.d * 0.9, fill: act ? 'var(--rd-accent)' : 'var(--rd-blue)', 'fill-opacity': 0.55, stroke: 'var(--rd-panel)' });
+          el('text', { x: cx, y: cy + 3.5, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-ink)', 'font-weight': 600 }, String(input.findIndex((i) => i.mode === x.mode) + 1));
+        });
+        el('text', { x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'occurrence (circle size: detection)');
+        el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, 'severity');
+      };
+    }
+
+    // ---- redundancy ----
+    function runPair(rows: Row[], notes: [string, string][]) {
+      const q = num('q'), d = num('dd'), c = num('cv'), beta = num('beta'), port = field('port').value === 'yes';
+      if (!(q >= 0 && q < 1 && d >= 0 && d < 1 && c >= 0 && c <= 1 && beta >= 0 && beta <= 1)) { notes.push(['bad', 'Enter probabilities from 0 to 1.']); return null; }
+      const r = sealPair({ q, d, c, beta, port }), other = sealPair({ q, d, c, beta, port: !port });
+      const qa = num('qa'), have = qa > 0 && qa < 1;
+      rows.push({ dt: 'Pair fails', dd: `${sci(r.pair)} <small>per mission${have ? ` · allowed ${sci(qa)}` : ''}</small>`, primary: true, cls: have ? (r.pair <= qa ? 'ok' : 'bad') : r.gain < 1 ? 'bad' : '' });
+      rows.push({ dt: 'Against one tested seal', dd: `${r.gain >= 1 ? `${f(r.gain, r.gain < 10 ? 1 : 0)} times better` : `${f(1 / r.gain, 1)} times worse`} <small>one seal: ${sci(r.single)}</small>`, cls: r.gain < 1 ? 'bad' : '' });
+      rows.push({ dt: 'Common cause', dd: `${f((r.ccf / r.pair) * 100, r.ccf / r.pair > 0.99 ? 1 : 0)}% of the pair failure <small>β = ${f(beta, 2)}: the same groove, compound, technician or temperature</small>` });
+      rows.push({ dt: port ? 'Without the port' : 'With a port', dd: `${sci(other.pair)} <small>${port ? 'only the pair tested' : 'each seal tested'}</small>` });
+      if (!have) notes.push(['warn', awaitingMessage(['allowed failure probability'], 'whether the pair meets it', true)]);
+      if (r.gain < 1) notes.push(['bad', 'Two seals with no way to test the inner one: one seal plus a placebo. A defect in either is never found, so the pair is worse than a single seal that the test can see.']);
+      notes.push(['', 'Common cause limits what redundancy can give: two identical seals in the same groove design fail together more often than two independent ones. Use a different design for the second barrier where it matters (Sealing strategy).']);
+      return () => {
+        const W = width(), H = 40 + 3 * 26 + 32;
+        frame(H);
+        const pw = sealPair({ q, d, c, beta, port: true }).pair, pn = sealPair({ q, d, c, beta, port: false }).pair;
+        logBars(W, 26, [['One seal', r.single, 'var(--rd-muted)'], ['Pair, port', pw, port ? 'var(--rd-accent)' : 'var(--rd-blue)'], ['Pair, no port', pn, port ? 'var(--rd-blue)' : 'var(--rd-accent)']], have ? qa : null, 'allowed', 'failure probability per mission');
+      };
+    }
+
+    const RUN: Record<string, typeof runCls> = { cls: runCls, fmea: runFmea, pair: runPair };
+    const CAPS: Record<string, string> = {
+      cls: 'The class (top) and, for a part that holds pressure, the stored energy of each fluid at your pressure and volume against the pressure-vessel limit.',
+      fmea: 'Each failure mode by severity and occurrence; the circle size grows as detection gets worse. Red: needs a named control.',
+      pair: 'Failure probability of one tested seal and of the pair, with and without a port between the seals. Your case is red.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['thr', 'qa'],
+      note: 'Worked-example criteria loaded: RPN 100 for action, 1 × 10⁻⁴ allowed for the joint',
+      values: { cons: 'cat', fs: 'false', pz: 'true', p: '11', V: '85', med: 'n2', hz: 'false',
+        m0: 'Primary O-ring cut at assembly', s0: '10', o0: '4', d0: '3', m1: 'Closure bolt preload low', s1: '10', o1: '3', d1: '5',
+        m2: 'Seal groove corrosion in storage', s2: '8', o2: '3', d2: '6', m3: 'Insulation debond at the closure', s3: '10', o3: '2', d3: '7',
+        m4: 'Wrong O-ring compound', s4: '10', o4: '2', d4: '4', thr: '100',
+        q: '1e-4', dd: '1e-2', cv: '0.99', beta: '0.05', port: 'yes', qa: '1e-4' },
+    });
+    run();
+  });
+</script>

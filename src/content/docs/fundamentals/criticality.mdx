@@ -1,0 +1,178 @@
+---
+title: Criticality and DFMEA
+description: Classify each part by the consequence of its failure before detail design, because the class sets the allowable basis, the inspection and the approval. Criticality classes, fracture control and the pressure-vessel definition, a design FMEA that is useful, the limits of RPN, and redundancy with common-cause failure, with a calculator and a worked example on the 300 mm motor's case and aft closure.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CriticalityFlow from '../../../components/CriticalityFlow.astro';
+import SealTest from '../../../components/SealTest.astro';
+import RiskCalc from '../../../components/RiskCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Classify the part by what happens when it fails, at concept. The class decides the allowable basis, the inspection and who signs the drawing.</div>
+  <div><b>Before this</b><a href="../duty-cycle/">Duty cycle</a></div>
+  <div><b>Related</b><a href="../../materials/allowables/">Allowables</a> · <a href="../../make/ndt/">NDT</a> · <a href="../../seals/sealing-strategy/">Sealing strategy</a> · <a href="../../verify/proof-testing/">Proof testing</a></div>
+</div>
+
+## Why this matters
+
+Two parts can have the same margin of safety and very different risk. A cable clip that breaks is a nuisance; a
+closure bolt that breaks can destroy the vehicle. The difference is not in the stress analysis. It is in the
+consequence of failure, and the consequence decides how much proof each part needs: the allowable basis, the
+inspection of every part or of a sample, and the review before release.
+
+Assign the class at concept. If a part is found to be critical after release, everything that depends on the class
+must be done again: new allowables, new analysis, new inspection of the parts already made.
+
+<Analogy title="Triage">
+  In an emergency room, a nurse sorts patients by how serious their condition is, not by how long they have waited or
+  how easy they are to treat. A quiet patient with chest pain goes before a loud one with a sprained ankle. A
+  criticality class does the same for parts: the consequence of failure decides the attention, not the difficulty of
+  the drawing.
+</Analogy>
+
+## What the class drives
+
+<CriticalityFlow />
+
+| Class | Allowable basis | Inspection | Approval |
+| --- | --- | --- | --- |
+| Safety-critical or fracture-critical | A-basis; damage tolerance | 100% NDT, first-article inspection, serialised | Independent check and design authority |
+| Mission-critical | A- or B-basis by load path | NDT of critical features, first-article inspection | Design authority |
+| Standard | B-basis or specification minimum | Sample inspection | Normal route |
+
+Your company's classes and their requirements differ in detail; this is the shape, not the rule. The allowable basis
+comes from the load path ([Allowables](../../materials/allowables/)), and the inspection from the flaw that it must
+find ([NDT](../../make/ndt/)).
+
+## Fracture control
+
+Fracture-control standards for spaceflight hardware (NASA-STD-5019) start from one question: can a crack in this part
+cause a catastrophic hazard? If it can, the part is **fracture-critical**, unless it is shown to be one of the
+accepted exceptions:
+
+- **Fail-safe:** a redundant load path carries the load after the part fails, with no hazardous release of debris.
+- **Contained or low release:** the part cannot release anything hazardous when it fails.
+- **Non-hazardous leak:** a pressurised part that leaks before it breaks ([Leak before break](../../verify/leak-before-break/)).
+
+A fracture-critical part needs a damage-tolerance analysis from the largest flaw that inspection can miss, NDT of each
+part, and full traceability ([Certs & trace](../../make/certs/)).
+
+**Pressure vessels are always in scope.** NASA-STD-5019 and AIAA S-080 define a pressure vessel as one that stores
+19 310 J (14 240 ft·lbf) or more, operates above 0.69 MPa (100 psi), or holds a fluid that is hazardous if released.
+The stored energy of a gas is much larger than that of a liquid at the same pressure, which is why proof tests use
+liquid ([Proof testing](../../verify/proof-testing/#test-media-and-safety)). A solid motor case is a pressure vessel
+in operation; its burst is catastrophic.
+
+## A design FMEA that is useful
+
+A design failure mode and effects analysis (DFMEA) lists, for each function, how it can fail, what happens next, and
+what controls it.
+
+- **List functions, not parts.** "Contain pressure", "keep the clamp load", "locate within 0.1 mm". A part with three
+  functions has three sets of failure modes.
+- **For each function, list how it fails and what happens next,** up to the effect on the motor and the people near
+  it.
+- **Score severity (S) without looking at occurrence.** A rare catastrophic mode is still catastrophic. Occurrence (O)
+  is how likely the cause is; detection (D) is how likely the design controls are to find it before it reaches
+  service (10 is not found).
+- **Name the control and its owner.** For each severity 9 or 10 line, name the design feature, the analysis or the
+  test that controls it, and the person who owns it.
+
+**The risk priority number** $\text{RPN} = S \times O \times D$ ranks the lines, but it multiplies scores that are not
+on one scale. A severity-8 mode with poor detection can rank above three severity-10 modes. The AIAG-VDA FMEA handbook
+replaced RPN with an action priority that looks at severity first. Whatever the method, act on every severity 9 and
+10 line.
+
+## Redundancy and common cause
+
+A redundant barrier is only worth something if it is independent and if it can be tested.
+
+<SealTest />
+
+- **Test each barrier on its own.** Two seals in series with no way of testing the inner one is one seal plus a
+  placebo. Put a port between them ([Sealing strategy](../../seals/sealing-strategy/#leak-check-ports)).
+- **Look for single points hidden by an assumed redundancy:** one bolt pattern, one igniter path, one insulation
+  layer under both seals.
+
+**Common cause limits redundancy.** Two identical seals in the same groove design share the same compound, the same
+technician, the same temperature and the same contamination. The β-factor model gives a common-cause share $\beta$ of
+the failure probability $Q$ of each:
+
+$$
+Q_\text{pair} = \left[(1 - \beta)\,Q\right]^2 + \beta\,Q
+$$
+
+With $Q = 2 \times 10^{-4}$ and $\beta = 0.05$, the independent term is $3.6 \times 10^{-8}$ and the common-cause term
+$1 \times 10^{-5}$: almost all of the pair failure. A different design for the second barrier decreases $\beta$.
+
+## Calculator
+
+<RiskCalc />
+
+## Worked example: the 300 mm motor's case and aft closure
+
+The 300 mm motor has a welded D6AC case ([Case sizing](../../motor/case-sizing/)) and a bolted aft closure with two
+radial O-rings ([Sealing strategy](../../seals/sealing-strategy/#worked-example-the-aft-closure-seal)). The FMEA scores,
+the RPN of 100 for action, the seal probabilities and the allowed failure probability of $1 \times 10^{-4}$ are **for
+this example only**. Push **Load worked example** in the calculator to load them.
+
+1. **The case.** A burst destroys the vehicle and endangers people: catastrophic, so **Class A**. It is one load path,
+   and the [leak-before-break](../../verify/leak-before-break/) check fails for high-strength steel cases, so it is
+   not fail-safe: **fracture-critical**. Each case gets NDT, a proof test and full traceability.
+2. **Its proof test.** At 11 MPa in the 85 L case, nitrogen stores **1.74 MJ** (approximately 0.4 kg of TNT); water
+   stores **2.3 kJ**, 745 times less and below the 19 310 J limit. The case is a pressure vessel either way, because of
+   its pressure. Proof-test with water.
+3. **A harness bracket.** If it fails, a cable moves and the motor still works: marginal, **Class C**, with sample
+   inspection and the normal release route.
+4. **The FMEA of the aft closure joint.** Five modes: O-ring cut at assembly (S 10, O 4, D 3, RPN 120), low bolt
+   preload (10, 3, 5: 150), seal groove corrosion in storage (8, 3, 6: 144), insulation debond at the closure (10, 2,
+   7: 140) and the wrong O-ring compound (10, 2, 4: 80). By RPN, the corrosion mode is **second**, above three
+   severity-10 modes. By severity first, it is last. The wrong compound has an RPN of only 80, below the threshold,
+   but severity 10: it needs a control (a material certificate and batch marking). **All five** need a named control.
+5. **The seal pair.** Each seal: a random failure of $1 \times 10^{-4}$, an assembly defect of 1 in 100, a leak test
+   that finds 99% of defects, and $\beta = 0.05$. One tested seal fails at $2 \times 10^{-4}$. With a port between the
+   seals, the pair fails at **$1.0 \times 10^{-5}$**: 20 times better, and common cause is almost all of it. Without a
+   port, the pair fails at **$6.0 \times 10^{-4}$**: **three times worse** than one tested seal, because a cut O-ring in
+   either seal is never found. Only the pair with a port meets $1 \times 10^{-4}$.
+
+The class of the case set its inspection and proof test, and the FMEA and the seal-pair numbers set one feature on the
+closure drawing: the port between the seals.
+
+## Where this stops
+
+- **A generic three-class scheme.** Use the classes, names and requirements of your programme and company.
+- **The pressure-vessel definition** is from the fracture-control standards for spaceflight hardware. Ground
+  equipment follows its own pressure codes (for example the Pressure Equipment Directive or ASME VIII).
+- **FMEA scores are judgement.** Calibrate the scales with your team before scoring, and review the scores with people
+  who did not make them.
+- **The β-factor model** is the simplest common-cause model, with one parameter for all causes. The probabilities in
+  the example are illustrative.
+- **No system-level analysis.** Fault trees and hazard analyses combine the parts into the system risk.
+
+## On the drawing
+
+- **The criticality class** in the title block or the notes, as your drawing standard requires.
+- **Fracture-critical identification,** serialisation and the NDT that each part needs.
+- **Key characteristics** (AS9103): the features whose variation most affects function, with their inspection.
+- **First-article inspection** to AS9102 for critical parts.
+- **The controls from the FMEA:** test ports, torque and lubricant, material certificates, masking. Each is a feature
+  or a note.
+
+## References and further reading
+
+- NASA-STD-5019, *Fracture Control Requirements for Spaceflight Hardware*.
+- AIAA S-080, *Space Systems: Metallic Pressure Vessels, Pressurized Structures, and Pressure Components*.
+- AIAG and VDA, *FMEA Handbook* (2019); SAE J1739 (potential failure mode and effects analysis).
+- MIL-STD-1629A, *Procedures for Performing a Failure Mode, Effects and Criticality Analysis*; ECSS-Q-ST-30-02
+  (FMEA and FMECA).
+- NUREG/CR-5485, *Guidelines on Modeling Common-Cause Failures in Probabilistic Risk Assessment*, US NRC (1998).
+- SAE AS9102 (first article inspection), SAE AS9103 (variation management of key characteristics).
+
+<Aside type="note">
+  This is guidance on method from public standards and general practice. The criticality classes, fracture-control
+  plan, FMEA procedure and probability requirements for your hardware come from your programme.
+</Aside>

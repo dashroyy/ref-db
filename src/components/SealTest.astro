@@ -1,0 +1,52 @@
+---
+// Two seals in series with a cut inner seal: with a port between the seals the leak test finds it; without a port the
+// outer seal holds the test pressure and the defect is not found.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', accent = 'var(--rd-accent)', ok = 'var(--rd-ok)', blue = 'var(--rd-blue)';
+const panels = [
+  { x: 8, port: true, title: 'Port between the seals', a: 'the port sees the cut seal:', b: 'found and replaced', c: ok },
+  { x: 188, port: false, title: 'No port', a: 'the outer seal holds the test:', b: 'the cut seal flies', c: accent },
+];
+---
+
+<figure class="viz sealtest">
+  <p class="viz-title">A seal you cannot test is not redundant</p>
+  <svg viewBox="0 0 360 200" role="img" aria-labelledby="sealtest-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="sealtest-desc">
+      Two sections of a joint with two O-rings, where the inner seal is cut. Left: a port between the seals connects to
+      a gauge. Pressure applied at the port shows the leak of the cut inner seal, so the defect is found. Right: there
+      is no port, and the joint is tested from inside. The good outer seal holds the pressure, the test passes, and the
+      cut inner seal is not found.
+    </desc>
+    {panels.map((p) => (
+      <g>
+        <text x={p.x + 82} y="20" text-anchor="middle" font-size="10.5" fill={ink}>{p.title}</text>
+        <rect x={p.x} y="70" width="164" height="30" fill={steel} fill-opacity="0.45"></rect>
+        <rect x={p.x} y="104" width="164" height="30" fill={steel} fill-opacity="0.3"></rect>
+        <circle cx={p.x + 52} cy="105" r="7" fill={ink} fill-opacity="0.75"></circle>
+        <circle cx={p.x + 112} cy="105" r="7" fill={ink} fill-opacity="0.75"></circle>
+        <line x1={p.x + 46} x2={p.x + 58} y1="98" y2="112" stroke={accent} stroke-width="2.4"></line>
+        <text x={p.x + 52} y="150" text-anchor="middle" font-size="9" fill={accent}>cut</text>
+        <text x={p.x + 112} y="150" text-anchor="middle" font-size="9" fill={muted}>good</text>
+        <text x={p.x + 4} y="64" font-size="9" fill={muted}>inside</text>
+        <text x={p.x + 160} y="64" text-anchor="end" font-size="9" fill={muted}>outside</text>
+        {p.port
+          ? <g>
+              <rect x={p.x + 79} y="34" width="6" height="66" fill={blue} fill-opacity="0.6"></rect>
+              <circle cx={p.x + 82} cy="36" r="8" fill="var(--rd-panel)" stroke={ink}></circle>
+              <path d={`M${p.x + 72},104 L${p.x + 62},104`} stroke={blue} stroke-width="2" fill="none"></path>
+              <text x={p.x + 94} y="40" font-size="9" fill={blue}>test here</text>
+            </g>
+          : <g>
+              <rect x={p.x} y="100" width="112" height="4" fill={blue} fill-opacity="0.6"></rect>
+              <text x={p.x + 4} y="96" font-size="9" fill={blue}>test pressure</text>
+            </g>}
+        <text x={p.x + 82} y="174" text-anchor="middle" font-size="9.5" fill={p.c}>{p.a}</text>
+        <text x={p.x + 82} y="187" text-anchor="middle" font-size="9.5" fill={p.c}>{p.b}</text>
+      </g>
+    ))}
+  </svg>
+  <figcaption>
+    Without a port, a leak test of the joint passes when either seal holds. A defect in one seal is never found, so the
+    pair flies with one seal. The second seal is only a barrier if it can be tested on its own (Sealing strategy).
+  </figcaption>
+</figure>

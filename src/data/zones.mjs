@@ -57,6 +57,7 @@ export const ZONE_PLAN = [
 export const REBUILT = {
   home: '',
   duty: 'fundamentals/duty-cycle',
+  risk: 'fundamentals/criticality',
   metal: 'fundamentals/metallurgy',
   fatigue: 'fundamentals/fatigue',
   visco: 'fundamentals/viscoelasticity',
