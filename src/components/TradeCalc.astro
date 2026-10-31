@@ -1,0 +1,287 @@
+---
+// Weighted trade study in three tabs over one shared matrix: the weighted totals; the weight change that makes another
+// option catch the leader; and a Monte Carlo of the scores and weights. Maths in src/lib/trade.ts (unit-tested); UI
+// only here.
+const TABS = [{ key: 'mat', name: 'Matrix' }, { key: 'sens', name: 'Sensitivity' }, { key: 'mc', name: 'Uncertainty' }];
+const OPTS = ['D6AC', 'Maraging 250', 'Ti-6Al-4V ELI', 'Carbon/epoxy'];
+const CRIT: [string, 'max' | 'min', number[]][] = [
+  ['Mass index', 'max', [185, 211, 187, 350]],
+  ['Damage tolerance, 1–5', 'max', [2, 3, 5, 2]],
+  ['Relative cost', 'min', [1, 3, 4, 3.5]],
+  ['Heritage, 1–5', 'max', [5, 4, 3, 4]],
+  ['Supply risk, 1–5', 'min', [2, 4, 4, 3]],
+];
+---
+
+<div class="calc tradecalc" data-tradecalc>
+  <div class="calc-head"><span>Trade study</span><span class="head-btns"><span>weighted sum · min–max</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Trade study">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Options and criteria</legend>
+        <div class="tgrid">
+          {OPTS.map((o, j) => <input name={`o${j}`} type="text" value={o} aria-label={`Option ${j + 1}`} class="oname" autocomplete="off" />)}
+          {CRIT.map(([n, d, v], k) => (
+            <>
+              <input name={`c${k}`} type="text" value={n} aria-label={`Criterion ${k + 1}`} class="cname" autocomplete="off" />
+              <select name={`d${k}`} aria-label={`Criterion ${k + 1}, better when`}><option value="max" selected={d === 'max'}>higher</option><option value="min" selected={d === 'min'}>lower</option></select>
+              <input name={`w${k}`} type="number" min="0" step="any" placeholder="weight" aria-label={`Criterion ${k + 1}, weight`} />
+              {v.map((x, j) => <input name={`v${k}_${j}`} type="number" step="any" value={x} aria-label={`Criterion ${k + 1}, option ${j + 1}`} />)}
+            </>
+          ))}
+        </div>
+        <p class="hint">Each criterion is scaled 0 to 1 across the options (best 1, worst 0), then weighted. Screen out options that fail a requirement before you score: a weighted sum lets a strength in one criterion pay for a failure in another.</p>
+      </fieldset>
+      <fieldset data-panel="sens" hidden>
+        <legend>Sensitivity</legend>
+        <label>Criterion to plot<select name="sc">{CRIT.map(([n], k) => <option value={k}>{n}</option>)}</select></label>
+      </fieldset>
+      <fieldset data-panel="mc" hidden>
+        <legend>Uncertainty</legend>
+        <div class="row2">
+          <label>Score uncertainty, ± (0 to 0.5)<input name="u" type="number" min="0" max="0.5" step="any" value="0.15" /></label>
+          <label>Weight uncertainty, ± %<input name="v" type="number" min="0" max="100" step="any" value="30" /></label>
+        </div>
+        <p class="hint">Each scaled score moves by up to ± this amount and each weight by up to ± this percentage, at random, in 4000 trials (repeatable).</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 240" data-chart role="img" aria-label="Chart for the selected trade-study view"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening only: a weighted sum of min–max scaled scores, with uniform random variation for the uncertainty. The
+    decision, its criteria and its weights belong to the people who own the requirement, and the record of why.
+  </div>
+</div>
+
+<style is:global>
+  .tradecalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .tradecalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .tradecalc .pv-notes li.bad { color: var(--rd-accent); }
+  .tradecalc .pv-notes li.warn { color: var(--rd-warn); }
+  .tradecalc .example-note { margin: 0.5rem 0 0 !important; }
+  .tradecalc .tgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.3rem 0.4rem; margin: 0.4rem 0 0.6rem; }
+  .tradecalc .tgrid input, .tradecalc .tgrid select { width: 100%; min-width: 0; }
+  .tradecalc .tgrid .oname { font-weight: 600; }
+  .tradecalc .tgrid .cname { grid-column: span 2; margin-top: 0.45rem; }
+  .tradecalc .tgrid .cname + select, .tradecalc .tgrid .cname + select + input { margin-top: 0.45rem; }
+  .tradecalc select { width: 100%; }
+</style>
+
+<script>
+  import { scoreMatrix, totals, ranking, sensitivity, monteCarlo, type Criterion } from '../lib/trade';
+  import { readFactor, wireWorkedExample } from '../lib/factors';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const COLS = ['var(--rd-accent)', 'var(--rd-blue)', 'var(--rd-ok)', 'var(--rd-warn)', 'var(--rd-steel)'];
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+  const NO = 4, NC = 5;
+
+  document.querySelectorAll<HTMLElement>('[data-tradecalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => { const s = field(n).value.trim(); return s === '' ? NaN : +s; };
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const frame = (H: number) => { svg.replaceChildren(); const W = width(); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); return W; };
+    const short = (s: string, n = 14) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+    let mode = 'mat';
+    let draw: (() => void) | null = null;
+
+    // read the matrix; weights may be missing
+    function read() {
+      const opts = Array.from({ length: NO }, (_, j) => field(`o${j}`).value.trim() || `Option ${j + 1}`);
+      const crit: Criterion[] = [], bad: string[] = [];
+      for (let k = 0; k < NC; k++) {
+        const name = field(`c${k}`).value.trim();
+        if (!name) continue;
+        const values = Array.from({ length: NO }, (_, j) => num(`v${k}_${j}`));
+        if (values.some((v) => !Number.isFinite(v))) { bad.push(name); continue; }
+        const w = readFactor(field(`w${k}`).value, 0);
+        crit.push({ name, dir: field(`d${k}`).value as 'max' | 'min', weight: w ?? NaN, values });
+      }
+      const haveW = crit.length > 0 && crit.every((c) => Number.isFinite(c.weight)) && crit.some((c) => c.weight > 0);
+      return { opts, crit, bad, haveW, s: crit.length ? scoreMatrix(crit) : [], w: crit.map((c) => c.weight) };
+    }
+    const needW = (rows: Row[], notes: [string, string][], what: string) => { rows.push({ dt: 'Weights', dd: '<small>needs a weight for each criterion</small>' }); notes.push(['warn', `Enter a weight for each criterion to see ${what}. The weights come from the people who own the requirement, with the reason for each. Or press “Load worked example”.`]); };
+
+    // ---- matrix ----
+    function runMat(rows: Row[], notes: [string, string][]) {
+      const m = read();
+      if (!m.crit.length) { notes.push(['bad', 'Enter at least one criterion with a value for each option.']); return null; }
+      if (m.bad.length) notes.push(['warn', `Not used, a value is missing: ${m.bad.join(', ')}.`]);
+      if (!m.haveW) {
+        needW(rows, notes, 'the weighted totals and the ranking');
+        return () => {
+          // heat map of the scaled scores
+          const H = 52 + m.crit.length * 30 + 20, W = frame(H), L = 112, R = 10, T = 42, cw = (W - L - R) / NO;
+          m.opts.forEach((o, j) => el('text', { x: L + j * cw + cw / 2, y: T - 8 - (j % 2) * 14, 'text-anchor': 'middle', 'font-size': 9.5, fill: 'var(--rd-ink)' }, short(o, 12))); // staggered so long names do not touch
+          m.crit.forEach((c, k) => {
+            el('text', { x: L - 6, y: T + k * 30 + 18, 'text-anchor': 'end', 'font-size': 9.5, fill: 'var(--rd-ink)' }, short(c.name, 17));
+            m.s.forEach((row, j) => {
+              el('rect', { x: L + j * cw + 2, y: T + k * 30 + 2, width: cw - 4, height: 26, rx: 3, fill: 'var(--rd-blue)', 'fill-opacity': 0.1 + 0.75 * row[k] });
+              el('text', { x: L + j * cw + cw / 2, y: T + k * 30 + 19, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-ink)' }, f(row[k], 2));
+            });
+          });
+        };
+      }
+      const t = totals(m.s, m.w), r = ranking(t), lead = r[0], second = r[1];
+      rows.push({ dt: 'Leader', dd: `${m.opts[lead]}: ${f(t[lead], 1)} <small>${f(t[lead] - t[second], 1)} points ahead of ${m.opts[second]}</small>`, primary: true, cls: t[lead] - t[second] < 5 ? 'warn' : 'ok' });
+      r.slice(1).forEach((j) => rows.push({ dt: m.opts[j], dd: `${f(t[j], 1)}` }));
+      if (t[lead] - t[second] < 5) notes.push(['warn', `The first two are within 5 points: a small change of one weight or one score can swap them. Look at the Sensitivity and Uncertainty tabs before you decide.`]);
+      notes.push(['', 'The scores are scaled across these options: adding or removing an option changes every scaled score, and can change the order of the others.']);
+      return () => {
+        const H = 34 + NO * 32 + 40, W = frame(H), L = 100, R = 30, T = 14;
+        const Wsum = m.w.reduce((a, b) => a + b, 0), X = (v: number) => L + (v / 100) * (W - L - R);
+        r.forEach((j, i) => {
+          const y = T + i * 32;
+          el('text', { x: L - 6, y: y + 17, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-ink)', 'font-weight': i === 0 ? 600 : 400 }, short(m.opts[j], 15));
+          let acc = 0;
+          m.crit.forEach((c, k) => { const part = (100 * m.s[j][k] * c.weight) / Wsum; if (part > 0) el('rect', { x: X(acc), y: y + 4, width: X(acc + part) - X(acc), height: 18, fill: COLS[k % COLS.length], 'fill-opacity': 0.75 }); acc += part; });
+          txt(X(acc) + 4, y + 17, f(t[j], 1), 'var(--rd-muted)');
+        });
+        el('line', { x1: L, x2: L, y1: T, y2: T + NO * 32, stroke: 'var(--rd-muted)' });
+        let lx = 8, ly = T + NO * 32 + 18;
+        m.crit.forEach((c, k) => {
+          const label = short(c.name, 16), wpx = label.length * 5.6 + 18;
+          if (lx + wpx > W - 6) { lx = 8; ly += 14; }
+          el('rect', { x: lx, y: ly - 8, width: 9, height: 9, fill: COLS[k % COLS.length], 'fill-opacity': 0.75 });
+          el('text', { x: lx + 12, y: ly, 'font-size': 9, fill: 'var(--rd-ink)' }, label);
+          lx += wpx;
+        });
+        svg.setAttribute('viewBox', `0 0 ${W} ${Math.max(H, ly + 8)}`);
+      };
+    }
+
+    // ---- sensitivity ----
+    function runSens(rows: Row[], notes: [string, string][]) {
+      const m = read();
+      if (!m.crit.length) { notes.push(['bad', 'Enter at least one criterion with a value for each option.']); return null; }
+      if (!m.haveW) { needW(rows, notes, 'how far each weight can move before the leader changes'); return null; }
+      const t = totals(m.s, m.w), lead = ranking(t)[0], sens = sensitivity(m.s, m.w);
+      const finite = sens.filter((x) => x.change !== null && Number.isFinite(x.change)).sort((a, b) => Math.abs(a.change!) - Math.abs(b.change!));
+      if (finite.length) rows.push({ dt: 'Most sensitive weight', dd: `${m.crit[finite[0].c].name} <small>${f(finite[0].w, 1)} → ${f(finite[0].tie!.at, 1)} (${finite[0].change! >= 0 ? '+' : '−'}${f(Math.abs(finite[0].change!) * 100)}%) makes ${m.opts[finite[0].tie!.other]} tie with ${m.opts[lead]}</small>`, primary: true, cls: Math.abs(finite[0].change!) < 0.25 ? 'warn' : 'ok' });
+      else rows.push({ dt: 'Most sensitive weight', dd: `none <small>${m.opts[lead]} leads at any single weight</small>`, primary: true, cls: 'ok' });
+      sens.forEach((x) => rows.push({ dt: m.crit[x.c].name, dd: x.tie ? `${f(x.w, 1)} → ${f(x.tie.at, 1)} <small>${m.opts[x.tie.other]} ties (${x.change! >= 0 ? '+' : '−'}${f(Math.abs(x.change!) * 100)}%)</small>` : `${f(x.w, 1)} <small>no single change of this weight moves the leader</small>` }));
+      if (finite.length && Math.abs(finite[0].change!) < 0.25) notes.push(['warn', 'A change of less than 25% in one weight changes the decision. The weights cannot be known that well: record the result as a near tie, and decide on what the matrix leaves out.']);
+      notes.push(['', 'Weights are judgement. Write down who set each weight and why; that record is worth more than the totals.']);
+      return () => {
+        const c = Math.min(+field('sc').value || 0, m.crit.length - 1), H = 230, W = frame(H), L = 42, R = 96, T = 14, B = 32;
+        const wMax = Math.max(m.w[c] * 2, ...sens.filter((x) => x.c === c && x.tie).map((x) => x.tie!.at * 1.2), 1);
+        const X = (v: number) => L + (v / wMax) * (W - L - R), Y = (v: number) => H - B - (v / 100) * (H - T - B);
+        for (let v = 0; v <= 100; v += 25) { el('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(v) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(v)); }
+        const ws = Array.from({ length: 41 }, (_, i) => (wMax * i) / 40);
+        const ends: [number, number, string, string][] = [];
+        m.opts.forEach((o, j) => {
+          const pts = ws.map((wc) => { const ww = m.w.map((x, k) => (k === c ? wc : x)); return [X(wc), Y(totals(m.s, ww)[j])] as [number, number]; });
+          el('polyline', { points: pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '), fill: 'none', stroke: COLS[j % COLS.length], 'stroke-width': j === lead ? 2.6 : 1.6 });
+          ends.push([pts[pts.length - 1][1], j, o, COLS[j % COLS.length]]);
+        });
+        // labels at the right, at least 12 apart
+        ends.sort((a, b) => a[0] - b[0]);
+        for (let i = 1; i < ends.length; i++) ends[i][0] = Math.max(ends[i][0], ends[i - 1][0] + 12);
+        ends.forEach(([y, , o, col]) => txt(W - R + 4, Math.min(y + 3, H - B), short(o, 14), col));
+        el('line', { x1: X(m.w[c]), x2: X(m.w[c]), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '3 3' });
+        el('text', { x: X(m.w[c]), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-ink)' }, f(m.w[c], 1));
+        el('text', { x: L, y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, '0');
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, `weight of ${short(m.crit[c].name, 22)}`);
+        el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, 'total');
+      };
+    }
+
+    // ---- uncertainty ----
+    function runMc(rows: Row[], notes: [string, string][]) {
+      const m = read(), u = num('u'), v = num('v') / 100;
+      if (!m.crit.length) { notes.push(['bad', 'Enter at least one criterion with a value for each option.']); return null; }
+      if (!m.haveW) { needW(rows, notes, 'how often each option wins when the scores and weights are uncertain'); return null; }
+      if (!(u >= 0 && u <= 0.5 && v >= 0 && v <= 1)) { notes.push(['bad', 'Enter a score uncertainty from 0 to 0.5 and a weight uncertainty from 0 to 100%.']); return null; }
+      const p = monteCarlo(m.s, m.w, u, v, 4000, 1), r = ranking(p);
+      rows.push({ dt: 'Wins most often', dd: `${m.opts[r[0]]}: ${f(p[r[0]] * 100)}% <small>of 4000 trials · ${m.opts[r[1]]} ${f(p[r[1]] * 100)}%</small>`, primary: true, cls: p[r[0]] < 0.7 ? 'warn' : 'ok' });
+      r.slice(1).forEach((j) => rows.push({ dt: m.opts[j], dd: p[j] > 0 && p[j] < 0.001 ? 'less than 0.1%' : `${f(p[j] * 100, p[j] > 0 && p[j] < 0.01 ? 1 : 0)}%` }));
+      if (p[r[0]] < 0.7) notes.push(['warn', 'No option wins in more than 70% of the trials. The matrix cannot separate them: decide on the criteria it does not hold (risk, schedule, programme preference), and record that.']);
+      notes.push(['', 'An option that never wins can still be the safe second choice. Keep it alive until the leader is proven.']);
+      return () => {
+        const W = width(), H = 30 + NO * 30 + 26; frame(H);
+        const L = 100, R = 40, T = 14, X = (x: number) => L + x * (W - L - R);
+        for (let x = 0; x <= 1.0001; x += 0.25) { el('line', { x1: X(x), x2: X(x), y1: T, y2: T + NO * 30, stroke: 'var(--rd-line)' }); el('text', { x: X(x), y: T + NO * 30 + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, `${x * 100}%`); }
+        m.opts.forEach((o, j) => {
+          const y = T + j * 30;
+          el('text', { x: L - 6, y: y + 18, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-ink)' }, short(o, 15));
+          el('rect', { x: L, y: y + 6, width: Math.max(1.5, X(p[j]) - L), height: 17, rx: 3, fill: COLS[j % COLS.length], 'fill-opacity': 0.75 });
+          txt(X(p[j]) + 4, y + 19, `${f(p[j] * 100)}%`, 'var(--rd-muted)');
+        });
+      };
+    }
+
+    const RUN: Record<string, typeof runMat> = { mat: runMat, sens: runSens, mc: runMc };
+    const CAPS: Record<string, string> = {
+      mat: 'Without weights: the scaled score of each option on each criterion (darker is better). With weights: each total, built from the share of each criterion.',
+      sens: 'The total of each option as the weight of one criterion changes, with the other weights held. Where two lines cross, the leader changes.',
+      mc: 'The share of 4000 trials that each option wins, with the scores and weights varied at random inside your uncertainty.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    // keep the criterion names in the plot selector
+    const syncNames = () => { const sel = field('sc') as HTMLSelectElement; [...sel.options].forEach((o, k) => (o.textContent = field(`c${k}`).value.trim() || `Criterion ${k + 1}`)); };
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => { syncNames(); run(); }, 150); });
+    form.addEventListener('change', () => { syncNames(); run(); });
+    const values: Record<string, string> = { w0: '30', w1: '25', w2: '20', w3: '15', w4: '10', u: '0.15', v: '30', sc: '0' };
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['w0', 'w1', 'w2', 'w3', 'w4'],
+      note: 'Worked-example weights loaded: mass 30, damage tolerance 25, cost 20, heritage 15, supply 10',
+      values: { ...values, o0: 'D6AC', o1: 'Maraging 250', o2: 'Ti-6Al-4V ELI', o3: 'Carbon/epoxy',
+        c0: 'Mass index', d0: 'max', v0_0: '185', v0_1: '211', v0_2: '187', v0_3: '350',
+        c1: 'Damage tolerance, 1–5', d1: 'max', v1_0: '2', v1_1: '3', v1_2: '5', v1_3: '2',
+        c2: 'Relative cost', d2: 'min', v2_0: '1', v2_1: '3', v2_2: '4', v2_3: '3.5',
+        c3: 'Heritage, 1–5', d3: 'max', v3_0: '5', v3_1: '4', v3_2: '3', v3_3: '4',
+        c4: 'Supply risk, 1–5', d4: 'min', v4_0: '2', v4_1: '4', v4_2: '4', v4_3: '3' },
+    });
+    run();
+  });
+</script>

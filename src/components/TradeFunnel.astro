@@ -1,0 +1,36 @@
+---
+// The order of a trade study: screen by the musts, score the wants, test the sensitivity, decide and record.
+const ink = 'var(--rd-ink)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)', ok = 'var(--rd-ok)', warn = 'var(--rd-warn)';
+const steps: [string, string, number][] = [
+  ['1  Screen', 'many candidates, by the musts', 320],
+  ['2  Score', 'the shortlist, by the wants', 256],
+  ['3  Test', 'sensitivity and uncertainty', 192],
+  ['4  Decide', 'and record why', 128],
+];
+const cols = [blue, ok, warn, accent];
+---
+
+<figure class="viz tradefunnel">
+  <p class="viz-title">Screen, score, test, decide</p>
+  <svg viewBox="0 0 360 220" role="img" aria-labelledby="tradefunnel-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="tradefunnel-desc">
+      A funnel in four steps. First, screen many candidates with the musts, the requirements that are pass or fail.
+      Second, score the shortlist on the wants, with weights. Third, test the sensitivity of the result to the weights
+      and the uncertainty of the scores, to find near ties. Fourth, decide and record the reasons.
+    </desc>
+    {steps.map(([n, how, w], k) => {
+      const y = 14 + k * 50, x = 180 - w / 2;
+      return (
+        <g>
+          <rect x={x} y={y} width={w} height="40" rx="6" fill={cols[k]} fill-opacity="0.22" stroke={cols[k]}></rect>
+          <text x="180" y={y + 17} text-anchor="middle" font-size="11" font-weight="600" fill={ink}>{n}</text>
+          <text x="180" y={y + 32} text-anchor="middle" font-size="9.5" fill={ink}>{how}</text>
+        </g>
+      );
+    })}
+  </svg>
+  <figcaption>
+    A requirement that must be met is a screen, not a weight: an option that fails it is out, whatever its total. Only
+    the options that pass are scored, and the score is tested before it is trusted.
+  </figcaption>
+</figure>

@@ -42,7 +42,7 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r.find((x) => x.key === 'pv')!.tag, 'Z25');
   assert.equal(r.find((x) => x.key === 'oring')!.tag, 'Z51');
   assert.equal(r.find((x) => x.primer)!.num, null);
-  assert.equal(hrefOf(r.find((x) => x.key === 'trade')!, '/'), '/legacy/?z=trade');
+  assert.equal(hrefOf(r.find((x) => x.key === 'sheet')!, '/'), '/legacy/?z=sheet');
   assert.equal(hrefOf(r.find((x) => x.key === 'pv')!, '/ref-db/'), '/ref-db/motor/case-sizing/');
   assert.equal(hrefOf(r.find((x) => x.key === 'home')!, '/'), '/');
 });

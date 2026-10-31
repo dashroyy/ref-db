@@ -62,6 +62,7 @@ export const REBUILT = {
   fatigue: 'fundamentals/fatigue',
   visco: 'fundamentals/viscoelasticity',
   materials: 'materials/selection',
+  trade: 'materials/trade-study',
   xref: 'materials/designations',
   rocket: 'motor/hardware',
   propellant: 'motor/propellant',

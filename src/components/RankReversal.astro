@@ -1,0 +1,50 @@
+---
+// Rank reversal: adding an option re-scales every criterion and swaps the order of two options that did not change.
+// Computed from the worked-example matrix with src/lib/trade.ts.
+import { scoreMatrix, totals, type Criterion } from '../lib/trade';
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)', steel = 'var(--rd-steel)';
+const names = ['D6AC', 'Maraging 250', 'Ti-6Al-4V ELI', 'Carbon/epoxy', '4130'];
+const crit: Criterion[] = [
+  { name: 'Mass', dir: 'max', weight: 30, values: [185, 211, 187, 350] },
+  { name: 'Damage tolerance', dir: 'max', weight: 25, values: [2, 3, 5, 2] },
+  { name: 'Cost', dir: 'min', weight: 20, values: [1, 3, 4, 3.5] },
+  { name: 'Heritage', dir: 'max', weight: 15, values: [5, 4, 3, 4] },
+  { name: 'Supply', dir: 'min', weight: 10, values: [2, 4, 4, 3] },
+];
+const w = crit.map((c) => c.weight);
+const t4 = totals(scoreMatrix(crit), w);
+const t5 = totals(scoreMatrix(crit.map((c, k) => ({ ...c, values: [...c.values, [130, 4, 0.8, 5, 1][k]] }))), w);
+const X = (v: number, x0: number) => x0 + (v / 75) * 92;
+const colour = (j: number) => (j === 0 ? accent : j === 3 ? blue : j === 4 ? steel : muted);
+const panels = [{ x0: 92, t: t4, n: 4, title: 'Four options' }, { x0: 254, t: t5, n: 5, title: 'Add 4130' }];
+---
+
+<figure class="viz rankreversal">
+  <p class="viz-title">Adding an option changes the order of the others</p>
+  <svg viewBox="0 0 360 200" role="img" aria-labelledby="rankreversal-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="rankreversal-desc">
+      Weighted totals of the worked example. With four options, carbon/epoxy leads with {t4[3].toFixed(1)} and D6AC
+      follows with {t4[0].toFixed(1)}. When 4130 steel is added, every criterion is scaled again: 4130 leads with
+      {t5[4].toFixed(1)}, and D6AC ({t5[0].toFixed(1)}) moves above carbon/epoxy ({t5[3].toFixed(1)}), although nothing
+      about either of them changed.
+    </desc>
+    {panels.map((p) => (
+      <g>
+        <text x={p.x0 + 46} y="20" text-anchor="middle" font-size="10.5" fill={ink}>{p.title}</text>
+        {names.slice(0, p.n).map((n, j) => (
+          <g>
+            {p.x0 === 92 && <text x="86" y={44 + j * 26} text-anchor="end" font-size="10" fill={ink}>{n}</text>}
+            <rect x={p.x0} y={31 + j * 26} width={X(p.t[j], p.x0) - p.x0} height="17" rx="3" fill={colour(j)} fill-opacity="0.75"></rect>
+            <text x={X(p.t[j], p.x0) + 4} y={44 + j * 26} font-size="9.5" fill={muted}>{p.t[j].toFixed(1)}</text>
+          </g>
+        ))}
+      </g>
+    ))}
+    <text x="250" y={44 + 4 * 26} text-anchor="end" font-size="10" fill={ink}>4130</text>
+    <text x="180" y="184" text-anchor="middle" font-size="10" fill={accent}>D6AC and carbon/epoxy swap places</text>
+  </svg>
+  <figcaption>
+    The scores are scaled from the worst to the best option. A new option moves the ends of each scale, so every score
+    changes. Here 4130 also "wins", although it is too heavy for the case: a must, not a weight. Screen it out first.
+  </figcaption>
+</figure>

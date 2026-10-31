@@ -1,0 +1,174 @@
+---
+title: Trade study
+description: How to run a weighted trade study that supports a decision instead of disguising one. Musts and wants, criteria and scales, weights, the weighted sum, rank reversal, sensitivity to the weights, uncertainty by Monte Carlo, and the decision record, with a calculator and a worked example on the case-material shortlist of the 300 mm motor.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import TradeFunnel from '../../../components/TradeFunnel.astro';
+import RankReversal from '../../../components/RankReversal.astro';
+import TradeCalc from '../../../components/TradeCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A trade study is an argument, not an answer. Screen by the musts, score the wants, test how much the result depends on the weights, and record why you chose.</div>
+  <div><b>Before this</b><a href="../selection/">Material selection</a></div>
+  <div><b>Related</b><a href="../../fundamentals/criticality/">Criticality</a> · <a href="../allowables/">Allowables</a> · <a href="../../make/cost/">Cost</a></div>
+</div>
+
+## Why this matters
+
+A performance index ranks materials on one question ([Material selection](../selection/)). A real choice has
+several: mass, damage tolerance, cost, heritage, supply, schedule. A weighted trade study puts them on one page and
+gives each option a total.
+
+The total looks objective, but it comes from choices: which criteria, which scales and which weights. Change the
+weights and the winner can change. That is not a fault of the method; it is the information the method gives. The
+weights, not the totals, are what a design review should question.
+
+<Analogy title="Buying a car">
+  Score three cars on price, economy, boot space and comfort, weight each criterion, and add. One car wins by two
+  points. Then your partner says comfort matters more than you thought, and another car wins. The sheet did not tell
+  you which car is best; it told you that the decision depends on how much comfort matters, and that is the question
+  to settle.
+</Analogy>
+
+## Musts and wants
+
+<TradeFunnel />
+
+- **Musts are screens.** A requirement that must be met (a service temperature, weldability, a mass limit, an export
+  restriction) is pass or fail. An option that fails it is out. Never give a must a weight: a weighted sum lets a
+  strength in one criterion pay for a failure in another.
+- **Wants are scored.** Everything that is better when larger or smaller, but has no hard limit, goes into the matrix
+  with a weight.
+
+## Criteria and scales
+
+- **Independent criteria.** If two criteria measure the same thing (strength-to-weight and wall mass), the property
+  counts twice. Merge them or drop one.
+- **Measured where you can, judged where you must.** Use the property value for mass, cost and strength. For judged
+  criteria (heritage, supply risk, manufacturability), write the scale with anchors: what a 1, a 3 and a 5 mean.
+- **Scale the values to 0–1.** Min–max scaling gives the best option 1 and the worst 0. It makes the criteria
+  comparable, but it stretches small differences: two options 1% apart get 0 and 1.
+
+The weighted total of option $i$ is:
+
+$$
+T_i = 100\,\frac{\sum_k w_k\,s_{ik}}{\sum_k w_k}
+$$
+
+Here $w_k$ is the weight of criterion $k$ and $s_{ik}$ the scaled score of option $i$ on it.
+
+## Weights
+
+Weights express how much each criterion matters to this decision. Set them before you score, with the people who own
+the requirement, and write the reason for each. Methods that help:
+
+- **Swing weighting:** for each criterion, ask how much it is worth to move from the worst option to the best. The
+  criterion with the largest swing gets the largest weight. This ties the weights to the options, not to an abstract
+  importance.
+- **Pairwise comparison** (as in the analytic hierarchy process): compare the criteria two at a time, and derive the
+  weights from the comparisons. It shows when the judgements are not consistent.
+
+## Rank reversal
+
+Because the scores are scaled across the options, adding or removing an option changes every score.
+
+<RankReversal />
+
+The order of two options can change although nothing about them changed. A matrix ranks the options it holds, not
+options in general. Fix the set of options before the final scoring, and screen out options that fail a must.
+
+## Sensitivity
+
+Hold all weights but one, and find the weight $w_c$ at which another option $b$ ties with the leader $a$:
+
+$$
+w_c^{*} = -\,\frac{\sum_{k \ne c} w_k\,(s_{ak} - s_{bk})}{s_{ac} - s_{bc}}
+$$
+
+If a small change of one weight (less than approximately 25%) changes the leader, the weights cannot support the
+decision: no one knows them that well. If no single weight within reason changes it, the decision is robust.
+
+## Uncertainty
+
+Scores are uncertain too: a cost estimate, a judged heritage, a mass index from a typical property. A Monte Carlo
+moves each score and each weight at random inside its uncertainty and counts how often each option wins. An option
+that wins in 95% of the trials is a clear choice. Two options that share the wins evenly are a tie, whatever their
+totals say.
+
+## Pugh matrix for concepts
+
+Early in a design, scores are too uncertain for a weighted sum. The Pugh method compares each concept with a datum
+concept, criterion by criterion: better (+), the same (0) or worse (−). It does not give a winner. It shows where
+each concept is strong and weak, and it suggests hybrids that take the strengths of two.
+
+## Calculator
+
+<TradeCalc />
+
+## Worked example: the case-material shortlist
+
+The [material-selection example](../selection/#worked-example-choosing-a-case-material) ranked the metals for the
+300 mm case. The programme now asks whether a filament-wound carbon/epoxy case is worth it. The shortlist is D6AC,
+maraging 250, Ti-6Al-4V ELI and carbon/epoxy. The judged scores, the laminate mass index and the weights are **for
+this example only**. Push **Load worked example** in the calculator to load them.
+
+1. **Musts.** All four meet the service temperature and have a qualified joining or winding route. They pass the
+   screen.
+2. **Scores.** Mass index $\sigma_y/\rho$: 185, 211 and 187 kN·m/kg for the metals, and an illustrative 350 for a
+   filament-wound wall. Damage tolerance, judged 1–5 from the crack at yield (0.59, 0.89 and 3.68 mm) and the impact
+   sensitivity of the composite: 2, 3, 5, 2. Relative cost: 1, 3, 4, 3.5. Heritage: 5, 4, 3, 4. Supply risk: 2, 4, 4,
+   3.
+3. **Weights and totals.** Mass 30, damage tolerance 25, cost 20, heritage 15, supply 10. Carbon/epoxy **45.8**,
+   D6AC **45.0**, maraging 27.2, titanium 25.4. Carbon/epoxy leads by 0.8 points.
+4. **Sensitivity.** The mass weight falling from 30 to **29.2** (−3%) makes D6AC tie. So does the cost weight rising
+   from 20 to 21 (+5%). For titanium to tie, the damage-tolerance weight must nearly double, to 45.5. The first two are
+   a tie; the other two are clearly behind.
+5. **Uncertainty.** With ±0.15 on each scaled score and ±30% on each weight, carbon/epoxy wins **51%** of 4000 trials
+   and D6AC **49%**. Maraging and titanium almost never win.
+6. **Adding an option.** Add 4130 steel (mass index 130, cheap and well known). It "wins" with **61.7**, although it
+   cannot meet the mass of the case: it should have failed a must. And D6AC (47.9) now ranks **above** carbon/epoxy
+   (44.0), although nothing about either changed.
+
+The matrix says clearly that maraging and titanium are not the answer for these weights, and that it cannot choose
+between D6AC and carbon/epoxy. The choice between them rests on what the matrix leaves out: qualification cost and
+schedule, the facilities, and the risk of a first composite case. Record that reasoning with the matrix.
+
+## Where this stops
+
+- **A weighted sum is compensatory.** A high score on one criterion pays for a low score on another. Use screens for
+  anything that must not be traded.
+- **Min–max scaling** depends on the options in the set and stretches small differences. Other scales (ratio to the
+  best, fixed ranges) behave differently; state which one you use.
+- **Judged scores are opinions** with an anchor. Two people should score them independently, and the differences be
+  discussed.
+- **Uniform random variation** in the Monte Carlo is a simple model. Correlated uncertainties (cost and schedule, for
+  example) can change the result.
+- **The matrix does not decide.** People decide, with the matrix as evidence.
+
+## On the drawing
+
+A trade study does not go on the drawing, but its result does:
+
+- **The material specification and condition** that the study chose ([Material specs](../specification/)).
+- **A reference to the trade study** in the design file or the design justification, so that a later change can see
+  why the choice was made.
+- **The musts** that screened the options, as requirements in the specification, so that a later substitution must
+  meet them.
+
+## References and further reading
+
+- C. H. Kepner and B. B. Tregoe, *The New Rational Manager*, Princeton Research Press (1981) (musts and wants).
+- S. Pugh, *Total Design: Integrated Methods for Successful Product Engineering*, Addison-Wesley (1991).
+- T. L. Saaty, *The Analytic Hierarchy Process*, McGraw-Hill (1980).
+- R. L. Keeney and H. Raiffa, *Decisions with Multiple Objectives*, Wiley (1976).
+- NASA, *Systems Engineering Handbook*, NASA/SP-2016-6105 Rev. 2 (decision analysis).
+- M. F. Ashby, *Materials Selection in Mechanical Design*, 5th ed., Butterworth-Heinemann (2017).
+
+<Aside type="note">
+  The scores and weights in the example are illustrative. The criteria, weights and decision for your hardware belong
+  to your programme and the people who own its requirements.
+</Aside>
