@@ -1,0 +1,48 @@
+---
+// Why rainflow counting works: a small interruption in a large cycle makes a small closed loop in the stress–strain
+// response, and the large loop continues as if it had not happened.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)';
+const hist: [number, number][] = [[24, 100], [56, 56], [88, 84], [112, 68], [148, 144], [170, 100]];
+// loops: centre (262, 100), 12 px per unit of strain from −4 to 4, branch shape g(u)
+const S = 52, cx = 262, cy = 100, k = 11;
+const g = (u: number) => (1 - Math.exp(-3 * u)) / (1 - Math.exp(-3));
+const up = (e: number) => -S + 2 * S * g((e + 4) / 8), dn = (e: number) => S - 2 * S * g((4 - e) / 8);
+const es = Array.from({ length: 41 }, (_, i) => -4 + (8 * i) / 40);
+const branch = (fn: (e: number) => number) => es.map((e) => `${(cx + k * e).toFixed(1)},${(cy - fn(e)).toFixed(1)}`).join(' ');
+const p1 = [cx + k * 1.5, cy - dn(1.5)], p2 = [cx + k * 3, cy - dn(3)];
+---
+
+<figure class="viz hysteresis">
+  <p class="viz-title">One small cycle inside a large one</p>
+  <svg viewBox="0 0 360 210" role="img" aria-labelledby="hysteresis-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="hysteresis-desc">
+      Left: a strain history that rises to a maximum, falls a little, rises a little, then falls to a minimum. Right:
+      the stress–strain response. The large cycle from the minimum to the maximum is one closed loop. The small fall and
+      rise make a small closed loop that hangs on the large one, and the large loop then continues on its path.
+      Rainflow counting finds both loops: one large cycle and one small cycle.
+    </desc>
+    <line x1="20" x2="176" y1="100" y2="100" stroke="var(--rd-line)"></line>
+    <polyline points={hist.map(([x, y]) => `${x},${y}`).join(' ')} fill="none" stroke={blue} stroke-width="2"></polyline>
+    <polyline points="88,84 112,68" fill="none" stroke={accent} stroke-width="3"></polyline>
+    <text x="98" y="40" text-anchor="middle" font-size="10" fill={ink}>strain against time</text>
+    <text x="100" y="60" text-anchor="middle" font-size="10" fill={accent}>small cycle</text>
+    <text x="98" y="174" text-anchor="middle" font-size="10" fill={muted}>the large cycle runs from</text>
+    <text x="98" y="187" text-anchor="middle" font-size="10" fill={muted}>the highest to the lowest point</text>
+    <line x1={cx - 56} x2={cx + 56} y1={cy} y2={cy} stroke="var(--rd-line)"></line>
+    <line x1={cx} x2={cx} y1={cy - 62} y2={cy + 62} stroke="var(--rd-line)"></line>
+    <polyline points={branch(up)} fill="none" stroke={blue} stroke-width="2"></polyline>
+    <polyline points={branch(dn)} fill="none" stroke={blue} stroke-width="2"></polyline>
+    <path d={`M${p1[0]},${p1[1]} Q${cx + k * 2.8},${p1[1] + 2} ${p2[0]},${p2[1]}`} fill="none" stroke={accent} stroke-width="2.4"></path>
+    <polyline points={es.filter((e) => e >= 1.5 && e <= 3).map((e) => `${(cx + k * e).toFixed(1)},${(cy - dn(e)).toFixed(1)}`).join(' ')} fill="none" stroke={accent} stroke-width="2.4"></polyline>
+    <text x={cx} y="28" text-anchor="middle" font-size="10" fill={ink}>stress against strain</text>
+    <text x={cx + 50} y={cy + 4} font-size="9" fill={muted}>ε</text>
+    <text x={cx + 4} y={cy - 56} font-size="9" fill={muted}>σ</text>
+    <text x={cx} y="182" text-anchor="middle" font-size="10" fill={accent}>a small closed loop:</text>
+    <text x={cx} y="195" text-anchor="middle" font-size="10" fill={accent}>one small cycle</text>
+  </svg>
+  <figcaption>
+    Fatigue damage comes from closed stress–strain loops. Rainflow counting finds each closed loop in a history. The
+    material remembers the large loop: after the small cycle, it continues on the large loop as if the small cycle had
+    not happened.
+  </figcaption>
+</figure>

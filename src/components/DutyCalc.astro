@@ -1,0 +1,267 @@
+---
+// Duty cycle in three tabs: the life events as equivalent cycles at MEOP; rainflow counting of a load history; and the
+// shock of a handling drop. Maths in src/lib/duty.ts (unit-tested); UI only here.
+const TABS = [{ key: 'life', name: 'Life events' }, { key: 'rf', name: 'Rainflow' }, { key: 'drop', name: 'Drop' }];
+const EVENTS = [
+  { key: 'pr', name: 'Proof', level: 11, n: 1 },
+  { key: 'lk', name: 'Leak checks', level: 0.7, n: 4 },
+  { key: 'ac', name: 'Acceptance and functional', level: '', n: '' },
+  { key: 'fl', name: 'Flight', level: 10, n: 1 },
+  { key: 'ot', name: 'Other', level: '', n: '' },
+];
+---
+
+<div class="calc dutycalc" data-dutycalc>
+  <div class="calc-head"><span>Duty cycle</span><span class="head-btns"><span>Miner · ASTM E1049 · half-sine</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Duty cycle">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="life">
+        <legend>Pressure events in the life</legend>
+        <div class="row2">
+          <label>Reference level, MEOP (MPa)<input name="ref" type="number" min="0.01" step="any" value="10" /></label>
+          <label>S–N slope m<input name="m" type="number" min="1" max="30" step="any" value="3" /></label>
+        </div>
+        <div class="evgrid">
+          <span></span><span class="hint">Peak (MPa)</span><span class="hint">Count</span>
+          {EVENTS.map((e) => (
+            <>
+              <span class="evname">{e.name}</span>
+              <input name={`${e.key}L`} type="number" min="0" step="any" value={e.level} aria-label={`${e.name}, peak pressure`} />
+              <input name={`${e.key}N`} type="number" min="0" step="1" value={e.n} aria-label={`${e.name}, count`} />
+            </>
+          ))}
+        </div>
+        <div class="row2">
+          <label>Years in storage<input name="yr" type="number" min="0" step="any" value="10" /></label>
+          <label>Scatter factor on life<input name="sf" type="number" min="1" step="any" placeholder="your value" /></label>
+        </div>
+        <p class="hint">Each event is a cycle from zero to its peak. Use m = 3 for welded joints; a steeper slope (5 to 10) for smooth parent metal makes the highest events count more.</p>
+      </fieldset>
+
+      <fieldset data-panel="rf" hidden>
+        <legend>Load history</legend>
+        <label>Values in time order<textarea name="hs" rows="4" spellcheck="false">0, 11, 0, 0.7, 0, 0.7, 0, 0.7, 0, 0.7, 0, 10.4, 9.2, 10, 9.4, 10, 0</textarea></label>
+        <div class="row2">
+          <label>Reference range<input name="rr" type="number" min="0.0001" step="any" value="10" /></label>
+          <label>S–N slope m<input name="rm" type="number" min="1" max="30" step="any" value="3" /></label>
+        </div>
+        <p class="hint">Any unit: pressure, stress, strain or temperature. Separate the values with commas, spaces or new lines.</p>
+      </fieldset>
+
+      <fieldset data-panel="drop" hidden>
+        <legend>Handling drop</legend>
+        <div class="row2">
+          <label>Mass (kg)<input name="ms" type="number" min="0.01" step="any" value="137.81" /></label>
+          <label>Drop height (m)<input name="h" type="number" min="0" step="any" value="0.3" /></label>
+          <label>Pulse duration (ms)<input name="tau" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Rebound (0 to 1)<input name="e" type="number" min="0" max="1" step="any" value="0.5" /></label>
+          <label>Allowed acceleration (g)<input name="glim" type="number" min="0.1" step="any" placeholder="your value" /></label>
+        </div>
+        <p class="hint">A hard floor gives a pulse of a few milliseconds; a cushion or a sprung cradle gives tens. Rebound 0 is a dead stop, 1 a perfect bounce.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 240" data-chart role="img" aria-label="Chart for the selected duty-cycle check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening only: Miner's rule with one S–N slope and no endurance limit, rainflow counting without mean-stress
+    correction, and a half-sine shock pulse on a rigid body. The governing values come from your environment
+    specification and your fatigue and handling analyses.
+  </div>
+</div>
+
+<style is:global>
+  .dutycalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .dutycalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .dutycalc .pv-notes li.bad { color: var(--rd-accent); }
+  .dutycalc .pv-notes li.warn { color: var(--rd-warn); }
+  .dutycalc .example-note { margin: 0.5rem 0 0 !important; }
+  .dutycalc .evgrid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr); gap: 0.35rem 0.5rem; align-items: center; margin: 0.6rem 0; }
+  .dutycalc .evgrid input { width: 100%; min-width: 0; }
+  .dutycalc .evname { font-size: var(--sl-text-sm); }
+  .dutycalc textarea { width: 100%; font-family: var(--sl-font-mono, monospace); font-size: var(--sl-text-sm); }
+</style>
+
+<script>
+  import { lifeCycle, rainflow, histogram, equivalent, reversals, parseSeries, drop, tauFor } from '../lib/duty';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const sig = (v: number) => (!Number.isFinite(v) ? '—' : v === 0 ? '0' : Math.abs(v) >= 100 ? f(v) : Math.abs(v) >= 0.01 ? (+v.toPrecision(3)).toLocaleString('en-GB') : v.toExponential(1));
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+  const EVENTS: [string, string][] = [['pr', 'Proof'], ['lk', 'Leak checks'], ['ac', 'Acceptance'], ['fl', 'Flight'], ['ot', 'Other']];
+
+  document.querySelectorAll<HTMLElement>('[data-dutycalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLTextAreaElement;
+    const num = (n: string) => { const s = field(n).value.trim(); return s === '' ? NaN : +s; };
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const frame = (H: number) => { svg.replaceChildren(); const W = width(); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); return W; };
+    const nice = (m: number) => { const e = 10 ** Math.floor(Math.log10(m)); return [1, 2, 2.5, 5, 10].map((k) => k * e).find((s) => m / s <= 6)!; };
+    const line = (pts: [number, number][], c: string, w = 2, dash = '') => el('polyline', { points: pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '), fill: 'none', stroke: c, 'stroke-width': w, 'stroke-dasharray': dash });
+    let mode = 'life';
+    let draw: (() => void) | null = null;
+
+    // ---- life events ----
+    function runLife(rows: Row[], notes: [string, string][]) {
+      const ref = num('ref'), m = num('m');
+      if (!(ref > 0 && m >= 1)) { notes.push(['bad', 'Enter the reference level (MEOP) and an S–N slope of 1 or more.']); return null; }
+      const ev = EVENTS.map(([k, name]) => ({ name, level: num(`${k}L`), n: num(`${k}N`) })).filter((e) => e.level > 0 && e.n > 0);
+      if (!ev.length) { notes.push(['bad', 'Enter at least one event with a peak and a count.']); return null; }
+      const r = lifeCycle(ev, ref, m), sf = readFactor(field('sf').value, 1), yr = num('yr');
+      rows.push({ dt: 'Equivalent MEOP cycles', dd: `${sig(r.total)} <small>from ${f(r.count)} pressure cycles, slope ${f(m, 1)}</small>`, primary: true });
+      const top = [...r.rows].sort((a, b) => b.eq - a.eq)[0];
+      rows.push({ dt: 'Largest share', dd: `${top.name}: ${f(top.share * 100)}% <small>${sig(top.eq)} equivalent cycles</small>` });
+      if (sf === null) { rows.push({ dt: 'Life to show', dd: '<small>needs scatter factor on life</small>' }); notes.push(['warn', awaitingMessage(['scatter factor on life'], 'the number of MEOP cycles that analysis or test must show')]); }
+      else rows.push({ dt: 'Life to show', dd: `${sig(r.total * sf)} MEOP cycles <small>${sig(r.total)} × ${f(sf, 1)}</small>` });
+      if (yr > 0) rows.push({ dt: 'Daily temperature cycles', dd: `${f(365 * yr)} <small>in ${f(yr, yr < 10 ? 1 : 0)} years of storage: seals, preload, bond lines</small>` });
+      const proof = r.rows.find((x) => x.name === 'Proof');
+      if (proof && proof.share > 0.4) notes.push(['', `The proof test is ${f(proof.share * 100)}% of the pressure damage. "Single use" describes the mission, not the life of the hardware.`]);
+      notes.push(['', 'Every disassembly adds a leak check and a reassembly: thread wear, seal reuse and new preload. Count them.']);
+      return () => {
+        const H = 40 + r.rows.length * 34 + 30, W = frame(H), L = 104, R = 12, T = 20;
+        const max = Math.max(...r.rows.map((x) => x.eq));
+        const X = (v: number) => L + (v / max) * (W - L - R - 46);
+        r.rows.forEach((x, k) => {
+          const y = T + k * 34;
+          el('text', { x: L - 6, y: y + 15, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-ink)' }, x.name);
+          el('rect', { x: L, y: y + 4, width: Math.max(1.5, X(x.eq) - L), height: 16, rx: 3, fill: x === top ? 'var(--rd-accent)' : 'var(--rd-blue)', 'fill-opacity': 0.7 });
+          txt(X(x.eq) + 4, y + 16, sig(x.eq), 'var(--rd-muted)');
+        });
+        el('line', { x1: L, x2: L, y1: T, y2: T + r.rows.length * 34, stroke: 'var(--rd-muted)' });
+        el('text', { x: (L + W - R) / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'equivalent cycles at MEOP');
+      };
+    }
+
+    // ---- rainflow ----
+    function runRf(rows: Row[], notes: [string, string][]) {
+      const x = parseSeries(field('hs').value), ref = num('rr'), m = num('rm');
+      if (x.length < 2 || !(ref > 0 && m >= 1)) { notes.push(['bad', 'Enter at least two values, a reference range and an S–N slope of 1 or more.']); return null; }
+      const c = rainflow(x), span = Math.max(...x) - Math.min(...x), h = histogram(c, Math.max(span, 1e-9) / 1000);
+      const n = c.reduce((a, k) => a + k.count, 0), eq = equivalent(c, ref, m);
+      rows.push({ dt: 'Equivalent cycles', dd: `${sig(eq)} <small>at a range of ${sig(ref)}, slope ${f(m, 1)}</small>`, primary: true });
+      rows.push({ dt: 'Cycles counted', dd: `${f(n, 1)} <small>${c.filter((k) => k.count === 0.5).length} half cycles · ${reversals(x).length} reversals</small>` });
+      rows.push({ dt: 'Largest range', dd: `${sig(h[0].range)} <small>${f(h[0].count, 1)} cycles</small>` });
+      const small = c.filter((k) => k.range < 0.2 * ref).reduce((a, k) => a + k.count * (k.range / ref) ** m, 0);
+      notes.push(['', `Ranges below 20% of the reference give ${f((small / eq) * 100, 1)}% of the damage. The largest cycles control it; an extra small cycle hardly matters, an extra large one does.`]);
+      notes.push(['', 'Rainflow counts the closed loops of the stress–strain response. The largest cycle runs from the lowest to the highest value in the history, even if they are far apart in time.']);
+      return () => {
+        const H = 240, W = frame(H), L = 40, R = 12;
+        // the history
+        const y0 = Math.min(...x), y1 = Math.max(...x), T1 = 16, B1 = 96;
+        const X = (i: number) => L + (i / (x.length - 1)) * (W - L - R), Y = (v: number) => B1 - ((v - y0) / (y1 - y0 || 1)) * (B1 - T1);
+        el('line', { x1: L, x2: W - R, y1: B1, y2: B1, stroke: 'var(--rd-line)' });
+        line(x.map((v, i) => [X(i), Y(v)]), 'var(--rd-blue)', 1.8);
+        el('text', { x: L - 4, y: T1 + 4, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, sig(y1));
+        el('text', { x: L - 4, y: B1 + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, sig(y0));
+        txt(W - R, T1 - 4, 'history', 'var(--rd-muted)', 'end');
+        // the histogram: range against count
+        const hb = h.slice(0, 8), T2 = 120, B2 = 208, cMax = Math.max(...hb.map((k) => k.count));
+        const bw = Math.min(36, (W - L - R) / hb.length - 6);
+        hb.forEach((k, i) => {
+          const x0 = L + i * (bw + 6), hgt = (k.count / cMax) * (B2 - T2 - 12);
+          el('rect', { x: x0, y: B2 - hgt, width: bw, height: hgt, rx: 2, fill: i === 0 ? 'var(--rd-accent)' : 'var(--rd-blue)', 'fill-opacity': 0.7 });
+          el('text', { x: x0 + bw / 2, y: B2 - hgt - 3, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--rd-ink)' }, f(k.count, k.count % 1 ? 1 : 0));
+          el('text', { x: x0 + bw / 2, y: B2 + 12, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--rd-muted)' }, sig(k.range));
+        });
+        el('line', { x1: L, x2: W - R, y1: B2, y2: B2, stroke: 'var(--rd-muted)' });
+        el('text', { x: (L + W - R) / 2, y: H - 5, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-ink)' }, 'range (cycles above each bar)');
+      };
+    }
+
+    // ---- drop ----
+    function runDrop(rows: Row[], notes: [string, string][]) {
+      const mass = num('ms'), h = num('h'), tau = num('tau') / 1000, e = num('e');
+      if (!(mass > 0 && h >= 0 && tau > 0 && e >= 0 && e <= 1)) { notes.push(['bad', 'Enter the mass, the height, a pulse duration and a rebound from 0 to 1.']); return null; }
+      const d = drop({ h, tau, e, mass }), gl = readFactor(field('glim').value, 0);
+      const cls = gl === null || gl === 0 ? '' : d.g <= gl ? 'ok' : 'bad';
+      rows.push({ dt: 'Peak acceleration', dd: `${f(d.g, 1)} g <small>half-sine of ${f(tau * 1000, 1)} ms${gl ? ` · allowed ${f(gl, 1)} g` : ''}</small>`, primary: true, cls });
+      rows.push({ dt: 'Impact speed and velocity change', dd: `${f(d.v, 2)} and ${f(d.dv, 2)} m/s <small>rebound ${f(e, 2)}</small>` });
+      rows.push({ dt: 'Equivalent static load', dd: `${f(d.F / 1000, 1)} kN <small>${f(mass, 1)} kg × ${f(d.g, 1)} g, on the supports</small>` });
+      if (gl === null || gl === 0) { rows.push({ dt: 'Pulse for the allowed level', dd: '<small>needs allowed acceleration</small>' }); notes.push(['warn', awaitingMessage(['allowed acceleration'], 'whether the drop is acceptable and the cushion it needs', true)]); }
+      else { const t2 = tauFor(gl, h, e), s = drop({ h, tau: t2, e, mass }); rows.push({ dt: 'Pulse for the allowed level', dd: `${f(t2 * 1000, 1)} ms <small>stroke of a linear cushion approximately ${f(s.stroke * 1000)} mm</small>`, cls }); }
+      notes.push(['', 'The peak depends on the pulse duration, which the surface and the packaging set, as much as on the height. Softer support gives a longer pulse, a lower peak and more stroke.']);
+      notes.push(['', 'A component on a resonant mount can see more than the input peak. Compare the pulse with its natural frequency (shock response spectrum).']);
+      return () => {
+        const H = 220, W = frame(H), L = 46, R = 12, T = 14, B = 32;
+        const t2 = gl ? tauFor(gl, h, e) : NaN, tMax = Math.max(tau, Number.isFinite(t2) ? t2 : 0) * 1.25 * 1000;
+        const gMax = Math.max(d.g, gl || 0) * 1.15;
+        const X = (ms: number) => L + (ms / tMax) * (W - L - R), Y = (g: number) => H - B - (g / gMax) * (H - T - B);
+        const sx = nice(tMax), sy = nice(gMax);
+        for (let t = 0; t <= tMax + 1e-9; t += sx) { el('line', { x1: X(t), x2: X(t), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(t), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(+t.toFixed(1))); }
+        for (let g = 0; g <= gMax; g += sy) { el('line', { x1: L, x2: W - R, y1: Y(g), y2: Y(g), stroke: 'var(--rd-line)' }); if (Y(g) < H - B - 6) el('text', { x: L - 4, y: Y(g) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(+g.toFixed(1))); }
+        const pulse = (tt: number, A: number, c: string, w: number, dash = '') => line(Array.from({ length: 41 }, (_, k): [number, number] => { const t = (tt * k) / 40; return [X(t * 1000), Y(A * Math.sin((Math.PI * t) / tt))]; }), c, w, dash);
+        pulse(tau, d.g, 'var(--rd-accent)', 2.4);
+        if (Number.isFinite(t2)) { pulse(t2, gl!, 'var(--rd-ok)', 1.8, '5 3'); line([[L, Y(gl!)], [W - R, Y(gl!)]], 'var(--rd-ok)', 1, '2 3'); txt(W - R - 4, Y(gl!) - 5, 'allowed', 'var(--rd-ok)', 'end'); }
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'time, ms');
+        el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, 'acceleration, g');
+      };
+    }
+
+    const RUN: Record<string, typeof runLife> = { life: runLife, rf: runRf, drop: runDrop };
+    const CAPS: Record<string, string> = {
+      life: 'Equivalent cycles at MEOP from each event. The largest share is red.',
+      rf: 'Top: the history. Bottom: the rainflow count, cycles against range, the largest range in red.',
+      drop: 'The shock pulse (solid) and, with an allowed level, the longer pulse that stays inside it (dashed).',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['sf', 'glim'],
+      note: 'Worked-example values loaded: scatter factor 4, allowed 30 g',
+      values: { ref: '10', m: '3', prL: '11', prN: '1', lkL: '0.7', lkN: '4', acL: '', acN: '', flL: '10', flN: '1', otL: '', otN: '', yr: '10', sf: '4',
+        hs: '0, 11, 0, 0.7, 0, 0.7, 0, 0.7, 0, 0.7, 0, 10.4, 9.2, 10, 9.4, 10, 0', rr: '10', rm: '3',
+        ms: '137.81', h: '0.3', tau: '10', e: '0.5', glim: '30' },
+    });
+    run();
+  });
+</script>

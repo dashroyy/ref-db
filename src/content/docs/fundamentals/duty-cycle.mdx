@@ -1,0 +1,198 @@
+---
+title: Duty cycle and environment
+description: Write down every load event in the life of the hardware before detail design starts. The inputs the duty-cycle sheet must have, counting the pressure cycles of single-use hardware, limit, proof and ultimate loads, equivalent cycles with Miner's rule, rainflow counting, temperature cycles, and handling shock, with a calculator and a worked example on the life of the 300 mm motor's case.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import LifeTimeline from '../../../components/LifeTimeline.astro';
+import HysteresisLoops from '../../../components/HysteresisLoops.astro';
+import DutyCalc from '../../../components/DutyCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Count the real cycles. Single-use hardware sees proof, leak checks, environment tests, years of storage and handling before its one flight, and each is a load case.</div>
+  <div><b>Then</b><a href="../fatigue/">Fatigue</a> · <a href="../../verify/margin-policy/">Margin policy</a></div>
+  <div><b>Related</b><a href="../../verify/random-vibration/">Random vibration</a> · <a href="../../verify/storage-ageing/">Storage & ageing</a> · <a href="../../joints/differential-expansion/">Diff. expansion</a></div>
+</div>
+
+## Why this matters
+
+Many structural failures found in review start with a load case that nobody wrote down: the re-proof after a repair,
+the fifth reassembly of a closure, the cold night in an unheated store, the drop from a forklift. The analysis was
+correct for the loads it had. It did not have these.
+
+The duty cycle is the list of every event that loads the hardware, with its level and its count, from manufacture to
+the end of its life. Agree it before detail design starts. Every margin on the drawing depends on it.
+
+<Analogy title="A car's mileage">
+  The odometer of a car counts kilometres, but the engine wears most in cold starts and the suspension in potholes. A
+  car with few kilometres and many short trips on bad roads can be more worn than one with many motorway kilometres.
+  Count the events that do the damage, not only the use.
+</Analogy>
+
+## What the duty-cycle sheet must have
+
+| Input | Why it governs | Common miss |
+| --- | --- | --- |
+| MEOP (maximum expected operating pressure) | Wall and joint sizing | Nominal pressure given, not the hot worst case |
+| Pressure rise rate and ignition peak | Dynamic load on joints and seals | Treated as static |
+| Temperature: soak and transient | Allowables, seal state, differential growth | Only the steady state given |
+| Time at temperature | Short- or long-time allowables, creep, ageing | Never asked for |
+| Vibration and shock spectra | Preload retention, fatigue, fretting | Left to qualification |
+| Handling and transport | Often larger than the operating loads | Ignored |
+| Assembly cycles | Thread wear, inserts, seal reuse | Assumed to be one |
+| Storage life and conditions | Elastomer ageing, corrosion, compression set | Treated as packaging |
+
+**If an input is unknown, write the assumption on the sheet with a name against it.** An assumption with an owner
+gets challenged. A blank gets filled in, without a record, by whoever does the drawing.
+
+## Count the cycles honestly
+
+"Single use" describes the mission, not the life of the hardware.
+
+<LifeTimeline />
+
+| Event | Typical count | Note |
+| --- | --- | --- |
+| Proof test | 1 to 2 | The highest stress the part will see. A repair means a re-proof |
+| Leak checks | 2 to 5 | Each disassembly adds one |
+| Acceptance and functional tests | 1 to 3 | Programme-dependent |
+| Environment tests | Per the test plan | Vibration, shock, thermal cycling on the qualification unit, sometimes on flight units |
+| Temperature cycles in storage | Thousands | Daily and seasonal swings on seals, preload and bond lines |
+| Handling and transport | Many | Lifts, cradles, road and air transport |
+
+**Limit, proof and ultimate.** The limit load is the highest load expected in service, with no factor. The ultimate
+load is the limit load times the factor from the programme specification: the part must not rupture. The proof load
+is the acceptance test level on delivered hardware, from the contract or the code. The factors come from the customer
+specification or the governing code, never from a handbook default ([Margin policy](../../verify/margin-policy/)).
+
+## Equivalent cycles
+
+Events at different levels do different damage. With Miner's rule and an S–N curve of slope $m$
+($N \propto S^{-m}$), the events convert to an equivalent number of cycles at a reference level, such as MEOP:
+
+$$
+N_\text{eq} = \sum_i n_i \left(\frac{S_i}{S_\text{ref}}\right)^{m}
+$$
+
+Here $n_i$ is the count of event $i$ and $S_i$ its stress range (or pressure range, where stress is proportional to
+pressure). The slope is approximately 3 for welded joints and 5 to 10 for smooth parent metal. A steep slope makes the
+largest events count most: the proof test is often more than half of the damage of a single-use case, and
+low-pressure leak checks are almost nothing. The scatter factor of the programme then multiplies $N_\text{eq}$ into
+the life that analysis or test must show ([Fatigue](../fatigue/#variable-loads-miners-rule)).
+
+## Rainflow counting
+
+A measured or predicted history (a pressure trace, a strain gauge record, a temperature log) is not a list of
+cycles. Rainflow counting (ASTM E1049) turns it into one.
+
+<HysteresisLoops />
+
+The three-point rule: take the peaks and valleys in order. When the latest range is at least as large as the range
+before it, that earlier range is a cycle; remove it and continue. Ranges left at the end are half cycles. The largest
+cycle always runs from the lowest to the highest value in the history, even when they are far apart in time.
+
+The result is a list of ranges with their counts, which go into the equivalent-cycle sum or into Miner's rule with
+the S–N curve. Mean-stress correction, where it matters, is applied to each cycle ([Fatigue](../fatigue/#mean-stress)).
+
+## Temperature
+
+Temperature changes are load cycles too:
+
+- **Daily and seasonal swings** in storage and transport: thousands of cycles on seals, bolt preload, bond lines and
+  the propellant grain ([Propellant grain](../../motor/propellant-grain/)).
+- **Differential expansion** between parts of different materials changes preload, fits and seal squeeze at each
+  extreme ([Differential expansion](../../joints/differential-expansion/)).
+- **Time at temperature** ages elastomers, adhesives and propellant ([Storage & ageing](../../verify/storage-ageing/)).
+  Record the temperature history, not only the limits.
+
+Climatic design data (MIL-HDBK-310) and test methods (MIL-STD-810, Methods 501, 502 and 503) give typical extremes
+and cycles where the programme has none.
+
+## Handling, transport and shock
+
+Handling and transport loads are often larger than the operating loads, and they act on the motor in directions that
+the flight does not load. A drop from height $h$ onto a surface gives an impact speed $v = \sqrt{2gh}$. If the surface
+or the cushion stops the part in a half-sine pulse of duration $\tau$, with rebound coefficient $e$:
+
+$$
+A_\text{peak} = \frac{\pi (1 + e)\, v}{2\tau}
+$$
+
+The peak depends on the pulse duration as much as on the height. A hard floor gives a few milliseconds and very high
+accelerations; a cushion or a sprung cradle gives tens of milliseconds. Specify the handling limit (in g) that the
+motor, its grain and its igniter accept, and design the cradles and containers to keep inside it. MIL-STD-810 Method
+516 gives shock tests, and Method 514 vibration for transport ([Random vibration](../../verify/random-vibration/)).
+
+## Calculator
+
+<DutyCalc />
+
+## Worked example: the life of the 300 mm motor's case
+
+The 300 mm motor has a welded D6AC case with a MEOP of 10 MPa ([Case sizing](../../motor/case-sizing/)). The event
+counts, the scatter factor of 4, the drop height and the handling limit of 30 g are **for this example only**. Push
+**Load worked example** in the calculator to load them.
+
+1. **The pressure events.** One proof test at 11 MPa (1.1 × MEOP), four leak checks at 0.7 MPa
+   ([Leak testing](../../make/leak-testing/)), and one flight at MEOP. That is six pressure cycles.
+2. **Equivalent cycles.** With $m = 3$ for the welds, the life is **2.33 MEOP cycles**. The proof test is **57%** of
+   it; the four leak checks together are 0.0014. With $m = 8$ for smooth parent metal, it is 3.14: the steeper slope
+   makes the proof count more.
+3. **The life to show.** With a scatter factor of 4, the analysis must show **9.3 MEOP cycles**. The
+   [NDT](../../make/ndt/#worked-example-can-ndt-clear-the-d6ac-case) page found 70 cycles of growth from the largest
+   flaw that ultrasonic testing can miss: 7.5 times this requirement, at room-temperature toughness. The duty cycle and the inspection are two halves
+   of one argument.
+4. **Rainflow of the pressure history.** The real flight has an ignition peak of 10.4 MPa and small oscillations. The
+   history $0, 11, 0, 0.7, 0, 0.7, 0, 0.7, 0, 0.7, 0, 10.4, 9.2, 10, 9.4, 10, 0$ gives **8 cycles**: 11, 10.4, four of
+   0.7, 0.8 and 0.6 MPa. The equivalent life is **2.46** MEOP cycles. The ignition peak adds 0.125; the two
+   oscillations add 0.0007. The largest cycles control the damage.
+5. **Temperature.** Ten years in storage is approximately **3650 daily cycles**. They do not load the case wall, but
+   they load the bond between the insulation and the propellant, the seals and the closure bolt preload. Each needs its
+   own count on the sheet.
+6. **A handling drop.** The loaded motor (137.8 kg) drops 0.3 m into a steel cradle: a 10 ms pulse with a rebound of
+   0.5. The peak is **58 g**, an equivalent static load of 78.8 kN on the cradle supports. The
+   [hand calc](../hand-calcs/#worked-example-hand-checks-for-the-300-mm-motors-test-campaign) used 3 g for transport:
+   the drop is twenty times larger. To stay inside 30 g, the pulse must be at least **19.4 ms**: a cushion with
+   approximately **15 mm** of stroke.
+
+Six pressure cycles, thousands of temperature cycles and one bad drop: each is on the sheet, with a number and a name
+against it.
+
+## Where this stops
+
+- **Miner's rule** sums damage linearly. The order of the loads matters in reality: a large cycle first can make
+  later small cycles more damaging, or an overload can slow crack growth.
+- **One S–N slope** and no endurance limit. Real curves bend, and the slope changes with the detail.
+- **Rainflow without mean stress.** Apply a mean-stress correction to each cycle where it matters.
+- **A rigid body on a half-sine pulse** for the drop. A part on a flexible mount can amplify the shock; use a shock
+  response spectrum for components.
+- **Fatigue is not fracture.** For few cycles at high stress, the life comes from crack growth from the largest flaw
+  that inspection can miss ([Leak before break](../../verify/leak-before-break/)).
+
+## On the drawing
+
+- **A reference to the duty-cycle or environment specification,** with its revision, for each part that it loads.
+- **The limits that production and handling must respect:** the number of proof tests and re-proofs allowed, the
+  number of reassemblies, the handling limit in g, the storage temperature range.
+- **Life-limited items:** seals, inserts and fasteners that are replaced after a stated number of assemblies.
+- **The tests that add cycles,** written in the test plan with their levels, so that the analysis can count them.
+
+## References and further reading
+
+- ASTM E1049, *Standard Practices for Cycle Counting in Fatigue Analysis*.
+- M. Matsuishi and T. Endo, "Fatigue of metals subjected to varying stress", Japan Society of Mechanical Engineers
+  (1968) (the origin of rainflow counting).
+- M. A. Miner, "Cumulative damage in fatigue", *J. Appl. Mech.* 12 (1945) A159–A164.
+- MIL-STD-810H, *Environmental Engineering Considerations and Laboratory Tests*; MIL-HDBK-310, *Global Climatic
+  Data for Developing Military Products*.
+- NASA-STD-5001, *Structural Design and Test Factors of Safety for Spaceflight Hardware*.
+- A. G. Piersol and T. L. Paez (eds.), *Harris' Shock and Vibration Handbook*, 6th ed., McGraw-Hill (2010).
+
+<Aside type="note">
+  This is guidance on method from public standards and general practice, with typical values. The duty cycle,
+  environments, factors and handling limits for your hardware come from your programme and its environment
+  specification.
+</Aside>
