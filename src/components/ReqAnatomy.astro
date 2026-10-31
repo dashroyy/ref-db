@@ -1,0 +1,43 @@
+---
+// The parts of a verifiable requirement, on one example from the leak-testing page.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)', ok = 'var(--rd-ok)', warn = 'var(--rd-warn)';
+const parts: [string, string, string][] = [
+  ['The nozzle joint', 'the subject: one item', blue],
+  ['shall', 'the binding verb, once', accent],
+  ['not leak more than', 'what it must do', ink],
+  ['1 × 10⁻⁵ std cm³/s He', 'value, unit, medium', ok],
+  ['at 700 kPa gauge, 20 °C', 'the conditions', warn],
+];
+---
+
+<figure class="viz reqanatomy">
+  <p class="viz-title">The parts of a requirement you can verify</p>
+  <svg viewBox="0 0 360 214" role="img" aria-labelledby="reqanatomy-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="reqanatomy-desc">
+      A requirement split into its parts: the subject, the nozzle joint; the binding verb, shall, used once; what it
+      must do, not leak more than; the value with its unit and medium, 1 times 10 to the minus 5 standard cubic
+      centimetres per second of helium; and the conditions, at 700 kilopascals gauge and 20 degrees Celsius. Below it,
+      the verification method (test, with the procedure) and the trace to its parent requirement and to the drawing
+      features it drives.
+    </desc>
+    {parts.map(([t, label, c], k) => {
+      const y = 10 + k * 26;
+      return (
+        <g>
+          <rect x="8" y={y} width="180" height="22" rx="4" fill={c} fill-opacity="0.18" stroke={c}></rect>
+          <text x="16" y={y + 15} font-size="10" fill={ink}>{t}</text>
+          <text x="198" y={y + 15} font-size="9.5" fill={muted}>{label}</text>
+        </g>
+      );
+    })}
+    <line x1="8" x2="352" y1="146" y2="146" stroke="var(--rd-line)"></line>
+    <text x="8" y="164" font-size="10" fill={ink}>Verified by: test, to the leak-test procedure</text>
+    <text x="8" y="180" font-size="10" fill={ink}>Parent: the motor leak requirement</text>
+    <text x="8" y="196" font-size="10" fill={ink}>Drives: seal groove, surface finish</text>
+    <text x="352" y="210" text-anchor="end" font-size="9" fill={muted}>one row of the compliance matrix</text>
+  </svg>
+  <figcaption>
+    A requirement you can verify has one subject, one "shall", a value with its unit, and the conditions it applies at.
+    Its row in the compliance matrix adds how it is verified, where it comes from, and what it drives on the drawing.
+  </figcaption>
+</figure>

@@ -1,0 +1,173 @@
+---
+title: Requirements and interfaces
+description: Turn every "shall" into a numbered, verifiable requirement before any geometry exists, and control each interface with a document that both sides design to. The compliance matrix, verification methods, words that make a requirement unverifiable, derived requirements, the interface control document, interface loads and their reference point, and budgets with growth allowances, with a calculator and a worked example on the nozzle interface of the 300 mm motor.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ReqAnatomy from '../../../components/ReqAnatomy.astro';
+import IcdBoundary from '../../../components/IcdBoundary.astro';
+import ReqCalc from '../../../components/ReqCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A requirement you cannot verify is an opinion. Write each one with a value and a verification method, and design every interface to the ICD, never to the other team's model.</div>
+  <div><b>Then</b><a href="../duty-cycle/">Duty cycle</a> · <a href="../criticality/">Criticality</a></div>
+  <div><b>Related</b><a href="../../make/leak-testing/">Leak testing</a> · <a href="../../drawing/tolerance-stack/">Tolerance stack</a> · <a href="../../joints/bolted-joints/">Bolted joints</a></div>
+</div>
+
+## Why this matters
+
+The first job on a new part is not geometry. It is to turn the specification into a list of numbered requirements,
+each with the method that will prove it. A requirement with no number cannot be met or failed; a requirement with
+no verification method will be argued about at the end, when changes are most expensive.
+
+Most problems found at integration are at interfaces: a bolt that one team thought the other would supply, a load
+given at a point that nobody stated, a seal face that both sides thought the other would finish. These are boundaries
+between teams, and an interface control document (ICD) is how they are managed.
+
+<Analogy title="A kitchen brief">
+  Ask a builder for "a good kitchen with enough storage" and you will get the builder's idea of good and enough. Ask
+  for "worktops 900 mm high, 4 m of wall cupboards, a 600 mm oven housing", and you can check each one with a tape
+  measure. The second brief can be built, priced and accepted. A requirement is the same.
+</Analogy>
+
+## The compliance matrix
+
+Convert the specification into a compliance matrix: one row for each requirement, each with how it will be proven.
+
+| Method | Use for | Evidence |
+| --- | --- | --- |
+| Test | Anything with a pass or fail that you can measure under load | Test report against a released procedure |
+| Analysis | Strength, stiffness, thermal, where a test is impractical | Analysis report with margins |
+| Inspection | Dimensions, markings, finish, material | Inspection record, certificate |
+| Demonstration | Assembly, access, operation | Witnessed record |
+
+Each row also has the parent requirement it comes from, the owner, the evidence and its status. The matrix is the
+plan for verification, and at the end it is the proof.
+
+<ReqAnatomy />
+
+## Words that make a requirement unverifiable
+
+| Wording | Problem | Rewrite as |
+| --- | --- | --- |
+| "suitable", "adequate", "robust" | No threshold | The number it must meet |
+| "minimise", "maximise" | No end point | A limit, plus a goal if wanted |
+| "as required", "where necessary" | Delegates the decision | The specific condition |
+| "and/or" | Two requirements in one | Two rows |
+| "should", "may" | Not binding in most specifications | "shall", or move it to guidance |
+| Two "shall" in one sentence | Two requirements in one | One row each |
+
+**Track every TBD and TBC** in the same matrix, with an owner and a date. A TBD that reaches drawing release becomes
+whatever the designer assumed on the day.
+
+## Derived requirements
+
+Most of what governs a detail part is derived, not stated. A leak requirement becomes a seal groove, a surface
+finish, a flatness and a squeeze range ([O-ring design](../../seals/o-ring-design/)). A life requirement becomes an NDT
+method and a proof factor ([NDT](../../make/ndt/)). Write the derived requirements down and trace each to its parent.
+When the parent changes, you can then find every feature that it drives.
+
+## The interface control document
+
+<IcdBoundary />
+
+| Field | Content |
+| --- | --- |
+| Geometry | Mating features and the datum reference frame that both sides share |
+| Tolerance split | How the allowable mismatch is divided between the two parts ([Tolerance stack](../../drawing/tolerance-stack/)) |
+| Loads | Forces and moments across the interface, both directions, all load cases, at a stated point |
+| Thermal | Temperature on each side, heat flow, allowable differential growth |
+| Sealing | Which side has the groove, which the face; finish and flatness |
+| Fasteners | Who supplies them; size, grade, torque and lubricant |
+| Bonding and earthing | Electrical continuity requirement and surface preparation |
+| Freeze date | When it stops changing, and the change route after that |
+
+**Design to the ICD, not to the other team's current model.** It feels efficient until they move a hole. The ICD is
+the only document that both teams can be held to, and each change goes through it with both signatures.
+
+## Interface loads
+
+A load set without its reference point is incomplete. The same force at a different point has a different moment:
+moving a load set $(\mathbf{F}, \mathbf{M}_A)$ from point $A$ to point $B$ gives
+
+$$
+\mathbf{M}_B = \mathbf{M}_A + (\mathbf{r}_A - \mathbf{r}_B) \times \mathbf{F}
+$$
+
+with the same force. For a circular pattern of $n$ bolts on diameter $D$, the axial force divides equally, and a
+bending moment $M$ adds at most $4M/(nD)$ to the most loaded bolt. Then add the preload and check the joint
+([Bolted joints](../../joints/bolted-joints/)).
+
+## Budgets and margins
+
+Mass, power, leak rate and tolerances are shared quantities. A budget allocates each to the items that use it and
+keeps a reserve at the system level.
+
+- **Values grow as designs mature.** A sketch is light; the part that is made is heavier. A growth allowance on each
+  item, by its maturity (a few per cent for a measured part, 20% or more for a layout), predicts the final value.
+  AIAA S-120 and ISO 22010 give such allowances for mass.
+- **The reserve belongs to the system owner,** not to any item. It is released by a decision.
+- **Track the predicted margin,** not the current one. A budget that fits with current values and fails with the
+  growth allowances needs action now, while changes are cheap.
+
+## Calculator
+
+<ReqCalc />
+
+## Worked example: the nozzle interface of the 300 mm motor
+
+The motor team owns the aft closure; a supplier makes the nozzle. The first draft of their ICD has six requirements.
+The load set, the bolt pattern, the growth allowances, the 30 kg allowable inert mass and the 1.5 kg reserve are **for
+this example only**. Push **Load worked example** in the calculator to load them.
+
+1. **The wording.** Requirement 1, "suitable for the motor environment", has no threshold: rewrite it to reference
+   the environment specification and its revision. Requirement 3, "should be minimised", has no binding verb and no
+   end point: requirement 6 (6.0 kg or less, verified by weighing) replaces it. Requirement 4, "bolts and/or pins ...
+   as required", is two requirements and delegates the decision: split it into who supplies the bolts and what they
+   are. Requirement 5 has a TBD: it gets an owner and a date. Requirements 2 (the leak rate from
+   [Leak testing](../../make/leak-testing/)) and 6 are verifiable by test.
+2. **The loads.** The ICD gives the loads at the nozzle reference point, 120 mm aft of the interface plane: 65.6 kN
+   axial (the blow-off load from [Load paths](../../joints/load-paths/#worked-example-the-300-mm-motors-load-path)) and
+   0.88 kN lateral (15 g on the 6 kg nozzle). At the interface plane, this is a bending moment of **106 N·m**.
+3. **The bolts.** With 12 bolts on a 150 mm circle, the axial share is 5.47 kN for each bolt and the bending adds
+   0.24 kN: **5.70 kN** on the most loaded bolt, 4% more. Here the moment is small. A load set with no stated point
+   could have hidden a large one.
+4. **The budget.** The inert mass is 26.61 kg today ([Rocket motor hardware](../../motor/hardware/)): the case 11.77 kg
+   (calculated, 5% growth), the insulation 4.84 kg and the nozzle 6 kg (estimated, 15%), and other hardware 4 kg (a
+   layout, 25%). With the current values, the margin is **+1.89 kg**. With the growth allowances, the predicted total
+   is 29.82 kg and the margin is **−1.32 kg**. The budget fits today and fails at maturity: the time to act is now.
+
+Two requirements to rewrite, one to delete, one open item, a load set with its point, and a budget that needs a
+decision: each is cheap now and expensive after the drawings are released.
+
+## Where this stops
+
+- **The word check finds wording problems,** not wrong numbers. Every requirement still needs review by people who
+  know where the value comes from.
+- **Rigid-body load transfer and a rigid bolt pattern.** Flexible flanges, prying and non-circular patterns change the
+  bolt loads ([Bolted joints](../../joints/bolted-joints/)).
+- **One growth allowance for each item.** Real budgets track maturity, uncertainty and known changes separately.
+- **No requirements management tool.** Large programmes keep requirements, traces and verification in a database.
+
+## On the drawing
+
+- **The requirements that the part meets,** through the specification and the ICD that the drawing references.
+- **The features that come from derived requirements,** with a note or a key characteristic where the trace matters.
+- **The interface datums** of the ICD, used as the datums of the drawing.
+- **The ICD revision** that the drawing is designed to.
+
+## References and further reading
+
+- ISO/IEC/IEEE 29148, *Systems and software engineering: Life cycle processes, Requirements engineering*.
+- INCOSE, *Guide for Writing Requirements*.
+- NASA, *Systems Engineering Handbook*, NASA/SP-2016-6105 Rev. 2 (requirements, interfaces, verification).
+- ECSS-E-ST-10-06 (technical requirements specification), ECSS-E-ST-10-24 (interface management).
+- AIAA S-120, *Mass Properties Control for Space Systems*; ISO 22010, *Space systems: Mass properties control*.
+
+<Aside type="note">
+  The requirements, ICD and budgets in the example are illustrative. The requirements process, interface documents and
+  budget rules for your hardware come from your programme.
+</Aside>

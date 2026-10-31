@@ -1,0 +1,40 @@
+---
+// Two teams and one interface: both design to the ICD, never to the other team's current model.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)', blue = 'var(--rd-blue)', ok = 'var(--rd-ok)';
+const fields = ['Geometry and datums', 'Tolerance split', 'Loads, both directions', 'Temperatures', 'Sealing: groove and face', 'Fasteners and torque', 'Bonding and earthing', 'Freeze date'];
+---
+
+<figure class="viz icdboundary">
+  <p class="viz-title">Both sides design to the ICD</p>
+  <svg viewBox="0 0 360 244" role="img" aria-labelledby="icdboundary-desc" style="max-width: 600px; margin: 0 auto;">
+    <desc id="icdboundary-desc">
+      The motor team on the left and the nozzle supplier on the right each design their part to the interface control
+      document in the middle. The ICD defines the geometry and datums, the tolerance split, the loads in both
+      directions, the temperatures, which side has the seal groove and which the face, the fasteners and torque, the
+      electrical bonding, and the freeze date. A crossed-out dashed line between the two teams shows that neither
+      designs to the other team's current model.
+    </desc>
+    <defs>
+      <marker id="icd-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path></marker>
+    </defs>
+    <rect x="8" y="70" width="80" height="64" rx="6" fill={blue} fill-opacity="0.18" stroke={blue}></rect>
+    <text x="48" y="98" text-anchor="middle" font-size="10" fill={ink}>Motor team</text>
+    <text x="48" y="113" text-anchor="middle" font-size="9" fill={muted}>closure</text>
+    <rect x="272" y="70" width="80" height="64" rx="6" fill={ok} fill-opacity="0.18" stroke={ok}></rect>
+    <text x="312" y="98" text-anchor="middle" font-size="10" fill={ink}>Nozzle team</text>
+    <text x="312" y="113" text-anchor="middle" font-size="9" fill={muted}>nozzle</text>
+    <rect x="100" y="12" width="160" height="180" rx="6" fill="var(--rd-panel)" stroke={ink}></rect>
+    <text x="180" y="30" text-anchor="middle" font-size="11" font-weight="600" fill={ink}>ICD</text>
+    {fields.map((t, k) => <text x="108" y={50 + k * 18} font-size="9" fill={ink}>{t}</text>)}
+    <line x1="88" x2="98" y1="102" y2="102" stroke={blue} stroke-width="1.6" marker-end="url(#icd-arr)"></line>
+    <line x1="272" x2="262" y1="102" y2="102" stroke={ok} stroke-width="1.6" marker-end="url(#icd-arr)"></line>
+    <path d="M48,134 Q48,214 180,214 Q312,214 312,134" fill="none" stroke={accent} stroke-dasharray="4 3"></path>
+    <line x1="172" x2="188" y1="206" y2="222" stroke={accent} stroke-width="2"></line>
+    <line x1="188" x2="172" y1="206" y2="222" stroke={accent} stroke-width="2"></line>
+    <text x="180" y="238" text-anchor="middle" font-size="9.5" fill={accent}>not to the other team's CAD</text>
+  </svg>
+  <figcaption>
+    Interfaces fail at the boundary between teams, not between parts. The ICD is the only document that both teams can
+    be held to. Each change goes through it, with both signatures.
+  </figcaption>
+</figure>

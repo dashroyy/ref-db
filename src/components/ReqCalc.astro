@@ -1,0 +1,283 @@
+---
+// Requirements and interfaces in three tabs: a check of requirement wording; an interface load set moved to the
+// interface plane and its bolt pattern; and a budget with growth allowances and a reserve. Maths in src/lib/reqs.ts
+// (unit-tested); UI only here.
+const TABS = [{ key: 'lint', name: 'Requirement check' }, { key: 'load', name: 'Interface loads' }, { key: 'bud', name: 'Budget' }];
+const ITEMS: [string, string, string][] = [['Case', '11.77', '5'], ['Insulation', '4.84', '15'], ['Nozzle', '6', '15'], ['Other hardware', '4', '25'], ['', '', '']];
+const REQS = `1. The nozzle shall be suitable for the motor environment.
+2. The nozzle-to-closure joint shall not leak more than 1e-5 std cm³/s of helium at 700 kPa gauge.
+3. The nozzle mass should be minimised.
+4. The interface bolts and/or pins shall be supplied by the nozzle team as required.
+5. The throat insert shall withstand a peak chamber pressure of TBD MPa.
+6. The nozzle shall have a mass of 6.0 kg or less.`;
+---
+
+<div class="calc reqcalc" data-reqcalc>
+  <div class="calc-head"><span>Requirements and interfaces</span><span class="head-btns"><span>wording · loads · budget</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Requirements and interfaces">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="lint">
+        <legend>Requirements, one for each line</legend>
+        <textarea name="rq" rows="8" spellcheck="false">{REQS}</textarea>
+        <p class="hint">The check looks for words that make a requirement unverifiable. It cannot tell if the number is the right one: that is the review.</p>
+      </fieldset>
+
+      <fieldset data-panel="load" hidden>
+        <legend>Load set from the ICD</legend>
+        <div class="row3">
+          <label>F<sub>x</sub> axial (kN)<input name="fx" type="number" step="any" value="65.6" /></label>
+          <label>F<sub>y</sub> (kN)<input name="fy" type="number" step="any" value="0.883" /></label>
+          <label>F<sub>z</sub> (kN)<input name="fz" type="number" step="any" value="0" /></label>
+          <label>M<sub>x</sub> torque (N·m)<input name="mx" type="number" step="any" value="0" /></label>
+          <label>M<sub>y</sub> (N·m)<input name="my" type="number" step="any" value="0" /></label>
+          <label>M<sub>z</sub> (N·m)<input name="mz" type="number" step="any" value="0" /></label>
+          <label>Given at x (mm)<input name="ax" type="number" step="any" value="120" /></label>
+          <label>y (mm)<input name="ay" type="number" step="any" value="0" /></label>
+          <label>z (mm)<input name="az" type="number" step="any" value="0" /></label>
+          <label>Interface at x (mm)<input name="bx" type="number" step="any" value="0" /></label>
+          <label>y (mm)<input name="by" type="number" step="any" value="0" /></label>
+          <label>z (mm)<input name="bz" type="number" step="any" value="0" /></label>
+        </div>
+        <div class="row2">
+          <label>Bolts in the pattern<input name="nb" type="number" min="3" step="1" value="12" /></label>
+          <label>Bolt circle (mm)<input name="db" type="number" min="1" step="any" value="150" /></label>
+        </div>
+        <p class="hint">x is normal to the interface. A force away from the interface is a tension in the bolts. Use the load set of the ICD with its factors stated.</p>
+      </fieldset>
+
+      <fieldset data-panel="bud" hidden>
+        <legend>Budget</legend>
+        <div class="row2">
+          <label>Allowable total<input name="al" type="number" min="0" step="any" placeholder="your value" /></label>
+          <label>Reserve held by the system<input name="rs" type="number" min="0" step="any" placeholder="your value" /></label>
+        </div>
+        <div class="bgrid">
+          <span class="hint">Item</span><span class="hint">Current</span><span class="hint">Growth %</span>
+          {ITEMS.map(([n, v, g], k) => (
+            <>
+              <input name={`bn${k}`} type="text" value={n} aria-label={`Item ${k + 1}`} autocomplete="off" />
+              <input name={`bv${k}`} type="number" min="0" step="any" value={v} aria-label={`Item ${k + 1}, current value`} />
+              <input name={`bg${k}`} type="number" min="0" step="any" value={g} aria-label={`Item ${k + 1}, growth allowance`} />
+            </>
+          ))}
+        </div>
+        <p class="hint">Any quantity: mass, power, leak rate, a tolerance. The growth allowance follows the maturity of each value: small for a measured part, large for a sketch.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 240" data-chart role="img" aria-label="Chart for the selected requirements check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening only: a word check that cannot judge the values, rigid-body load transfer, a rigid circular bolt pattern,
+    and a budget with one growth allowance for each item. Your requirements process, ICD and budget rules govern.
+  </div>
+</div>
+
+<style is:global>
+  .reqcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .reqcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .reqcalc .pv-notes li.bad { color: var(--rd-accent); }
+  .reqcalc .pv-notes li.warn { color: var(--rd-warn); }
+  .reqcalc .pv-notes li b { color: var(--rd-ink); }
+  .reqcalc .example-note { margin: 0.5rem 0 0 !important; }
+  .reqcalc textarea { width: 100%; font-size: var(--sl-text-sm); }
+  .reqcalc .row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem 0.6rem; }
+  .reqcalc .row3 input { width: 100%; min-width: 0; }
+  .reqcalc .bgrid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr); gap: 0.35rem 0.5rem; margin: 0.6rem 0; }
+  .reqcalc .bgrid input { width: 100%; min-width: 0; }
+</style>
+
+<script>
+  import { lintAll, transfer, boltPattern, budget, type V3 } from '../lib/reqs';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+
+  document.querySelectorAll<HTMLElement>('[data-reqcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLTextAreaElement;
+    const num = (n: string) => { const s = field(n).value.trim(); return s === '' ? NaN : +s; };
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const frame = (H: number) => { svg.replaceChildren(); const W = width(); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); return W; };
+    let mode = 'lint';
+    let draw: (() => void) | null = null;
+    // horizontal bars with a label column
+    function bars(W: number, top: number, data: [string, number, string][], unit: string) {
+      const L = 110, R = 40, rh = 24, max = Math.max(1, ...data.map((d) => d[1]));
+      data.forEach(([n, v, c], k) => {
+        const y = top + k * rh;
+        el('text', { x: L - 6, y: y + 15, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-ink)' }, n);
+        el('rect', { x: L, y: y + 4, width: Math.max(1.5, ((W - L - R) * v) / max), height: 15, rx: 3, fill: c, 'fill-opacity': 0.75 });
+        txt(L + ((W - L - R) * v) / max + 4, y + 16, `${f(v)}${unit}`, 'var(--rd-muted)');
+      });
+      return top + data.length * rh;
+    }
+
+    // ---- requirement check ----
+    function runLint(rows: Row[], notes: [string, string][]) {
+      const r = lintAll(field('rq').value);
+      if (!r.length) { notes.push(['bad', 'Enter at least one requirement.']); return null; }
+      const bad = r.filter((x) => x.issues.some((i) => i.level === 'bad')).length, warn = r.filter((x) => !x.issues.some((i) => i.level === 'bad') && x.issues.length).length, clean = r.length - bad - warn;
+      const open = r.filter((x) => x.issues.some((i) => i.problem === 'Open item')).length;
+      rows.push({ dt: 'Requirements to rewrite', dd: `${bad} of ${r.length} <small>${clean} with no issue found · ${warn} to check</small>`, primary: true, cls: bad ? 'bad' : warn ? 'warn' : 'ok' });
+      rows.push({ dt: 'Open items', dd: `${open} <small>TBD, TBC or TBR: each needs an owner and a date</small>`, cls: open ? 'warn' : '' });
+      r.forEach((x, k) => {
+        const worst = x.issues.some((i) => i.level === 'bad') ? 'bad' : x.issues.length ? 'warn' : '';
+        const list = x.issues.length ? x.issues.map((i) => `${i.problem}${i.word ? ` (“${esc(i.word)}”)` : ''}: ${i.fix.toLowerCase()}`).join('; ') : 'no issue found';
+        notes.push([worst, `<b>${k + 1}.</b> ${list}. Verify by ${x.method.toLowerCase()}.`]);
+      });
+      return () => {
+        const W = width(), counts = new Map<string, number>();
+        r.forEach((x) => counts.set(x.method, (counts.get(x.method) ?? 0) + 1));
+        const H = 26 + 3 * 24 + 34 + counts.size * 24 + 10;
+        frame(H);
+        txt(8, 14, 'status', 'var(--rd-muted)');
+        const y1 = bars(W, 20, [['Rewrite', bad, 'var(--rd-accent)'], ['Check', warn, 'var(--rd-warn)'], ['No issue found', clean, 'var(--rd-ok)']], '');
+        txt(8, y1 + 22, 'suggested verification', 'var(--rd-muted)');
+        bars(W, y1 + 28, [...counts.entries()].map(([m, n]) => [m, n, 'var(--rd-blue)']), '');
+      };
+    }
+
+    // ---- interface loads ----
+    function runLoad(rows: Row[], notes: [string, string][]) {
+      const F: V3 = [num('fx') || 0, num('fy') || 0, num('fz') || 0], M: V3 = [(num('mx') || 0), (num('my') || 0), (num('mz') || 0)];
+      const A: V3 = [num('ax') || 0, num('ay') || 0, num('az') || 0], B: V3 = [num('bx') || 0, num('by') || 0, num('bz') || 0];
+      const n = Math.round(num('nb')), D = num('db');
+      if (!(n >= 3 && D > 0)) { notes.push(['bad', 'Enter at least three bolts and the bolt-circle diameter.']); return null; }
+      // N·m to kN·mm is a factor of 1
+      const t = transfer(F, M, A, B), b = boltPattern(t.F, t.M, n, D);
+      rows.push({ dt: 'Highest bolt tension', dd: `${f(b.max, 2)} kN <small>${f(b.axial, 2)} from the axial force + ${f(b.bend, 2)} from bending (${b.increase < 10 ? `${f(b.increase * 100, 1)}%` : 'bending dominates'})</small>`, primary: true, cls: b.min < 0 ? 'warn' : '' });
+      rows.push({ dt: 'Moment at the interface', dd: `M<sub>y</sub> ${f(t.M[1], 1)} · M<sub>z</sub> ${f(t.M[2], 1)} N·m <small>bending ${f(b.Mb, 1)} N·m · torque ${f(t.M[0], 1)} N·m</small>` });
+      rows.push({ dt: 'Shear on each bolt', dd: `${f(b.shear * 1000)} N <small>if the bolts carry it; friction of the clamped faces usually does</small>` });
+      rows.push({ dt: 'Lowest bolt', dd: `${b.min < 0 ? '−' : ''}${f(Math.abs(b.min), 2)} kN <small>${b.min < 0 ? 'in compression: the joint must carry it in contact' : 'still in tension'}</small>`, cls: b.min < 0 ? 'warn' : '' });
+      notes.push(['', 'The ICD states where its loads act. A load moved to another point keeps its force and gains a moment: force times offset. Ask for the reference point with every load set.']);
+      notes.push(['', 'These are external loads on the joint. The bolts also carry their preload; check the joint with both (Bolted joints).']);
+      return () => {
+        const H = 220, W = frame(H), L = 40, R = 12, T = 18, B0 = 34;
+        const loads = Array.from({ length: n }, (_, i) => {
+          const th = (2 * Math.PI * i) / n, ang = Math.atan2(t.M[2], -t.M[1]);
+          return b.axial + b.bend * Math.cos(th - ang);
+        });
+        const lo = Math.min(0, ...loads), hi = Math.max(...loads) * 1.1 || 1;
+        const bw = (W - L - R) / n, Y = (v: number) => H - B0 - ((v - lo) / (hi - lo)) * (H - T - B0);
+        el('line', { x1: L, x2: W - R, y1: Y(0), y2: Y(0), stroke: 'var(--rd-muted)' });
+        loads.forEach((v, i) => {
+          el('rect', { x: L + i * bw + 2, y: Math.min(Y(v), Y(0)), width: Math.max(1, bw - 4), height: Math.abs(Y(v) - Y(0)), rx: 2, fill: v === Math.max(...loads) ? 'var(--rd-accent)' : 'var(--rd-blue)', 'fill-opacity': 0.75 });
+          if (n <= 16) el('text', { x: L + i * bw + bw / 2, y: H - B0 + 13, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--rd-muted)' }, String(i + 1));
+        });
+        line(b.axial, 'var(--rd-ok)', 'axial share');
+        function line(v: number, c: string, label: string) { el('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: c, 'stroke-dasharray': '5 3' }); txt(W - R - 4, Y(v) - 4, label, c, 'end'); }
+        el('text', { x: L - 4, y: Y(hi / 1.1) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, f(hi / 1.1, 1));
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'bolt, around the circle');
+        el('text', { x: 12, y: (T + H - B0) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B0) / 2})` }, 'kN');
+      };
+    }
+
+    // ---- budget ----
+    function runBud(rows: Row[], notes: [string, string][]) {
+      const items = Array.from({ length: 5 }, (_, k) => ({ name: field(`bn${k}`).value.trim(), value: num(`bv${k}`), growth: (num(`bg${k}`) || 0) / 100 }));
+      const al = readFactor(field('al').value, 0), rs = readFactor(field('rs').value, 0);
+      const r = budget(items, al ?? 0, rs ?? 0);
+      if (!r.rows.length) { notes.push(['bad', 'Enter at least one item with a name and a value.']); return null; }
+      if (al === null || rs === null) {
+        rows.push({ dt: 'Predicted total', dd: `${f(r.predicted, 2)} <small>current ${f(r.current, 2)} + growth ${f(r.growth, 2)}</small>`, primary: true });
+        notes.push(['warn', awaitingMessage([...(al === null ? ['allowable total'] : []), ...(rs === null ? ['reserve'] : [])], 'the margin of the budget')]);
+      } else {
+        rows.push({ dt: 'Margin, predicted', dd: `${r.margin >= 0 ? '+' : '−'}${f(Math.abs(r.margin), 2)} <small>${f(r.available, 2)} available (allowable ${f(al, 2)} − reserve ${f(rs, 2)}) − ${f(r.predicted, 2)} predicted</small>`, primary: true, cls: r.margin >= 0 ? 'ok' : 'bad' });
+        rows.push({ dt: 'Margin, current values', dd: `${r.marginNow >= 0 ? '+' : '−'}${f(Math.abs(r.marginNow), 2)} <small>without the growth allowances</small>`, cls: r.marginNow >= 0 ? '' : 'bad' });
+        if (r.margin < 0 && r.marginNow >= 0) notes.push(['bad', 'The current values fit, but the predicted values do not. Values grow as designs mature; act now, while the changes are cheap.']);
+      }
+      rows.push({ dt: 'Growth allowance', dd: `${f(r.growth, 2)} <small>${f((r.growth / r.current) * 100)}% of the current total</small>` });
+      notes.push(['', 'The reserve belongs to the system owner, not to any item. Release it by decision, not by accident.']);
+      return () => {
+        const H = 150, W = frame(H), L = 14, R = 14, T = 40;
+        const total = Math.max(r.predicted + (rs ?? 0), al ?? 0) * 1.08, X = (v: number) => L + (v / total) * (W - L - R);
+        let acc = 0;
+        const COLS = ['var(--rd-blue)', 'var(--rd-ok)', 'var(--rd-warn)', 'var(--rd-steel)', 'var(--rd-muted)'];
+        r.rows.forEach((row, k) => { el('rect', { x: X(acc), y: T, width: X(acc + row.value) - X(acc), height: 26, fill: COLS[k % COLS.length], 'fill-opacity': 0.75 }); acc += row.value; });
+        el('rect', { x: X(acc), y: T, width: X(acc + r.growth) - X(acc), height: 26, fill: 'var(--rd-accent)', 'fill-opacity': 0.35 });
+        txt(X(acc + r.growth / 2), T - 6, 'growth', 'var(--rd-accent)', 'middle');
+        acc += r.growth;
+        if (rs) { el('rect', { x: X(acc), y: T, width: X(acc + rs) - X(acc), height: 26, fill: 'var(--rd-muted)', 'fill-opacity': 0.25, stroke: 'var(--rd-muted)', 'stroke-dasharray': '3 2' }); txt(X(acc + rs / 2), T + 44, 'reserve', 'var(--rd-muted)', 'middle'); }
+        if (al) { el('line', { x1: X(al), x2: X(al), y1: T - 18, y2: T + 34, stroke: 'var(--rd-ink)', 'stroke-width': 2 }); txt(X(al), T - 22, `allowable ${f(al, 1)}`, 'var(--rd-ink)', X(al) > W - 80 ? 'end' : 'middle'); }
+        let lx = L, ly = T + 70;
+        r.rows.forEach((row, k) => {
+          const lab = row.name.length > 14 ? `${row.name.slice(0, 13)}…` : row.name, w = lab.length * 5.6 + 20;
+          if (lx + w > W - R) { lx = L; ly += 14; }
+          el('rect', { x: lx, y: ly - 8, width: 9, height: 9, fill: COLS[k % COLS.length], 'fill-opacity': 0.75 });
+          el('text', { x: lx + 12, y: ly, 'font-size': 9, fill: 'var(--rd-ink)' }, lab);
+          lx += w;
+        });
+        svg.setAttribute('viewBox', `0 0 ${W} ${Math.max(H, ly + 10)}`);
+      };
+    }
+
+    const RUN: Record<string, typeof runLint> = { lint: runLint, load: runLoad, bud: runBud };
+    const CAPS: Record<string, string> = {
+      lint: 'The status of each requirement, and the verification method that its words suggest. The notes below give the issues of each line.',
+      load: 'The external tension in each bolt around the circle: the axial share (dashed) plus the bending share. The highest is red.',
+      bud: 'The current values of the items, their growth allowances and the reserve, against the allowable.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    const reqs = (root.querySelector('textarea[name="rq"]') as HTMLTextAreaElement).defaultValue;
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['al', 'rs'],
+      note: 'Worked-example budget loaded: 30 kg allowable inert mass, 1.5 kg reserve',
+      values: { rq: reqs, fx: '65.6', fy: '0.883', fz: '0', mx: '0', my: '0', mz: '0', ax: '120', ay: '0', az: '0', bx: '0', by: '0', bz: '0', nb: '12', db: '150',
+        al: '30', rs: '1.5', bn0: 'Case', bv0: '11.77', bg0: '5', bn1: 'Insulation', bv1: '4.84', bg1: '15', bn2: 'Nozzle', bv2: '6', bg2: '15', bn3: 'Other hardware', bv3: '4', bg3: '25', bn4: '', bv4: '', bg4: '' },
+    });
+    run();
+  });
+</script>

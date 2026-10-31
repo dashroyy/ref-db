@@ -56,6 +56,7 @@ export const ZONE_PLAN = [
 /** Zones rebuilt as v2 pages: zone key → page slug ('' is the home page). */
 export const REBUILT = {
   home: '',
+  reqs: 'fundamentals/requirements',
   duty: 'fundamentals/duty-cycle',
   risk: 'fundamentals/criticality',
   metal: 'fundamentals/metallurgy',
