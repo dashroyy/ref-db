@@ -83,6 +83,7 @@ export const REBUILT = {
   process: 'make/process-and-am',
   cost: 'make/cost',
   ndt: 'make/ndt',
+  leak: 'make/leak-testing',
   certs: 'make/certs',
   margins: 'verify/margin-policy',
   vibration: 'verify/random-vibration',

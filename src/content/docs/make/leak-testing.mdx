@@ -1,0 +1,221 @@
+---
+title: Leak testing
+description: How to specify and run a leak test that can see the leak that matters. Leak-rate units, the methods and their sensitivity, pressure decay with temperature correction and uncertainty, helium tracer methods, the conversion of a test rate to a service rate, and leak tests of motor joints, with a calculator and a worked example on the aft closure seals.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import LeakScale from '../../../components/LeakScale.astro';
+import LeakPort from '../../../components/LeakPort.astro';
+import LeakCalc from '../../../components/LeakCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Every seal leaks at some rate. The requirement is a number with its gas and conditions, and the test must be able to see that number through the effect of temperature.</div>
+  <div><b>Before this</b><a href="../../seals/sealing-strategy/">Sealing strategy</a> · <a href="../../seals/o-ring-design/">O-ring design</a></div>
+  <div><b>Related</b><a href="../../verify/proof-testing/">Proof testing</a> · <a href="../../verify/leak-before-break/">Leak before break</a> · <a href="../ndt/">NDT</a></div>
+</div>
+
+## Why this matters
+
+A motor case is a pressure boundary with many joints: the closures, the nozzle-to-case joint, the igniter boss, the
+transducer and test ports and their plugs. Each has seals, and each seal is checked by a leak test before the motor
+leaves the factory. The leak test is often the only proof that a joint was assembled correctly: that the O-ring is
+present, not cut, not twisted, and in the correct groove.
+
+A leak test proves only what it can see. A test with a sensitivity of $10^{-3}$ mbar·L/s says nothing about a leak of
+$10^{-5}$. A test that drifts with temperature can fail a good joint or pass a bad one. Thus the test must be designed,
+in the same way as the joint.
+
+<Analogy title="A slow puncture">
+  To find a slow puncture, you pump up the tyre, wait a day and check the pressure. If the night was cold, the pressure
+  is lower even with no puncture; if the sun was on the tyre, it is higher even with one. To find where the air comes
+  out, you put the tube in water and look for bubbles. Pressure decay and tracer tests are these two methods, made
+  quantitative.
+</Analogy>
+
+## "No leaks" is not a requirement
+
+A leak requirement has five parts. Without all five, a pass means only that the test could not see anything:
+
+1. **The allowable leak rate,** with its unit.
+2. **The gas,** for example helium or nitrogen.
+3. **The pressure,** upstream and downstream, and the direction.
+4. **The method** and its demonstrated sensitivity, smaller than the allowable.
+5. **The conditions:** temperature, soak and hold time, and the calibration with a reference leak.
+
+## Leak-rate units
+
+A leak rate is a flow of gas expressed as pressure × volume per time. It is a quantity of gas, like a mass flow:
+
+| Unit | In Pa·m³/s | Notes |
+| --- | --- | --- |
+| Pa·m³/s | 1 | SI unit |
+| mbar·L/s | 0.1 | Usual in Europe and on helium leak detectors |
+| atm·cm³/s (std cm³/s) | 0.1013 | Usual in the US and in pressure-decay work |
+| sccm (std cm³/min) | 0.00169 | Flow meters |
+| Torr·L/s | 0.1333 | Vacuum work |
+
+**1 mbar·L/s is 1 cm³ of gas at 1 bar each second.** At $10^{-6}$ mbar·L/s, 1 cm³ is lost in 12 days.
+
+<LeakScale />
+
+## The methods
+
+| Method | Sensitivity, mbar·L/s | Integral or local | Good for | Watch |
+| --- | --- | --- | --- | --- |
+| Bubble, immersion or spray | $10^{-3}$ to $10^{-4}$ | Local | Finding gross leaks, cheaply | Operator; wetting; contamination of the part |
+| Pressure decay | $10^{-3}$ to $10^{-4}$ | Integral | A whole assembly, or the space between two seals | Temperature, test volume, hold time |
+| Vacuum decay (pressure rise) | About $10^{-4}$ | Integral | Parts that can be evacuated | Outgassing and moisture |
+| Mass flow | About $10^{-3}$ | Integral | Large volumes, faster than decay | Temperature; flow-meter range |
+| Hydrogen tracer (5% H₂ in N₂) | $10^{-6}$ to $10^{-7}$ | Local | Low background, low-cost gas | Calibration; ventilation |
+| Helium sniffer | $10^{-6}$ to $10^{-7}$ | Local | Finding the leak on a pressurised part | Background helium, probe distance and speed |
+| Helium accumulation (hood) | $10^{-7}$ to $10^{-8}$ | Integral in the hood | The total rate of a pressurised part at atmosphere | Hood volume, mixing, permeation |
+| Helium vacuum (chamber or inside-out) | $10^{-9}$ and below | Integral | The highest sensitivity | Needs vacuum; pressure direction; time |
+
+Use a sensitive integral test to measure the rate, and a local test to find the leak if it fails. The sensitivity in
+your test comes from the procedure and a calibrated reference leak (ISO 20486), not from the table.
+
+## Pressure decay, done correctly
+
+Fill the test volume $V$ to the test pressure, isolate it, and measure the pressure drop over the hold time $t$. With
+the ideal gas law at constant volume, a change of gas temperature also changes the pressure. The leak rate is:
+
+$$
+Q = \frac{V}{t}\left(\Delta p - p_\text{abs}\,\frac{\Delta T}{T}\right)
+$$
+
+Here $\Delta p$ is the measured pressure drop, $\Delta T$ the measured fall of gas temperature and $T$ the absolute
+temperature. At 8 bar absolute, a temperature change of only 0.05 K changes the pressure by 137 Pa, which is often more
+than the leak. Thus:
+
+- **Soak before the hold.** Filling heats the gas (adiabatic compression). Wait until the gas, the part and the gauge
+  have a stable temperature, and record it.
+- **Know the uncertainty.** Each reading of pressure and temperature has a resolution. The smallest leak that the test
+  can show is approximately $\tfrac{V}{t}\sqrt{2}\sqrt{\delta p^2 + (p\,\delta T/T)^2}$. A longer hold and a smaller
+  volume make it smaller.
+- **Keep the volume small and known.** The gauge, the tubing and the valves are part of the test volume. They are often
+  larger than the space between the seals. Measure the volume, for example by expansion from a known volume.
+- **A pass clears everything; a fail locates nothing.** Decay measures the sum of all leaks from the test volume. Use a
+  tracer or a bubble test to find the leak.
+
+## Helium tracer methods
+
+Helium is used because it is inert, light (it goes through small paths), and rare in air (approximately 5 ppm), so a
+mass-spectrometer detector sees a small amount above the background.
+
+- **Sniffer:** a probe moved along a pressurised part finds where helium comes out. Its sensitivity depends on the
+  distance and the speed of the probe and on the background. It locates; it does not measure the total.
+- **Accumulation (hood):** a sealed hood of free volume $V$ around the part collects the leak. The concentration
+  increases by $\Delta C$ in the time $t$, so $Q_\text{He} = \Delta C\,V\,p_\text{atm}/t$. Divide by the helium fraction
+  in the part to get the total leak. A longer time and a smaller hood find smaller leaks.
+- **Vacuum:** the part (or a chamber around it) is evacuated and connected to the detector. It is the most sensitive
+  method, but the pressure across the seal may be in the opposite direction to service.
+- **Permeation.** Helium goes through elastomers slowly. After some minutes it comes through an O-ring by permeation,
+  even with no leak path. Measure before that, or measure the permeation background and subtract it.
+
+## From the test rate to the service rate
+
+A test with helium at a low pressure does not give the leak of the service gas at MEOP. Through the same leak path, the
+flow depends on the regime. For a capillary of diameter $d$ and length $L$:
+
+$$
+\text{viscous:}\quad Q = \frac{\pi d^4}{256\,\mu L}\left(p_1^2 - p_2^2\right)
+\qquad
+\text{molecular:}\quad Q = \frac{\pi}{12}\,\bar v\,\frac{d^3}{L}\,(p_1 - p_2),\quad \bar v = \sqrt{\frac{8RT}{\pi M}}
+$$
+
+Viscous flow applies when the path is much larger than the mean free path of the gas, $\lambda = \tfrac{\mu}{p}\sqrt{\pi RT/2M}$
+(Knudsen number $\lambda/d$ below about 0.01). It is usual for leaks above approximately $10^{-5}$ mbar·L/s. Molecular
+flow applies to very small leaks and low pressures. In viscous flow the rate increases with the square of the pressure,
+so a leak at MEOP can be hundreds of times the leak in a low-pressure test.
+
+Two results for the design:
+
+- **Write the requirement as a test rate,** with its gas, pressures and method, and keep the argument that relates it
+  to the service condition in the analysis.
+- **Pressure-energised seals close as the pressure increases.** An O-ring at MEOP usually leaks less than the viscous
+  estimate. A crack or a porous weld does not close.
+
+## Leak testing motor hardware
+
+<LeakPort />
+
+- **Joints with two seals** get a port between the seals ([Sealing strategy](../../seals/sealing-strategy/#leak-check-ports)).
+  It is the only way to test each seal of a redundant pair. The test pressure pushes the primary seal from its back,
+  opposite to service: where possible, also test in the service direction, for example with low-pressure helium in the
+  case and accumulation at the port.
+- **Port plugs** are part of the pressure boundary after the test. Each needs its own seal, torque and check.
+- **The case** gets a leak test after the proof test, usually with gas at a much lower pressure than proof, because of
+  the stored energy ([Proof testing](../../verify/proof-testing/#test-media-and-safety)).
+- **Before and after environments.** Repeat the joint leak tests after vibration, thermal cycling and transport, and
+  after each reassembly. A seal that passes once can be disturbed.
+- **A through crack is a leak.** Where the case can leak before it breaks, a leak test finds a crack that grew through
+  the wall ([Leak before break](../../verify/leak-before-break/)).
+
+## Calculator
+
+<LeakCalc />
+
+## Worked example: the aft closure seals
+
+The aft closure has two radial O-rings with a port between them ([Sealing strategy](../../seals/sealing-strategy/#worked-example-the-aft-closure-seal)).
+The requirement for this example only is $1 \times 10^{-5}$ std cm³/s of helium at 700 kPa gauge between the seals.
+Push **Load worked example** in the calculator to load these inputs.
+
+1. **The test volume.** The space between the seals is 2 cm³, but the port, the line and the gauge add 10 cm³. The test
+   volume is **12 cm³**. A shorter line would make every result below better.
+2. **Pressure decay.** Nitrogen at 700 kPa gauge, a 600 s hold, a gauge resolution of 20 Pa and a temperature
+   resolution of 0.02 K. The pressure falls by 150 Pa and the gas cools by 0.05 K. Without the temperature correction,
+   the leak is $3.0 \times 10^{-5}$ std cm³/s: three times the allowable, and the joint would be rejected. The cooling
+   explains 137 Pa of the drop. The corrected leak is $2.6 \times 10^{-6} \pm 1.6 \times 10^{-5}$ std cm³/s:
+   **inconclusive**, because the uncertainty is larger than the allowable.
+3. **What controls the uncertainty.** One reading of 0.02 K is 55 Pa at this pressure, against 20 Pa for the gauge.
+   With these instruments, the uncertainty equals the allowable after a 16 minute hold, and half of it after 33 minutes,
+   if the temperature stays stable for that long. A better temperature measurement or a smaller volume is the better
+   answer.
+4. **Helium hood.** The space between the seals is filled with helium at 700 kPa, and a 5 L hood collects for 10
+   minutes on the outside of the joint. The rise is 0.05 ppm, below the 0.1 ppm resolution of the detector. The leak of
+   the secondary seal is less than $8.3 \times 10^{-7}$ std cm³/s: **12 times below** the allowable. The hood does not
+   see the primary seal, which leaks into the case. The decay test, or helium in the case with accumulation at the
+   port, covers it.
+5. **Test to service.** The allowable is the flow through a capillary of approximately 1.7 µm over the 3 mm seal
+   contact. With air at the 10 MPa MEOP, the flow is viscous and the same path passes **175 times** more:
+   $1.7 \times 10^{-3}$ std cm³/s, or 1 cm³ at 1 bar every 9 minutes. The O-ring is pressure-energised, so the real
+   service leak is less; a crack would not be.
+
+## Where this stops
+
+- **Ideal gas at constant volume** for pressure decay. The volume changes a little with pressure, and the gas
+  temperature is not uniform. Calibrate the test with a reference leak in the test volume.
+- **One round capillary** for the conversion. Real leak paths are slots, porosity and cracks, often in the transitional
+  regime. The conversion gives limits, not a value.
+- **No permeation** through elastomers, and no outgassing or moisture.
+- **No hot gas.** The leak of hot combustion gas through a seal is an erosion problem first: keep the gas away from the
+  seal ([Sealing strategy](../../seals/sealing-strategy/)).
+
+## On the drawing
+
+- **The allowable leak rate** with its unit, the gas, the test pressure and its direction.
+- **The method and its standard,** for example helium accumulation to ISO 20485, or pressure decay to EN 13184, and the
+  sensitivity that it must demonstrate with a reference leak.
+- **The soak and hold times** and the temperature record for pressure decay.
+- **Where the test is done:** each joint and port, and the sequence: after proof, after environments, after each
+  reassembly.
+- **The port plugs:** seal, torque and their own check.
+
+## References and further reading
+
+- ISO 20484, *Non-destructive testing: leak testing, vocabulary*; ISO 20485, *Tracer gas method*; ISO 20486,
+  *Calibration of reference leaks for gases*.
+- EN 1779, *Leak testing: criteria for method and technique selection*; EN 13184, *Pressure change method*.
+- ASTM E432 (selection of a leak-testing method), E493 (inside-out testing), E498 (tracer-probe mode), E499
+  (detector-probe mode).
+- American Society for Nondestructive Testing, *Nondestructive Testing Handbook*, Vol. 1, *Leak Testing*.
+- A. Roth, *Vacuum Technology*, 3rd ed., Elsevier (1990) (gas flow regimes and conductance).
+
+<Aside type="note">
+  This is guidance on method from general practice, with indicative sensitivities. The leak requirements and test
+  procedures for your hardware come from your programme and your qualified procedures.
+</Aside>

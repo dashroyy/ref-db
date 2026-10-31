@@ -1,0 +1,55 @@
+---
+// Leak-test methods on one log scale of leak rate, with the time to lose 1 cm³ of gas at 1 bar for scale.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', blue = 'var(--rd-blue)', ok = 'var(--rd-ok)', accent = 'var(--rd-accent)';
+const e0 = -11, e1 = 1, x0 = 104, x1 = 348;
+const X = (e: number) => x0 + ((e - e0) / (e1 - e0)) * (x1 - x0);
+const rows: [string, number, number, string][] = [
+  ['Bubble test', -4, 1, accent],
+  ['Pressure decay', -3.5, 1, accent],
+  ['Helium sniffer', -7, -1, blue],
+  ['Helium hood', -8, -2, blue],
+  ['Helium vacuum', -11, -3, ok],
+];
+const top = 40, rh = 28;
+const scale: [number, string][] = [[-9, '32 years'], [-6, '12 days'], [-3, '17 min'], [0, '1 s']];
+const yS = top + rows.length * rh + 30;
+---
+
+<figure class="viz leakscale">
+  <p class="viz-title">Leak rates span twelve orders of magnitude</p>
+  <svg viewBox="0 0 360 250" role="img" aria-labelledby="leakscale-desc" style="max-width: 560px; margin: 0 auto;">
+    <desc id="leakscale-desc">
+      Leak rate on a logarithmic scale from 10 to the minus 11 to 10 mbar litres per second. Bubble and pressure-decay
+      tests cover approximately 10 to the minus 4 and above. Helium sniffer and hood tests reach 10 to the minus 7 and
+      10 to the minus 8. Helium vacuum tests reach 10 to the minus 11. For scale, 1 cubic centimetre of gas at 1 bar is
+      lost in 1 second at 1 mbar litre per second, 17 minutes at 10 to the minus 3, 12 days at 10 to the minus 6 and 32
+      years at 10 to the minus 9.
+    </desc>
+    {[-10, -8, -6, -4, -2, 0].map((e) => (
+      <g>
+        <line x1={X(e)} x2={X(e)} y1={top - 6} y2={top + rows.length * rh} stroke="var(--rd-line)"></line>
+        <text x={X(e)} y={top - 12} text-anchor="middle" font-size="10" fill={muted}>10<tspan baseline-shift="super" font-size="7">{e}</tspan></text>
+      </g>
+    ))}
+    <text x="6" y={top - 12} font-size="10" fill={muted}>mbar·L/s</text>
+    {rows.map(([n, a, b, c], k) => (
+      <g>
+        <text x="6" y={top + k * rh + 15} font-size="11" fill={ink}>{n}</text>
+        <rect x={X(a)} y={top + k * rh + 4} width={X(b) - X(a)} height="14" rx="3" fill={c} fill-opacity="0.7"></rect>
+      </g>
+    ))}
+    <text x="6" y={yS - 12} font-size="10" fill={muted}>1 cm³ at 1 bar is lost in:</text>
+    <line x1={x0} x2={x1} y1={yS} y2={yS} stroke={muted}></line>
+    {scale.map(([e, s]) => (
+      <g>
+        <line x1={X(e)} x2={X(e)} y1={yS - 4} y2={yS + 4} stroke={ink}></line>
+        <text x={X(e)} y={yS + 17} text-anchor="middle" font-size="10" fill={ink}>{s}</text>
+      </g>
+    ))}
+  </svg>
+  <figcaption>
+    1 mbar·L/s is 1 cm³ of gas at 1 bar each second. Each method has a range where it works; the sensitivity in your
+    test comes from the procedure and a calibrated reference leak. A test cannot show a leak smaller than its
+    sensitivity, so "no leak found" means only "smaller than the sensitivity".
+  </figcaption>
+</figure>
