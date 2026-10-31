@@ -1,0 +1,41 @@
+---
+// An illustrative EN 10204 3.1 certificate with the items to check numbered. Not a real document.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', accent = 'var(--rd-accent)';
+const lines: [number, string, string, number | null][] = [
+  [52, 'INSPECTION CERTIFICATE EN 10204 3.1', 'b', 1],
+  [72, 'Producer: PRODUCER NAME · Order PO-0000 item 1', '', null],
+  [92, 'Specification: AMS 6431, issue as ordered', '', 2],
+  [110, 'Condition: annealed · Product: bar ⌀320 mm', '', 3],
+  [128, 'Heat: 41872 · Quantity: 4 pieces', '', 4],
+  [148, 'Melt: electric furnace + vacuum arc remelt', '', null],
+  [168, 'Chemistry %: C 0.46 Mn 0.75 Cr 1.05 Mo 1.00', '', 5],
+  [182, '             Ni 0.55 V 0.08 S 0.003 P 0.006', '', null],
+  [202, 'Tensile: direction L, mid-radius, annealed', '', 6],
+  [216, '  UTS · yield · elongation · reduction of area', '', null],
+  [236, 'Hardness · grain size · macro-etch · UT', '', null],
+  [262, 'Results conform. Signed: inspection rep., date', '', 7],
+];
+---
+
+<figure class="viz certanat">
+  <p class="viz-title">What to check on a certificate</p>
+  <svg viewBox="0 0 360 290" role="img" aria-labelledby="certanat-desc" style="max-width: 520px; margin: 0 auto;">
+    <desc id="certanat-desc">
+      An illustrative inspection certificate with seven numbered items: the certificate type, the specification and
+      issue, the condition and product form, the heat number, the chemistry, the tensile results with the test
+      direction and location, and the signature of the inspection representative.
+    </desc>
+    <rect x="12" y="30" width="310" height="250" rx="4" fill="var(--rd-panel)" stroke={ink} stroke-width="1"></rect>
+    <text x="167" y="20" text-anchor="middle" font-size="10" fill={muted}>illustrative, not a real document</text>
+    {lines.map(([y, s, w, n]) => (
+      <g>
+        <text x="22" y={y} font-size={w ? 11 : 10} font-weight={w ? 700 : 400} fill={w ? ink : muted} style="white-space: pre;">{s}</text>
+        {n !== null && <g><circle cx="338" cy={y - 4} r="8" fill={accent}></circle><text x="338" y={y} text-anchor="middle" font-size="10" fill="var(--rd-panel)" font-weight="700">{n}</text><line x1="322" y1={y - 4} x2="330" y2={y - 4} stroke={accent}></line></g>}
+      </g>
+    ))}
+  </svg>
+  <figcaption>
+    The material certificate shows what the producer delivered: here annealed bar. The strength of the finished part
+    is shown by a second certificate, from the heat treatment, with its own test coupons.
+  </figcaption>
+</figure>

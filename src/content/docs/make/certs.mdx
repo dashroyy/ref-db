@@ -1,0 +1,213 @@
+---
+title: Certs & trace
+description: Certificates and traceability for motor hardware. EN 10204 inspection documents, what to check on a certificate, material versus heat-treatment certificates, the chain from the melt to the motor, part marking, suspect and counterfeit material, and receiving-inspection sampling, with a calculator and a worked example on a D6AC closure forging.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CertAnatomy from '../../../components/CertAnatomy.astro';
+import TraceChain from '../../../components/TraceChain.astro';
+import CertCalc from '../../../components/CertCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A datasheet value is a claim; a certificate against a specification is evidence, but only for the material that carries its heat or lot number.</div>
+  <div><b>Before this</b><a href="../../materials/specification/">Specifying materials</a> · <a href="../ndt/">NDT</a></div>
+  <div><b>Related</b><a href="../../materials/allowables/">Allowables</a> · <a href="../../drawing/gauging/">Gauging</a> · <a href="../process-and-am/">Process & AM</a></div>
+</div>
+
+## Why this matters
+
+Many properties of a part cannot be measured on the finished part: the chemistry, the melt practice, the tensile
+strength, the toughness, the heat treatment that it had. The design analysis assumes them. The only evidence that the
+part has them is a set of documents that link the part, step by step, to the tests that showed them.
+
+If one link is missing, the evidence is lost. A correct certificate for the wrong heat, an offcut without its heat
+number, or a heat treatment without its furnace record makes good material into material of unknown quality. On a
+pressure part, unknown quality means scrap or a concession, however good the metal actually is.
+
+<Analogy title="Chain of custody">
+  In court, a piece of evidence counts only if its chain of custody is complete: who had it, when, and what they did
+  with it, from the scene to the courtroom. If there is one gap, the evidence cannot be used, even if it is genuine.
+  Material traceability is a chain of custody for metal, from the melt to the motor.
+</Analogy>
+
+## Inspection documents
+
+BS EN 10204 gives four types of inspection document for metallic products:
+
+| Type | Name | Content | Validated by |
+| --- | --- | --- | --- |
+| 2.1 | Declaration of compliance | A statement that the product complies, without test results | Manufacturer |
+| 2.2 | Test report | Results of non-specific tests: typical of the production, not of this batch | Manufacturer |
+| 3.1 | Inspection certificate 3.1 | Results of specific tests on the delivered batch | Inspection representative of the manufacturer, independent of production |
+| 3.2 | Inspection certificate 3.2 | As 3.1, and the results are also verified | The manufacturer's representative and the purchaser's representative or a third party |
+
+Structural and pressure parts usually need 3.1 at least. Types 2.1 and 2.2 have no results for your material: they
+are not evidence of its properties. The purchase order gives the type that is required. Other documents complete the
+chain:
+
+- **Certificate of conformity (CoC):** a statement that the product meets the order. It is necessary, but it does not
+  replace test results.
+- **Special-process certificates:** heat treatment, plating, peening, welding and NDT. Each gives the specification,
+  the parameters, the identity of the parts and the result. Aerospace special processes are usually done by suppliers
+  with Nadcap accreditation.
+- **Test reports from laboratories,** preferably accredited to ISO/IEC 17025 for the test.
+- **First article inspection (FAI)** to AS9102: a full record that the first production part meets every requirement of
+  the drawing, with the material and process certificates.
+
+## What to check on a certificate
+
+<CertAnatomy />
+
+1. **The type** is the type that the order requires.
+2. **The specification and its issue** are those on the drawing and the order. A different issue needs a check or a
+   concession.
+3. **The condition and the product form** are those ordered: temper or heat treatment, bar, plate or forging, size.
+4. **The heat or lot number** agrees with the marking on the material that you received.
+5. **The chemistry** is in the limits of the specification, including the residual elements that it controls.
+6. **The test results** are from this batch, in the test direction and location that represent your load path, and
+   meet every minimum. Properties across the grain (short transverse) are usually the lowest.
+7. **The signature** of the person who validates the results, as the type requires.
+
+Also check that the numbers are consistent: yield less than UTS, a hardness that agrees with the strength, and results
+that are not all exactly at the minimum. Look for alterations, missing pages and photocopies of photocopies. A
+distributor certificate is complete only with a copy of the producer's certificate.
+
+### The material certificate is not the part certificate
+
+The producer certifies the material in its delivered condition. D6AC bar to AMS 6431, for example, is usually delivered
+annealed: its certificate gives the chemistry, the melt practice and the annealed properties. The strength that the
+case analysis uses comes from hardening and tempering, done later. That evidence is the **heat-treatment
+certificate**: the specification (AMS 2759/2 for this steel), the furnace load, the temperatures and times with the
+furnace chart, pyrometry to AMS 2750, and the tests on coupons that went through the furnace with the parts. A hardness
+test of each part after heat treatment shows that each part, not only the coupon, had the treatment.
+
+## Traceability
+
+<TraceChain />
+
+- **Lot traceability:** each part is linked to its heat, its heat-treatment load and its process lots. This is the
+  minimum for structural parts.
+- **Serial traceability:** each part has its own serial number and record. Use it for fracture-critical and pressure
+  parts, so that a problem found in one part leads to the exact set of parts that shares its history.
+- **Trace back and trace forward.** Back from a part to the melt, for a failure investigation. Forward from a bad heat,
+  a bad furnace load or a bad batch of fasteners to every motor that contains it, for a recall. Test both directions
+  on your records before you need them.
+- **Keep the identity on the material.** Transfer the heat number to each piece before stock is cut, and keep material
+  of different heats apart. Material without its identity goes to quarantine.
+- **Keep the records** for the life of the product and the period that the contract gives. A motor in storage for
+  fifteen years needs records that last longer.
+
+### Marking the part
+
+| Method | Where it is usually acceptable |
+| --- | --- |
+| Ink, label or tag (bag and tag) | Small parts, parts that cannot be marked, temporary identity during manufacture |
+| Electrochemical etch | Most metals; shallow, no stress raiser; check the effect on corrosion |
+| Laser marking | Most metals; check the depth and the heat effect on highly stressed or coated surfaces |
+| Dot peen or vibro-peen | Non-critical surfaces; makes small indentations |
+| Low-stress impression stamp | Thick sections away from stress; never on fracture-critical or thin parts |
+
+Mark after final machining, at a location shown on the drawing, away from high stress, seal faces and fatigue-critical
+surfaces, and where the mark stays readable after the finish. SAE AS478 describes the methods; MIL-STD-130 gives
+unique identification for US defence items.
+
+## Suspect and counterfeit material
+
+Suspect material is material whose identity or properties are in doubt. Counterfeit material is misrepresented on
+purpose. Fasteners, electronic parts and high-value alloys are the usual cases. The signs:
+
+- The certificate does not agree with the marking on the material or the head marking on a fastener.
+- The numbers are not consistent: hardness against strength, chemistry against the alloy, identical results for
+  different heats, or every result at a round number.
+- Altered, illegible or incomplete documents; no producer certificate behind a distributor certificate.
+- An unknown source, a price much lower than the market, or a delivery much faster than the usual lead time.
+
+Buy from the producer or from approved distributors. When material is suspect, quarantine it, report it under your
+quality procedure, and do not return it to the supplier before it is investigated: it can come back into the supply
+chain. AS9100 requires the prevention of counterfeit parts, and AS6174 gives the method for materiel.
+
+## Receiving inspection and sampling
+
+Receiving inspection checks the documents for each delivery, and tests a sample where the risk justifies it: a
+hardness check, a chemistry check by a portable analyser, or a test at an independent laboratory. A sample that finds
+no defect shows only that the lot is unlikely to have more than a given defect rate:
+
+$$
+P_\text{accept} = \sum_{k=0}^{c} \binom{n}{k} p^k (1-p)^{n-k}
+\qquad
+n_{c=0} = \left\lceil \frac{\ln(1 - C)}{\ln(1 - p)} \right\rceil
+$$
+
+Here $n$ is the sample size, $c$ the largest number of defectives that is accepted, $p$ the defect rate in the lot and
+$C$ the confidence. Use zero-acceptance plans ($c = 0$) for critical characteristics: one defective rejects the lot or
+starts 100% inspection. ISO 2859-1 and the Squeglia plans give standard sample sizes.
+
+## Calculator
+
+<CertCalc />
+
+## Worked example: a D6AC closure forging
+
+The supplier forged and heat-treated a lot of aft closures from D6AC bar, and sends a 3.1 certificate for the hardened
+and double-tempered condition, with a copy of the producer's certificate. The drawing gives minimums of 1520 MPa UTS,
+1450 MPa yield and 8% elongation for this example. The required type (3.1) and the confidence (95%) are for this
+example only. Push **Load worked example** in the calculator to load these inputs.
+
+1. **The documents.** The type, the specification (AMS 6431, written with and without a space), the condition and the
+   heat number H41872 all agree. The results, 1586 MPa UTS, 1475 MPa yield and 9% elongation, meet the minimums. The
+   chain to the producer is complete.
+2. **Hardness against strength.** The certificate also gives 43 HRC. That is approximately 424 HV, or **1401 MPa**:
+   12% below the UTS on the certificate, outside the ±10% of the conversion. One of the two values is wrong, or they
+   are from different coupons or different furnace loads.
+3. **Test direction.** The tests are in the longitudinal direction. The closure boss carries its load across the grain
+   (short transverse), where the properties are usually lower. The result does not represent the load path.
+4. **Verdict: query the supplier.** Nothing fails, but the certificate is not yet evidence. The supplier's records show
+   that the hardness was on an untempered offcut; a test of the coupon gives 47 HRC (approximately 1560 MPa, 2% from
+   the UTS). The drawing requires short-transverse tests for this part, and the supplier adds them. All checks are then
+   correct.
+5. **Receiving sample.** A hardness check on 13 closures, accepted only if all 13 pass, accepts a lot with 1% outside
+   the limits 88% of the time. It accepts 95% of lots at 0.39% defective (AQL) and rejects 90% of lots at 16.2% (LTPD).
+   To catch a lot with 5% defective with 95% confidence needs **59** parts. For a fracture-critical closure, this is
+   why each part gets a hardness test, and not a sample.
+
+## Where this stops
+
+- **A review aid, not an acceptance.** Your inspection plan and your quality procedures decide what is accepted, and
+  by whom.
+- **The hardness conversion is approximate** (about ±10%) and for carbon and low-alloy steels only.
+- **Sampling assumes a lot much larger than the sample,** random samples and a test that finds every defect.
+- **Composites and non-metallics** are traced by batch of fibre, resin and prepreg, with shelf life and out-time, and
+  by the cure record of each part. The same logic applies, with other documents.
+
+## On the drawing
+
+- **The material specification and condition,** with the heat-treatment specification ([Specifying materials](../../materials/specification/)).
+- **The certificate type** that is required, usually on the purchase order. Make sure that the drawing and the order
+  agree.
+- **Traceability:** lot-traceable or serialised, and the identity to be kept through each process.
+- **Marking:** the content, the method and its specification, the location, and where marking is not permitted, for
+  example "no impression stamping".
+- **Test direction and location** where they are important, for example short-transverse tests from a forging
+  prolongation.
+- **First article inspection** and the records to be delivered with the parts.
+
+## References and further reading
+
+- BS EN 10204:2004, *Metallic products: types of inspection documents*.
+- SAE AS9100D (2016), *Quality management systems: requirements for aviation, space and defence organizations*.
+- SAE AS9102, *Aerospace first article inspection requirement* (current revision).
+- SAE AS6174, *Counterfeit materiel: assuring acquisition of authentic and conforming materiel* (current revision).
+- SAE AS478, *Identification marking methods* (current revision); MIL-STD-130, *Identification marking of US military
+  property*.
+- ASTM E140 and ISO 18265, hardness conversion tables for metals.
+- ISO 2859-1, *Sampling procedures for inspection by attributes*; N. L. Squeglia, *Zero Acceptance Number Sampling
+  Plans*, ASQ Quality Press.
+
+<Aside type="note">
+  This is guidance on method from general practice, with illustrative values and an illustrative certificate. The
+  certificates, traceability and records for your hardware come from your purchase orders, your quality management
+  system and your programme requirements.
+</Aside>

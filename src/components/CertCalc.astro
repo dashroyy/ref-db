@@ -1,0 +1,287 @@
+---
+// Certificates in three tabs: review one certificate against the drawing and the material; check that a hardness and a
+// tensile strength agree (steels); and the operating characteristic of a receiving-inspection sample. Maths in
+// src/lib/certs.ts (unit-tested); UI only here.
+import { CERT_TYPES } from '../lib/certs';
+
+const TABS = [{ key: 'cert', name: 'Certificate review' }, { key: 'hard', name: 'Hardness & strength' }, { key: 'samp', name: 'Receiving sample' }];
+const DIRS = [['L', 'L (longitudinal)'], ['LT', 'LT (long transverse)'], ['ST', 'ST (short transverse)']];
+---
+
+<div class="calc certcalc" data-certcalc>
+  <div class="calc-head"><span>Certificate check</span><span class="head-btns"><span>EN 10204 · ASTM E140 approx. · binomial</span><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Certificate check">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="cert">
+        <legend>Drawing and order against certificate</legend>
+        <div class="row2">
+          <label>Required type<select name="req"><option value="">your requirement</option>{CERT_TYPES.map((c) => <option value={c.key}>{c.key}</option>)}</select></label>
+          <label>Supplied type<select name="sup">{CERT_TYPES.map((c) => <option value={c.key} selected={c.key === '3.1'}>{c.key}: {c.name}</option>)}</select></label>
+          <label>Specification, drawing<input name="sd" type="text" value="AMS 6431" /></label>
+          <label>Specification, certificate<input name="sc" type="text" value="AMS6431" /></label>
+          <label>Issue, drawing<input name="id" type="text" value="" placeholder="as ordered" /></label>
+          <label>Issue, certificate<input name="ic" type="text" value="" /></label>
+          <label>Condition, drawing<input name="cd" type="text" value="Hardened and double tempered" /></label>
+          <label>Condition, certificate<input name="cc" type="text" value="hardened and double-tempered" /></label>
+          <label>Heat or lot, on the material<input name="hp" type="text" value="H 41872" /></label>
+          <label>Heat or lot, certificate<input name="hc" type="text" value="H41872" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="cert">
+        <legend>Results against minimums</legend>
+        <div class="row2">
+          <label>Minimum UTS (MPa)<input name="mu" type="number" min="0" step="any" value="1520" /></label>
+          <label>UTS on certificate<input name="u" type="number" min="0" step="any" value="1586" /></label>
+          <label>Minimum yield (MPa)<input name="my" type="number" min="0" step="any" value="1450" /></label>
+          <label>Yield on certificate<input name="y" type="number" min="0" step="any" value="1475" /></label>
+          <label>Minimum elongation (%)<input name="me" type="number" min="0" step="any" value="8" /></label>
+          <label>Elongation on certificate<input name="e" type="number" min="0" step="any" value="9" /></label>
+          <label>Hardness on certificate (HRC)<input name="h" type="number" min="0" step="any" value="43" /></label>
+          <label>Material<select name="st"><option value="1">Steel (hardness check applies)</option><option value="0">Other</option></select></label>
+          <label>Test direction<select name="td">{DIRS.map(([k, n]) => <option value={k}>{n}</option>)}</select></label>
+          <label>Load direction in the part<select name="ld">{DIRS.map(([k, n]) => <option value={k} selected={k === 'ST'}>{n}</option>)}</select></label>
+          <label>Signed or validated<select name="sg"><option value="1">Yes</option><option value="0">No</option></select></label>
+          <label>Source<select name="src"><option value="mill">Producer (mill or forge)</option><option value="distributor-with-mill" selected>Distributor, with producer certificate</option><option value="distributor-only">Distributor only</option></select></label>
+        </div>
+        <p class="hint">The minimums come from the drawing or the material specification. Leave a minimum blank to skip it.</p>
+      </fieldset>
+
+      <fieldset data-panel="hard" hidden>
+        <legend>Hardness and tensile strength, steels</legend>
+        <div class="row2">
+          <label>Hardness<input name="hv" type="number" min="1" step="any" value="43" /></label>
+          <label>Scale<select name="hs"><option value="hrc">HRC</option><option value="hv">HV</option><option value="hb">HB</option></select></label>
+          <label>UTS on certificate (MPa)<input name="hu" type="number" min="0" step="any" value="1586" /></label>
+        </div>
+        <p class="hint">Approximate conversion for carbon and low-alloy steels (ASTM E140, ISO 18265). It does not apply to austenitic stainless, aluminium, titanium or nickel alloys, or to cold-worked material.</p>
+      </fieldset>
+
+      <fieldset data-panel="samp" hidden>
+        <legend>Attribute sample from a large lot</legend>
+        <div class="row2">
+          <label>Sample size n<input name="n" type="number" min="1" step="1" value="13" /></label>
+          <label>Accept with up to c defective<input name="c" type="number" min="0" step="1" value="0" /></label>
+          <label>Defect rate in the lot (%)<input name="p" type="number" min="0" max="100" step="any" value="1" /></label>
+          <label>Defect rate to catch (%)<input name="pc" type="number" min="0.01" max="99" step="any" value="5" /></label>
+          <label>Confidence (%)<input name="conf" type="number" min="50" max="99.9" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">For a lot at least ten times larger than the sample. The confidence comes from your quality plan, not from this site.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div>
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 420 260" data-chart role="img" aria-label="Chart for the selected certificate check"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    A review aid, not an acceptance: the inspection plan and the quality procedures of your organisation decide. The
+    hardness conversion is approximate (about ±10%) and for steels only. Sampling assumes a lot much larger than the
+    sample and defects found without error.
+  </div>
+</div>
+
+<style is:global>
+  .certcalc .readout dd small { display: block; margin-top: 0.15rem; }
+  .certcalc .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
+  .certcalc .pv-notes li.bad { color: var(--rd-accent); }
+  .certcalc .pv-notes li.warn { color: var(--rd-warn); }
+  .certcalc .example-note { margin: 0.5rem 0 0 !important; }
+  .certcalc input[type='text'] { width: 100%; }
+</style>
+
+<script>
+  import { reviewCert, hrcToHv, hvToHrc, hrcToHb, hbToHrc, utsFromHrc, HRC_RANGE, accept, rateAt, zeroAcceptN, type Dir } from '../lib/certs';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const pct = (p: number, d = 1) => `${f(100 * p, d)}%`;
+  type Row = { dt: string; dd: string; cls?: string; primary?: boolean };
+  const VERDICT: Record<string, [string, string, string]> = {
+    accept: ['Accept', 'ok', 'Every check that this tool makes is satisfied.'],
+    query: ['Query the supplier', 'warn', 'Nothing fails, but some items need an answer before acceptance.'],
+    reject: ['Reject or quarantine', 'bad', 'At least one check fails: the certificate is not evidence for this material as it is.'],
+    incomplete: ['Incomplete', '', 'Enter the required type to complete the review.'],
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-certcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const val = (n: string) => field(n).value;
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (text !== undefined) e.textContent = text;
+      svg.append(e);
+      return e;
+    };
+    const txt = (x: number, y: number, s: string, c = 'var(--rd-ink)', anchor = 'start', fs = 10) =>
+      el('text', { x, y, 'text-anchor': anchor, 'font-size': fs, fill: c, stroke: 'var(--rd-panel)', 'stroke-width': 3, 'paint-order': 'stroke' }, s);
+    const width = () => Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420)));
+    const frame = (H: number) => { svg.replaceChildren(); const W = width(); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); return W; };
+    let mode = 'cert';
+    let draw: (() => void) | null = null;
+
+    // ---- certificate review ----
+    function runCert(rows: Row[], notes: [string, string][]) {
+      const i = {
+        required: val('req') || null, supplied: val('sup'), specDrawing: val('sd'), specCert: val('sc'), issueDrawing: val('id'), issueCert: val('ic'),
+        condDrawing: val('cd'), condCert: val('cc'), heatPart: val('hp'), heatCert: val('hc'),
+        minUts: num('mu'), minYs: num('my'), minEl: num('me'), uts: num('u'), ys: num('y'), el: num('e'), hrc: num('h'),
+        steel: val('st') === '1', testDir: val('td') as Dir, loadDir: val('ld') as Dir, signed: val('sg') === '1', source: val('src') as 'mill',
+      };
+      const r = reviewCert(i), [vt, vc, vn] = VERDICT[r.verdict];
+      rows.push({ dt: 'Verdict', dd: `${vt} <small>${r.bad} failed · ${r.warn} to query · ${r.findings.filter((x) => x.status === 'ok').length} correct</small>`, primary: true, cls: vc });
+      for (const x of r.findings) rows.push({ dt: x.item, dd: `<small>${x.text}</small>`, cls: x.status === 'ok' ? 'ok' : x.status === 'bad' ? 'bad' : x.status === 'warn' ? 'warn' : '' });
+      notes.push([vc === 'ok' ? '' : vc, vn]);
+      if (r.need) notes.push(['warn', 'The required certificate type is a requirement of your purchase order or programme. Enter it, or press “Load worked example”.']);
+      notes.push(['', 'A certificate is evidence only for the material that carries its heat or lot number. Keep the marking on every piece when stock is cut.']);
+      const bars: [string, number, number][] = [['UTS', i.uts, i.minUts], ['Yield', i.ys, i.minYs], ['Elong.', i.el, i.minEl]];
+      const hard = i.steel && Number.isFinite(i.hrc) && Number.isFinite(i.minUts) && i.minUts > 0 ? utsFromHrc(i.hrc) : NaN;
+      return () => {
+        const H = 200, W = frame(H), L = 56, R = 16, T = 18, B = 30;
+        const list = bars.filter(([, v, m]) => Number.isFinite(v) && m > 0);
+        if (Number.isFinite(hard)) list.push(['HRC → UTS', hard, i.minUts]);
+        const xMax = Math.max(1.3, ...list.map(([, v, m]) => (v / m) * 1.08));
+        const X = (q: number) => L + ((q - 0.6) / (xMax - 0.6)) * (W - L - R);
+        for (const q of [0.6, 0.8, 1, 1.2, 1.4, 1.6].filter((q) => q <= xMax)) { el('line', { x1: X(q), x2: X(q), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(q), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, `${Math.round(q * 100)}%`); }
+        const rowH = (H - T - B) / Math.max(1, list.length);
+        list.forEach(([n, v, m], k) => {
+          const q = v / m, y = T + k * rowH + rowH * 0.25, hgt = Math.min(18, rowH * 0.5), est = n.startsWith('HRC');
+          el('rect', { x: X(0.6), y, width: Math.max(0, X(Math.max(0.6, q)) - X(0.6)), height: hgt, fill: q >= 1 ? 'var(--rd-ok)' : 'var(--rd-accent)', 'fill-opacity': est ? 0.35 : 0.75 });
+          el('text', { x: L - 5, y: y + hgt - 4, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-ink)' }, n);
+        });
+        el('line', { x1: X(1), x2: X(1), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' });
+        txt(X(1) + 4, T - 4, 'minimum', 'var(--rd-ink)');
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'result ÷ minimum');
+      };
+    }
+
+    // ---- hardness and strength ----
+    function runHard(rows: Row[], notes: [string, string][]) {
+      const v = num('hv'), s = val('hs'), u = num('hu');
+      if (!(v > 0)) { notes.push(['bad', 'Enter a hardness.']); return null; }
+      const hrc = s === 'hrc' ? v : s === 'hv' ? hvToHrc(v) : hbToHrc(v);
+      const hv = hrcToHv(hrc), implied = utsFromHrc(hrc), inRange = hrc >= HRC_RANGE[0] && hrc <= HRC_RANGE[1];
+      rows.push({ dt: 'Tensile strength from hardness', dd: `≈ ${f(implied)} MPa <small>range ${f(implied * 0.9)}–${f(implied * 1.1)} MPa</small>`, primary: true, cls: inRange ? '' : 'warn' });
+      rows.push({ dt: 'Equivalent hardness', dd: `<small>${f(hrc, 1)} HRC · ${f(hv)} HV · ${Number.isFinite(hrcToHb(hrc)) ? `${f(hrcToHb(hrc))} HB` : 'HB not valid'}</small>` });
+      if (u > 0) {
+        const d = (u - implied) / u;
+        rows.push({ dt: 'Certificate UTS', dd: `${f(u)} MPa <small>${f(Math.abs(d) * 100, 0)}% ${d > 0 ? 'above' : 'below'} the value from hardness</small>`, cls: Math.abs(d) <= 0.1 ? 'ok' : 'warn' });
+        if (Math.abs(d) > 0.1) notes.push(['warn', `The hardness and the UTS do not agree within 10%. One of them is wrong, or they are from different material or different heat-treatment lots. Ask for the test records, or test again.`]);
+        else notes.push(['', 'The hardness and the UTS agree within the accuracy of the conversion.']);
+      }
+      if (!inRange) notes.push(['warn', `${f(hrc, 1)} HRC is outside the range of this conversion (${HRC_RANGE[0]}–${HRC_RANGE[1]} HRC).`]);
+      notes.push(['', 'Hardness is a check, not a replacement for a tensile test. It is a good test of each part after heat treatment, where a tensile test cannot be done.']);
+      return () => {
+        const H = 250, W = frame(H), L = 48, R = 14, T = 14, B = 32;
+        const x0 = 20, x1 = 60, y0 = 600, y1 = 2600;
+        const X = (h: number) => L + ((h - x0) / (x1 - x0)) * (W - L - R), Y = (s: number) => H - B - ((s - y0) / (y1 - y0)) * (H - T - B);
+        for (let h = 20; h <= 60; h += 10) { el('line', { x1: X(h), x2: X(h), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); el('text', { x: X(h), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(h)); }
+        for (let s2 = 1000; s2 <= 2500; s2 += 500) { el('line', { x1: L, x2: W - R, y1: Y(s2), y2: Y(s2), stroke: 'var(--rd-line)' }); el('text', { x: L - 4, y: Y(s2) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, String(s2)); }
+        const hs = Array.from({ length: 77 }, (_, k) => 20 + k * 0.5).filter((h) => h <= HRC_RANGE[1]);
+        el('polygon', { points: [...hs.map((h) => `${X(h).toFixed(1)},${Y(utsFromHrc(h) * 1.1).toFixed(1)}`), ...hs.slice().reverse().map((h) => `${X(h).toFixed(1)},${Y(utsFromHrc(h) * 0.9).toFixed(1)}`)].join(' '), fill: 'var(--rd-blue)', 'fill-opacity': 0.12 });
+        el('polyline', { points: hs.map((h) => `${X(h).toFixed(1)},${Y(utsFromHrc(h)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-blue)', 'stroke-width': 2.2 });
+        const hx = Math.min(x1, Math.max(x0, hrc));
+        el('line', { x1: X(hx), x2: X(hx), y1: T, y2: H - B, stroke: 'var(--rd-muted)', 'stroke-dasharray': '3 3' });
+        if (u > 0) {
+          const ok = Math.abs((u - implied) / u) <= 0.1;
+          el('circle', { cx: X(hx), cy: Y(Math.min(y1, Math.max(y0, u))), r: 5.5, fill: 'var(--rd-panel)', stroke: ok ? 'var(--rd-ok)' : 'var(--rd-accent)', 'stroke-width': 2.5 });
+          txt(X(hx) + (X(hx) > W - 110 ? -8 : 8), Y(Math.min(y1, Math.max(y0, u))) + 4, 'certificate', ok ? 'var(--rd-ok)' : 'var(--rd-accent)', X(hx) > W - 110 ? 'end' : 'start');
+        }
+        txt(L + 6, T + 10, 'UTS ≈ 3.3 HV, ±10% band', 'var(--rd-blue)');
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'hardness, HRC');
+        el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, 'UTS, MPa');
+      };
+    }
+
+    // ---- receiving sample ----
+    function runSamp(rows: Row[], notes: [string, string][]) {
+      const n = Math.round(num('n')), c = Math.round(num('c')), p = num('p') / 100, pc = num('pc') / 100, conf = readFactor(field('conf').value, 50);
+      if (!(n >= 1 && c >= 0 && c < n && p >= 0 && p <= 1)) { notes.push(['bad', 'Enter a sample size, an acceptance number smaller than it, and a defect rate.']); return null; }
+      const pa = accept(n, c, p), aql = rateAt(n, c, 0.95), ltpd = rateAt(n, c, 0.1);
+      rows.push({ dt: `Chance to accept a lot with ${f(100 * p, 2)}% defective`, dd: `${pct(pa)} <small>sample ${n}, accept with ${c} or fewer defective</small>`, primary: true });
+      rows.push({ dt: 'The plan', dd: `<small>accepts 95% of lots at ${pct(aql, 2)} defective (AQL) · rejects 90% of lots at ${pct(ltpd, 1)} defective (LTPD)</small>` });
+      if (conf === null) {
+        rows.push({ dt: `Sample to catch ${f(100 * pc, 1)}% defective`, dd: '<small>needs confidence</small>' });
+        notes.push(['warn', awaitingMessage(['confidence'], 'the sample size that catches that defect rate')]);
+      } else if (pc > 0 && pc < 1) {
+        const nz = zeroAcceptN(pc, conf / 100);
+        rows.push({ dt: `Sample to catch ${f(100 * pc, 1)}% defective`, dd: `${nz} <small>parts, zero defective accepted, ${f(conf, 0)}% confidence</small>`, cls: n >= nz && c === 0 ? 'ok' : '' });
+      }
+      notes.push(['', 'A sample that finds no defect does not show that the lot has none. It shows only that the lot is unlikely to have more than the LTPD.']);
+      if (c > 0) notes.push(['', 'For critical characteristics, use plans that accept only with zero defective (c = 0). A defect found in the sample rejects the lot, or starts 100% inspection.']);
+      return () => {
+        const H = 250, W = frame(H), L = 42, R = 14, T = 14, B = 32;
+        const pMax = Math.min(1, Math.max(ltpd * 1.6, p * 1.3, 0.02));
+        const X = (q: number) => L + (q / pMax) * (W - L - R), Y = (a: number) => H - B - a * (H - T - B);
+        const st = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2].find((s) => pMax / s <= 6)!;
+        for (let q = 0; q <= pMax + 1e-9; q += st) { el('line', { x1: X(q), x2: X(q), y1: T, y2: H - B, stroke: 'var(--rd-line)' }); if (q > 0) el('text', { x: X(q), y: H - B + 13, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, `${+(q * 100).toFixed(1)}%`); }
+        for (const a of [0, 0.1, 0.5, 0.95, 1]) { el('line', { x1: L, x2: W - R, y1: Y(a), y2: Y(a), stroke: 'var(--rd-line)', 'stroke-dasharray': a === 0.1 || a === 0.95 ? '4 3' : '' }); if (a < 1) el('text', { x: L - 4, y: Y(a) + 3, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, `${Math.round(a * 100)}%`); }
+        const qs = Array.from({ length: 120 }, (_, k) => (pMax * k) / 119);
+        el('polyline', { points: qs.map((q) => `${X(q).toFixed(1)},${Y(accept(n, c, q)).toFixed(1)}`).join(' '), fill: 'none', stroke: 'var(--rd-blue)', 'stroke-width': 2.4 });
+        el('circle', { cx: X(aql), cy: Y(0.95), r: 4, fill: 'var(--rd-ok)' });
+        el('circle', { cx: X(ltpd), cy: Y(0.1), r: 4, fill: 'var(--rd-accent)' });
+        txt(X(aql) + 6, Y(0.95) + 14, 'AQL', 'var(--rd-ok)');
+        txt(X(ltpd) + 6, Y(0.1) - 6, 'LTPD', 'var(--rd-accent)');
+        if (p <= pMax) { el('line', { x1: X(p), x2: X(p), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '3 3' }); el('circle', { cx: X(p), cy: Y(pa), r: 5, fill: 'var(--rd-panel)', stroke: 'var(--rd-ink)', 'stroke-width': 2 }); }
+        el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'defect rate in the lot');
+      };
+    }
+
+    const RUN: Record<string, typeof runCert> = { cert: runCert, hard: runHard, samp: runSamp };
+    const CAPS: Record<string, string> = {
+      cert: 'Each result as a fraction of its minimum. Pale bar: the strength implied by the hardness, for steels.',
+      hard: 'Approximate tensile strength of steel against Rockwell C hardness, with a ±10% band. The circle is the certificate.',
+      samp: 'Operating characteristic: the chance that the plan accepts a lot, against the defect rate in the lot. Circle: your lot.',
+    };
+    function run() {
+      const rows: Row[] = [], notes: [string, string][] = [];
+      draw = RUN[mode](rows, notes);
+      root.querySelector('[data-out]')!.innerHTML = rows.map((r) => `<div class="readout${r.primary ? ' primary' : ''}${r.cls ? ` ${r.cls}` : ''}"><dt>${r.dt}</dt><dd>${r.dd}</dd></div>`).join('');
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, x]) => `<li class="${c}">${x}</li>`).join('');
+      root.querySelector('[data-cap]')!.textContent = CAPS[mode];
+      if (draw) draw(); else svg.replaceChildren();
+    }
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string, focus = false) => {
+      mode = key;
+      tabs.forEach((b) => { const on = b.dataset.tab === key; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b, i) => {
+      b.tabIndex = i === 0 ? 0 : -1;
+      b.addEventListener('click', () => select(b.dataset.tab!));
+      b.addEventListener('keydown', (ev) => {
+        const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (d) { ev.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length].dataset.tab!, true); }
+      });
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (draw && Math.abs(nw - w) > 8) { w = nw; draw(); } }).observe(svg);
+    }
+    let timer = 0;
+    form.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 150); });
+    form.addEventListener('change', run);
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['req', 'conf'],
+      note: 'Worked-example requirements loaded: certificate type 3.1, 95% confidence',
+      values: { req: '3.1', sup: '3.1', sd: 'AMS 6431', sc: 'AMS6431', id: '', ic: '', cd: 'Hardened and double tempered', cc: 'hardened and double-tempered', hp: 'H 41872', hc: 'H41872',
+        mu: '1520', u: '1586', my: '1450', y: '1475', me: '8', e: '9', h: '43', st: '1', td: 'L', ld: 'ST', sg: '1', src: 'distributor-with-mill',
+        hv: '43', hs: 'hrc', hu: '1586', n: '13', c: '0', p: '1', pc: '5', conf: '95' },
+    });
+    run();
+  });
+</script>

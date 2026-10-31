@@ -1,0 +1,52 @@
+---
+// The traceability chain from the melt to the motor: each step, the identity it carries, and the document that links it.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', blue = 'var(--rd-blue)', ok = 'var(--rd-ok)', accent = 'var(--rd-accent)';
+const steps = [
+  ['Melt', 'heat 41872', ['producer certificate:', 'chemistry, melt practice']],
+  ['Bar, plate, billet', 'heat 41872', ['producer certificate:', 'properties as delivered']],
+  ['Distributor cuts it', 'heat on each piece', ['distributor certificate', '+ producer certificate']],
+  ['Forge and machine', 'work order, part no.', ['router: each operation', 'signed and dated']],
+  ['Heat treatment', 'furnace load 2291', ['heat-treatment cert,', 'furnace chart, coupons']],
+  ['Inspection and NDT', 'serial number 017', ['NDT and dimensional', 'reports, FAI']],
+  ['Motor assembly', 'motor serial 004', ['build record: which', 'serials in which motor']],
+] as const;
+const top = 34, rowH = 50, bx = 26, bw = 138, dx = 172, dw = 158;
+---
+
+<figure class="viz tracechain">
+  <p class="viz-title">One chain, from the melt to the motor</p>
+  <svg viewBox="0 0 360 400" role="img" aria-labelledby="tracechain-desc" style="max-width: 520px; margin: 0 auto;">
+    <desc id="tracechain-desc">
+      Seven steps from top to bottom: melt, mill product, distributor, forging and machining, heat treatment, inspection
+      and NDT, and motor assembly. Each step carries an identity (heat number, work order, furnace load, serial number)
+      and has a document that links it to the step before. Tracing back goes from the motor to the melt; tracing forward
+      goes from a bad heat to every motor that contains it.
+    </desc>
+    <defs>
+      <marker id="tc-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path></marker>
+    </defs>
+    <text x={bx + bw / 2} y="20" text-anchor="middle" font-size="11" fill={muted}>step and identity</text>
+    <text x={dx + dw / 2} y="20" text-anchor="middle" font-size="11" fill={muted}>document that links it</text>
+    {steps.map(([n, id, doc], k) => (
+      <g>
+        <rect x={bx} y={top + k * rowH} width={bw} height="36" rx="5" fill="var(--rd-panel)" stroke={ink} stroke-width="1"></rect>
+        <text x={bx + 8} y={top + k * rowH + 15} font-size="11.5" fill={ink}>{n}</text>
+        <text x={bx + 8} y={top + k * rowH + 29} font-size="10" fill={blue}>{id}</text>
+        <line x1={bx + bw} y1={top + k * rowH + 18} x2={dx - 2} y2={top + k * rowH + 18} stroke={muted} stroke-dasharray="2 2"></line>
+        <text x={dx} y={top + k * rowH + 15} font-size="10" fill={muted}>{doc[0]}</text>
+        <text x={dx} y={top + k * rowH + 29} font-size="10" fill={muted}>{doc[1]}</text>
+        {k < steps.length - 1 && <line x1={bx + bw / 2} y1={top + k * rowH + 36} x2={bx + bw / 2} y2={top + (k + 1) * rowH - 1} stroke={ink} stroke-width="1.2" marker-end="url(#tc-arr)"></line>}
+      </g>
+    ))}
+    <line x1="19" y1={top + 6 * rowH + 30} x2="19" y2={top + 4} stroke={ok} stroke-width="2" marker-end="url(#tc-arr)"></line>
+    <text x="10" y={top + 3 * rowH + 18} text-anchor="middle" font-size="10" fill={ok} transform={`rotate(-90 10 ${top + 3 * rowH + 18})`}>trace back</text>
+    <line x1="333" y1={top + 4} x2="333" y2={top + 6 * rowH + 30} stroke={accent} stroke-width="2" marker-end="url(#tc-arr)"></line>
+    <text x="344" y={top + 3 * rowH + 18} text-anchor="middle" font-size="10" fill={accent} transform={`rotate(90 344 ${top + 3 * rowH + 18})`}>trace forward</text>
+  </svg>
+  <figcaption>
+    Tracing back answers "what is this part made of, and how was it processed?". Tracing forward answers "this heat is
+    bad: which motors contain it?". Each identity must be on the material or the part at each step, and each document
+    must give the identity before and after the step. One break, such as an offcut without its heat number, breaks the
+    chain for everything after it.
+  </figcaption>
+</figure>
