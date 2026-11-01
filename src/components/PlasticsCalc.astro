@@ -1,0 +1,275 @@
+---
+// Plastics in two tabs: a screen of the 37 polymers against the service requirements (with a range chart and a card for
+// each polymer), and a plastic part fitted to a metal part across the service window. Logic in src/lib/plastics.ts and
+// src/lib/expansion.ts (unit-tested); UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { POLYMERS, FAMS } from '../lib/plastics';
+import { EXP_MATERIALS } from '../lib/expansion';
+import { MATERIALS, slug } from '../lib/materials';
+
+const METALS = EXP_MATERIALS.filter((m) => MATERIALS.find((x) => x.key === m.key)?.kind === 'metal');
+const METAL_DATA = Object.fromEntries(METALS.map((m) => [m.key, { name: m.name, E: m.E, nu: m.nu, alpha: m.alpha }]));
+const RIGID = POLYMERS.filter((p) => p.E && p.cte);
+const AL6061 = slug('Al 6061-T6');
+const TABS = [{ key: 'select', name: 'Select' }, { key: 'fit', name: 'In a metal part' }];
+---
+
+<div class="calc plcalc" data-plcalc>
+  <div class="calc-head"><span>Plastics: selection and fit</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Service window</legend>
+        <div class="row2">
+          <label>Coldest (°C)<input name="tmin" type="number" step="1" placeholder="programme value" /></label>
+          <label>Hottest (°C)<input name="tmax" type="number" step="1" placeholder="programme value" /></label>
+        </div>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="select">
+        <legend>Requirements</legend>
+        <div class="row2">
+          <label>Water absorption, at most<select name="wabs"><option value="">Any</option><option value="0.1">0.1%</option><option value="0.3">0.3%</option><option value="0.5">0.5%</option><option value="1">1%</option></select></label>
+          <label>Vacuum outgassing<select name="outgas"><option value="any">Any</option><option value="low">Low (screen, then ASTM E595)</option></select></label>
+          <label>Ionising radiation<select name="rad"><option value="any">Any</option><option value="good">Good or excellent</option></select></label>
+          <label>Friction on steel, at most<select name="cof"><option value="">Any</option><option value="0.2">0.20</option><option value="0.3">0.30</option></select></label>
+          <label>Family<select name="fam"><option value="all">All</option>{FAMS.map((f) => <option value={f.key}>{f.name}</option>)}</select></label>
+          <label>Search<input name="q" type="search" placeholder="acronym, name or trade name" autocomplete="off" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="fit" hidden>
+        <legend>The parts</legend>
+        <div class="or-seg pl-seg" role="radiogroup" aria-label="Arrangement">
+          <label><input type="radio" name="arr" value="bush" checked /><span>Plastic bush in a metal bore</span></label>
+          <label><input type="radio" name="arr" value="ring" /><span>Plastic ring on a metal shaft</span></label>
+        </div>
+        <div class="row2">
+          <label>Plastic<select name="poly">{RIGID.map((p) => <option value={p.a} selected={p.a === 'PEEK'}>{p.a}: {p.name}</option>)}</select></label>
+          <label>Metal<MaterialSelect name="metal" list={METALS} selected={AL6061} /></label>
+          <label>Interface diameter d (mm)<input name="d" type="number" step="any" min="0" value="30" /></label>
+          <label data-dlabel>Outer diameter of the housing D (mm)<input name="D" type="number" step="any" min="0" value="50" /></label>
+          <label data-dilabel>Bore of the bush (mm)<input name="di" type="number" step="any" min="0" value="25" /></label>
+          <label>Fit at 20 °C (mm)<input name="fit0" type="number" step="0.005" value="0.05" /></label>
+        </div>
+        <p class="hint">Fit: positive is interference, negative is clearance, on the diameter. Typical unfilled plastic values at room temperature, ν = 0.4.</p>
+      </fieldset>
+    </form>
+    <div class="pl-out">
+      <dl class="readouts" data-out></dl>
+      <div data-vis></div>
+      <div data-detail></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-metals set:html={JSON.stringify(METAL_DATA)}></script>
+  <div class="calc-foot">
+    Data: REF·DB v1 plastics reference. Service temperatures are continuous-service guides, not limits under load.
+    Outgassing and radiation ratings are indicative: verify the compound against ASTM E595 data. The fit uses free
+    expansion and Lamé thick cylinders (src/lib/expansion.ts), with room-temperature moduli and no creep or relaxation.
+  </div>
+</div>
+
+<style is:global>
+  .plcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .plcalc .calc-body > * { min-width: 0; }
+  .pl-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; min-width: 0; }
+  .pl-out > * { margin: 0 !important; min-width: 0; }
+  .pl-h { font: 600 0.7rem var(--sl-font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--rd-ink); margin: 0 0 0.4rem !important; }
+  .pl-chart { width: 100%; height: auto; display: block; }
+  .pl-chart .row { cursor: pointer; }
+  .pl-chart .row:hover rect.hit { fill: color-mix(in srgb, var(--rd-ink) 6%, transparent); }
+  .pl-scroll { overflow-x: auto; }
+  .pl-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); }
+  .pl-table th, .pl-table td { text-align: left; padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--rd-line); white-space: nowrap; }
+  .pl-table td.why { white-space: normal; color: var(--rd-muted); }
+  .pl-table tr { cursor: pointer; }
+  .pl-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .pl-table tr.fail td:first-child { opacity: 0.6; }
+  .pl-ok { color: var(--rd-ok); font-weight: 700; }
+  .pl-card { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-accent); border-radius: 6px; padding: 0.6rem 0.8rem; background: var(--rd-panel2); font-size: var(--sl-text-sm); }
+  .pl-card > * { margin: 0 !important; }
+  .pl-card h4 { font: 700 1rem var(--sl-font-mono); color: var(--rd-ink); }
+  .pl-card h4 small { font: 400 var(--sl-text-xs) var(--sl-font-system, system-ui); color: var(--rd-muted); margin-left: 0.4rem; }
+  .pl-card .alt { color: var(--rd-muted); font-size: var(--sl-text-xs); margin-top: 0.15rem !important; }
+  .pl-card .app { margin-top: 0.4rem !important; color: var(--rd-ink); }
+  .pl-gb { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.4rem 1rem; margin-top: 0.5rem !important; }
+  .pl-gb > * { margin: 0 !important; }
+  .pl-gb ul { margin: 0.2rem 0 0 !important; padding-left: 1.1rem; color: var(--rd-muted); font-size: var(--sl-text-xs); }
+  .pl-gb li { margin: 0.1rem 0 0 !important; }
+  .pl-gb b { font-size: var(--sl-text-xs); letter-spacing: 0.06em; text-transform: uppercase; }
+  .pl-gb .g b { color: var(--rd-ok); }
+  .pl-gb .w b { color: var(--rd-accent); }
+  .pl-props { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin-top: 0.45rem !important; font-family: var(--sl-font-mono); font-size: 0.72rem; color: var(--rd-muted); }
+  .pl-props > * { margin: 0 !important; }
+  .pl-props b { color: var(--rd-ink); }
+  .plcalc .or-seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--rd-line); border-radius: 6px; overflow: hidden; margin-bottom: 0.6rem; }
+  .plcalc .or-seg label { margin: 0 !important; position: relative; }
+  .plcalc .or-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .plcalc .or-seg span { display: block; text-align: center; padding: 0.4rem 0.3rem; font-size: var(--sl-text-xs); color: var(--rd-muted); cursor: pointer; border-right: 1px solid var(--rd-line); }
+  .plcalc .or-seg label:last-child span { border-right: 0; }
+  .plcalc .or-seg input:checked + span { background: color-mix(in srgb, var(--rd-accent) 16%, transparent); color: var(--rd-ink); font-weight: 600; }
+  .plcalc .or-seg input:focus-visible + span { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+</style>
+
+<script>
+  import { POLYMERS, FAMS, polymer, screen, tgInWindow, fitAt, fitSweep, type Req, type FitInput, type Polymer } from '../lib/plastics';
+  import { wireWorkedExample } from '../lib/factors';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const NS = 'http://www.w3.org/2000/svg';
+  const famName = (k: string) => FAMS.find((f) => f.key === k)?.name ?? k;
+  const f3 = (v: number) => (Math.abs(v) < 0.0005 ? '0.000' : v.toFixed(3));
+
+  document.querySelectorAll<HTMLElement>('[data-plcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => (form.elements.namedItem(n) as RadioNodeList | HTMLInputElement).value;
+    const num = (n: string) => (val(n).trim() === '' ? undefined : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const METALS: Record<string, { name: string; E: number; nu: number; alpha: number }> = JSON.parse($('[data-metals]').textContent!);
+    let mode = 'select', picked = 'PEEK';
+    const width = () => Math.round(Math.min(720, Math.max(260, $('[data-vis]').clientWidth || 600)));
+
+    const req = (): Req => ({ tmin: num('tmin'), tmax: num('tmax'), maxWabs: num('wabs'), outgas: val('outgas') as Req['outgas'], rad: val('rad') as Req['rad'], maxCof: num('cof') });
+
+    function card(p: Polymer, r: Req) {
+      const fails = screen(p, r);
+      return `<div class="pl-card"><h4>${esc(p.a)}<small>${esc(p.name)} · ${famName(p.fam)}</small></h4><p class="alt">Also sold as ${esc(p.alt)}</p>
+        <div class="pl-props"><span>service <b>${p.tmin} to ${p.tmax} °C</b></span><span>Tg <b>${p.tg} °C</b></span><span>water <b>${p.wabs}%</b></span><span>μ <b>${p.cof}</b></span><span>outgassing <b>${p.outgas}</b></span><span>radiation <b>${p.rad}</b></span>${p.E ? `<span>E <b>${p.E} GPa</b></span><span>α <b>${p.cte} µm/m·K</b></span>` : ''}</div>
+        <p class="app">${esc(p.app)}</p>
+        <div class="pl-gb"><div class="g"><b>Good at</b><ul>${p.good.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div><div class="w"><b>Bad at</b><ul>${p.bad.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div></div>
+        ${fails.length ? `<p class="alt" style="color:var(--rd-accent);margin-top:0.4rem !important">Fails this screen: ${esc(fails.join('; '))}</p>` : ''}</div>`;
+    }
+
+    function rangeChart(list: { p: Polymer; fails: string[] }[], r: Req) {
+      const W = width(), L = 70, R = 14, row = 15, top = 22, H = top + list.length * row + 24, lo = -100, hi = 320;
+      const X = (t: number) => L + ((Math.max(lo, Math.min(hi, t)) - lo) / (hi - lo)) * (W - L - R);
+      const s: string[] = [];
+      if (r.tmin !== undefined && r.tmax !== undefined) s.push(`<rect x="${X(r.tmin)}" y="${top - 6}" width="${Math.max(1, X(r.tmax) - X(r.tmin))}" height="${list.length * row + 8}" fill="var(--rd-accent)" fill-opacity="0.1" stroke="var(--rd-accent)" stroke-dasharray="4 3"/><text x="${(X(r.tmin) + X(r.tmax)) / 2}" y="${top - 9}" text-anchor="middle" font-size="10" fill="var(--rd-accent)">required ${r.tmin} to ${r.tmax} °C</text>`);
+      for (let t = -100; t <= 300; t += 100) s.push(`<line x1="${X(t)}" x2="${X(t)}" y1="${top - 4}" y2="${top + list.length * row}" stroke="var(--rd-line)"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t} °C</text>`);
+      list.forEach(({ p, fails }, i) => {
+        const y = top + i * row, ok = !fails.length, c = ok ? 'var(--rd-ok)' : 'var(--rd-muted)', sel = p.a === picked;
+        s.push(`<g class="row" data-a="${esc(p.a)}"><title>${esc(p.a)}: ${p.tmin} to ${p.tmax} °C, Tg ${p.tg} °C${fails.length ? `. ${esc(fails.join('; '))}` : ''}</title><rect class="hit" x="0" y="${y}" width="${W}" height="${row}" fill="${sel ? 'color-mix(in srgb, var(--rd-accent) 14%, transparent)' : 'transparent'}"/>
+          <text x="${L - 6}" y="${y + 11}" text-anchor="end" font-size="10.5" font-family="var(--sl-font-mono)" fill="${ok ? 'var(--rd-ink)' : 'var(--rd-muted)'}" font-weight="${sel ? 700 : 400}">${esc(p.a)}</text>
+          <rect x="${X(p.tmin)}" y="${y + 3}" width="${Math.max(1, X(p.tmax) - X(p.tmin))}" height="${row - 6}" rx="2" fill="${c}" fill-opacity="${ok ? 0.45 : 0.18}"/>
+          ${p.tmin < lo ? `<text x="${X(lo) + 2}" y="${y + 11}" font-size="9" fill="var(--rd-ink)">◂</text>` : ''}
+          ${p.tg > lo && p.tg < hi ? `<line x1="${X(p.tg)}" x2="${X(p.tg)}" y1="${y + 1}" y2="${y + row - 1}" stroke="var(--rd-ink)" stroke-width="2"/>` : ''}</g>`);
+      });
+      return `<svg class="pl-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Service temperature ranges">${s.join('')}</svg>`;
+    }
+
+    function runSelect() {
+      const r = req(), fam = val('fam'), q = val('q').trim().toLowerCase();
+      const shown = POLYMERS.filter((p) => (fam === 'all' || p.fam === fam) && (!q || `${p.a} ${p.name} ${p.alt} ${p.app}`.toLowerCase().includes(q)))
+        .map((p) => ({ p, fails: screen(p, r) }))
+        .sort((a, b) => (a.fails.length ? 1 : 0) - (b.fails.length ? 1 : 0) || b.p.tmax - a.p.tmax);
+      const pass = shown.filter((x) => !x.fails.length);
+      if (!shown.some((x) => x.p.a === picked) && shown.length) picked = shown[0].p.a;
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${pass.length ? 'ok' : 'bad'}"><dt>Pass the screen</dt><dd>${pass.length} of ${shown.length} <small>${pass.slice(0, 6).map((x) => x.p.a).join(', ')}${pass.length > 6 ? '…' : ''}</small></dd></div>
+        <div class="readout ${r.tmin === undefined || r.tmax === undefined ? 'warn' : ''}"><dt>Service window</dt><dd>${r.tmin ?? '?'} to ${r.tmax ?? '?'} °C <small>${r.tmin === undefined || r.tmax === undefined ? 'enter the programme window' : 'continuous service'}</small></dd></div>`;
+      $('[data-vis]').innerHTML = shown.length ? `<p class="pl-h">Service range and Tg (│). Select a row</p>${rangeChart(shown, r)}
+        <div class="pl-scroll"><table class="pl-table"><thead><tr><th>Polymer</th><th>°C</th><th>Tg</th><th>H₂O %</th><th>μ</th><th>Outgas</th><th>Result</th></tr></thead><tbody>${shown.map(({ p, fails }) => `<tr data-a="${esc(p.a)}" class="${fails.length ? 'fail' : ''} ${p.a === picked ? 'sel' : ''}"><td><b>${esc(p.a)}</b></td><td>${p.tmin} to ${p.tmax}</td><td>${p.tg}</td><td>${p.wabs}</td><td>${p.cof}</td><td>${p.outgas}</td><td class="why">${fails.length ? esc(fails.join('; ')) : '<span class="pl-ok">pass</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="pl-h">No polymer matches the search.</p>';
+      const p = polymer(picked);
+      $('[data-detail]').innerHTML = p ? card(p, r) : '';
+      const notes: [string, string][] = [];
+      if (p && tgInWindow(p, r)) notes.push(['warn', `${p.a}: Tg ${p.tg} °C is inside the service window. Its stiffness and creep change a lot across Tg.`]);
+      if (r.tmin !== undefined && r.tmin < 0) notes.push(['warn', 'The cold end stops more seals than the hot end. Below Tg a polymer is hard and brittle, with almost no elastic recovery.']);
+      if (r.outgas === 'low') notes.push(['', 'Outgassing ratings are a screen. Check the actual compound and cure against ASTM E595 (TML 1.0%, CVCM 0.10%) in the NASA outgassing database.']);
+      notes.push(['', 'Service temperatures are continuous-service guides. Under sustained load, use creep data at temperature: the creep rate rises steeply near the limit.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function fitChart(f: FitInput, lo: number, hi: number, r: Req) {
+      const W = width(), H = 210, L = 52, R = 14, T = 14, B = 30, pts = fitSweep(f, lo, hi, 60);
+      const ys = pts.map((x) => x.delta * 1000), ymin = Math.min(0, ...ys) - 10, ymax = Math.max(0, ...ys) + 10;
+      const X = (t: number) => L + ((t - lo) / (hi - lo)) * (W - L - R), Y = (v: number) => T + ((ymax - v) / (ymax - ymin)) * (H - T - B);
+      const s: string[] = [`<rect x="${L}" y="${Y(0)}" width="${W - L - R}" height="${Math.max(0, Y(ymin) - Y(0))}" fill="var(--rd-accent)" fill-opacity="0.1"/><text x="${W - R - 4}" y="${Y(0) + 13}" text-anchor="end" font-size="10" fill="var(--rd-accent)">clearance: ${f.arrangement === 'bush' ? 'the bush is loose' : 'the ring is loose'}</text>`,
+        `<line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--rd-muted)"/>`];
+      if (r.tmin !== undefined && r.tmax !== undefined) s.push(`<rect x="${X(r.tmin)}" y="${T}" width="${X(r.tmax) - X(r.tmin)}" height="${H - T - B}" fill="var(--rd-ink)" fill-opacity="0.05" stroke="var(--rd-line)" stroke-dasharray="4 3"/>`);
+      const step = (hi - lo) > 200 ? 50 : 20;
+      for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) s.push(`<text x="${X(t)}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t}</text>`);
+      const yStep = (ymax - ymin) > 300 ? 100 : (ymax - ymin) > 120 ? 50 : 20;
+      for (let v = Math.ceil(ymin / yStep) * yStep; v <= ymax; v += yStep) s.push(`<line x1="${L - 4}" x2="${L}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-muted)"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      s.push(`<text x="${L}" y="${H - 1}" font-size="10" fill="var(--rd-muted)">°C</text><text x="4" y="${T + 4}" font-size="10" fill="var(--rd-muted)">µm</text>`);
+      s.push(`<polyline fill="none" stroke="var(--rd-ink)" stroke-width="2.2" points="${pts.map((x) => `${X(x.T).toFixed(1)},${Y(x.delta * 1000).toFixed(1)}`).join(' ')}"/>`);
+      for (const t of [lo, 20, hi]) {
+        if (t < lo || t > hi) continue;
+        const v = fitAt(f, t).delta * 1000;
+        s.push(`<circle cx="${X(t)}" cy="${Y(v)}" r="4" fill="${v >= 0 ? 'var(--rd-ok)' : 'var(--rd-accent)'}"/><text x="${X(t) + (t === hi ? -6 : 6)}" y="${Y(v) - 7}" text-anchor="${t === hi ? 'end' : 'start'}" font-size="10.5" fill="var(--rd-ink)">${v >= 0 ? '+' : ''}${v.toFixed(0)} µm</text>`);
+      }
+      return `<svg class="pl-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Fit against temperature">${s.join('')}</svg>`;
+    }
+
+    function runFit() {
+      const p = polymer(val('poly'))!, m = METALS[val('metal')], r = req(), bush = val('arr') === 'bush';
+      $('[data-dlabel]').firstChild!.textContent = bush ? 'Outer diameter of the housing D (mm)' : 'Outer diameter of the ring D (mm)';
+      $('[data-dilabel]').firstChild!.textContent = bush ? 'Bore of the bush (mm)' : 'Bore of the shaft (mm, 0 if solid)';
+      const f: FitInput = { arrangement: bush ? 'bush' : 'ring', d: +val('d'), D: +val('D'), di: +val('di') || 0, fit0: +val('fit0'), Ep: p.E! * 1000, nuP: 0.4, alphaP: p.cte! * 1e-6, Em: m.E, nuM: m.nu, alphaM: m.alpha };
+      const geomOk = f.d > 0 && f.D > f.d && f.di >= 0 && f.di < f.d && Number.isFinite(f.fit0);
+      if (!geomOk) { $('[data-out]').innerHTML = '<div class="readout bad"><dt>Geometry</dt><dd>Check the diameters <small>d &gt; bore, and D &gt; d</small></dd></div>'; $('[data-vis]').innerHTML = ''; $('[data-detail]').innerHTML = ''; $('[data-notes]').innerHTML = ''; return; }
+      const win = r.tmin !== undefined && r.tmax !== undefined && r.tmax > r.tmin;
+      const lo = win ? r.tmin! : p.tmin, hi = win ? r.tmax! : p.tmax;
+      const cold = fitAt(f, lo), room = fitAt(f, 20), hot = fitAt(f, hi);
+      const fitTxt = (x: { delta: number }) => `${x.delta >= 0 ? 'interference' : 'clearance'} ${f3(Math.abs(x.delta))} mm`;
+      const worst = cold.delta < hot.delta ? cold : hot, loose = worst.delta < 0;
+      const maxHoop = Math.max(Math.abs(cold.hoopPlastic), Math.abs(hot.hoopPlastic), Math.abs(room.hoopPlastic));
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${loose ? 'bad' : 'ok'}"><dt>Loosest, at ${worst.T} °C</dt><dd>${f3(worst.delta)} mm <small>${fitTxt(worst)}${loose ? `: the ${bush ? 'bush' : 'ring'} is loose` : ''}</small></dd></div>
+        <div class="readout"><dt>Tightest, at ${(cold.delta > hot.delta ? cold : hot).T} °C</dt><dd>${f3(Math.max(cold.delta, hot.delta))} mm <small>contact pressure ${Math.max(cold.p, hot.p).toFixed(1)} MPa</small></dd></div>
+        ${bush && f.di > 0 ? `<div class="readout warn"><dt>Bore closure</dt><dd>${f3(room.closure)} mm <small>at 20 °C · ${f3(Math.max(cold.closure, hot.closure))} mm at the tight end</small></dd></div>` : ''}
+        <div class="readout"><dt>Hoop stress in the plastic</dt><dd>${maxHoop.toFixed(1)} MPa <small>${bush ? 'compression' : 'tension'}, before creep and relaxation</small></dd></div>`;
+      const others = POLYMERS.filter((x) => x.E && x.cte && (!win || !screen(x, { tmin: lo, tmax: hi }).length))
+        .map((x) => { const g = { ...f, Ep: x.E! * 1000, alphaP: x.cte! * 1e-6 }; return { a: x.a, worst: Math.min(fitAt(g, lo).delta, fitAt(g, hi).delta) }; })
+        .sort((a, b) => b.worst - a.worst);
+      $('[data-vis]').innerHTML = `<p class="pl-h">Fit against temperature: ${esc(p.a)} ${bush ? 'bush in' : 'ring on'} ${esc(m.name)}${win ? '' : ` (rated range of ${esc(p.a)}: enter the service window)`}</p>${fitChart(f, lo, hi, r)}
+        <p class="pl-h" style="margin-top:0.9rem !important">The same part in other plastics${win ? ' rated for the window' : ''}: fit at the loose end (µm)</p>
+        <div class="pl-scroll"><table class="pl-table"><tbody>${others.slice(0, 10).map((o) => `<tr data-poly="${esc(o.a)}" class="${o.a === p.a ? 'sel' : ''}"><td><b>${esc(o.a)}</b></td><td style="color:${o.worst >= 0 ? 'var(--rd-ok)' : 'var(--rd-accent)'}">${o.worst >= 0 ? '+' : ''}${(o.worst * 1000).toFixed(0)}</td><td class="why">${o.worst >= 0 ? 'stays tight' : 'goes loose'}</td></tr>`).join('')}</tbody></table></div>`;
+      $('[data-detail]').innerHTML = '';
+      const notes: [string, string][] = [];
+      if (loose) notes.push(['bad', `At ${worst.T} °C the ${bush ? 'bush' : 'ring'} has clearance. Retain it mechanically (a shoulder and a retaining ring), choose a plastic with lower expansion, or add interference: but more interference raises the stress at the other end.`]);
+      if (bush && f.di > 0) notes.push(['warn', `The bush bore closes by about the interference when pressed in (${f3(room.closure)} mm here). Machine the bore after pressing, or size it for the closure, and check the running clearance at the tight end.`]);
+      if (win && screen(p, { tmin: lo, tmax: hi }).length) notes.push(['bad', `${p.a} is not rated for ${lo} to ${hi} °C: ${screen(p, { tmin: lo, tmax: hi }).join('; ')}.`]);
+      if (win && tgInWindow(p, r)) notes.push(['warn', `Tg ${p.tg} °C is inside the window: the modulus falls a lot above it, and so does the contact pressure.`]);
+      if (p.a === 'PTFE' || p.a === 'PFA/FEP') notes.push(['warn', 'PTFE has a crystal transition near 19 °C with a step in volume of about 1%. Its expansion is not linear around room temperature.']);
+      notes.push(['', 'A plastic held at constant strain relaxes. The pressure you press in today falls over months, faster when hot. Do not rely on an interference fit alone to carry load.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    const run = () => (mode === 'select' ? runSelect() : runFit());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    // Select a polymer from the chart or the table; in the fit tab, try another plastic from the comparison.
+    root.addEventListener('click', (e) => {
+      const el = (e.target as Element).closest<HTMLElement | SVGElement>('[data-a], [data-poly]');
+      if (!el) return;
+      if (el.dataset.poly) { const opt = (field('poly') as HTMLSelectElement); opt.value = el.dataset.poly; run(); return; }
+      picked = el.dataset.a!;
+      const p = polymer(picked);
+      if (p?.E) (field('poly') as HTMLSelectElement).value = p.a;
+      run();
+    });
+    window.addEventListener('resize', () => run());
+
+    // The worked example: a guide bush in a 6061 bracket of the motor handling fixture.
+    wireWorkedExample({
+      root,
+      values: { tmin: '-54', tmax: '71', wabs: '0.3', outgas: 'low', rad: 'any', cof: '', fam: 'all', q: '', poly: 'PEEK', metal: 'al-6061-t6', d: '30', D: '50', di: '25', fit0: '0.05' },
+      factorFields: ['tmin', 'tmax'],
+      note: 'Worked example: a service window of −54 to +71 °C, for this example only',
+      onLoad: () => { picked = 'PEEK'; (form.querySelector<HTMLInputElement>('input[name=arr][value=bush]')!).checked = true; run(); },
+    });
+    run();
+  });
+</script>

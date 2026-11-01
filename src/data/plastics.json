@@ -1,0 +1,1013 @@
+{
+ "source": "REF·DB v1 plastics reference; E and CTE typical unfilled values at room temperature",
+ "polymers": [
+  {
+   "a": "ABS",
+   "name": "Acrylonitrile butadiene styrene",
+   "alt": "Cycolac, Novodur, Terluran",
+   "fam": "commodity",
+   "tmax": 80,
+   "tmin": -20,
+   "tg": 105,
+   "wabs": 0.3,
+   "cof": 0.35,
+   "outgas": "moderate",
+   "rad": "fair",
+   "E": 2.3,
+   "cte": 90,
+   "app": "Housings, enclosures, FDM prototypes, trim, tool handles.",
+   "good": [
+    "Tough and impact resistant at room temperature",
+    "Easy to machine, glue (solvent weld) and paint",
+    "Cheap and universally stocked",
+    "Good dimensional stability for a commodity plastic"
+   ],
+   "bad": [
+    "Poor UV resistance: yellows and embrittles outdoors (use ASA)",
+    "Attacked by many solvents, esters and ketones",
+    "Low service temperature",
+    "Not for structural or hot applications"
+   ]
+  },
+  {
+   "a": "ASA",
+   "name": "Acrylonitrile styrene acrylate",
+   "alt": "Luran S, Geloy",
+   "fam": "commodity",
+   "tmax": 85,
+   "tmin": -20,
+   "tg": 105,
+   "wabs": 0.3,
+   "cof": 0.35,
+   "outgas": "moderate",
+   "rad": "fair",
+   "E": 2.3,
+   "cte": 95,
+   "app": "Outdoor housings, antenna covers, external trim, UV-exposed prototypes.",
+   "good": [
+    "Essentially ABS with genuine UV and weather resistance",
+    "Retains colour and impact strength outdoors",
+    "Machines and bonds like ABS"
+   ],
+   "bad": [
+    "More expensive than ABS",
+    "Still low temperature capability",
+    "Same solvent sensitivities"
+   ]
+  },
+  {
+   "a": "PC",
+   "name": "Polycarbonate",
+   "alt": "Lexan, Makrolon, Hyzod",
+   "fam": "commodity",
+   "tmax": 115,
+   "tmin": -40,
+   "tg": 147,
+   "wabs": 0.15,
+   "cof": 0.31,
+   "outgas": "low",
+   "rad": "good",
+   "E": 2.4,
+   "cte": 68,
+   "app": "Machine guards, canopies, light covers, impact shields, sight windows.",
+   "good": [
+    "Outstanding impact strength: effectively unbreakable in sheet",
+    "Transparent, and available flame-retardant",
+    "Good temperature range for a commodity polymer",
+    "Thermoformable"
+   ],
+   "bad": [
+    "Notch-sensitive: a sharp internal corner destroys its impact performance",
+    "Poor chemical resistance: cracks with many solvents and some threadlockers",
+    "Scratches easily unless hard-coated",
+    "Must be dried before moulding or it degrades"
+   ]
+  },
+  {
+   "a": "PMMA",
+   "name": "Poly(methyl methacrylate)",
+   "alt": "Acrylic, Perspex, Plexiglas, Lucite",
+   "fam": "commodity",
+   "tmax": 80,
+   "tmin": -40,
+   "tg": 105,
+   "wabs": 0.3,
+   "cof": 0.45,
+   "outgas": "moderate",
+   "rad": "poor",
+   "E": 3.1,
+   "cte": 70,
+   "app": "Windows, guards, light pipes, display panels, laser-cut fixtures.",
+   "good": [
+    "Best optical clarity of the common plastics",
+    "Excellent UV and weather resistance",
+    "Laser cuts and polishes beautifully",
+    "Cheaper than PC"
+   ],
+   "bad": [
+    "Brittle: cracks rather than deforms",
+    "Crazes badly under stress with solvents and some cleaners",
+    "Low temperature capability",
+    "Poor fatigue resistance"
+   ]
+  },
+  {
+   "a": "PP",
+   "name": "Polypropylene",
+   "alt": "Polyprop, Moplen",
+   "fam": "commodity",
+   "tmax": 100,
+   "tmin": -10,
+   "tg": -10,
+   "wabs": 0.02,
+   "cof": 0.3,
+   "outgas": "low",
+   "rad": "poor",
+   "E": 1.5,
+   "cte": 150,
+   "app": "Chemical tanks, ducting, living hinges, labware, fluid handling.",
+   "good": [
+    "Superb chemical resistance including acids and alkalis",
+    "Genuine fatigue resistance: the living-hinge polymer",
+    "Very low density (floats)",
+    "Low cost"
+   ],
+   "bad": [
+    "Almost impossible to bond: needs flame or plasma treatment",
+    "Poor UV resistance unless stabilised",
+    "Creeps under sustained load",
+    "High thermal expansion; poor dimensional stability"
+   ]
+  },
+  {
+   "a": "HDPE",
+   "name": "High-density polyethylene",
+   "alt": "Polythene, Alkathene",
+   "fam": "commodity",
+   "tmax": 80,
+   "tmin": -50,
+   "tg": -110,
+   "wabs": 0.01,
+   "cof": 0.29,
+   "outgas": "low",
+   "rad": "fair",
+   "E": 1,
+   "cte": 120,
+   "app": "Tanks, chute liners, cutting boards, jig bases, chemical pipework.",
+   "good": [
+    "Excellent chemical resistance",
+    "Very low friction and good wear resistance",
+    "Cheap and easy to machine",
+    "Weldable to itself"
+   ],
+   "bad": [
+    "Cannot be bonded with conventional adhesives",
+    "High thermal expansion and creep",
+    "Low stiffness and strength",
+    "Poor UV resistance unless carbon-filled"
+   ]
+  },
+  {
+   "a": "UHMWPE",
+   "name": "Ultra-high-molecular-weight polyethylene",
+   "alt": "Tivar, Dyneema (fibre form)",
+   "fam": "commodity",
+   "tmax": 80,
+   "tmin": -200,
+   "tg": -110,
+   "wabs": 0.01,
+   "cof": 0.15,
+   "outgas": "low",
+   "rad": "fair",
+   "E": 0.7,
+   "cte": 200,
+   "app": "Wear strips, chute and hopper liners, guide rails, low-friction pads.",
+   "good": [
+    "Outstanding abrasion resistance: better than most metals",
+    "Very low coefficient of friction",
+    "Self-lubricating, quiet running",
+    "Good impact strength at low temperature"
+   ],
+   "bad": [
+    "Cannot be bonded or conventionally welded",
+    "Creeps significantly under load",
+    "Very high thermal expansion",
+    "Poor dimensional stability for precision parts"
+   ]
+  },
+  {
+   "a": "POM",
+   "name": "Polyoxymethylene (acetal)",
+   "alt": "Delrin (POM-H), Ertacetal, Hostaform (POM-C)",
+   "fam": "engineering",
+   "tmax": 90,
+   "tmin": -40,
+   "tg": -60,
+   "wabs": 0.2,
+   "cof": 0.21,
+   "outgas": "moderate",
+   "rad": "poor",
+   "E": 3,
+   "cte": 110,
+   "app": "Precision gears, bushes, rollers, jig components, valve parts, wear pads.",
+   "good": [
+    "Best machinability of any thermoplastic: holds tight tolerances",
+    "Excellent dimensional stability and low moisture uptake",
+    "Good fatigue and wear resistance, low friction",
+    "Stiff and strong for its weight"
+   ],
+   "bad": [
+    "Very poor bonding: must be mechanically fastened",
+    "Attacked by strong acids and oxidising agents",
+    "Burns readily; poor flame performance",
+    "POM-H can have centreline porosity in large sections: use POM-C for thick parts"
+   ]
+  },
+  {
+   "a": "PA",
+   "name": "Polyamide (nylon)",
+   "alt": "Nylon 6, 66, 11, 12; Zytel, Ertalon, Nylatron",
+   "fam": "engineering",
+   "tmax": 100,
+   "tmin": -40,
+   "tg": 60,
+   "wabs": 1.8,
+   "cof": 0.28,
+   "outgas": "high",
+   "rad": "fair",
+   "E": 3,
+   "cte": 80,
+   "app": "Gears, bushes, cable ties, guides, pulleys, fuel lines (PA11/12).",
+   "good": [
+    "Tough and abrasion resistant",
+    "Good fatigue strength, quiet-running gears",
+    "Wide grade range including cast sections for large parts",
+    "Reasonable temperature capability"
+   ],
+   "bad": [
+    "Absorbs moisture: dimensions and properties drift significantly with humidity",
+    "That moisture uptake makes it poor for precision parts (use POM instead)",
+    "Attacked by acids",
+    "Grade differences matter: PA6 absorbs more than PA66; PA11/12 much less"
+   ]
+  },
+  {
+   "a": "PET",
+   "name": "Polyethylene terephthalate",
+   "alt": "Ertalyte, Arnite, Mylar (film)",
+   "fam": "engineering",
+   "tmax": 100,
+   "tmin": -20,
+   "tg": 78,
+   "wabs": 0.12,
+   "cof": 0.24,
+   "outgas": "low",
+   "rad": "good",
+   "E": 3,
+   "cte": 60,
+   "app": "Precision wear parts, bearing surfaces, bottles, films, insulation tapes.",
+   "good": [
+    "Very good dimensional stability and low moisture uptake",
+    "Low friction with good wear resistance",
+    "Stiffer and harder than acetal",
+    "Good chemical resistance to dilute acids"
+   ],
+   "bad": [
+    "Hydrolyses in hot water and steam",
+    "Notch sensitive and relatively brittle",
+    "Attacked by alkalis",
+    "Slow crystallisation makes moulding fussy"
+   ]
+  },
+  {
+   "a": "PBT",
+   "name": "Polybutylene terephthalate",
+   "alt": "Crastin, Valox, Ultradur",
+   "fam": "engineering",
+   "tmax": 120,
+   "tmin": -40,
+   "tg": 60,
+   "wabs": 0.08,
+   "cof": 0.25,
+   "outgas": "low",
+   "rad": "good",
+   "E": 2.5,
+   "cte": 100,
+   "app": "Electrical connectors, switch bodies, housings, automotive electricals.",
+   "good": [
+    "Excellent electrical properties, retained when wet",
+    "Good dimensional stability and fast moulding cycles",
+    "Better chemical resistance than PA",
+    "Good surface finish"
+   ],
+   "bad": [
+    "Notch sensitive",
+    "Hydrolyses at elevated temperature in water",
+    "Lower strength than PET",
+    "Warps if gating and cooling aren't controlled"
+   ]
+  },
+  {
+   "a": "PC/ABS",
+   "name": "Polycarbonate-ABS blend",
+   "alt": "Bayblend, Cycoloy, Pulse",
+   "fam": "engineering",
+   "tmax": 100,
+   "tmin": -30,
+   "tg": 125,
+   "wabs": 0.2,
+   "cof": 0.33,
+   "outgas": "moderate",
+   "rad": "fair",
+   "E": 2.4,
+   "cte": 70,
+   "app": "Tough equipment housings, instrument enclosures, automotive interiors.",
+   "good": [
+    "Combines PC toughness with ABS processability",
+    "Better low-temperature impact than ABS",
+    "Good flame-retardant grades available"
+   ],
+   "bad": [
+    "Inherits PC's chemical sensitivity",
+    "Not for outdoor use without stabilisation",
+    "More expensive than either base polymer"
+   ]
+  },
+  {
+   "a": "PPO/PPE",
+   "name": "Polyphenylene oxide / ether",
+   "alt": "Noryl (blend with PS)",
+   "fam": "engineering",
+   "tmax": 105,
+   "tmin": -40,
+   "tg": 150,
+   "wabs": 0.06,
+   "cof": 0.35,
+   "outgas": "low",
+   "rad": "good",
+   "E": 2.5,
+   "cte": 60,
+   "app": "Water-handling components, electrical housings, dimensionally critical parts.",
+   "good": [
+    "Very low moisture absorption: outstanding dimensional stability",
+    "Excellent hydrolytic stability, good for hot water",
+    "Good electrical properties",
+    "Low density for an engineering polymer"
+   ],
+   "bad": [
+    "Poor resistance to hydrocarbons and chlorinated solvents",
+    "Notch sensitive",
+    "Limited temperature capability"
+   ]
+  },
+  {
+   "a": "PVC",
+   "name": "Polyvinyl chloride",
+   "alt": "uPVC (rigid), CPVC (chlorinated), Trovidur",
+   "fam": "engineering",
+   "tmax": 60,
+   "tmin": -15,
+   "tg": 80,
+   "wabs": 0.1,
+   "cof": 0.4,
+   "outgas": "moderate",
+   "rad": "fair",
+   "E": 3,
+   "cte": 70,
+   "app": "Chemical pipework, ducting, tank linings, fume extraction, bund liners.",
+   "good": [
+    "Excellent acid and alkali resistance",
+    "Inherently flame retardant",
+    "Very cheap; easy to solvent weld and fabricate",
+    "CPVC extends temperature to about 95 °C"
+   ],
+   "bad": [
+    "Low service temperature and poor impact when cold",
+    "Releases HCl if burned or overheated: machining and welding need extraction",
+    "Attacked by ketones and aromatics",
+    "Plasticised grades leach plasticiser over time"
+   ]
+  },
+  {
+   "a": "PPS",
+   "name": "Polyphenylene sulphide",
+   "alt": "Ryton, Fortron, Techtron",
+   "fam": "high-perf",
+   "tmax": 220,
+   "tmin": -40,
+   "tg": 90,
+   "wabs": 0.02,
+   "cof": 0.25,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 3.8,
+   "cte": 50,
+   "app": "Pump components, hot fluid handling, chemically aggressive service, electrical parts at temperature.",
+   "good": [
+    "Outstanding chemical resistance: no known solvent below 200 °C",
+    "Inherently flame retardant with low smoke",
+    "Excellent dimensional stability at temperature",
+    "Retains properties hot"
+   ],
+   "bad": [
+    "Brittle unfilled: almost always used glass or carbon filled",
+    "Notch sensitive",
+    "Difficult to bond",
+    "Abrasive to tooling when filled"
+   ]
+  },
+  {
+   "a": "PSU",
+   "name": "Polysulfone",
+   "alt": "Udel",
+   "fam": "high-perf",
+   "tmax": 150,
+   "tmin": -100,
+   "tg": 187,
+   "wabs": 0.3,
+   "cof": 0.35,
+   "outgas": "low",
+   "rad": "good",
+   "E": 2.5,
+   "cte": 56,
+   "app": "Steam-sterilisable equipment, hot water fittings, medical and lab hardware.",
+   "good": [
+    "Withstands repeated steam sterilisation",
+    "Good hydrolytic stability",
+    "Transparent amber; rigid and strong hot",
+    "Good electrical properties"
+   ],
+   "bad": [
+    "Poor resistance to ketones, esters and aromatics",
+    "Stress cracks readily in the presence of solvents",
+    "Notch sensitive",
+    "Yellows with UV"
+   ]
+  },
+  {
+   "a": "PPSU",
+   "name": "Polyphenylsulfone",
+   "alt": "Radel R",
+   "fam": "high-perf",
+   "tmax": 180,
+   "tmin": -100,
+   "tg": 220,
+   "wabs": 0.4,
+   "cof": 0.35,
+   "outgas": "low",
+   "rad": "good",
+   "E": 2.3,
+   "cte": 56,
+   "app": "Aircraft interior parts, sterilisable medical instruments, hot plumbing.",
+   "good": [
+    "Best impact strength and toughness of the sulfones",
+    "Excellent hydrolytic stability: endless steam cycles",
+    "Good flame, smoke and toxicity performance for cabin use"
+   ],
+   "bad": [
+    "Expensive",
+    "Still solvent-sensitive",
+    "Requires careful drying before processing"
+   ]
+  },
+  {
+   "a": "PES",
+   "name": "Polyethersulfone",
+   "alt": "Ultrason E, Veradel",
+   "fam": "high-perf",
+   "tmax": 180,
+   "tmin": -100,
+   "tg": 225,
+   "wabs": 0.6,
+   "cof": 0.35,
+   "outgas": "low",
+   "rad": "good",
+   "E": 2.6,
+   "cte": 55,
+   "app": "Hot water and steam service, membranes, electrical parts at temperature.",
+   "good": [
+    "High continuous service temperature",
+    "Good creep resistance hot",
+    "Inherently flame retardant",
+    "Transparent grades available"
+   ],
+   "bad": [
+    "Notch sensitive and solvent sensitive",
+    "Absorbs more moisture than PSU",
+    "Expensive",
+    "Yellows in sunlight"
+   ]
+  },
+  {
+   "a": "PEI",
+   "name": "Polyetherimide",
+   "alt": "Ultem 1000 / 2300",
+   "fam": "high-perf",
+   "tmax": 170,
+   "tmin": -60,
+   "tg": 217,
+   "wabs": 0.25,
+   "cof": 0.3,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 3.3,
+   "cte": 56,
+   "app": "Aircraft interior components, electrical insulators, sterilisable parts, high-temp fixtures.",
+   "good": [
+    "Excellent flame, smoke and toxicity performance: a cabin-interior staple",
+    "High strength and stiffness retained hot",
+    "Good dimensional stability, low creep",
+    "Available as FDM filament for high-temp prototypes"
+   ],
+   "bad": [
+    "Attacked by chlorinated solvents and some paint strippers",
+    "Notch sensitive",
+    "Expensive",
+    "Needs thorough drying before processing"
+   ]
+  },
+  {
+   "a": "PEEK",
+   "name": "Polyetheretherketone",
+   "alt": "Victrex 450G, Ketron, Optima",
+   "fam": "high-perf",
+   "tmax": 250,
+   "tmin": -60,
+   "tg": 143,
+   "wabs": 0.1,
+   "cof": 0.35,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 3.6,
+   "cte": 47,
+   "app": "Seals, back-up rings, bushes, insulators, valve seats, hot wear parts, cryogenic components.",
+   "good": [
+    "Exceptional chemical resistance: very few attacking agents",
+    "Continuous service to about 250 °C, excellent creep resistance",
+    "Good wear and fatigue behaviour; works cryogenically too",
+    "Inherently low flammability and low outgassing"
+   ],
+   "bad": [
+    "Very expensive: design for minimum volume",
+    "Difficult to bond",
+    "Needs high processing temperatures and dry stock",
+    "Attacked by concentrated sulphuric acid"
+   ]
+  },
+  {
+   "a": "PEKK",
+   "name": "Polyetherketoneketone",
+   "alt": "Kepstan",
+   "fam": "high-perf",
+   "tmax": 260,
+   "tmin": -60,
+   "tg": 162,
+   "wabs": 0.1,
+   "cof": 0.35,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 3.5,
+   "cte": 45,
+   "app": "Additive-manufactured high-performance parts, composite matrices, aerospace brackets.",
+   "good": [
+    "Similar capability to PEEK with better AM processability",
+    "Tuneable crystallinity for lower-warp printing",
+    "Excellent strength and chemical resistance"
+   ],
+   "bad": [
+    "Very expensive and less widely stocked than PEEK",
+    "Fewer published design allowables",
+    "Demanding processing"
+   ]
+  },
+  {
+   "a": "PAI",
+   "name": "Polyamide-imide",
+   "alt": "Torlon",
+   "fam": "high-perf",
+   "tmax": 260,
+   "tmin": -190,
+   "tg": 275,
+   "wabs": 0.28,
+   "cof": 0.2,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 4.5,
+   "cte": 31,
+   "app": "High-load bushings, thrust washers, seal rings, structural parts at temperature.",
+   "good": [
+    "Highest strength and stiffness of any melt-processable polymer",
+    "Outstanding wear resistance under load and heat",
+    "Very low thermal expansion; excellent creep resistance"
+   ],
+   "bad": [
+    "Requires a long, costly post-cure cycle",
+    "Extremely expensive",
+    "Absorbs some moisture",
+    "Difficult to machine: slow and hard on tools"
+   ]
+  },
+  {
+   "a": "PI",
+   "name": "Polyimide",
+   "alt": "Vespel SP-1/SP-21, Kapton (film), Meldin",
+   "fam": "high-perf",
+   "tmax": 300,
+   "tmin": -240,
+   "tg": 360,
+   "wabs": 1.2,
+   "cof": 0.29,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 3.1,
+   "cte": 54,
+   "app": "Hot bushings, seals, thermal isolators, vacuum and space hardware, flexible circuits (film).",
+   "good": [
+    "Highest continuous temperature of the machinable polymers",
+    "Excellent in vacuum: very low outgassing",
+    "Self-lubricating grades for unlubricated hot bearings",
+    "Retains toughness cryogenically"
+   ],
+   "bad": [
+    "Astonishingly expensive: often priced per part, not per kg",
+    "Absorbs moisture, which affects dimensions",
+    "Attacked by strong alkalis",
+    "Not melt-processable; parts are direct-formed then machined"
+   ]
+  },
+  {
+   "a": "PBI",
+   "name": "Polybenzimidazole",
+   "alt": "Celazole",
+   "fam": "high-perf",
+   "tmax": 310,
+   "tmin": -190,
+   "tg": 427,
+   "wabs": 0.4,
+   "cof": 0.27,
+   "outgas": "low",
+   "rad": "excellent",
+   "E": 5.9,
+   "cte": 23,
+   "app": "Extreme-temperature bushings, insulators, seals, semiconductor handling.",
+   "good": [
+    "Highest temperature capability of any commercial thermoplastic",
+    "Highest compressive strength of any polymer",
+    "Very low thermal expansion; excellent wear at temperature"
+   ],
+   "bad": [
+    "The most expensive common polymer by a wide margin",
+    "Extremely brittle and difficult to machine",
+    "Absorbs moisture noticeably",
+    "Limited stock shapes"
+   ]
+  },
+  {
+   "a": "PTFE",
+   "name": "Polytetrafluoroethylene",
+   "alt": "Teflon, Fluon",
+   "fam": "fluoro",
+   "tmax": 260,
+   "tmin": -260,
+   "tg": 126,
+   "wabs": 0.01,
+   "cof": 0.06,
+   "outgas": "very low",
+   "rad": "very poor",
+   "E": 0.5,
+   "cte": 120,
+   "app": "Seals, back-up rings, gaskets, low-friction faces, chemical linings, cryogenic seats.",
+   "good": [
+    "Effectively universal chemical resistance",
+    "Lowest friction of any solid polymer",
+    "Very wide service range, cryogenic to 260 °C",
+    "Excellent electrical insulator, non-stick"
+   ],
+   "bad": [
+    "Creeps badly under load (cold flow): never a structural part",
+    "Very poor wear resistance unless filled (glass, carbon, bronze)",
+    "Cannot be melt-processed conventionally or bonded without etching",
+    "Produces hazardous fumes if overheated: control machining temperature and never smoke near swarf"
+   ]
+  },
+  {
+   "a": "PVDF",
+   "name": "Polyvinylidene fluoride",
+   "alt": "Kynar, Solef",
+   "fam": "fluoro",
+   "tmax": 150,
+   "tmin": -40,
+   "tg": -38,
+   "wabs": 0.03,
+   "cof": 0.25,
+   "outgas": "low",
+   "rad": "fair",
+   "E": 2,
+   "cte": 130,
+   "app": "High-purity chemical pipework, pump bodies, valve components, semiconductor fluid handling.",
+   "good": [
+    "Excellent chemical resistance with far better mechanical strength than PTFE",
+    "Weldable and machinable",
+    "Good UV resistance and abrasion resistance",
+    "High purity: low extractables"
+   ],
+   "bad": [
+    "Attacked by strong bases and some ketones",
+    "More expensive than PP or PVC",
+    "Higher density than most polymers",
+    "Piezoelectric grades behave oddly in high-vibration service"
+   ]
+  },
+  {
+   "a": "PFA/FEP",
+   "name": "Perfluoroalkoxy / fluorinated ethylene propylene",
+   "alt": "Teflon PFA, Teflon FEP",
+   "fam": "fluoro",
+   "tmax": 200,
+   "tmin": -260,
+   "tg": 80,
+   "wabs": 0.01,
+   "cof": 0.2,
+   "outgas": "very low",
+   "rad": "very poor",
+   "E": 0.6,
+   "cte": 130,
+   "app": "High-purity tubing, linings, wire insulation, transparent chemical lines.",
+   "good": [
+    "PTFE-class chemical resistance but genuinely melt-processable",
+    "Can be extruded, moulded and heat-sealed",
+    "Transparent: good for visible flow lines"
+   ],
+   "bad": [
+    "Lower temperature capability than PTFE",
+    "Expensive",
+    "Still creeps under sustained load",
+    "Low mechanical strength"
+   ]
+  },
+  {
+   "a": "ETFE",
+   "name": "Ethylene tetrafluoroethylene",
+   "alt": "Tefzel",
+   "fam": "fluoro",
+   "tmax": 150,
+   "tmin": -190,
+   "tg": 110,
+   "wabs": 0.03,
+   "cof": 0.35,
+   "outgas": "very low",
+   "rad": "good",
+   "E": 1.2,
+   "cte": 100,
+   "app": "Aerospace wire insulation, chemical liners, architectural film.",
+   "good": [
+    "Much tougher and more cut-resistant than PTFE",
+    "Good chemical and radiation resistance",
+    "Lightweight for a fluoropolymer",
+    "Standard aerospace wire insulation"
+   ],
+   "bad": [
+    "Lower temperature than PTFE",
+    "Expensive",
+    "Attacked by some amines and sulphonic acids"
+   ]
+  },
+  {
+   "a": "PCTFE",
+   "name": "Polychlorotrifluoroethylene",
+   "alt": "Kel-F, Neoflon",
+   "fam": "fluoro",
+   "tmax": 150,
+   "tmin": -240,
+   "tg": 75,
+   "wabs": 0,
+   "cof": 0.1,
+   "outgas": "very low",
+   "rad": "fair",
+   "E": 1.4,
+   "cte": 60,
+   "app": "Cryogenic valve seats, oxygen-service seals, low-permeation windows.",
+   "good": [
+    "Lowest gas permeability of the fluoropolymers",
+    "Excellent cryogenic performance: a classic LOX-service material",
+    "Good dimensional stability, less cold flow than PTFE"
+   ],
+   "bad": [
+    "Very expensive and limited supply",
+    "Harder and more brittle than PTFE",
+    "Difficult to process"
+   ]
+  },
+  {
+   "a": "TPU",
+   "name": "Thermoplastic polyurethane",
+   "alt": "Estane, Desmopan, Elastollan",
+   "fam": "elastomer",
+   "tmax": 80,
+   "tmin": -40,
+   "tg": -30,
+   "wabs": 0.8,
+   "cof": 0.45,
+   "outgas": "moderate",
+   "rad": "fair",
+   "app": "Flexible seals, cable jackets, bellows, wheels, protective boots, printed flexible parts.",
+   "good": [
+    "Outstanding abrasion and tear resistance",
+    "Wide hardness range from soft rubber to rigid",
+    "Good oil and grease resistance",
+    "Printable and mouldable"
+   ],
+   "bad": [
+    "Hydrolyses in hot humid conditions (polyester grades especially: use polyether)",
+    "Poor resistance to strong acids and bases",
+    "Limited temperature range",
+    "Creeps under sustained load"
+   ]
+  },
+  {
+   "a": "EPDM",
+   "name": "Ethylene propylene diene monomer",
+   "alt": "Nordel, Keltan",
+   "fam": "elastomer",
+   "tmax": 150,
+   "tmin": -50,
+   "tg": -55,
+   "wabs": 0.5,
+   "cof": 0.6,
+   "outgas": "moderate",
+   "rad": "good",
+   "app": "Phosphate-ester hydraulic seals, water and steam seals, weather seals, motor case insulation.",
+   "good": [
+    "Excellent water, steam and weather resistance",
+    "The correct choice for phosphate-ester fluids (Skydrol) and brake fluid",
+    "Good electrical insulation",
+    "Wide temperature range"
+   ],
+   "bad": [
+    "Completely unsuitable for mineral oils and fuels: swells and dissolves",
+    "Poor resistance to hydrocarbons",
+    "Moderate tear strength",
+    "Bonds need careful surface preparation"
+   ]
+  },
+  {
+   "a": "NBR",
+   "name": "Nitrile / acrylonitrile butadiene rubber",
+   "alt": "Buna-N, Perbunan",
+   "fam": "elastomer",
+   "tmax": 100,
+   "tmin": -30,
+   "tg": -40,
+   "wabs": 0.6,
+   "cof": 0.55,
+   "outgas": "moderate",
+   "rad": "good",
+   "app": "Fuel and oil seals, o-rings, gaskets, hydraulic seals.",
+   "good": [
+    "Excellent mineral oil, fuel and grease resistance",
+    "Cheap and universally available",
+    "Good abrasion and compression-set behaviour",
+    "Wide hardness range"
+   ],
+   "bad": [
+    "Poor ozone, UV and weather resistance: cracks in storage",
+    "Not for phosphate esters, ketones or strong acids",
+    "Limited temperature range",
+    "Hardens and takes a set when hot"
+   ]
+  },
+  {
+   "a": "FKM",
+   "name": "Fluoroelastomer",
+   "alt": "Viton, Fluorel, Tecnoflon",
+   "fam": "elastomer",
+   "tmax": 200,
+   "tmin": -20,
+   "tg": -18,
+   "wabs": 0.2,
+   "cof": 0.5,
+   "outgas": "low",
+   "rad": "fair",
+   "app": "Fuel system seals, hot oil seals, chemically aggressive o-rings, engine seals.",
+   "good": [
+    "Wide chemical resistance with high-temperature capability",
+    "Excellent compression set at temperature",
+    "Very low gas permeability",
+    "Good ozone and weather resistance"
+   ],
+   "bad": [
+    "Not for phosphate esters, ketones, amines or hot water/steam",
+    "Poor low-temperature flexibility: check the cold end",
+    "Expensive",
+    "Produces hazardous decomposition products if burned"
+   ]
+  },
+  {
+   "a": "FFKM",
+   "name": "Perfluoroelastomer",
+   "alt": "Kalrez, Chemraz, Isolast",
+   "fam": "elastomer",
+   "tmax": 300,
+   "tmin": -15,
+   "tg": -5,
+   "wabs": 0.1,
+   "cof": 0.5,
+   "outgas": "low",
+   "rad": "fair",
+   "app": "Ultimate chemical and temperature seals; semiconductor, aggressive process, critical aerospace.",
+   "good": [
+    "Near-universal chemical resistance with elastomeric behaviour",
+    "Highest temperature elastomer available",
+    "Very low outgassing grades for vacuum"
+   ],
+   "bad": [
+    "Extraordinarily expensive: often per-seal pricing",
+    "Limited low-temperature flexibility",
+    "Long lead times",
+    "Overkill for most applications"
+   ]
+  },
+  {
+   "a": "VMQ",
+   "name": "Silicone rubber",
+   "alt": "VMQ, PVMQ, Silastic",
+   "fam": "elastomer",
+   "tmax": 230,
+   "tmin": -60,
+   "tg": -120,
+   "wabs": 0.3,
+   "cof": 0.55,
+   "outgas": "verify",
+   "rad": "good",
+   "app": "Extreme-temperature static seals, gaskets, thermal pads, medical and food contact.",
+   "good": [
+    "Widest temperature range of the common elastomers, roughly −60 to +230 °C",
+    "Excellent ozone, UV and weather resistance",
+    "Physiologically inert; food and medical grades",
+    "Very low compression set hot"
+   ],
+   "bad": [
+    "Poor tear, abrasion and tensile strength: static duty only",
+    "Poor resistance to fuels, oils and steam",
+    "Permeable to gases",
+    "Silicone contamination ruins bonding and painting nearby: keep it away from bond shops"
+   ]
+  },
+  {
+   "a": "PLA",
+   "name": "Polylactic acid",
+   "alt": "Ingeo, PLA+",
+   "fam": "commodity",
+   "tmax": 55,
+   "tmin": -20,
+   "tg": 60,
+   "wabs": 0.5,
+   "cof": 0.4,
+   "outgas": "high",
+   "rad": "poor",
+   "E": 3.5,
+   "cte": 70,
+   "app": "FDM prototypes, form models, checking fixtures, throwaway jigs.",
+   "good": [
+    "Easiest material to 3D print: minimal warp",
+    "Stiff and dimensionally accurate when cold",
+    "Bio-derived, low odour",
+    "Cheap"
+   ],
+   "bad": [
+    "Softens around 55–60 °C: useless in a warm car or near a heater",
+    "Brittle, poor impact resistance",
+    "Creeps under sustained load",
+    "Not a functional engineering material"
+   ]
+  },
+  {
+   "a": "PA12-SLS",
+   "name": "Polyamide 12 (laser sintered)",
+   "alt": "PA2200, Nylon 12",
+   "fam": "engineering",
+   "tmax": 110,
+   "tmin": -40,
+   "tg": 40,
+   "wabs": 0.3,
+   "cof": 0.3,
+   "outgas": "moderate",
+   "rad": "fair",
+   "E": 1.7,
+   "cte": 110,
+   "app": "Functional prototypes, ducting, brackets, complex one-off hardware.",
+   "good": [
+    "Genuinely functional parts with isotropic-ish properties",
+    "Complex geometry with no tooling",
+    "Lower moisture uptake than PA6/PA66",
+    "Good chemical resistance"
+   ],
+   "bad": [
+    "Porous surface: needs sealing for fluid or vacuum service",
+    "Anisotropy and build-orientation effects still exist",
+    "Powder ageing changes properties batch to batch",
+    "Dimensional accuracy poorer than machining"
+   ]
+  }
+ ]
+}

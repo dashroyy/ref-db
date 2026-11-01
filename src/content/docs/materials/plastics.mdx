@@ -1,0 +1,167 @@
+---
+title: Plastics
+description: "What each polymer is, what it is good at and, more usefully, what it is bad at: the cold end and the glass transition, creep, water, outgassing, radiation and expansion. With a screen of 37 polymers against your requirements and a tool for a plastic part fitted to a metal part across the temperature range."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import PlasticsCalc from '../../../components/PlasticsCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Datasheets lead with the hottest temperature. Plastic parts fail at the cold end, under sustained load, and where they meet metal.</div>
+  <div><b>Before this</b><a href="../selection/">Material selection</a> · <a href="../datasheet/">Material datasheet</a></div>
+  <div><b>Related</b><a href="../../joints/differential-expansion/#fits-that-change-with-temperature">Differential expansion</a> · <a href="../../seals/o-ring-design/#choosing-the-compound">O-ring compounds</a></div>
+</div>
+
+## Why this matters
+
+A solid rocket motor has more plastic in it than its drawings suggest: back-up rings and seats, insulating bushes and
+spacers, closures that keep moisture out in storage, and much of the ground equipment that handles the motor. These
+parts are small and cheap, so they get less attention than the case. Then a back-up ring cracks on a cold morning, a
+bush falls out of its housing, or a guide made of nylon grows until it binds.
+
+The causes are almost always the same five: the cold end, creep, water, the vacuum, and expansion against metal.
+
+<Analogy title="Butter">
+  Butter from the fridge is hard and snaps. On the counter it is soft and takes the shape of the knife. Put a weight on
+  it and it slowly spreads, even when the weight is small. A plastic is the same: its glass transition is the fridge
+  door, and creep is the slow spread.
+</Analogy>
+
+## The families
+
+| Family | Examples | Use them for | Watch for |
+| --- | --- | --- | --- |
+| Commodity | ABS, PC, PMMA, PP, HDPE, UHMWPE | Covers, guards, tanks, liners, prototypes | Low temperature limit, solvents, UV |
+| Engineering | POM, PA, PET, PBT, PPO | Bushes, gears, rollers, fixtures, precision parts | Creep, water (PA), poor bonding (POM) |
+| High performance | PPS, PSU, PEI, PEEK, PAI, PI, PBI | Parts at temperature, insulators, seats, flight hardware | Cost, notch sensitivity, solvents (sulfones) |
+| Fluoropolymer | PTFE, PFA/FEP, ETFE, PCTFE, PVDF | Seals, back-up rings, seats, low friction, chemicals, cryogenic service | Creep (cold flow), radiation (PTFE) |
+| Elastomer | EPDM, NBR, FKM, FFKM, VMQ, TPU | Seals and insulation ([O-ring compounds](../../seals/o-ring-design/#choosing-the-compound)) | The cold end: a seal stops sealing near Tg |
+
+## The cold end kills more seals than the hot end
+
+Below its glass transition temperature (Tg) an amorphous polymer, or the amorphous part of a semi-crystalline one, is
+hard and brittle, with almost no elastic recovery. Standard FKM stiffens near −20 °C, which is why low-temperature
+grades exist. Silicone and PTFE stay useful much colder than almost anything else.
+
+- **Read the minimum temperature, not only the maximum.** A seal that works at 200 °C can leak at −30 °C.
+- **A Tg inside the service window** means that the stiffness changes a lot across the window. Nylon (Tg about 60 °C,
+  lower when wet) is a common example.
+- **Semi-crystalline polymers** (POM, PP, PE, PEEK, PTFE) keep their crystals above Tg, so they stay useful there. The
+  amorphous ones (PC, PSU, PEI) soften sharply as they approach Tg.
+
+## Creep and relaxation
+
+A plastic under constant load creeps; held at constant strain, it relaxes. Both are faster when hot, and the rate
+rises steeply near the service limit.
+
+- **The service temperatures in this page are continuous-service guides,** not limits under load. A loaded part needs
+  creep data at its temperature (ISO 899-1, ASTM D2990).
+- **An interference fit loses its pressure with time.** Do not rely on it alone to carry load or to retain a part.
+- **PTFE cold-flows** at room temperature. A PTFE seat or back-up ring needs a groove that contains it.
+
+## Water moves dimensions
+
+Nylon absorbs up to about 1.8% water in 24 hours, and more to saturation, and grows as it does. The water also acts
+as a plasticiser: stiffness and strength fall, and toughness rises. For precision parts, use POM or PET, which absorb
+little. PA11 and PA12 absorb much less than PA6 and PA66.
+
+## Vacuum, outgassing and radiation
+
+- **Outgassing:** in a vacuum, volatiles leave the polymer and condense on optics, sensors and cold surfaces. The
+  screening test is ASTM E595, with the usual limits of 1.0% total mass loss (TML) and 0.10% collected volatile
+  condensable material (CVCM). Fillers, plasticisers and the cure change the result more than the base polymer does.
+  Check the actual compound in the NASA outgassing database.
+- **Radiation:** PTFE and the perfluoropolymers are among the worst materials under ionising radiation. PEEK, PEI, PI
+  and PPS are the radiation-tolerant choices.
+
+## Plastics against metal
+
+Plastics expand five to ten times more than steel or titanium, and two to five times more than aluminium. Where a
+plastic part fits to a metal part, the fit changes a lot with temperature:
+
+- **A plastic bush in a metal bore** is tight when hot and loose when cold.
+- **A plastic ring on a metal shaft** is tight when cold and loose when hot.
+- **A pressed-in bush bore closes** by about the interference. Machine the bore after pressing, or size it for the
+  closure.
+
+The physics is the same as for metal fits ([Differential expansion](../../joints/differential-expansion/#fits-that-change-with-temperature)),
+with much larger numbers.
+
+## Calculator
+
+**Select** screens the 37 polymers of the v1 reference against your service window and requirements: water absorption,
+outgassing, radiation, friction and family. The chart shows the service range and Tg of each polymer against the
+required window. Select a polymer to see its card: what it is good at and what it is bad at. The service window starts
+blank: it is a programme value.
+
+**In a metal part** takes a plastic bush in a metal bore, or a plastic ring on a metal shaft, with the metal from the
+[material library](../datasheet/). It gives the fit across the service window, the contact pressure, the bore closure
+and the hoop stress in the plastic. It also lists the same part in the other plastics, so that you can see which stay
+tight.
+
+<PlasticsCalc />
+
+## Worked example: a guide bush in the handling fixture
+
+The handling fixture of the 300 mm motor has a guide bush, ⌀30 mm outside and ⌀25 mm bore, pressed into an
+aluminium 6061-T6 bracket (⌀50 mm boss) with 0.05 mm interference at 20 °C. The fixture is stored and used outdoors,
+and goes into a vacuum chamber with the motor. Select **Load worked example**. The service window, −54 to +71 °C, is
+for this example only.
+
+**1. Screen.** With water absorption of 0.3% at most and low outgassing, 10 of the 37 polymers pass: UHMWPE, PSU,
+PEI, PEEK, PEKK, PAI, PTFE, PFA/FEP, ETFE and PCTFE. POM, the usual bush material, fails twice: it is rated only to
+−40 °C, and its outgassing is moderate. Nylon fails three times: cold, water and outgassing.
+
+**2. Fit.** Select **In a metal part**. PEEK expands at 47 µm/m·K against 23.6 for the aluminium:
+
+| Temperature | Fit | Contact pressure |
+| --- | --- | --- |
+| −54 °C | 0.002 mm clearance: **the bush is loose** | 0 |
+| 20 °C | 0.050 mm interference | 1.1 MPa |
+| +71 °C | 0.086 mm interference | 2.0 MPa |
+
+The 0.05 mm interference is all used up by the cold end. The comparison lists the plastics rated for the window:
+PBI keeps 0.049 mm of interference at −54 °C and PAI (Torlon, 31 µm/m·K) keeps 0.034 mm, but PEKK keeps only
+0.002 mm, which is no margin. POM, which is not rated for the window, would have 0.142 mm of clearance.
+
+**3. The bore.** Pressing the PEEK bush in closes its bore by 0.052 mm at 20 °C, and by 0.089 mm at +71 °C. Machine the
+bore after pressing, and check the running clearance on the guide pin at the hot end.
+
+**4. The decision.** Do not rely on the interference: retain the bush with a shoulder and a retaining ring, or change
+to PAI. More interference would keep PEEK tight at −54 °C, but it raises the stress and the relaxation at +71 °C.
+
+## Where this stops
+
+- **Typical, unfilled values at room temperature.** Glass and carbon fill change the modulus, the expansion and the
+  strength a lot, and in different directions along and across the flow. Use the grade's datasheet.
+- **No creep and no relaxation** in the fit. The pressure at 20 °C after a year at +71 °C is lower than the tool shows.
+- **The modulus falls with temperature,** most sharply near Tg. The tool uses the room-temperature value.
+- **Ratings are a screen.** Outgassing, radiation and chemical resistance depend on the compound; test or use data
+  for the actual grade.
+
+## On the drawing
+
+- **The grade and the form,** not only the polymer: for example "PEEK, unfilled, extruded rod, annealed", with the
+  specification or the classification (ASTM D4000) your programme uses.
+- **The conditioning before inspection,** for any polymer that absorbs water: measure after conditioning, at 20 °C.
+- **Tolerances that the material can hold.** Plastic parts move with temperature and water. Moulded parts follow
+  ISO 20457.
+- **Retention that does not depend on interference** for any part that must stay in place across the service window.
+
+## References and further reading
+
+- ASTM E595, *Total Mass Loss and Collected Volatile Condensable Materials from Outgassing in a Vacuum Environment*;
+  NASA outgassing database.
+- ISO 899-1 and ASTM D2990, *Creep* of plastics; ASTM D570, *Water Absorption of Plastics*; ISO 11357-2, *Glass
+  transition temperature* by DSC.
+- ASTM D4000, *Standard Classification System for Specifying Plastic Materials*.
+- ISO 20457, *Plastics moulded parts: Tolerances and acceptance conditions*.
+
+<Aside type="note">
+  Screening guidance from general practice. The data are typical values from the v1 reference, not allowables.
+  Confirm them against the grade's datasheet and your programme specification before anything reaches a released
+  drawing.
+</Aside>
