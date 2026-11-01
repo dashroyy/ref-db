@@ -85,6 +85,7 @@ export const REBUILT = {
   stack: 'drawing/tolerance-stack',
   drawing: 'drawing/drawing-frame',
   release: 'drawing/revision-and-sign-off',
+  export: 'drawing/archive-and-export',
   surf: 'drawing/surface-finish',
   gauge: 'drawing/gauging',
   galvanic: 'materials/galvanic',

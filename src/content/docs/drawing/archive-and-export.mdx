@@ -1,0 +1,135 @@
+---
+title: Archive & export
+description: "Release in a neutral, frozen format that carries its export-control marking. Archive formats, how long the record is kept, checksums that show integrity, and the decisions to record before technical data leaves your organisation, with a release-package tool, a SHA-256 checksum tool and a check before you send."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ArchiveCalc from '../../../components/ArchiveCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Release in a neutral, frozen format with its export-control marking. The native CAD file is not the record.</div>
+  <div><b>Before this</b><a href="../revision-and-sign-off/">Revision & sign-off</a> · <a href="../drawing-frame/">Drawing frame & notes</a></div>
+  <div><b>Related</b><a href="../../make/certs/">Certificates & traceability</a> · <a href="../../fundamentals/requirements/">Requirements & ICD</a></div>
+</div>
+
+## Why this matters
+
+A motor can stay in service for many years after its drawings are released. During that time somebody will need the
+record: for a failure investigation, a spare part, a life extension or an audit. The CAD software that made the files
+will have changed many times. A record that only that software can open is not a record.
+
+Technical data also leaves your organisation: to suppliers, to partners, to colleagues overseas. Each transfer can be
+an export, and the sender is responsible for it. Rocket motor hardware and its technical data are often on the
+control lists.
+
+<Analogy title="A letter in a sealed envelope">
+  A record is like a letter that must be read in 30 years. Write it in a language that will still be read (a neutral
+  format), seal the envelope (a checksum that shows nobody changed it), and write on the envelope who may open it
+  (the export-control marking).
+</Analogy>
+
+## Archive formats
+
+| Content | Format | Why |
+| --- | --- | --- |
+| Drawings | PDF/A (ISO 19005) | Self-contained: fonts and images are embedded. Made for long-term reading |
+| 3D models with PMI | STEP AP242 (ISO 10303-242) | Neutral. Carries the geometry with its tolerances and annotation |
+| Native CAD | Keep, but not as the record | Becomes unreadable as software versions move on |
+| Reports, inspection and FAI records | PDF/A, with data as CSV | Plain-text data stays readable without the software that made it |
+
+- **PDF/A has parts.** PDF/A-2 suits most drawings. PDF/A-3 can also embed other files, for example the STEP file
+  inside the drawing PDF.
+- **For model-based definition, the PMI must be semantic,** not only a picture of the annotation. Otherwise the model
+  that is the master cannot be read by the inspection software. The aerospace practice for long-term archiving of 3D
+  data is EN 9300 (LOTAR).
+- **Release the native files with the record, as reference.** They make the next change easier, but they do not
+  define the part.
+
+## How long, and how to show integrity
+
+- **Keep the record for the period your contract requires.** This is often the service life of the product plus a
+  defined number of years. Use the contract values: the tool does not supply them.
+- **Store a checksum of each file.** A SHA-256 checksum changes completely if one bit of the file changes. A manifest
+  of checksums, kept with the package, shows later that each file is the one that was released.
+- **Check the files during the retention period.** Media fail and formats age. Move the files to new media, and check
+  the checksums each time.
+
+## Export control
+
+- **Classify the technical data** against the UK Strategic Export Control Lists (military and dual-use) before it
+  leaves your organisation. Your export compliance team does the classification.
+- **Mark the drawings and the file metadata** with the classification.
+- **Any transfer can be an export.** Email, a cloud share, a shared screen and a drive in your luggage are all ways
+  to transfer technology.
+- **US-origin content can bring ITAR or EAR obligations** on top of UK controls. They follow the data: a re-transfer
+  can need US authorisation. US rules also treat a release to a foreign person inside the US as an export.
+- **An export needs the correct licence:** a SIEL, an OIEL or an applicable OGEL. Your export compliance team decides;
+  the designer marks.
+
+<Aside type="caution" title="Trap">
+  Sending a drawing to a supplier or an overseas colleague without checking its classification. The sender is
+  responsible, not the recipient.
+</Aside>
+
+## Calculator
+
+**Package** lists the items in the release with the format of each one, and gives the year until which the
+record must be kept. The service life and the years after service start blank: they come from your contract.
+**Checksums** computes the SHA-256 of each file you choose. The files stay on your device: your browser computes the
+hashes. It gives a manifest to copy, and checks files against an old manifest. **Send check** lists the decisions
+that must be recorded before technical data is sent, and gives the marking to fill. It never gives a classification
+or a licence.
+
+<ArchiveCalc />
+
+## Worked example: archiving and sending the aft closure
+
+The aft closure is released at revision J ([Revision & sign-off](../revision-and-sign-off/#worked-example-a-deeper-gland-in-the-aft-closure)).
+Select **Load worked example**.
+
+1. **The package.** The drawing as PDF/A, the model as STEP AP242 with its PMI, the stress report, the inspection and
+   FAI records, and the material certificates are the record (5 items). The native CAD is kept for reference only.
+2. **How long.** For this example only, take a 15-year service life and 10 years after service. A release in 2026
+   gives a record kept until **2051**: 25 years. The files must stay readable for all that time, so plan to check them
+   and move them to new media.
+3. **Checksums.** Choose the release files on the Checksums tab and copy the manifest into the package. To check the
+   tool, hash a text file that holds only `abc` with no line end. Its SHA-256 is
+   `ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad` (the FIPS 180-2 test vector).
+4. **Send check.** A machine shop outside the UK will quote for the closure. The data is not classified yet, and
+   no licence decision is recorded. The check gives **Stop: do not send yet**, with 2 decisions missing. Ask the export
+   compliance team. When they have classified the data and recorded the licence route, mark the drawing and the file
+   metadata, and then send.
+
+## Where this stops
+
+- **No classification and no licence.** The tool lists the decisions; your export compliance team makes them.
+- **Not legal advice.** Export law changes, and the control lists change. Use your company's export procedures.
+- **Retention periods and formats come from your contract** and your company's records procedure.
+- **Checksums show integrity, not authenticity.** A digital signature shows who released a file. A checksum shows
+  only that the file has not changed since the manifest was made.
+
+## On the drawing
+
+- **The export-control marking** in the title block and in the file metadata.
+- **The master stated:** drawing or model ([Revision & sign-off](../revision-and-sign-off/#the-master-drawing-or-model)).
+- **The release in neutral formats,** with a checksum manifest kept with it.
+
+## References and further reading
+
+- ISO 19005 (all parts), *Document management: Electronic document file format for long-term preservation (PDF/A)*.
+- ISO 10303-242, *Industrial automation systems and integration: Product data representation and exchange. Managed
+  model-based 3D engineering*.
+- EN 9300 (series), *LOTAR: Long-term archiving and retrieval of digital technical product documentation*.
+- ISO 14721, *Space data and information transfer systems: Open archival information system (OAIS)*.
+- FIPS 180-4, *Secure Hash Standard* (SHA-256).
+- UK Export Control Order 2008, and the UK Strategic Export Control Lists (Export Control Joint Unit guidance).
+- US International Traffic in Arms Regulations (22 CFR 120–130) and Export Administration Regulations (15 CFR
+  730–774).
+
+<Aside type="note">
+  Screening guidance from general practice, not legal advice. Your contract, your records procedure and your export
+  compliance team decide what is kept, for how long, and what may be sent.
+</Aside>

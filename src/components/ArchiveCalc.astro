@@ -1,0 +1,255 @@
+---
+// Archive and export in three tabs: the release package (the neutral format of each item and how long the record is
+// kept), checksums (SHA-256 of local files, computed in the browser, with a manifest to copy and a check against an
+// old manifest), and a check before technical data is sent. Logic in src/lib/archive.ts (unit-tested); UI only here.
+import { ARCHIVE_ITEMS } from '../lib/archive';
+
+const TABS = [{ key: 'package', name: 'Package' }, { key: 'sums', name: 'Checksums' }, { key: 'send', name: 'Send check' }];
+const TRI = [{ v: 'yes', t: 'Yes' }, { v: 'no', t: 'No' }, { v: 'unknown', t: 'Unknown' }];
+const SENDQ = [
+  { key: 'classified', q: 'Has your export compliance team classified this data against the control lists?' },
+  { key: 'marked', q: 'Do the drawing and the file metadata carry that classification?' },
+  { key: 'usOrigin', q: 'Does the data contain US-origin technical data?' },
+  { key: 'recipientChecked', q: 'Are the recipient and the end use known and screened?' },
+];
+---
+
+<div class="calc arccalc" data-arccalc>
+  <div class="calc-head"><span>Archive and export</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button><button type="button" class="chip" data-copy>Copy</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="package">
+        <legend>The release</legend>
+        <div class="row2">
+          <label>Part<input name="part" type="text" placeholder="part number and name" autocomplete="off" /></label>
+          <label>Revision<input name="rev" type="text" maxlength="3" placeholder="for example J" autocomplete="off" /></label>
+          <label>Release year<input name="year" type="number" step="1" min="1950" max="2200" /></label>
+          <label>Service life (years)<input name="life" type="number" step="1" min="0" placeholder="programme value" /></label>
+          <label>Keep after service (years)<input name="extra" type="number" step="1" min="0" placeholder="contract value" /></label>
+        </div>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="package">
+        <legend>Items in the package</legend>
+        <div class="ar-items">
+          {ARCHIVE_ITEMS.map((it) => <label class="inline"><input type="checkbox" name={`it-${it.key}`} checked /> {it.name}</label>)}
+        </div>
+      </fieldset>
+      <fieldset data-panel="sums" hidden>
+        <legend>Files</legend>
+        <label class="ar-drop" data-drop>
+          <input type="file" multiple data-files />
+          <span><b>Choose files, or drop them here</b>The files stay on this device. Your browser computes each SHA-256.</span>
+        </label>
+        <label>Manifest to check against (optional)<textarea name="manifest" rows="4" spellcheck="false" placeholder="paste a manifest: one 'hash  file name' on each line"></textarea></label>
+      </fieldset>
+      <fieldset data-panel="send" hidden>
+        <legend>Before technical data leaves your organisation</legend>
+        <div class="rl-qs">
+          {SENDQ.map((q) => (
+            <div class="rl-q">
+              <span>{q.q}</span>
+              <div class="or-seg" role="radiogroup" aria-label={q.key}>
+                {TRI.map((a) => <label><input type="radio" name={q.key} value={a.v} checked={a.v === 'unknown'} /><span>{a.t}</span></label>)}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div class="row2">
+          <label>Licence decision (from compliance)<select name="licence"><option value="none">Not recorded</option><option value="identified">Licence identified (SIEL, OIEL or OGEL)</option><option value="notRequired">Recorded: no licence required</option></select></label>
+        </div>
+        <label class="inline"><input type="checkbox" name="overseas" checked /> The recipient, or the place where the data is stored, is outside the UK</label>
+        <p class="hint">This check does not classify data and does not choose a licence. Your export compliance team does both. The designer marks the drawing.</p>
+      </fieldset>
+    </form>
+    <div class="ar-out">
+      <dl class="readouts" data-out></dl>
+      <div data-vis></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Formats: PDF/A (ISO 19005), STEP AP242 (ISO 10303-242). Checksums: SHA-256 (FIPS 180-4) by Web Crypto, in the
+    sha256sum format, so that standard tools can check them. The service life and the retention period come from your
+    contract. The export check only lists the decisions that must be recorded before data is sent.
+  </div>
+</div>
+
+<style is:global>
+  .arccalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .arccalc .calc-body > * { min-width: 0; }
+  .arccalc .inline { display: flex !important; align-items: center; gap: 0.45rem; }
+  .arccalc .inline input { width: auto; }
+  .arccalc textarea { width: 100%; font-family: var(--sl-font-mono); font-size: 0.74rem; line-height: 1.45; background: var(--rd-panel); color: var(--rd-ink); border: 1px solid var(--rd-line); border-radius: 5px; padding: 0.45rem; resize: vertical; }
+  .ar-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.25rem 0.8rem; }
+  .ar-items > * { margin: 0 !important; }
+  .ar-out { display: grid; gap: 0.9rem; }
+  .ar-out > * { margin: 0 !important; }
+  .ar-h { font: 600 0.7rem var(--sl-font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--rd-ink); margin: 0 0 0.4rem !important; }
+  .ar-drop { display: block; position: relative; border: 2px dashed var(--rd-line); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .ar-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .ar-drop span { font-size: var(--sl-text-sm); color: var(--rd-muted); }
+  .ar-drop b { display: block; color: var(--rd-ink); margin-bottom: 0.2rem; }
+  .ar-drop.over, .ar-drop:focus-within { border-color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 8%, transparent); }
+  .ar-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); }
+  .ar-table th, .ar-table td { text-align: left; padding: 0.35rem 0.45rem; border-bottom: 1px solid var(--rd-line); vertical-align: top; }
+  .ar-table td.hash { font-family: var(--sl-font-mono); overflow-wrap: anywhere; word-break: break-all; }
+  .ar-table .muted { color: var(--rd-muted); }
+  .ar-tag { display: inline-block; font: 600 0.62rem var(--sl-font-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.05rem 0.35rem; border-radius: 3px; border: 1px solid currentColor; }
+  .ar-tag.match, .ar-tag.rec { color: var(--rd-ok); }
+  .ar-tag.changed, .ar-tag.missing { color: var(--rd-accent); }
+  .ar-tag.new, .ar-tag.ref { color: var(--rd-warn); }
+  .ar-scroll { overflow-x: auto; }
+  .ar-tl { width: 100%; max-width: 720px; height: auto; display: block; }
+  .ar-mark { font-family: var(--sl-font-mono); font-size: 0.8rem; padding: 0.55rem 0.7rem; border: 2px solid var(--rd-ink); border-radius: 4px; background: var(--rd-panel); color: var(--rd-ink); }
+  .ar-mark .dn-blank { color: var(--rd-warn); background: color-mix(in srgb, var(--rd-warn) 12%, transparent); border-radius: 3px; padding: 0 0.15rem; }
+  .ar-status { padding: 0.7rem 0.9rem; border-radius: 6px; border: 2px solid var(--rd-accent); font: 700 1.05rem var(--sl-font-mono); color: var(--rd-accent); }
+  .ar-status small { display: block; font: 400 var(--sl-text-xs) var(--sl-font-system, system-ui); color: var(--rd-muted); margin-top: 0.2rem; }
+  .ar-status.ready { border-color: var(--rd-ok); color: var(--rd-ok); }
+  /* the shared question rows and segmented answers */
+  .arccalc .rl-qs { display: grid; gap: 0.45rem; margin-bottom: 0.6rem; }
+  .arccalc .rl-qs > * { margin: 0 !important; }
+  .arccalc .rl-q { display: grid; grid-template-columns: minmax(0, 1fr) 14rem; gap: 0.3rem 0.8rem; align-items: center; font-size: var(--sl-text-sm); color: var(--rd-muted); }
+  .arccalc .rl-q > * { margin: 0 !important; }
+  @media (max-width: 40rem) { .arccalc .rl-q { grid-template-columns: minmax(0, 1fr); } }
+  .arccalc .or-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--rd-line); border-radius: 6px; overflow: hidden; }
+  .arccalc .or-seg label { margin: 0 !important; position: relative; }
+  .arccalc .or-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .arccalc .or-seg span { display: block; text-align: center; padding: 0.4rem 0.3rem; font-size: var(--sl-text-xs); color: var(--rd-muted); cursor: pointer; border-right: 1px solid var(--rd-line); }
+  .arccalc .or-seg label:last-child span { border-right: 0; }
+  .arccalc .or-seg input:checked + span { background: color-mix(in srgb, var(--rd-accent) 16%, transparent); color: var(--rd-ink); font-weight: 600; }
+  .arccalc .or-seg input[value='yes']:checked + span { background: color-mix(in srgb, var(--rd-ok) 18%, transparent); }
+  .arccalc .or-seg input[value='unknown']:checked + span { background: color-mix(in srgb, var(--rd-warn) 18%, transparent); }
+  .arccalc .or-seg input:focus-visible + span { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+</style>
+
+<script>
+  import { ARCHIVE_ITEMS, retainUntil, sha256Hex, manifestText, parseManifest, compareManifest, checkSend, type Entry, type SendCheck, type Tri } from '../lib/archive';
+  import { wireWorkedExample } from '../lib/factors';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const size = (b: number) => (b < 1024 ? `${b} B` : b < 1048576 ? `${(b / 1024).toFixed(1)} kB` : `${(b / 1048576).toFixed(1)} MB`);
+
+  document.querySelectorAll<HTMLElement>('[data-arccalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const val = (n: string) => (form.elements.namedItem(n) as RadioNodeList | HTMLInputElement).value;
+    const on = (n: string) => (field(n) as HTMLInputElement).checked;
+    const num = (n: string) => (val(n).trim() === '' ? NaN : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const thisYear = new Date().getFullYear();
+    field('year').value = String(thisYear);
+    let mode = 'package', copyText = '', files: Entry[] = [], hashing = false;
+
+    function timeline(rel: number, life: number, extra: number) {
+      // Drawn at the width of its container, so the text stays readable on a phone.
+      const W = Math.round(Math.min(720, Math.max(300, $('[data-vis]').clientWidth || 600))), H = 92, L = 14, R = 14, end = rel + life + extra, span = Math.max(1, end - rel);
+      const X = (y: number) => L + ((y - rel) / span) * (W - L - R);
+      const step = span > 40 || (W < 450 && span > 20) ? 10 : 5, ticks: string[] = [];
+      for (let y = Math.ceil(rel / step) * step; y <= end; y += step) ticks.push(`<line x1="${X(y)}" x2="${X(y)}" y1="58" y2="63" stroke="var(--rd-muted)"/><text x="${X(y)}" y="76" text-anchor="middle" font-size="11" fill="var(--rd-muted)">${y}</text>`);
+      const now = thisYear >= rel && thisYear <= end ? `<line x1="${X(thisYear)}" x2="${X(thisYear)}" y1="14" y2="58" stroke="var(--rd-ink)" stroke-dasharray="3 3"/><text x="${X(thisYear)}" y="10" text-anchor="middle" font-size="10" fill="var(--rd-ink)">now</text>` : '';
+      return `<svg class="ar-tl" viewBox="0 0 ${W} ${H}" role="img" aria-label="Record kept from ${rel} to ${end}">
+        <rect x="${X(rel)}" y="22" width="${Math.max(0, X(rel + life) - X(rel))}" height="28" rx="3" fill="var(--rd-ok)" fill-opacity="0.28" stroke="var(--rd-ok)"/>
+        <rect x="${X(rel + life)}" y="22" width="${Math.max(0, X(end) - X(rel + life))}" height="28" rx="3" fill="var(--rd-warn)" fill-opacity="0.22" stroke="var(--rd-warn)"/>
+        ${life > 0 ? `<text x="${(X(rel) + X(rel + life)) / 2}" y="40" text-anchor="middle" font-size="11" fill="var(--rd-ink)">service life ${life} y</text>` : ''}
+        ${extra > 0 ? `<text x="${(X(rel + life) + X(end)) / 2}" y="40" text-anchor="middle" font-size="11" fill="var(--rd-ink)">kept ${extra} y</text>` : ''}
+        <line x1="${L}" x2="${W - R}" y1="58" y2="58" stroke="var(--rd-muted)"/>${ticks.join('')}${now}
+        <text x="${X(end)}" y="89" text-anchor="end" font-size="11" font-weight="700" fill="var(--rd-ink)">keep until ${end}</text></svg>`;
+    }
+
+    function runPackage() {
+      const rel = num('year'), life = num('life'), extra = num('extra'), until = retainUntil(rel, life, extra);
+      const items = ARCHIVE_ITEMS.filter((it) => on(`it-${it.key}`)), rec = items.filter((it) => it.record);
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${Number.isFinite(until) ? '' : 'warn'}"><dt>Keep the record until</dt><dd>${Number.isFinite(until) ? until : '—'} <small>${Number.isFinite(until) ? `${until - rel} years from release` : 'enter the service life and the years after service from your contract'}</small></dd></div>
+        <div class="readout"><dt>Items in the record</dt><dd>${rec.length} <small>${items.length - rec.length ? `plus ${items.length - rec.length} kept for reference only` : 'all in neutral formats'}</small></dd></div>`;
+      const table = `<p class="ar-h">Release package</p><div class="ar-scroll"><table class="ar-table"><thead><tr><th>Item and why</th><th>Keep as</th><th></th></tr></thead><tbody>${items.map((it) => `<tr><td><b>${it.name}</b><br /><span class="muted">${esc(it.why)}</span></td><td>${it.format}${it.std ? `<br /><span class="muted">${it.std}</span>` : ''}</td><td><span class="ar-tag ${it.record ? 'rec' : 'ref'}">${it.record ? 'record' : 'reference'}</span></td></tr>`).join('')}</tbody></table></div>`;
+      $('[data-vis]').innerHTML = (Number.isFinite(until) ? `<p class="ar-h">How long the record is kept</p>${timeline(rel, life, extra)}` : '') + table;
+      const notes: [string, string][] = [];
+      if (!on('it-drawing') && !on('it-model')) notes.push(['bad', 'The package has no drawing and no model. One of them is the master definition, so it must be in the record.']);
+      if (on('it-model') && !on('it-drawing')) notes.push(['warn', 'Model only: the STEP AP242 file must carry semantic PMI, and the model must be stated as the master.']);
+      if (Number.isFinite(until) && until - thisYear > 20) notes.push(['warn', `The record must stay readable until ${until}. Plan to check the files, and move them to new media, during that time. Keep the checksums with them.`]);
+      notes.push(['', 'Keep a SHA-256 manifest with the package (the Checksums tab), so that integrity can be shown later.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+      copyText = [`Release package: ${val('part') || '[part]'} revision ${val('rev') || '[rev]'}`, `Keep until: ${Number.isFinite(until) ? until : '[year]'}`, ...items.map((it) => `- ${it.name}: ${it.format}${it.std ? ` (${it.std})` : ''}${it.record ? '' : ' [reference only]'}`)].join('\n');
+    }
+
+    function runSums() {
+      const manifest = parseManifest(val('manifest')), has = manifest.size > 0, cmp = compareManifest(manifest, files);
+      const n = (v: string) => cmp.results.filter((r) => r.verdict === v).length;
+      const total = files.reduce((a, f) => a + (f.size ?? 0), 0);
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>Files</dt><dd>${hashing ? 'Hashing…' : files.length} <small>${files.length ? `${size(total)} in all` : 'choose files to compute their checksums'}</small></dd></div>
+        ${has ? `<div class="readout ${n('changed') || cmp.missing.length ? 'bad' : files.length && n('match') === files.length ? 'ok' : 'warn'}"><dt>Against the manifest</dt><dd>${n('match')} match <small>${n('changed')} changed · ${n('new')} not listed · ${cmp.missing.length} missing</small></dd></div>` : ''}`;
+      const rows = [...cmp.results.map((r) => `<tr><td>${esc(r.name)}<br /><span class="muted">${size(r.size ?? 0)}</span></td><td class="hash">${r.hash}</td>${has ? `<td><span class="ar-tag ${r.verdict}">${r.verdict === 'new' ? 'not listed' : r.verdict}</span></td>` : ''}</tr>`),
+        ...cmp.missing.map((m) => `<tr><td>${esc(m)}</td><td class="hash muted">${manifest.get(m)}</td><td><span class="ar-tag missing">missing</span></td></tr>`)];
+      $('[data-vis]').innerHTML = rows.length ? `<p class="ar-h">SHA-256</p><div class="ar-scroll"><table class="ar-table"><thead><tr><th>File</th><th>SHA-256</th>${has ? '<th>Check</th>' : ''}</tr></thead><tbody>${rows.join('')}</tbody></table></div>` : '';
+      const notes: [string, string][] = [];
+      if (n('changed')) notes.push(['bad', 'A changed checksum means the file is not the one that was released. Find out why before it is used.']);
+      if (cmp.missing.length) notes.push(['bad', 'A file in the manifest is missing from the files you chose.']);
+      notes.push(['', 'Copy gives the manifest in the sha256sum format. On Linux or macOS, "sha256sum -c manifest.txt" checks it; on Windows, Get-FileHash gives the same hash.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+      copyText = manifestText(files, [`${val('part') || 'Release package'}${val('rev') ? ` revision ${val('rev')}` : ''}`, `SHA-256, ${new Date().toISOString().slice(0, 10)}`]);
+    }
+
+    function runSend() {
+      const s: SendCheck = { classified: val('classified') as Tri, marked: val('marked') as Tri, usOrigin: val('usOrigin') as Tri, recipientChecked: val('recipientChecked') as Tri, licence: val('licence') as SendCheck['licence'], overseas: on('overseas') };
+      const c = checkSend(s);
+      $('[data-out]').innerHTML = '';
+      const lic = s.licence === 'identified' ? '[licence reference]' : s.licence === 'notRequired' ? 'no licence required: [compliance reference]' : '[licence decision]';
+      $('[data-vis]').innerHTML = `<div class="ar-status ${c.status === 'ready' ? 'ready' : ''}">${c.status === 'ready' ? 'Decisions recorded' : 'Stop: do not send yet'}<small>${c.status === 'ready' ? 'Every decision this check asks for is recorded. Send by the route your compliance team approved.' : `${c.stops.length} decision${c.stops.length > 1 ? 's' : ''} missing. The sender is responsible, not the recipient.`}</small></div>
+        <p class="ar-h" style="margin-top:0.9rem !important">Marking for the drawing and the file metadata</p><div class="ar-mark">EXPORT CONTROL: <span class="dn-blank">[classification]</span> · ${s.licence === 'notRequired' ? 'no licence required: <span class="dn-blank">[compliance reference]</span>' : `<span class="dn-blank">${lic}</span>`}${s.usOrigin === 'yes' ? ' · contains US-origin data: <span class="dn-blank">[ITAR or EAR reference]</span>' : ''}</div>`;
+      $('[data-notes]').innerHTML = [...c.stops.map((t) => `<li class="bad">${esc(t)}</li>`), ...c.checks.map((t) => `<li class="warn">${esc(t)}</li>`), '<li>Email, a cloud share, a shared screen and a drive in your luggage are all ways to export technology.</li>'].join('');
+      copyText = [`Send check: ${c.status === 'ready' ? 'decisions recorded' : 'STOP'}`, ...c.stops.map((t) => `- ${t}`), ...c.checks.map((t) => `- ${t}`)].join('\n');
+    }
+
+    const run = () => (mode === 'package' ? runPackage() : mode === 'sums' ? runSums() : runSend());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+
+    async function hashFiles(list: FileList | null) {
+      if (!list || !list.length) return;
+      hashing = true; run();
+      const out: Entry[] = [];
+      for (const f of [...list]) {
+        try { out.push({ name: f.name, size: f.size, hash: await sha256Hex(await f.arrayBuffer()) }); } catch { out.push({ name: f.name, size: f.size, hash: 'could not read this file' }); }
+      }
+      files = out; hashing = false; run();
+    }
+    const input = root.querySelector<HTMLInputElement>('[data-files]')!, drop = $('[data-drop]');
+    input.addEventListener('change', () => hashFiles(input.files));
+    ['dragenter', 'dragover'].forEach((e) => drop.addEventListener(e, () => drop.classList.add('over')));
+    ['dragleave', 'drop'].forEach((e) => drop.addEventListener(e, () => drop.classList.remove('over')));
+
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+
+    // The worked example: the aft closure at revision J, and the question of sending its drawing to an overseas shop.
+    wireWorkedExample({
+      root,
+      values: { part: 'Aft closure', rev: 'J', year: '2026', life: '15', extra: '10', licence: 'none', overseas: 'true' },
+      factorFields: ['life', 'extra'],
+      note: 'Worked example: a 15-year service life and 10 years after service, for this example only',
+      onLoad: () => {
+        const send: Record<string, string> = { classified: 'unknown', marked: 'no', usOrigin: 'no', recipientChecked: 'yes' };
+        form.querySelectorAll<HTMLInputElement>('input[type=radio]').forEach((r) => { if (r.name in send) r.checked = r.value === send[r.name]; });
+        select('package');
+      },
+    });
+    run();
+  });
+</script>
