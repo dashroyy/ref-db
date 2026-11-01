@@ -83,6 +83,7 @@ export const REBUILT = {
   gdtprac: 'drawing/datums-and-position',
   fits: 'drawing/fits-and-limits',
   stack: 'drawing/tolerance-stack',
+  drawing: 'drawing/drawing-frame',
   surf: 'drawing/surface-finish',
   gauge: 'drawing/gauging',
   galvanic: 'materials/galvanic',

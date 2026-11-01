@@ -1,0 +1,161 @@
+---
+title: Drawing frame & notes
+description: "The title block and the general notes set the rules that every dimension on the drawing is read by. The fields a title block must state, how ISO and ASME read size and form differently, general tolerances, and how to write notes that an inspector can verify, with a title-block and notes builder and a note checker."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import DrawingNotesCalc from '../../../components/DrawingNotesCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The title block states how the drawing is read, and each general note is a requirement: specific, verifiable and stated once.</div>
+  <div><b>Before this</b><a href="../gdt/">GD&T</a> · <a href="../fits-and-limits/#general-tolerances-iso-2768">General tolerances</a> · <a href="../surface-finish/">Surface finish</a></div>
+  <div><b>Related</b><a href="../../materials/specification/">Material specs</a> · <a href="../../joints/bolted-joints/">Bolted joints</a> · <a href="../gauging/">Gauging</a></div>
+</div>
+
+## Why this matters
+
+The views and dimensions of a drawing show the shape of a part. The title block and the general notes tell the reader
+how to interpret that shape: which standard sets the meaning of each symbol, which projection the views use, which
+tolerance applies where none is shown, and which processes the part needs. A supplier reads them first, and an
+inspector checks the part against them.
+
+A wrong or vague entry here affects every dimension at once. A drawing to ISO read as ASME, or a first-angle drawing
+read as third angle, gives a different part from correct views. A note such as "break all sharp edges" cannot be
+inspected, so it gives a dispute instead of a requirement.
+
+<Analogy title="The rules before the game">
+  Two teams can play the same match under different rules and both think that they won. A drawing is the same: the
+  title block states the rules. If it does not, the supplier and the inspector use the rules they know, and they can
+  both be right about a part that does not fit.
+</Analogy>
+
+## What the title block must state
+
+| Field | Why |
+| --- | --- |
+| Governing standard and issue | Sets how every symbol is read. ISO GPS and ASME Y14.5 give different meanings to some of the same symbols |
+| Projection symbol | First angle in the UK and Europe, third angle in the US. Never assume |
+| Units | Millimetres unless stated. State it anyway |
+| General tolerances | Apply to every dimension that has no tolerance of its own |
+| Default surface texture | Applies to every surface without its own symbol ([Surface finish](../surface-finish/)) |
+| Material, specification and condition | Alloy, condition (including heat treatment), product form and specification ([Material specs](../../materials/specification/)) |
+| Criticality class | Sets the inspection and the approvals ([Criticality](../../fundamentals/criticality/)) |
+| Export-control marking | A legal requirement where it applies |
+| Mass, scale, sheet *n* of *m*, revision | Housekeeping that auditors check |
+
+## ISO and ASME read size differently
+
+- **ISO 8015: independency.** A size tolerance controls only the local sizes, not the form. A shaft can be in size and
+  still be bent. Where form must stay inside the size, add the envelope requirement Ⓔ to the feature, or to all
+  features with "ISO 2768-mK-E".
+- **ASME Y14.5: Rule #1.** Size controls form: a feature at maximum material condition must have perfect form (the
+  envelope). A note can remove this where it is not needed.
+
+Thus the same drawing can give two different parts. The governing standard and its issue in the title block decide
+which one is correct. Taylor's principle on the [Gauging page](../gauging/#limit-gauges) shows how each one is checked.
+
+## General tolerances
+
+- **ISO 2768** gives linear and angular tolerances (classes f, m, c, v) in part 1, and geometric tolerances (classes
+  H, K, L) in part 2. The [lookup on the Fits page](../fits-and-limits/#general-tolerances-iso-2768) gives the values.
+  ISO 22081 has replaced part 2, but many drawings still use it. Check which your programme uses.
+- **Title-block tolerances** (ASME practice) give a tolerance by the number of decimal places, for example ".XX ±0.01".
+- **General tolerances are for features without a function.** Each functional feature (a seal groove, a pilot, a bore,
+  a hole pattern) needs its own tolerance. A general tolerance on a functional feature is a requirement that nobody
+  decided.
+
+## Notes that work
+
+Each general note is a requirement. It must be specific (it gives a value, a level or a class), verifiable (an
+inspector can check it) and stated once. These shapes are worth making standard. Fill the brackets from your
+programme's specifications:
+
+- Interpret drawing per [governing standard and issue].
+- Remove burrs. Break sharp edges [range] mm unless otherwise specified.
+- Dimensions apply [before / after] surface treatment.
+- Mask threads and surfaces marked [symbol] from treatment.
+- Tighten to [torque] N·m with [lubricant]; friction coefficient assumed [range].
+- Bake for hydrogen embrittlement relief per [specification] within [time] of plating.
+- Mark part and serial number per [specification] at location shown, by [method]. No impression stamping on [class]
+  parts.
+- Clean to [cleanliness level] per [specification] before assembly.
+- Inspect [features] by [method] per [standard] to [acceptance standard and class].
+
+## Notes that do not work
+
+| Note | Problem |
+| --- | --- |
+| "Break all sharp edges" | No size: an inspector cannot accept or reject an edge |
+| "Clean before assembly" | No level and no method |
+| "Finish to suit" | Gives a design decision to the shop |
+| "Torque to standard values" | Which standard? Which lubricant? |
+| "Torque to 60 N·m" | No lubricant: the same torque gives very different preloads ([Bolted joints](../../joints/bolted-joints/)) |
+| "Wall approximately 1.4 mm" | An approximate value cannot be inspected. Give a tolerance, or mark the value as reference |
+| A torque in a note and a different torque on a view | A nonconformance whichever one the shop follows |
+
+## Calculator
+
+**Title block & notes** fills the title block and writes the general notes from your choices: the governing standard,
+the projection, the general tolerances, the defaults, the material, the surface treatment, the criticality, the NDT,
+the marking and the cleanliness. It draws the projection symbol, and it adds a hydrogen-embrittlement bake when you
+plate a steel of 1000 MPa or more. It never supplies a specification, a value or a class: those stay in amber
+[brackets] for your programme. **Check your notes** reads your notes, one on each line, and finds the ones that an
+inspector cannot verify, and values that are stated twice.
+
+<DrawingNotesCalc />
+
+## Worked example: the aft closure drawing
+
+The aft closure of the 300 mm motor is D6AC, bolted to the case with 30 M10 bolts
+([Bolted joints](../../joints/bolted-joints/)), with the nozzle seal bore of the
+[O-ring page](../../seals/o-ring-design/). Select **Load worked example** to put this part in the builder.
+
+1. **How it is read.** ISO GPS, first-angle projection, millimetres. Under ISO 8015, the seal bore is not inside its
+   envelope by default. It needs Ⓔ, or a cylindricity tolerance, because the O-ring squeeze depends on its form.
+2. **Defaults.** ISO 2768-mK for the features without a function, Ra 3.2 µm, and edge breaks of 0.2–0.5 mm. The seal
+   bore, the pilot, the bolt pattern and the seal faces all have their own tolerances and finishes
+   ([GD&T](../gdt/#worked-example-the-aft-closure-its-bolts-and-the-nozzle-seal-groove)).
+3. **Plating.** The closure is zinc-nickel plated. D6AC at 1520 MPa is far above 1000 MPa, so the builder adds the
+   hydrogen-embrittlement relief bake. It also adds the notes for the dimensions before or after plating and for
+   masking: the seal bore and the threads stay bare.
+4. **Bolts.** The torque note has a bracket for the torque and for the lubricant. The bolted-joints page gives 60 N·m
+   with a friction coefficient of 0.12. Write both on the drawing, or the preload is not defined.
+5. **Inspection and marking.** The closure is a critical pressure part: magnetic particle inspection per ASTM E1444
+   with an acceptance class, electrolytic etch marking, and no impression stamping.
+
+The builder gives 13 notes, with 22 blanks to fill in the title block and the notes. Now select **Check your notes**. The default text is the list of
+notes that do not work: the checker rejects 8 of the 9, and finds the two different torque values. Only "Tighten to
+55 N·m with MoS2 grease" passes, and it conflicts with note 6.
+
+## Where this stops
+
+- **The shape of each note,** not your company's wording or its specification numbers. Use your drawing standard.
+- **Word patterns.** The checker finds the usual faults. It cannot tell if a specification is the correct one, or if a
+  value is correct.
+- **No sheet layout.** Border, zones, revision table and parts list follow your drawing standard (ISO 7200, ASME Y14.1).
+
+## On the drawing
+
+- **The title block complete,** with the governing standard and its issue, and the projection symbol.
+- **Every functional feature toleranced explicitly.** General tolerances only for features without a function.
+- **Each requirement once.** If a value is on a view, do not repeat it in a note.
+- **Every note verifiable:** a value, a level, a class, a standard.
+
+## References and further reading
+
+- ISO 8015, *Geometrical product specifications (GPS): Fundamentals, concepts, principles and rules*.
+- ISO 7200, *Technical product documentation: Data fields in title blocks and document headers*.
+- ISO 128 (series), *Technical product documentation: General principles of representation* (projection methods).
+- ISO 2768-1 and -2, *General tolerances*; ISO 22081, *General geometrical specifications and general size
+  specifications*.
+- ASME Y14.5-2018, *Dimensioning and Tolerancing*; ASME Y14.1, *Decimal Inch Drawing Sheet Size and Format*;
+  ASME Y14.100, *Engineering Drawing Practices*.
+- ISO 4042 and ISO 9587 (hydrogen embrittlement of electroplated steel).
+
+<Aside type="note">
+  Screening guidance from general practice. The wording, specifications and values of your notes come from your
+  governing drawing standard, your programme specifications and your company procedures.
+</Aside>

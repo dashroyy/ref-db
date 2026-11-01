@@ -1,0 +1,217 @@
+---
+// Drawing frame and general notes in two tabs: a builder that fills the title block and writes the general notes from
+// the choices for a part (leaving [brackets] for the programme's own specifications and values), and a checker that
+// finds notes that cannot be verified. Maths in src/lib/drawingnotes.ts (unit-tested); UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS } from '../lib/materials';
+import { TREATMENTS, NDT_METHODS } from '../lib/drawingnotes';
+
+const METALS = MATERIALS.filter((m) => m.kind === 'metal');
+const MATDATA = Object.fromEntries(METALS.map((m) => [m.key, { name: m.name, spec: (m.spec || '').split(/[,;.]/)[0].trim(), ftu: m.Ftu }]));
+const TABS = [{ key: 'build', name: 'Title block & notes' }, { key: 'check', name: 'Check your notes' }];
+const BAD = `1. Break all sharp edges.
+2. Clean before assembly.
+3. Finish to suit.
+4. Torque to standard values.
+5. Anodize.
+6. Torque bolts to 60 N·m.
+7. Wall thickness approximately 1.4 mm.
+8. Inspect welds.
+9. Tighten to 55 N·m with MoS2 grease.`;
+---
+
+<div class="calc dncalc" data-dncalc>
+  <div class="calc-head"><span>Drawing frame and general notes</span><span class="head-btns"><button type="button" class="chip" data-load-example data-mat={DEFAULTS.caseSteel}>Load worked example</button><button type="button" class="chip" data-copy>Copy notes</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="build">
+        <legend>How the drawing is read</legend>
+        <div class="row2">
+          <label>Governing standard<select name="std"><option value="iso">ISO GPS (ISO 8015)</option><option value="asme">ASME Y14.5</option></select></label>
+          <label>Issue or year<input name="issue" type="text" placeholder="for example 2018" autocomplete="off" /></label>
+          <label>Projection<select name="proj"><option value="first">First angle</option><option value="third">Third angle</option></select></label>
+          <label>Units<select name="units"><option value="mm">Millimetres</option><option value="in">Inches</option></select></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="build">
+        <legend>Defaults for the whole part</legend>
+        <div class="row2">
+          <label>General tolerances<select name="gt">
+            <option value="iso2768">ISO 2768</option><option value="iso22081">ISO 22081</option><option value="asmeBlock">Title-block tolerances</option><option value="none">None: tolerance every dimension</option>
+          </select></label>
+          <label data-g2768>Linear class<select name="lin"><option value="f">f (fine)</option><option value="m" selected>m (medium)</option><option value="c">c (coarse)</option><option value="v">v (very coarse)</option></select></label>
+          <label data-g2768>Geometric class<select name="geo"><option value="">none</option><option value="H">H</option><option value="K" selected>K</option><option value="L">L</option></select></label>
+          <label data-g2768 class="inline"><input type="checkbox" name="env" /> Envelope Ⓔ for all sizes</label>
+          <label>Default surface texture<select name="ra"><option value="">(not stated)</option><option value="0.8">Ra 0.8</option><option value="1.6">Ra 1.6</option><option value="3.2" selected>Ra 3.2</option><option value="6.3">Ra 6.3</option></select></label>
+          <label>Edge break (mm)<select name="edge"><option value="">(not stated)</option><option value="0.1–0.3">0.1–0.3</option><option value="0.2–0.5" selected>0.2–0.5</option><option value="0.5–1.0">0.5–1.0</option></select></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="build">
+        <legend>The part</legend>
+        <div class="row2">
+          <label>Material<MaterialSelect name="mat" list={METALS} blank="(not stated)" /></label>
+          <label>Material specification<input name="mspec" type="text" placeholder="for example AMS 6431" autocomplete="off" /></label>
+          <label>Surface treatment<select name="treat">{TREATMENTS.map((t) => <option value={t.key}>{t.name}</option>)}</select></label>
+          <label>Criticality<select name="crit"><option value="none">(not classified)</option><option value="major">Major</option><option value="critical" selected>Critical</option><option value="fracture">Fracture critical</option></select></label>
+          <label>NDT<select name="ndt">{NDT_METHODS.map((m) => <option value={m.key}>{m.name}</option>)}</select></label>
+          <label>Part marking<select name="mark"><option value="etch">Electrolytic etch</option><option value="laser">Laser</option><option value="dotpeen">Dot peen</option><option value="ink">Ink</option><option value="none">None</option></select></label>
+        </div>
+        <label class="inline"><input type="checkbox" name="fast" checked /> Fasteners are installed on this drawing</label>
+        <label class="inline"><input type="checkbox" name="clean" checked /> Cleanliness before assembly</label>
+        <label class="inline"><input type="checkbox" name="exp" /> Export-controlled</label>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="check" hidden>
+        <legend>Your general notes</legend>
+        <textarea name="notes" rows="11" spellcheck="false" aria-label="Your notes">{BAD}</textarea>
+        <p class="hint">One note on each line. The checker finds notes that an inspector cannot verify: no size, no level, no standard, a decision left to the shop, or a value stated twice. The default text is the list of notes that do not work.</p>
+      </fieldset>
+    </form>
+    <div class="dn-out">
+      <dl class="readouts" data-out></dl>
+      <div data-tb></div>
+      <div data-list></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(MATDATA)}></script>
+  <div class="calc-foot">
+    The builder writes the shape of each note. It never supplies a specification, a value or a class: those are in
+    [brackets] for your programme to fill. Hydrogen-embrittlement relief is flagged for plated steel at 1000 MPa ultimate
+    or more (ISO 4042, ISO 9587). The checker uses word patterns: it finds the usual faults, not all of them.
+  </div>
+</div>
+
+<style is:global>
+  .dncalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .dncalc .calc-body > * { min-width: 0; }
+  .dn-out { display: grid; gap: 0.9rem; }
+  .dn-out > * { margin: 0 !important; }
+  .dncalc textarea { width: 100%; font-family: var(--sl-font-mono); font-size: 0.78rem; line-height: 1.5; background: var(--rd-panel); color: var(--rd-ink); border: 1px solid var(--rd-line); border-radius: 5px; padding: 0.5rem; resize: vertical; }
+  .dncalc .inline { display: flex !important; align-items: center; gap: 0.45rem; }
+  .dncalc .inline input { width: auto; }
+  /* the title block, drawn as on a drawing sheet */
+  .dn-tb { border: 2px solid var(--rd-ink); font-family: var(--sl-font-mono); background: var(--rd-panel); display: grid; grid-template-columns: minmax(0, 1fr) 7.5rem; }
+  .dn-tb > * { margin: 0 !important; }
+  .dn-tb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .dn-tb-grid > * { margin: 0 !important; }
+  .dn-tb-cell { border-right: 1px solid var(--rd-line); border-bottom: 1px solid var(--rd-line); padding: 0.3rem 0.45rem 0.35rem; min-width: 0; }
+  .dn-tb-cell > * { margin: 0 !important; }
+  .dn-tb-cell small { display: block; font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); }
+  .dn-tb-cell > span { display: block; font-size: 0.78rem; color: var(--rd-ink); overflow-wrap: anywhere; }
+  .dn-tb-proj { border-left: 1px solid var(--rd-ink); display: grid; place-items: center; padding: 0.4rem; text-align: center; }
+  .dn-tb-proj svg { width: 100%; max-width: 6.5rem; height: auto; }
+  .dn-tb-proj small { display: block; font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); }
+  .dn-blank { color: var(--rd-warn); background: color-mix(in srgb, var(--rd-warn) 12%, transparent); border-radius: 3px; padding: 0 0.15rem; }
+  .dn-notes { counter-reset: n; display: grid; gap: 0.35rem; padding: 0 !important; list-style: none; }
+  .dn-notes > li { counter-increment: n; position: relative; margin: 0 !important; padding: 0.45rem 0.6rem 0.45rem 2.3rem; border: 1px solid var(--rd-line); border-radius: 6px; background: var(--rd-panel2); font-family: var(--sl-font-mono); font-size: 0.78rem; line-height: 1.5; }
+  .dn-notes > li::before { content: counter(n) '.'; position: absolute; left: 0.65rem; top: 0.45rem; font-weight: 700; color: var(--rd-ink); }
+  .dn-notes > li small { display: block; font-family: var(--sl-font-system, system-ui); font-size: 0.72rem; color: var(--rd-muted); margin-top: 0.15rem; }
+  .dn-notes > li.ok { border-left: 3px solid var(--rd-ok); }
+  .dn-notes > li.bad { border-left: 3px solid var(--rd-accent); }
+  .dn-notes > li.bad small { color: var(--rd-accent); }
+  .dn-h { font: 600 0.7rem var(--sl-font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--rd-ink); margin: 0 0 0.35rem !important; }
+</style>
+
+<script>
+  import { titleBlock, generalNotes, needsBake, checkNotes, hasBlanks, type FrameInputs, type Std, type GenTol, type Treatment, type Crit, type Ndt } from '../lib/drawingnotes';
+  import { wireWorkedExample } from '../lib/factors';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const blanks = (s: string) => esc(s).replace(/\[([^\]]*)\]/g, '<span class="dn-blank">[$1]</span>');
+  // ISO 128 projection symbol: a truncated cone (narrow end on the left) in side view and end view. The end view is
+  // what you see from the left: first angle places it on the right of the side view, third angle on the left.
+  const projSvg = (first: boolean) => {
+    const side = (x: number) => `<path d="M${x},14 L${x + 40},6 L${x + 40},42 L${x},34 Z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="${x - 4}" x2="${x + 44}" y1="24" y2="24" stroke="currentColor" stroke-dasharray="6 2 1 2"/>`;
+    const end = (cx: number) => `<circle cx="${cx}" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="${cx}" cy="24" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="${cx - 22}" x2="${cx + 22}" y1="24" y2="24" stroke="currentColor" stroke-dasharray="6 2 1 2"/><line x1="${cx}" x2="${cx}" y1="2" y2="46" stroke="currentColor" stroke-dasharray="6 2 1 2"/>`;
+    return `<svg viewBox="0 0 120 48" role="img" aria-label="${first ? 'First' : 'Third'}-angle projection symbol" style="color: var(--rd-ink)">${first ? side(8) + end(96) : end(24) + side(66)}</svg>`;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-dncalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const val = (n: string) => field(n).value;
+    const on = (n: string) => (field(n) as HTMLInputElement).checked;
+    const MATS: Record<string, { name: string; spec: string; ftu?: number }> = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    let mode = 'build', copyText = '';
+
+    function inputs(): FrameInputs {
+      const m = MATS[val('mat')];
+      return {
+        std: val('std') as Std, stdIssue: val('issue').trim() || undefined, projection: val('proj') as 'first' | 'third', units: val('units') as 'mm' | 'in',
+        genTol: val('gt') as GenTol, linClass: val('lin'), geoClass: val('geo'), envelope: on('env'),
+        finishRa: val('ra') ? +val('ra') : undefined, edgeBreak: val('edge') || undefined,
+        material: m?.name, materialSpec: val('mspec').trim() || undefined, ftuMPa: m?.ftu,
+        treatment: val('treat') as Treatment, fasteners: on('fast'), marking: val('mark') as FrameInputs['marking'],
+        criticality: val('crit') as Crit, ndt: val('ndt') as Ndt, cleanliness: on('clean'), exportControl: on('exp'),
+      };
+    }
+
+    function runBuild() {
+      root.querySelectorAll<HTMLElement>('[data-g2768]').forEach((e) => (e.hidden = val('gt') !== 'iso2768'));
+      const i = inputs(), tb = titleBlock(i), notes = generalNotes(i);
+      const nBlanks = [...tb.map((r) => r.value), ...notes.map((n) => n.text)].reduce((a, t) => a + (t.match(/\[[^\]]*\]/g)?.length ?? 0), 0);
+      root.querySelector('[data-out]')!.innerHTML = `
+        <div class="readout primary"><dt>General notes</dt><dd>${notes.length} notes <small>${nBlanks} blanks for your programme to fill, shown in amber</small></dd></div>
+        <div class="readout ${i.std === 'iso' ? 'warn' : ''}"><dt>Size and form</dt><dd>${i.std === 'iso' ? 'Independency' : 'Envelope (Rule #1)'} <small>${i.std === 'iso' ? 'ISO 8015: a size tolerance does not control form. Use Ⓔ where form must stay inside size.' : 'ASME Y14.5: size controls form at MMC, unless the drawing says otherwise.'}</small></dd></div>
+        <div class="readout ${needsBake(i.ftuMPa, i.treatment) ? 'warn' : ''}"><dt>Hydrogen embrittlement</dt><dd>${needsBake(i.ftuMPa, i.treatment) ? 'Bake required' : 'No bake'} <small>${i.ftuMPa ? `${i.ftuMPa} MPa ultimate` : 'no material selected'} · ${i.treatment === 'none' ? 'no treatment' : 'treatment selected'}</small></dd></div>`;
+      root.querySelector('[data-tb]')!.innerHTML = `<p class="dn-h">Title block</p><div class="dn-tb"><div class="dn-tb-grid">${tb.map((r) => `<div class="dn-tb-cell" title="${esc(r.why)}"><small>${esc(r.field)}</small><span>${blanks(r.value)}</span></div>`).join('')}</div><div class="dn-tb-proj"><div>${projSvg(i.projection === 'first')}<small>${i.projection === 'first' ? 'first angle' : 'third angle'}</small></div></div></div>`;
+      root.querySelector('[data-list]')!.innerHTML = `<p class="dn-h">General notes</p><ol class="dn-notes">${notes.map((n) => `<li>${blanks(n.text)}<small>${esc(n.why)}</small></li>`).join('')}</ol>`;
+      copyText = ['TITLE BLOCK', ...tb.map((r) => `${r.field}: ${r.value}`), '', 'GENERAL NOTES', ...notes.map((n, k) => `${k + 1}. ${n.text}`)].join('\n');
+      const out: [string, string][] = [];
+      if (i.genTol === 'iso2768') out.push(['warn', 'ISO 2768 suits features without a function. Tolerance every functional feature explicitly: seal grooves, pilots, bores, hole patterns. ISO 2768-2 has been replaced by ISO 22081; check which your programme uses.']);
+      if (i.std === 'iso' && !i.envelope) out.push(['', 'Under ISO, a pilot or a seal bore that must be round inside its size needs Ⓔ on the feature, or a form tolerance.']);
+      if (i.criticality !== 'none' && i.marking === 'dotpeen') out.push(['warn', 'Dot peen makes an impression. On a critical part, use etch or laser marking, or show where dot peen is permitted.']);
+      if (i.criticality !== 'none' && i.ndt === 'none') out.push(['warn', 'A critical part usually needs an NDT method and acceptance class on the drawing.']);
+      if (needsBake(i.ftuMPa, i.treatment)) out.push(['warn', `Plated steel at ${i.ftuMPa} MPa ultimate can crack from hydrogen. The relief bake must follow plating quickly, usually within 4 hours.`]);
+      out.push(['', 'State each requirement once. A torque in a note and a different torque on a view is a nonconformance whichever one the shop follows.']);
+      root.querySelector('[data-notes]')!.innerHTML = out.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+    }
+
+    function runCheck() {
+      const c = checkNotes(val('notes')), bad = c.results.length - c.clean;
+      root.querySelector('[data-out]')!.innerHTML = `
+        <div class="readout primary ${bad ? 'bad' : 'ok'}"><dt>Notes that cannot be verified</dt><dd>${bad} of ${c.results.length}</dd></div>
+        <div class="readout ${c.conflicts.length ? 'bad' : 'ok'}"><dt>Values stated twice</dt><dd>${c.conflicts.length}</dd></div>`;
+      root.querySelector('[data-tb]')!.innerHTML = '';
+      root.querySelector('[data-list]')!.innerHTML = `<ol class="dn-notes">${c.results.map((r) => `<li class="${r.issues.length ? 'bad' : 'ok'}">${blanks(r.note)}${r.issues.map((w) => `<small>${esc(w)}</small>`).join('')}${!r.issues.length && hasBlanks(r.note) ? '<small>Fill the blanks.</small>' : ''}</li>`).join('')}</ol>`;
+      root.querySelector('[data-notes]')!.innerHTML = c.conflicts.map((t) => `<li class="bad">${esc(t)}</li>`).join('') + '<li>Every note is a requirement: specific, verifiable and stated once. A note that an inspector cannot check is a dispute at goods-in.</li>';
+      copyText = c.results.map((r, k) => `${k + 1}. ${r.note}${r.issues.length ? `  <-- ${r.issues.join(' ')}` : ''}`).join('\n');
+    }
+
+    const run = () => (mode === 'build' ? runBuild() : runCheck());
+    field('mat').addEventListener('change', () => { const m = MATS[val('mat')]; if (m && !val('mspec')) field('mspec').value = m.spec; });
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      root.querySelector<HTMLElement>('[data-copy]')!.textContent = key === 'build' ? 'Copy notes' : 'Copy report';
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    // The aft closure of the worked example. The specification is the programme's value, so the note asks to replace it.
+    wireWorkedExample({
+      root,
+      values: {
+        std: 'iso', issue: '', proj: 'first', units: 'mm', gt: 'iso2768', lin: 'm', geo: 'K', env: 'false', ra: '3.2', edge: '0.2–0.5',
+        mat: root.querySelector<HTMLElement>('[data-load-example]')!.dataset.mat!, mspec: 'AMS 6431', treat: 'plateZnNi', crit: 'critical',
+        ndt: 'mpi', mark: 'etch', fast: 'true', clean: 'true', exp: 'false',
+      },
+      factorFields: ['mspec'],
+      note: 'Worked example: the D6AC aft closure. AMS 6431 is the material specification for this example only',
+      onLoad: () => select('build'),
+    });
+    run();
+  });
+</script>
