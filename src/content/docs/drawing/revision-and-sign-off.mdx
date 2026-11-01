@@ -1,0 +1,172 @@
+---
+title: Revision & sign-off
+description: "When a change is a revision and when it needs a new part number, the form, fit and function test of interchangeability, revision letters, which definition is the master, and the sign-off route, with a change classifier, a revision-letter tool and a sign-off route builder."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ReleaseCalc from '../../../components/ReleaseCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>If old and new parts are interchangeable, the change is a revision. If they are not, it is a new part number.</div>
+  <div><b>Before this</b><a href="../drawing-frame/">Drawing frame & notes</a> · <a href="../../fundamentals/criticality/">Criticality</a></div>
+  <div><b>Related</b><a href="../../fundamentals/requirements/">Requirements & ICD</a> · <a href="../../seals/o-ring-design/">O-ring design</a></div>
+</div>
+
+## Why this matters
+
+A part number is a promise: every part with that number fits and works in every assembly that calls it up. A revision
+changes the drawing but keeps that promise. A change that breaks it needs a new part number. If it does not get one,
+old and new parts sit in the same bin with the same label, and nothing at assembly stops the wrong one from going in.
+
+The sign-off is the last check before the shop builds the part. Each signatory checks something different. When two
+signatories check the same thing, some other thing has no check.
+
+<Analogy title="The same name on two keys">
+  Cut a new key for a changed lock, and give it the same tag as the old key. Both keys hang on the same hook. Somebody
+  picks the wrong one, and the door stays shut. A revision is a new tag on the same key. A new part number is a new hook.
+</Analogy>
+
+## Revision or new part number
+
+The test is interchangeability: form, fit and function, in both directions.
+
+- **Fit.** Old parts still assemble with every mating part.
+- **Function.** Old parts still meet every performance, strength and life requirement.
+- **Form.** Shape, mass and centre of gravity stay inside what the next assembly relies on.
+- **Two-way.** New parts can replace old parts, and old parts can replace new, in every existing assembly.
+
+If all four are yes, the change is a revision. If any one is no, the change needs a new part number. "Unsure" counts
+as no until a test or an analysis shows otherwise.
+
+| Change | Interchangeable? | Action |
+| --- | --- | --- |
+| Clarify a note, correct a typo | Yes | Revision |
+| Relax a tolerance; parts still fit | Yes | Revision |
+| Tighten a tolerance | Only if old parts still work | Revision, or new part number |
+| Change the material or its grade | Usually not | New part number |
+| Change a functional feature that does not mate | No: old parts assemble but do not work | New part number |
+| Change a mating or interface feature | No | New part number |
+| Add a feature that old parts do not have | Usually not | New part number |
+
+**The dangerous case is a change of function without a change of fit.** The old part still goes in, so nothing at
+assembly shows the error. It is the case where a new part number matters most.
+
+**A new part number runs up the where-used tree.** The next assembly calls up the new number in its parts list, so it
+changes too. If it stays interchangeable at its own interfaces, it gets a revision. If not, it gets a new part number,
+and you ask the same questions one level up.
+
+## Change class
+
+Configuration management splits changes into two classes (EIA-649, MIL-HDBK-61):
+
+- **Class I (major)** affects an ICD, a customer requirement, safety, qualification, cost or schedule. The change board
+  approves it, and the customer where the contract requires it.
+- **Class II (minor)** is every other change. The design authority approves it.
+
+Class and interchangeability are different questions. A new part number can be Class II, and a revision can be
+Class I.
+
+## Revision letters
+
+- **ASME Y14.35 does not use I, O, Q, S, X or Z.** They read like 1, 0, 2, 5 or the multiplication sign, or like each
+  other. The sequence is A, B, C, D, E, F, G, H, J, K, L, M, N, P, R, T, U, V, W, Y, then AA, AB and so on.
+- **Every revision references its change record** and lists the zones it affects, in the revision table.
+- **Some drawings use numbers before the first release** (01, 02). The first release is then A.
+
+## The master: drawing or model
+
+Decide whether the drawing or the model is the master, and state it on the drawing. Model-based definition is
+correct practice, but only if one source is authoritative (ASME Y14.41, ISO 16792). Release the master under revision
+control, and mark superseded copies or remove them from use.
+
+<Aside type="caution" title="Trap">
+  Updating the model without releasing the drawing again, or the reverse. The shop builds whichever one it has.
+</Aside>
+
+## The sign-off route
+
+| Role | Checks |
+| --- | --- |
+| Drawn | The drawing is complete and agrees with the model at this revision |
+| Checked | Drawing practice and GD&T. Every feature is defined once and has one meaning |
+| Stress | Every margin is positive and references a released analysis at this revision |
+| Manufacturing | The part can be made with the intended process and tooling |
+| Quality | Every requirement can be measured or verified |
+| Design authority | The part meets its requirements. Approves the release |
+
+Higher criticality adds independent checks ([Criticality](../../fundamentals/criticality/)): a second stress analyst on a
+critical part, and fracture control on a fracture-critical part. A Class I change adds the change board.
+
+**The checker's short list:**
+
+- Is every feature fully defined, with nothing dimensioned twice?
+- Does each datum scheme agree with the mating part and the ICD?
+- Does every functional feature have its own tolerance?
+- Are material, condition, treatments and notes complete ([Drawing frame & notes](../drawing-frame/))?
+- Can each characteristic be measured?
+
+<Aside type="caution" title="Trap">
+  Checking in the live CAD model instead of the release copy. The checker must sign what the shop will receive.
+</Aside>
+
+## Calculator
+
+**The change** takes the kind of change and your answers to the four interchangeability questions.
+It gives the action, the change class, what happens to the next assembly, and the other documents to update. **Revision
+letter** gives the next letter and shows the excluded ones. **Sign-off** gives the signatories for the
+criticality and the change class, and the checker's list to tick.
+
+<ReleaseCalc />
+
+## Worked example: a deeper gland in the aft closure
+
+The [O-ring page](../../seals/o-ring-design/) shows the aft-closure seal losing squeeze at the cold limit. The fix
+makes the gland deeper. The aft closure drawing is at revision H. Select **Load worked example**.
+
+1. **Fit: yes.** Old closures still bolt to the case and accept the nozzle.
+2. **Function: no.** Old closures have the shallow gland, so they lose squeeze at the cold limit.
+3. **Form: yes.** The change in mass is very small.
+4. **Two-way: no.** An old closure cannot replace a new one, because it does not seal at the cold limit.
+
+Two answers are no, so the closure gets a **new part number**. This is the dangerous case: an old closure still
+assembles. The seal is a qualified function of the motor, so the change is **Class I** and goes to the change board.
+The motor assembly stays interchangeable at its own interfaces, so it gets a revision that calls up the new number.
+
+On **Sign-off** with criticality "Critical", the route has 8 signatories, 2 of them independent: drawn,
+checked, stress, independent stress check, manufacturing, quality, design authority and the change board.
+
+A second change on the same drawing adds the lubricant to the torque note (the conflict from the
+[note checker](../drawing-frame/#worked-example-the-aft-closure-drawing)). That only clarifies a note, so it is a
+revision: **H to J**, because I is not used.
+
+## Where this stops
+
+- **The decision belongs to the change board.** The tool sorts the questions. Your configuration-management plan sets
+  the rules, the classes and the approvals.
+- **"Interchangeable" needs evidence.** A yes means that a test, an analysis or the drawing shows it, not that it is
+  likely.
+- **No change record.** The tool does not write the change request or the engineering change notice.
+
+## On the drawing
+
+- **The revision table:** the letter, the change record, the zones affected, the date and the approval.
+- **The master stated:** drawing or model.
+- **Signatures on the release copy,** each for the check that role owns.
+- **A new part number for every change that is not interchangeable,** and the old number kept for the old parts.
+
+## References and further reading
+
+- ASME Y14.35, *Revision of Engineering Drawings and Associated Documents*.
+- ASME Y14.100, *Engineering Drawing Practices*; ISO 7200, *Data fields in title blocks and document headers*.
+- SAE EIA-649, *Configuration Management Standard*; MIL-HDBK-61, *Configuration Management Guidance*; ISO 10007,
+  *Guidelines for configuration management*.
+- ASME Y14.41, *Digital Product Definition Data Practices*; ISO 16792, *Digital product definition data practices*.
+- SAE AS9102, *First Article Inspection Requirement* (delta first article inspection after a design change).
+
+<Aside type="note">
+  Screening guidance from general practice. Your configuration-management plan, your drawing standard and your
+  company procedures decide how a change is classified and released.
+</Aside>

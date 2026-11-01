@@ -1,0 +1,250 @@
+---
+// Revision control and sign-off in three tabs: the change (form, fit, function and two-way interchangeability give a
+// revision or a new part number, and how that runs up the where-used tree), the next revision letter (ASME Y14.35),
+// and the sign-off route with the checker's list. Logic in src/lib/release.ts (unit-tested); UI only here.
+import { QUESTIONS, CHANGES } from '../lib/release';
+
+const TABS = [{ key: 'change', name: 'The change' }, { key: 'letter', name: 'Revision letter' }, { key: 'route', name: 'Sign-off' }];
+const ANS = [{ v: 'yes', t: 'Yes' }, { v: 'no', t: 'No' }, { v: 'unsure', t: 'Unsure' }];
+---
+
+<div class="calc relcalc" data-relcalc>
+  <div class="calc-head"><span>Revision control and sign-off</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button><button type="button" class="chip" data-copy>Copy summary</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="change">
+        <legend>The change</legend>
+        <div class="row2">
+          <label>Kind of change<select name="type">{CHANGES.map((c) => <option value={c.key}>{c.name}</option>)}</select></label>
+          <label>Current revision<input name="rev" type="text" maxlength="3" placeholder="for example C, or - for none" autocomplete="off" /></label>
+        </div>
+        <p class="hint">A kind of change fills typical answers. Answer for your actual change: the answers decide.</p>
+      </fieldset>
+      <fieldset data-panel="change">
+        <legend>Interchangeability</legend>
+        <div class="rl-qs">
+          {QUESTIONS.map((q) => (
+            <div class="rl-q" data-q={q.key}>
+              <span><b>{q.short}</b>{q.q}</span>
+              <div class="or-seg rl-seg" role="radiogroup" aria-label={q.short}>
+                {ANS.map((a) => <label><input type="radio" name={q.key} value={a.v} checked={a.v === 'yes'} /><span>{a.t}</span></label>)}
+              </div>
+            </div>
+          ))}
+          <div class="rl-q" data-parentq hidden>
+            <span><b>Next assembly</b>Does the next assembly stay interchangeable at its own interfaces?</span>
+            <div class="or-seg rl-seg" role="radiogroup" aria-label="Next assembly">
+              {ANS.map((a) => <label><input type="radio" name="parentOk" value={a.v} checked={a.v === 'unsure'} /><span>{a.t}</span></label>)}
+            </div>
+          </div>
+        </div>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="letter" hidden>
+        <legend>Revision letter</legend>
+        <label>Current revision<input name="rev2" type="text" maxlength="3" placeholder="for example H" autocomplete="off" /></label>
+        <p class="hint">ASME Y14.35 does not use I, O, Q, S, X or Z: they read like 1, 0, 2, 5 and the multiplication sign, or like each other. After Y comes AA. A blank, a dash or NC goes to A.</p>
+      </fieldset>
+      <fieldset data-panel="route" hidden>
+        <legend>The release</legend>
+        <div class="row2">
+          <label>Criticality<select name="crit"><option value="none">(not classified)</option><option value="major">Major</option><option value="critical">Critical</option><option value="fracture">Fracture critical</option></select></label>
+          <label>Master definition<select name="master"><option value="drawing">The drawing</option><option value="model">The model (model-based definition)</option></select></label>
+        </div>
+        <label class="inline"><input type="checkbox" name="analysis" /> The change affects the stress analysis</label>
+        <p class="hint" data-classnote></p>
+      </fieldset>
+    </form>
+    <div class="rl-out">
+      <dl class="readouts" data-out></dl>
+      <div data-vis></div>
+      <div data-list></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening logic. A "no" or "unsure" to fit, function, form or two-way interchangeability gives a new part number:
+    "unsure" counts as "no" until a test or an analysis shows otherwise. Class I and Class II follow the usual
+    configuration-management split (EIA-649, MIL-HDBK-61). Your configuration-management plan and change board decide.
+  </div>
+</div>
+
+<style is:global>
+  .relcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .relcalc .calc-body > * { min-width: 0; }
+  .relcalc .inline { display: flex !important; align-items: center; gap: 0.45rem; }
+  .relcalc .inline input { width: auto; }
+  .rl-out { display: grid; gap: 0.9rem; }
+  .rl-out > * { margin: 0 !important; }
+  .rl-qs { display: grid; gap: 0.45rem; }
+  .rl-qs > * { margin: 0 !important; }
+  .rl-q { display: grid; grid-template-columns: minmax(0, 1fr) 14rem; gap: 0.3rem 0.8rem; align-items: center; font-size: var(--sl-text-sm); color: var(--rd-muted); }
+  .rl-q > * { margin: 0 !important; }
+  .rl-q b { display: block; color: var(--rd-ink); font-size: var(--sl-text-xs); letter-spacing: 0.06em; text-transform: uppercase; }
+  .rl-q[hidden] { display: none; }
+  @media (max-width: 40rem) { .rl-q { grid-template-columns: minmax(0, 1fr); } }
+  .or-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--rd-line); border-radius: 6px; overflow: hidden; }
+  .or-seg label { margin: 0 !important; position: relative; }
+  .or-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .or-seg span { display: block; text-align: center; padding: 0.4rem 0.3rem; font-size: var(--sl-text-xs); color: var(--rd-muted); cursor: pointer; border-right: 1px solid var(--rd-line); }
+  .or-seg label:last-child span { border-right: 0; }
+  .or-seg input:checked + span { background: color-mix(in srgb, var(--rd-accent) 16%, transparent); color: var(--rd-ink); font-weight: 600; }
+  .or-seg input:focus-visible + span { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+  .rl-seg input[value='yes']:checked + span { background: color-mix(in srgb, var(--rd-ok) 18%, transparent); }
+  .rl-seg input[value='unsure']:checked + span { background: color-mix(in srgb, var(--rd-warn) 18%, transparent); }
+  .rl-h { font: 600 0.7rem var(--sl-font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--rd-ink); margin: 0 0 0.4rem !important; }
+  /* the interchangeability gates, then the outcome */
+  .rl-gates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
+  .rl-gates > * { margin: 0 !important; }
+  @media (max-width: 30rem) { .rl-gates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .rl-gate { border: 1px solid var(--rd-line); border-top: 3px solid var(--rd-ok); border-radius: 6px; padding: 0.35rem 0.45rem; background: var(--rd-panel2); font-family: var(--sl-font-mono); font-size: 0.72rem; color: var(--rd-muted); transition: border-color 0.2s; }
+  .rl-gate b { display: block; font-size: 0.95rem; color: var(--rd-ink); }
+  .rl-gate.no { border-top-color: var(--rd-accent); }
+  .rl-gate.unsure { border-top-color: var(--rd-warn); }
+  .rl-result { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 0.6rem; border: 2px solid var(--rd-ok); border-radius: 6px; padding: 0.4rem 0.6rem; font-family: var(--sl-font-mono); font-size: 0.72rem; color: var(--rd-muted); }
+  .rl-result b { font-size: 1rem; color: var(--rd-ink); }
+  .rl-result b::before { content: '⇒ '; color: var(--rd-muted); }
+  .rl-result.newpn { border-color: var(--rd-accent); }
+  /* the where-used tree */
+  .rl-tree { display: grid; gap: 0; max-width: 30rem; }
+  .rl-tree > * { margin: 0 !important; }
+  .rl-node { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-ok); border-radius: 6px; padding: 0.4rem 0.6rem; background: var(--rd-panel2); font-size: var(--sl-text-sm); color: var(--rd-muted); }
+  .rl-node b { color: var(--rd-ink); }
+  .rl-node.newpn { border-left-color: var(--rd-accent); }
+  .rl-node.ask { border-left-color: var(--rd-warn); }
+  .rl-node.idle { opacity: 0.55; }
+  .rl-link { height: 0.9rem; margin-left: 1.2rem !important; border-left: 2px solid var(--rd-line); }
+  /* the revision letter strip */
+  .rl-strip { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; font-family: var(--sl-font-mono); }
+  .rl-strip > * { margin: 0 !important; }
+  .rl-strip span { text-align: center; padding: 0.3rem 0; border: 1px solid var(--rd-line); border-radius: 4px; color: var(--rd-ink); font-size: 0.82rem; }
+  .rl-strip span.x { color: var(--rd-muted); text-decoration: line-through; opacity: 0.55; border-style: dashed; }
+  .rl-strip span.cur { background: color-mix(in srgb, var(--rd-muted) 25%, transparent); }
+  .rl-strip span.next { background: color-mix(in srgb, var(--rd-ok) 25%, transparent); border-color: var(--rd-ok); font-weight: 700; }
+  .rl-seq { font-family: var(--sl-font-mono); font-size: 0.85rem; color: var(--rd-ink); margin-top: 0.5rem !important; }
+  /* the sign-off route */
+  .rl-route { counter-reset: s; display: grid; gap: 0.35rem; padding: 0 !important; list-style: none; }
+  .rl-route > li { counter-increment: s; position: relative; margin: 0 !important; padding: 0.45rem 0.6rem 0.45rem 2.3rem; border: 1px solid var(--rd-line); border-radius: 6px; background: var(--rd-panel2); font-size: var(--sl-text-sm); color: var(--rd-muted); }
+  .rl-route > li::before { content: counter(s); position: absolute; left: 0.6rem; top: 0.45rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: var(--rd-line); color: var(--rd-ink); font: 700 0.7rem/1.2rem var(--sl-font-mono); text-align: center; }
+  .rl-route > li b { color: var(--rd-ink); }
+  .rl-route > li.ind { border-left: 3px solid var(--rd-warn); }
+  .rl-route > li em { font-style: normal; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rd-warn); margin-left: 0.4rem; }
+  .rl-check { display: grid; gap: 0.3rem; padding: 0 !important; list-style: none; }
+  .rl-check > li { margin: 0 !important; }
+  .rl-check label { display: flex; gap: 0.5rem; align-items: flex-start; font-size: var(--sl-text-sm); color: var(--rd-ink); cursor: pointer; }
+  .rl-check input { width: auto; margin-top: 0.2rem; }
+</style>
+
+<script>
+  import { QUESTIONS, CHANGES, CHECKLIST, classifyChange, nextRev, isValidRev, revIndex, revFromIndex, signoff, REV_EXCLUDED, type Ans, type ChangeAnswers, type Crit } from '../lib/release';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  document.querySelectorAll<HTMLElement>('[data-relcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => (form.elements.namedItem(n) as RadioNodeList | HTMLInputElement).value;
+    const setRadio = (n: string, v: string) => { const r = form.querySelector<HTMLInputElement>(`input[name="${n}"][value="${v}"]`); if (r) r.checked = true; };
+    const checked = new Set<number>();
+    let mode = 'change', copyText = '';
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const type = () => CHANGES.find((c) => c.key === val('type'))!;
+    const answers = (): ChangeAnswers => ({ fit: val('fit') as Ans, func: val('func') as Ans, form: val('form') as Ans, swap: val('swap') as Ans, classI: val('classI') as Ans, parentOk: val('parentOk') as Ans });
+    const fillType = () => { const t = type(); for (const q of QUESTIONS) setRadio(q.key, t.a[q.key]); (field('analysis') as HTMLInputElement).checked = ['tighten', 'material', 'function', 'mating', 'add'].includes(t.key); };
+
+    function runChange() {
+      const t = type(), a = answers(), c = classifyChange(a, t), rev = val('rev').trim().toUpperCase();
+      $('[data-parentq]').hidden = c.action === 'revision';
+      const revText = c.action === 'revision' ? `${rev || '-'} → ${nextRev(rev)}` : 'new part number';
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${c.action === 'revision' ? 'ok' : 'bad'}"><dt>Action</dt><dd>${c.action === 'revision' ? 'Revision' : 'New part number'} <small>${c.action === 'revision' ? `revision ${revText}` : `not interchangeable: ${[...c.failed, ...c.unsure.map((u) => `${u}?`)].join(', ')}`}</small></dd></div>
+        <div class="readout ${c.changeClass === 'I' ? 'warn' : ''}"><dt>Change class</dt><dd>Class ${c.changeClass} <small>${c.changeClass === 'I' ? 'major: change board approval' : 'minor: design authority approval'}</small></dd></div>
+        <div class="readout ${c.parent === 'newPN' ? 'bad' : c.parent === 'ask' ? 'warn' : ''}"><dt>Next assembly</dt><dd>${c.parent === undefined ? 'No change' : c.parent === 'revise' ? 'Revise' : c.parent === 'newPN' ? 'New part number' : 'Answer the question'} <small>${c.parent === undefined ? 'same part number, so the parts list is unchanged' : c.parent === 'revise' ? 'update its parts list' : c.parent === 'newPN' ? 'repeat the check one level up' : 'is it still interchangeable at its own interfaces?'}</small></dd></div>`;
+      const gate = (k: string) => { const q = QUESTIONS.find((x) => x.key === k)!, v = a[k as keyof ChangeAnswers]; return `<div class="rl-gate ${v}"><b>${v === 'yes' ? '✓' : v === 'no' ? '✗' : '?'} ${q.short}</b>${v === 'yes' ? 'interchangeable' : v === 'no' ? 'not interchangeable' : 'not shown yet'}</div>`; };
+      const nodes: [string, string, string][] = [
+        [c.action === 'revision' ? 'ok' : 'newpn', 'This part', c.action === 'revision' ? `revision ${nextRev(rev)}, same part number` : 'new part number. The old number stays for old parts'],
+        c.parent === undefined ? ['idle', 'Next assembly', 'no change: its parts list calls up the same number']
+          : c.parent === 'revise' ? ['ok', 'Next assembly', 'revision: its parts list calls up the new number']
+          : c.parent === 'newPN' ? ['newpn', 'Next assembly', 'new part number too. Ask the same questions one level up']
+          : ['ask', 'Next assembly', 'revision or new part number: answer the question for the next assembly'],
+        [c.parent === 'newPN' ? 'ask' : 'idle', 'Assembly above', c.parent === 'newPN' ? 'check it the same way' : 'no change'],
+      ];
+      $('[data-vis]').innerHTML = `<p class="rl-h">Interchangeability</p><div class="rl-gates">${['fit', 'func', 'form', 'swap'].map(gate).join('')}<div class="rl-result ${c.action === 'revision' ? '' : 'newpn'}"><b>${c.action === 'revision' ? 'Revision' : 'New part number'}</b>${c.action === 'revision' ? 'all four interchangeable' : 'any no or unsure'} · Class ${c.changeClass}</div></div>
+        <p class="rl-h" style="margin-top:0.9rem !important">Where-used</p><div class="rl-tree">${nodes.map(([k, h, d], i) => `${i ? '<div class="rl-link"></div>' : ''}<div class="rl-node ${k}"><b>${h}</b>: ${esc(d)}</div>`).join('')}</div>`;
+      $('[data-list]').innerHTML = `<p class="rl-h">Also update</p><ul class="pv-notes">${c.updates.map((u) => `<li>${esc(u)}</li>`).join('')}</ul>`;
+      const notes: [string, string][] = [];
+      if (c.unsure.length) notes.push(['warn', `${c.unsure.join(', ')}: unsure counts as not interchangeable. A test or an analysis that shows interchangeability can change the answer.`]);
+      if (c.action === 'newPN') notes.push(['', 'Keep the old part number for the old parts. Do not reuse a part number for a part that is not interchangeable with it.']);
+      if (a.func === 'no' && a.fit === 'yes') notes.push(['warn', 'Old parts still assemble but do not work. This is the dangerous case: nothing at assembly stops an old part going in.']);
+      if (c.action === 'revision') notes.push(['', 'Release the drawing and the model together. If only one changes, the shop builds whichever one it has.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+      copyText = [`Change: ${t.name}`, `Action: ${c.action === 'revision' ? `revision ${revText}` : 'new part number'}`, `Class ${c.changeClass}`, ...QUESTIONS.map((q) => `${q.short}: ${a[q.key]}`), 'Also update:', ...c.updates.map((u) => `- ${u}`), `Approvals: ${c.approvals.join('; ')}`].join('\n');
+    }
+
+    function runLetter() {
+      const r = val('rev2').trim().toUpperCase(), n = nextRev(r), ok = r === '' || r === '-' || r === 'NC' || isValidRev(r);
+      const seq = [n]; for (let k = 0; k < 5; k++) seq.push(nextRev(seq[seq.length - 1]));
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ok"><dt>Next revision</dt><dd>${n} <small>after ${esc(r || '-')}</small></dd></div>
+        <div class="readout ${ok ? 'ok' : 'bad'}"><dt>Current revision</dt><dd>${ok ? 'Valid' : 'Not valid'} <small>${ok ? (r && isValidRev(r) ? `number ${revIndex(r)} in the sequence` : 'initial release') : 'contains an excluded letter'}</small></dd></div>`;
+      const last = r.slice(-1), nextLast = n.slice(-1), sameLen = n.length === r.length || !r;
+      $('[data-vis]').innerHTML = `<p class="rl-h">The letters${n.length > 1 ? ` (last letter of ${n})` : ''}</p><div class="rl-strip">${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((c) => `<span class="${REV_EXCLUDED.includes(c) ? 'x' : ''} ${c === last && sameLen ? 'cur' : ''} ${c === nextLast ? 'next' : ''}">${c}</span>`).join('')}</div><p class="rl-seq">Next six: ${seq.join(' · ')}</p>`;
+      $('[data-list]').innerHTML = '';
+      $('[data-notes]').innerHTML = `<li>Revision ${revFromIndex(20)} is followed by ${revFromIndex(21)}. Some drawings use numbers (01, 02) before the first release; the first release is then A.</li><li>Every revision references its change record and lists the zones it affects.</li>`;
+      copyText = `Revision ${r || '-'} → ${n}`;
+    }
+
+    function runRoute() {
+      const c = classifyChange(answers(), type()), crit = val('crit') as Crit, model = val('master') === 'model';
+      const route = signoff(crit, c.changeClass === 'I', (field('analysis') as HTMLInputElement).checked);
+      $('[data-classnote]').textContent = `Class ${c.changeClass}, from the answers on the first tab.`;
+      const done = CHECKLIST.filter((_, i) => checked.has(i)).length;
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>Signatories</dt><dd>${route.length} <small>${route.filter((r) => r.independent).length} independent</small></dd></div>
+        <div class="readout ${done === CHECKLIST.length ? 'ok' : 'warn'}"><dt>Checker's list</dt><dd>${done} of ${CHECKLIST.length} <small>${done === CHECKLIST.length ? 'ready to sign' : 'not ready to sign'}</small></dd></div>`;
+      $('[data-vis]').innerHTML = `<p class="rl-h">Sign-off route</p><ol class="rl-route">${route.map((r) => `<li class="${r.independent ? 'ind' : ''}"><b>${r.role}</b>${r.independent ? '<em>independent</em>' : ''}<br />${esc(r.checks)}</li>`).join('')}</ol>`;
+      $('[data-list]').innerHTML = `<p class="rl-h">Checker's list</p><ul class="rl-check">${CHECKLIST.map((t, i) => `<li><label><input type="checkbox" data-ck="${i}" ${checked.has(i) ? 'checked' : ''} /> <span>${esc(t)}</span></label></li>`).join('')}</ul>`;
+      const notes: [string, string][] = [['', 'Each signatory checks something different. If two check the same thing, something else has no check.']];
+      notes.push(model ? ['warn', 'Model-based definition: the model is the master. State it on the drawing (or the drawing-less release), and release the model under revision control like a drawing (ASME Y14.41).'] : ['', 'The drawing is the master. State it on the drawing, so nobody measures from the model.']);
+      if (crit === 'none') notes.push(['warn', 'Criticality not classified. The class sets the inspection and the approvals.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+      copyText = ['SIGN-OFF ROUTE', ...route.map((r, i) => `${i + 1}. ${r.role}${r.independent ? ' (independent)' : ''}: ${r.checks}`), '', "CHECKER'S LIST", ...CHECKLIST.map((t, i) => `[${checked.has(i) ? 'x' : ' '}] ${t}`)].join('\n');
+    }
+
+    const run = () => (mode === 'change' ? runChange() : mode === 'letter' ? runLetter() : runRoute());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      if (key === 'letter' && !val('rev2')) field('rev2').value = val('rev');
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    field('type').addEventListener('change', fillType);
+    root.addEventListener('change', (e) => { const t = e.target as HTMLInputElement; if (t.dataset.ck) { t.checked ? checked.add(+t.dataset.ck) : checked.delete(+t.dataset.ck); run(); } });
+    form.addEventListener('input', () => { $('[data-example-note]').hidden = true; run(); });
+    form.addEventListener('change', run);
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    // The worked example: the aft closure gland is made deeper to keep the O-ring squeeze at the cold limit.
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => {
+      field('type').value = 'function'; fillType();
+      field('rev').value = 'H'; field('rev2').value = 'H';
+      setRadio('classI', 'yes'); setRadio('parentOk', 'yes');
+      field('crit').value = 'critical'; field('master').value = 'drawing';
+      const note = $('[data-example-note]');
+      note.textContent = 'Worked example: the deeper aft-closure gland. These answers are for this example only. Answer for your own change.';
+      note.hidden = false;
+      select('change');
+    });
+    fillType();
+    run();
+  });
+</script>
