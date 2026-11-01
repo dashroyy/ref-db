@@ -116,20 +116,22 @@ Two more lessons about joints:
 
 ## Calculator
 
-The calculator works in two steps:
+The result comes first:
 
-1. **Design from the hardware.** Enter the bore and the plug (or the rod, or the groove diameter of a face seal), the
-   pressure and the targets. **Design the ring and groove** selects the section from the diameter, a stock ring with
-   1–5% stretch (or against the pressure side of a face groove), the groove for the target squeeze and fill, and back-up
-   rings if the extrusion check needs them. It writes the result into the fields.
-2. **Check the gland.** Change the minimum and maximum values to your real tolerances. The calculator checks the worst
-   case at the tolerance corners and the temperature extremes, after compression set, and with the joint opening. It
-   also shows:
-   - the minimum and maximum squeeze across the full service temperature range;
-   - a Monte Carlo of 40,000 assemblies at the coldest temperature after compression set, with each dimension normal
-     across its limits. This tells how rare the worst case is;
-   - a table of what goes on the groove drawing: ring, groove dimensions, corner radii, lead-in chamfer, surface finish
-     and extrusion gap.
+- **The verdict** and the three key numbers: nominal squeeze, worst-case range and worst fill.
+- **A live section of the gland, to scale.** Select the nominal assembly, the least-squeeze corner (smallest ring, most
+  stretch, deepest gland, after compression set) or the most-squeeze corner (largest ring, tightest gland, swollen).
+  Move the temperature, or push **Sweep temperature**, to see the ring shrink and swell. With **Pressure on**, the ring
+  moves to the low-pressure side, and the extrusion gap there shows red when it is too large for the ring.
+- **A check for each failure mode,** as a chip. Select a chip to read why it passes or fails.
+- **Five views:** the squeeze range against the target and limits; the least and most squeeze across the temperature
+  range; a Monte Carlo of 40,000 assemblies at the coldest temperature after compression set; what goes on the groove
+  drawing; and each compound against your temperatures and medium.
+
+The inputs are in five short steps under the result. **Design a ring and groove** (at the top of the steps) uses the
+bore and the plug (or the rod, or the groove diameter of a face seal), the pressure and the targets. It selects the
+section from the diameter, a stock ring with 1–5% stretch (or against the pressure side of a face groove), the groove for
+the target squeeze and fill, and back-up rings if the extrusion check needs them, and writes them into the steps.
 
 The housing material comes from the [material library](../../materials/selection/), so its expansion is the same as
 in the other tools. For a ring that is not in the class A list, select **Other** and type the section and the ID.

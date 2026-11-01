@@ -1,0 +1,119 @@
+---
+title: Material datasheet
+description: Everything the site knows about one material on one page. All the properties from the material library, the figures derived from them, where the material sits among the others, its designations, specification and galvanic index, and links into the tools, with a side-by-side comparison of two materials.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import DatasheetCalc from '../../../components/DatasheetCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>One page for one material: its properties, what follows from them, and where else the site uses it. Compare two materials side by side before you select one.</div>
+  <div><b>Before this</b><a href="../selection/">Materials</a> (selection and the material chart)</div>
+  <div><b>Related</b><a href="../allowables/">Allowables</a> · <a href="../designations/">Designations</a> · <a href="../specification/">Material specs</a></div>
+</div>
+
+## Why this matters
+
+The data for one material is spread over many pages: the selection chart, the designation register, the specification
+builder, the galvanic table and the tools that size parts. When you compare two candidates, you must collect the same
+values for each, from the same source, in the same units. The datasheet does this for you.
+
+All the values come from the material library, the one source that every tool on the site uses. If you add a material
+to the library, it appears here, in the selection chart and in every tool that can use it. See
+[Adding a material](../../verify/fea-cards/#adding-a-material).
+
+## What is on the datasheet
+
+| Section | Contents |
+| --- | --- |
+| Identity | Name, family, maximum service temperature, weldability, summary and specification |
+| Mechanical | Density, modulus, Poisson's ratio, yield, ultimate, uniform elongation, fracture toughness |
+| Thermal | Expansion, conductivity (also through the thickness of a laminate), specific heat, service temperature, and for ablatives the pyrolysis onset and erosion rate |
+| Manufacturing | Indicative price, machinability and corrosion ratings |
+| Derived | The figures below, calculated from the library values |
+| Designations | Matching entries of the [designation register](../designations/): EN, UNS and aerospace specifications |
+| Galvanic and specification | The anodic index from [Galvanic corrosion](../galvanic/), and if the [specification builder](../specification/) has the alloy |
+
+A value marked **family** is a family default, not a value for the alloy. The library uses it where the entry does not
+give one, for example Poisson's ratio of 0.29 for steels. Use alloy data for a design.
+
+## The derived figures
+
+| Figure | Formula | What it tells you |
+| --- | --- | --- |
+| Specific strength | $F_{ty}/\rho$ | Strength for each kilogram: the index for a minimum-mass part loaded in tension |
+| Specific stiffness | $E/\rho$ | Stiffness for each kilogram. Almost all structural metals are near 25 MJ/kg |
+| Yield ÷ ultimate | $F_{ty}/F_{tu}$ | Near 1: little hardening after yield, so little warning before failure |
+| Thermal diffusivity | $k/\rho c_p$ | How fast heat spreads into the part ([Transient thermal](../../motor/transient-thermal/)) |
+| Constrained thermal stress | $E\alpha\,\Delta T$, for 100 K | The stress when a part cannot grow at all |
+| Thermal-shock parameter | $F_{ty}(1-\nu)/E\alpha$ | The temperature difference that a constrained surface can take before it yields |
+| Critical surface crack | $\frac{1}{\pi}\left(\frac{K_{IC}}{1.12\,\sigma}\right)^2$ at $\sigma = 0.6\,F_{ty}$ | The crack size that is critical at a typical working stress ([Leak before break](../../verify/leak-before-break/)) |
+| Unnotched fatigue estimate | from $F_{tu}$, by family | The estimate of the [Fatigue page](../../fundamentals/fatigue/), before the Marin factors |
+
+**The profile chart** ranks each property among all the library materials that have it: the left end is the lowest
+value in the library, and the right end is the highest. It shows at a glance where a material is strong or weak. It
+does not say what is good for your part. For price, further right is more expensive.
+
+## Calculator
+
+Select a material. Select a second material to compare: its values are blue, and B/A is its ratio to the first. The
+links open the tools with this material where they can: **Size a case with it** opens [Case sizing](../../motor/case-sizing/)
+with the material selected. **Copy datasheet** copies the values as plain text, for a report or a trade study.
+
+<DatasheetCalc />
+
+## Worked example: D6AC or titanium for the 300 mm case
+
+The [case-sizing example](../../motor/case-sizing/#worked-example) uses D6AC. Compare it with Ti-6Al-4V (Grade 5), and
+then with 7075-T6.
+
+1. **Specific strength.** D6AC gives 185 kN·m/kg and Ti-6Al-4V gives 199 kN·m/kg. Titanium is only 7% better for each
+   kilogram. Both are in the top 15% of the library. On strength for mass alone, the change is not worth much.
+2. **Toughness.** At 60% of yield, the critical surface crack is **1.6 mm** in D6AC and **5.1 mm** in Ti-6Al-4V.
+   A 1.6 mm crack is near the limit of routine NDT, which is why the D6AC case needs a proof test
+   ([Proof testing](../../verify/proof-testing/)). Titanium is much more tolerant of damage.
+3. **Heat.** The thermal diffusivity is 11.4 mm²/s for D6AC and 2.7 mm²/s for titanium. Heat stays near the surface of a
+   titanium part, so its surface gets hotter during a burn, and its soak-back is slower. A fully constrained part gets
+   252 MPa per 100 K in D6AC and 98 MPa in titanium.
+4. **Galvanic.** The anodic indices are 0.85 V and 0.30 V: 0.55 V apart. A titanium closure on a steel case needs
+   isolation and sealant ([Galvanic corrosion](../galvanic/)).
+5. **Price.** The indicative price is £12/kg for D6AC and £48/kg for titanium, before the machining cost, which is
+   higher for titanium.
+6. **And 7075-T6?** Its specific strength is 178 kN·m/kg, close to the other two, but its maximum service temperature is
+   120 °C and its critical crack at 60% of yield is 1.9 mm. It suits a cool, low-pressure part, not the case.
+
+The datasheet marks Poisson's ratio and specific heat as family defaults for all three. They are close enough for this
+comparison, but use alloy data in an analysis.
+
+## Where this stops
+
+- **Typical values.** The library holds typical room-temperature values for screening. Design values (A-basis or
+  B-basis, at temperature) come from MMPDS, the material specification or your own tests
+  ([Allowables](../allowables/)).
+- **One condition for each entry.** The same alloy in a different heat treatment, product form or thickness has
+  different properties. Add it as a separate entry.
+- **Different kinds of strength.** For a composite, the strength in the library is a laminate or fibre-direction value;
+  for a ceramic or an ablative it is a failure stress. Compare like with like.
+- **Matching by name.** Designations and specification entries are matched by the alloy code in the name. Check the
+  match before you use it.
+
+## On the drawing
+
+- **The material callout** comes from the specification, not from the datasheet: alloy, condition, product form,
+  specification and melt practice ([Material specs](../specification/)).
+- **Record the source** of every property that a design uses: the specification, the MMPDS table or the test report,
+  with its basis and temperature.
+
+## References and further reading
+
+- MMPDS, *Metallic Materials Properties Development and Standardization* (current edition).
+- ASM Handbook, Vol. 1 and 2, *Properties and Selection*, ASM International.
+- M. F. Ashby, *Materials Selection in Mechanical Design*, 5th ed., Butterworth-Heinemann (2016).
+- CMH-17, *Composite Materials Handbook*.
+
+<Aside type="note">
+  Typical values for screening and comparison. The properties for your design come from approved sources and your
+  programme's material requirements.
+</Aside>

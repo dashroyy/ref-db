@@ -1,0 +1,228 @@
+---
+// Material datasheet: one library material (and, optionally, a second to compare) with every property, the figures
+// derived from them, where each sits in the library, its designations and spec-builder entry, its galvanic index, and
+// links into the tools. All values come from the material library (src/lib/materials.ts); a new entry in
+// materials.json appears here. Maths in src/lib/datasheet.ts (unit-tested); UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS as D } from '../lib/materials';
+import { derived, galvanicFor, sameAlloy } from '../lib/datasheet';
+import xref from '../data/xref.json';
+import specs from '../data/specs.json';
+
+type XRow = { name: string; family: string; en: string; enNo: string; legacyBs: string; uns: string; aero: string; note: string };
+const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
+  name: m.name, family: m.family, familyName: m.familyName, kind: m.kind, summary: m.summary, spec: m.spec,
+  p: { rho: m.rho, E: m.E, nu: m.nu, Fty: m.Fty, Ftu: m.Ftu, eu: m.eu, kic: m.kic, alpha: m.alpha, k: m.k, kz: m.kz, cp: m.cp, maxT: m.maxT, tPyro: m.tPyro, erosion: m.erosion, corrosion: m.corrosion, machinability: m.machinability, price: m.price },
+  weldable: m.weldable, kicDefault: m.kicDefault, defaults: m.defaults,
+  d: derived(m), galv: galvanicFor(m),
+  xref: (xref.rows as XRow[]).filter((r) => sameAlloy(m, r)).slice(0, 3).map((r) => ({ name: r.name, en: r.en, enNo: r.enNo, uns: r.uns, aero: r.aero, legacyBs: r.legacyBs })),
+  spec: (specs.specs as { name: string; family: string; designation: string; forms: unknown[]; tempers: unknown[] }[]).filter((s) => sameAlloy(m, s)).slice(0, 1).map((s) => ({ name: s.name, designation: s.designation, forms: s.forms.length, tempers: s.tempers.length }))[0] ?? null,
+  caseOk: ['steel', 'ss', 'ti', 'al', 'ni'].includes(m.family) && !!m.Fty && !!m.Ftu && !!m.rho,
+}]));
+---
+
+<div class="calc dscalc" data-dscalc>
+  <div class="calc-head"><span>Material datasheet</span><span class="head-btns"><span>{MATERIALS.length} materials · from the material library</span><button type="button" class="chip" data-copy>Copy datasheet</button></span></div>
+  <div class="calc-body ds-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Material</legend>
+        <div class="row2">
+          <label>Material<MaterialSelect name="a" list={MATERIALS} selected={D.caseSteel} /></label>
+          <label>Compare with<MaterialSelect name="b" list={MATERIALS} blank="(nothing)" /></label>
+        </div>
+      </fieldset>
+    </form>
+    <div class="ds-out">
+      <div class="ds-id" data-id></div>
+      <div class="ds-links" data-links></div>
+      <div data-tables></div>
+      <figure class="hc-fig">
+        <svg viewBox="0 0 520 300" data-chart role="img" aria-label="Where the material sits in the library"></svg>
+        <figcaption data-cap></figcaption>
+      </figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-ds set:html={JSON.stringify(DATA)}></script>
+  <div class="calc-foot">
+    Typical room-temperature values from the material library, for screening and comparison: not allowables. Family
+    defaults are marked. Derived figures: specific strength F<sub>ty</sub>/ρ, specific stiffness E/ρ, diffusivity
+    k/ρc<sub>p</sub>, constrained thermal stress EαΔT, thermal-shock parameter F<sub>ty</sub>(1−ν)/Eα, critical surface crack
+    at 60% of yield with Y = 1.12, and the unnotched fatigue estimate of the Fatigue page. The profile ranks each property
+    among the library materials that have it.
+  </div>
+</div>
+
+<style is:global>
+  .dscalc .ds-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .dscalc .ds-body > * { min-width: 0; }
+  .dscalc .ds-out { display: grid; gap: 0.9rem; }
+  .dscalc .ds-out > * { margin: 0 !important; }
+  .ds-id { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-accent); border-radius: 6px; padding: 0.7rem 0.85rem; background: var(--rd-panel2); display: grid; gap: 0.35rem; }
+  .ds-id > * { margin: 0 !important; }
+  .ds-id h4 { font-size: 1.15rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.6rem; }
+  .ds-id h4 span { font: 600 0.66rem var(--sl-font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); border: 1px solid var(--rd-line); border-radius: 4px; padding: 0.05rem 0.4rem; }
+  .ds-id p { font-size: 0.82rem; color: var(--rd-muted); }
+  .ds-id .vs { color: var(--rd-blue); }
+  .ds-links { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ds-links > * { margin: 0 !important; }
+  .ds-links a { font: 600 0.7rem var(--sl-font-mono); letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; color: var(--rd-ink); border: 1px solid var(--rd-line); border-radius: 5px; padding: 0.35rem 0.65rem; background: var(--rd-panel); }
+  .ds-links a:hover { border-color: var(--rd-accent); }
+  .ds-sec { margin: 0 0 0.8rem !important; }
+  .ds-sec h5 { margin: 0 0 0.3rem !important; font: 600 0.7rem var(--sl-font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--rd-ink); }
+  .ds-tw { overflow-x: auto; }
+  .ds-tw table { width: 100%; display: table; margin: 0 !important; }
+  .ds-tw td, .ds-tw th { padding: 0.32rem 0.5rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
+  .ds-tw td:first-child, .ds-tw th:first-child { text-align: left; white-space: normal; }
+  .ds-tw td.u { color: var(--rd-muted); text-align: left; font-size: 0.72rem; }
+  .ds-tw td.b { color: var(--rd-blue); }
+  .ds-tw .tag { font: 600 0.58rem var(--sl-font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--rd-warn); border: 1px solid color-mix(in srgb, var(--rd-warn) 60%, transparent); border-radius: 3px; padding: 0 0.25rem; margin-left: 0.3rem; vertical-align: 0.1em; }
+  .ds-tw td.hi { color: var(--rd-ok); } .ds-tw td.lo { color: var(--rd-accent); }
+</style>
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg';
+  type P = Record<string, number | undefined>;
+  type M = { name: string; family: string; familyName: string; kind: string; summary: string; spec: string; p: P; weldable?: boolean; kicDefault: boolean; defaults: string[]; d: P; galv: { key: string; name: string; index: number } | null; xref: Record<string, string>[]; spec: { name: string; designation: string; forms: number; tempers: number } | null; caseOk: boolean };
+  const esc = (s: string) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const sig = (v: number | undefined, n = 3) => (v === undefined || !Number.isFinite(v) ? '—' : Math.abs(v) >= 10 ** n ? Math.round(v).toLocaleString('en-GB') : Number(v.toPrecision(n)).toLocaleString('en-GB', { maximumSignificantDigits: n }));
+
+  // property rows: [key, label, unit, scale to display, source group, larger is better for the profile (or null)]
+  const ROWS: [string, string, string, number, 'p' | 'd'][] = [
+    ['rho', 'Density', 'kg/m³', 1, 'p'], ['E', "Young's modulus", 'GPa', 1e-3, 'p'], ['nu', "Poisson's ratio", '', 1, 'p'],
+    ['Fty', 'Yield, F<sub>ty</sub>', 'MPa', 1, 'p'], ['Ftu', 'Ultimate, F<sub>tu</sub>', 'MPa', 1, 'p'], ['eu', 'Uniform elongation', '%', 1, 'p'],
+    ['kic', 'Fracture toughness, K<sub>IC</sub>', 'MPa√m', 1, 'p'],
+    ['alpha', 'Expansion, α', '10⁻⁶/K', 1e6, 'p'], ['k', 'Conductivity, k', 'W/m·K', 1, 'p'], ['kz', 'Conductivity through the thickness', 'W/m·K', 1, 'p'],
+    ['cp', 'Specific heat, c<sub>p</sub>', 'J/kg·K', 1, 'p'], ['maxT', 'Maximum service temperature', '°C', 1, 'p'],
+    ['tPyro', 'Pyrolysis onset', '°C', 1, 'p'], ['erosion', 'Erosion rate (moderate flow)', 'mm/s', 1, 'p'],
+    ['price', 'Price (indicative)', '£/kg', 1, 'p'], ['machinability', 'Machinability', '/5', 1, 'p'], ['corrosion', 'Corrosion resistance', '/5', 1, 'p'],
+  ];
+  const DERIVED: [string, string, string][] = [
+    ['specStrength', 'Specific strength, F<sub>ty</sub>/ρ', 'kN·m/kg'], ['specStiffness', 'Specific stiffness, E/ρ', 'MJ/kg'],
+    ['yieldRatio', 'Yield ÷ ultimate', ''], ['diffusivity', 'Thermal diffusivity', 'mm²/s'],
+    ['thermalStress', 'Stress, 100 K fully constrained', 'MPa'], ['shockR', 'Thermal-shock parameter', 'K'],
+    ['critCrack', 'Critical surface crack at 60% of yield', 'mm'], ['endurance', 'Unnotched fatigue estimate', 'MPa'],
+  ];
+  const GROUPS: [string, string[]][] = [
+    ['Mechanical', ['rho', 'E', 'nu', 'Fty', 'Ftu', 'eu', 'kic']],
+    ['Thermal', ['alpha', 'k', 'kz', 'cp', 'maxT', 'tPyro', 'erosion']],
+    ['Manufacturing', ['price', 'machinability', 'corrosion']],
+  ];
+  // the profile: properties ranked within the library, larger = further right
+  const PROFILE: [string, string, 'p' | 'd'][] = [
+    ['specStrength', 'Specific strength', 'd'], ['specStiffness', 'Specific stiffness', 'd'], ['kic', 'Toughness', 'p'],
+    ['maxT', 'Service temperature', 'p'], ['k', 'Conductivity', 'p'], ['endurance', 'Fatigue', 'd'], ['corrosion', 'Corrosion', 'p'], ['price', 'Price', 'p'],
+  ];
+
+  document.querySelectorAll<HTMLElement>('[data-dscalc]').forEach((root) => {
+    const DATA: Record<string, M> = JSON.parse(root.querySelector('[data-ds]')!.textContent!);
+    const all = Object.values(DATA);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const sel = (n: string) => form.elements.namedItem(n) as HTMLSelectElement;
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const el = (tag: string, a: Record<string, string | number>, text?: string) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v)); if (text !== undefined) e.textContent = text; svg.append(e); return e; };
+    const val = (m: M, key: string, src: 'p' | 'd') => (src === 'p' ? m.p[key] : m.d[key]);
+    const rank = (key: string, src: 'p' | 'd', v: number | undefined) => {
+      if (v === undefined) return undefined;
+      const vs = all.map((m) => val(m, key, src)).filter((x): x is number => typeof x === 'number' && Number.isFinite(x));
+      return vs.length > 1 ? vs.filter((x) => x < v).length / (vs.length - 1) : undefined;
+    };
+    // restore the material from the link: ?m=<key>
+    try { const q = new URLSearchParams(location.search).get('m'); if (q && DATA[q]) sel('a').value = q; } catch { /* no URL */ }
+    let text = '';
+
+    function run() {
+      const a = DATA[sel('a').value], bKey = sel('b').value, b = bKey ? DATA[bKey] : null;
+      if (!a) return;
+      const T: string[] = [`MATERIAL DATASHEET: ${a.name}${b ? ` (compared with ${b.name})` : ''}`, `Family: ${a.familyName}`, a.spec ? `Specification: ${a.spec}` : '', ''].filter((x, i) => x || i === 3);
+      root.querySelector('[data-id]')!.innerHTML = `<h4>${esc(a.name)}<span>${esc(a.familyName)}</span>${a.p.maxT !== undefined ? `<span>to ${a.p.maxT} °C</span>` : ''}${a.weldable === false ? '<span>not weldable</span>' : a.weldable ? '<span>weldable</span>' : ''}</h4>
+        ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}${a.spec ? `<p>${esc(a.spec)}</p>` : ''}${b ? `<p class="vs">Compared with <b>${esc(b.name)}</b> (${esc(b.familyName)}): its column is blue, and B/A is its ratio to the first material.</p>` : ''}`;
+      const aKey = sel('a').value;
+      root.querySelector('[data-links]')!.innerHTML = [
+        a.caseOk ? `<a href="../../motor/case-sizing/?m=${encodeURIComponent(aKey)}#calculator">Size a case with it →</a>` : '',
+        `<a href="../selection/#calculator">See it on the selection chart →</a>`,
+        `<a href="../../verify/fea-cards/#calculator">Make an FEA card →</a>`,
+        a.spec || DATA[aKey].spec ? `<a href="../specification/#calculator">Build the callout →</a>` : '',
+      ].filter(Boolean).join('');
+
+      // property tables
+      const head = `<thead><tr><th>Property</th><th>${b ? 'A' : 'Value'}</th>${b ? '<th>B</th><th>B/A</th>' : ''}<th>Unit</th></tr></thead>`;
+      const cell = (m: M, key: string, scale: number, src: 'p' | 'd') => {
+        const v = val(m, key, src);
+        const tag = src === 'p' && ((key === 'nu' && m.defaults.includes('nu')) || (key === 'cp' && m.defaults.includes('cp')) || (key === 'kic' && m.kicDefault)) ? '<span class="tag">family</span>' : '';
+        return { v, html: `${sig(v === undefined ? undefined : v * scale)}${tag}` };
+      };
+      const table = (rows: [string, string, string, number, 'p' | 'd'][]) => {
+        const body = rows.map(([key, label, unit, scale, src]) => {
+          const ca = cell(a, key, scale, src), cb = b ? cell(b, key, scale, src) : null;
+          if (ca.v === undefined && (!cb || cb.v === undefined)) return '';
+          const ratio = cb && ca.v && cb.v !== undefined ? cb.v / ca.v : undefined;
+          T.push(`  ${label.replace(/<[^>]+>/g, '')}: ${ca.html.replace(/<[^>]+>.*$/, '')} ${unit}${cb ? ` | ${cb.html.replace(/<[^>]+>.*$/, '')}` : ''}${ca.html.includes('family') ? ' (family default)' : ''}`);
+          return `<tr><td>${label}</td><td>${ca.html}</td>${cb ? `<td class="b">${cb.html}</td><td>${ratio !== undefined ? `×${sig(ratio, 2)}` : '—'}</td>` : ''}<td class="u">${unit}</td></tr>`;
+        }).join('');
+        return body ? `<div class="ds-tw"><table>${head}<tbody>${body}</tbody></table></div>` : '';
+      };
+      let html = '';
+      for (const [title, keys] of GROUPS) {
+        T.push(title.toUpperCase());
+        const t = table(ROWS.filter((r) => keys.includes(r[0])));
+        if (t) html += `<section class="ds-sec"><h5>${title}</h5>${t}</section>`;
+      }
+      T.push('DERIVED');
+      const dt = table(DERIVED.map(([k, l, u]) => [k, l, u, 1, 'd']));
+      if (dt) html += `<section class="ds-sec"><h5>Derived</h5>${dt}</section>`;
+      // designations, spec builder, galvanic
+      const x = a.xref.map((r) => `<tr><td>${esc(r.name)}</td><td>${esc(r.en)}${r.enNo && r.enNo !== '—' ? ` · ${esc(r.enNo)}` : ''}</td><td>${esc(r.uns)}</td><td>${esc(r.aero)}</td></tr>`).join('');
+      html += `<section class="ds-sec"><h5>Designations</h5>${x ? `<div class="ds-tw"><table><thead><tr><th>Register entry</th><th>EN</th><th>UNS</th><th>Aerospace</th></tr></thead><tbody>${x}</tbody></table></div>` : '<p class="hint">No entry in the designation register for this material. See <a href="../designations/">Designations</a>.</p>'}</section>`;
+      a.xref.forEach((r) => T.push(`DESIGNATION: ${r.name} | ${r.en} | UNS ${r.uns} | ${r.aero}`));
+      const g = (m: M | null) => (m?.galv ? `${m.galv.index.toFixed(2)} V` : '—');
+      html += `<section class="ds-sec"><h5>Galvanic and specification</h5><div class="ds-tw"><table><tbody>
+        <tr><td>Anodic index</td><td>${g(a)}</td>${b ? `<td class="b">${g(b)}</td><td>${a.galv && b.galv ? `${Math.abs(a.galv.index - b.galv.index).toFixed(2)} V apart` : '—'}</td>` : ''}<td class="u">${a.galv ? esc(a.galv.name) : 'not in the galvanic table'}</td></tr>
+        <tr><td>Spec builder</td><td>${a.spec ? 'yes' : 'no'}</td>${b ? `<td class="b">${b.spec ? 'yes' : 'no'}</td><td></td>` : ''}<td class="u">${a.spec ? `${esc(a.spec.designation)}: ${a.spec.forms} product forms, ${a.spec.tempers} conditions` : ''}</td></tr>
+      </tbody></table></div></section>`;
+      if (a.galv) T.push(`ANODIC INDEX: ${a.galv.index.toFixed(2)} V (${a.galv.name})`);
+      root.querySelector('[data-tables]')!.innerHTML = html;
+      text = T.join('\n');
+
+      // notes
+      const notes: [string, string][] = [];
+      if (a.defaults.length || a.kicDefault) notes.push(['warn', `Some values are family defaults, marked “family”: ${[...a.defaults.map((d) => (d === 'nu' ? "Poisson's ratio" : 'specific heat')), ...(a.kicDefault ? ['fracture toughness'] : [])].join(', ')}. Use alloy data for a design.`]);
+      if (a.d.yieldRatio !== undefined && a.d.yieldRatio > 0.9) notes.push(['', `Yield is ${Math.round(100 * a.d.yieldRatio)}% of the ultimate: little hardening after yield, so little warning before failure. Typical of high-strength steels.`]);
+      if (a.d.critCrack !== undefined) notes.push([a.d.critCrack < 2 ? 'warn' : '', `At 60% of yield, a surface crack of ${sig(a.d.critCrack, 2)} mm is critical. ${a.d.critCrack < 2 ? 'That is near the limit of routine NDT, which must find a crack well below this size: use proof testing or a lower working stress (see Proof testing and Leak before break).' : 'Routine NDT can usually find a crack of half this size.'}`]);
+      if (b && a.galv && b.galv && Math.abs(a.galv.index - b.galv.index) > 0.25) notes.push(['warn', `The two materials are ${Math.abs(a.galv.index - b.galv.index).toFixed(2)} V apart on the anodic index: more than the usual 0.25 V for a sheltered environment. Isolate them if they touch (see Galvanic corrosion).`]);
+      if (a.kind !== 'metal') notes.push(['', `${a.familyName}: the strength values are a different kind of value from metal yield (for example the fibre-direction strength of a laminate, or a failure stress). Compare like with like.`]);
+      notes.push(['', 'Typical values for screening and comparison, not allowables. Design values come from MMPDS, the material specification or your own test data (see Allowables).']);
+      root.querySelector('[data-notes]')!.innerHTML = notes.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+
+      // profile chart: where the material sits among the library materials that have each property
+      svg.replaceChildren();
+      const W = Math.round(Math.min(620, Math.max(320, svg.clientWidth || 520))), L = Math.min(150, W * 0.34), R = 16, T0 = 30, rowH = 26, items = PROFILE.filter(([k, , s]) => val(a, k, s) !== undefined || (b && val(b, k, s) !== undefined));
+      const H = T0 + items.length * rowH + 48;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const X = (u: number) => L + u * (W - L - R);
+      for (const u of [0, 0.25, 0.5, 0.75, 1]) { el('line', { x1: X(u), x2: X(u), y1: T0 - 4, y2: H - 40, stroke: 'var(--rd-line)' }); el('text', { x: X(u), y: H - 26, 'text-anchor': u === 0 ? 'start' : u === 1 ? 'end' : 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, u === 0 ? 'lowest' : u === 1 ? 'highest' : `${u * 100}%`); }
+      items.forEach(([k, label, s], i) => {
+        const y = T0 + i * rowH + rowH / 2, ra = rank(k, s, val(a, k, s)), rb = b ? rank(k, s, val(b, k, s)) : undefined;
+        el('text', { x: L - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--rd-ink)' }, label);
+        el('line', { x1: X(0), x2: X(1), y1: y, y2: y, stroke: 'var(--rd-line)', 'stroke-width': 6, 'stroke-linecap': 'round' });
+        if (ra !== undefined) { el('line', { x1: X(0), x2: X(ra), y1: y, y2: y, stroke: 'var(--rd-accent)', 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-opacity': 0.8 }); el('circle', { cx: X(ra), cy: y, r: 6, fill: 'var(--rd-accent)', stroke: 'var(--rd-panel)', 'stroke-width': 2 }); }
+        if (rb !== undefined) el('circle', { cx: X(rb), cy: y, r: 6, fill: 'var(--rd-blue)', stroke: 'var(--rd-panel)', 'stroke-width': 2 });
+      });
+      el('circle', { cx: 12, cy: 12, r: 5, fill: 'var(--rd-accent)' }); el('text', { x: 22, y: 16, 'font-size': 11, fill: 'var(--rd-ink)' }, a.name.length > 28 ? `${a.name.slice(0, 27)}…` : a.name);
+      if (b) { const x0 = Math.min(W / 2, 22 + Math.min(28, a.name.length) * 6.6 + 18); el('circle', { cx: x0, cy: 12, r: 5, fill: 'var(--rd-blue)' }); el('text', { x: x0 + 10, y: 16, 'font-size': 11, fill: 'var(--rd-ink)' }, b.name.length > 28 ? `${b.name.slice(0, 27)}…` : b.name); }
+      el('text', { x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, 'rank among the library materials that have the property');
+      root.querySelector('[data-cap]')!.textContent = `Where ${a.name}${b ? ` and ${b.name}` : ''} sit among the ${all.length} library materials, property by property. Further right is a higher value: for price, that is more expensive.`;
+      try { const u = new URL(location.href); u.searchParams.set('m', aKey); history.replaceState(null, '', u); } catch { /* opaque origin */ }
+    }
+
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = 'Copy datasheet'), 1500);
+    });
+    form.addEventListener('change', run);
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(svg); }
+    run();
+  });
+</script>

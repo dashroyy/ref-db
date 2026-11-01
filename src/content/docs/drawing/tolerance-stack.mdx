@@ -173,13 +173,17 @@ and the tilt of the nozzle into one value.
 
 The calculator has four tabs:
 
-- **Linear stack.** Enter one row for each arrow, as the drawing gives the dimension: equal ±, unequal + and −, limits,
-  unilateral, or a GD&T control. The calculator changes each row to a mean ± an equal half, and shows the change. A
-  diametral position zone acts by its radius, and a position at MMC can take its bonus. Each row can have a sensitivity,
-  a normal or uniform distribution, a correlation group and a material from the
-  [material library](../../materials/selection/) for thermal growth. The results are the worst case, RSS, Bender's 1.5 ×
-  RSS, the Cpk-based band and a Monte Carlo, with a table of the contribution of each row. You can also paste the rows
-  as text, for example from a spreadsheet.
+- **Linear stack.** Each arrow of the loop is one line, with its direction (+ or −), its mean ± half tolerance and a bar
+  for its share of the variance. Select a line to edit it: the tolerance as the drawing gives it (equal ±, unequal + and
+  −, limits, unilateral, or a GD&T control), a sensitivity, a normal or uniform distribution, a correlation group, and a
+  material from the [material library](../../materials/selection/) for thermal growth. A diametral position zone acts by
+  its radius, and a position at MMC can take its bonus. One table compares the worst case, RSS, Bender's 1.5 × RSS, the
+  Cpk-based band and the Monte Carlo against your limits. You can also paste the rows as text, for example from a
+  spreadsheet.
+- **Assemble and Budget views.** **Build assemblies** draws simulated assemblies one at a time: each part moves inside
+  its tolerance band, the result lands on the result line, and a histogram builds against the worst-case and RSS bands
+  and your limits. **Run all** shows the full Monte Carlo. **Budget** shows the share of each row in the variance and in
+  the worst case.
 - **Allocate.** Shares a target on the result among the rows, by one of the three methods above, and writes the new
   tolerances back to the rows.
 - **Radial stack.** Offsets that add as vectors, as described above.
