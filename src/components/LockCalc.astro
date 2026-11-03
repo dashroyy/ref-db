@@ -2,7 +2,7 @@
 // Locking check: will the joint slip (and so self-loosen), what preload the torque really gives with a prevailing-
 // torque feature, how the self-loosening moment compares with the feature, and whether the feature meets the
 // NASA-STD-5020B rules. Maths in src/lib/locking.ts and src/lib/bolts.ts (unit-tested); UI only here.
-import { THREADS } from '../lib/bolts';
+import ThreadSelect from './ThreadSelect.astro';
 import { FEATURES } from '../lib/locking';
 ---
 
@@ -13,7 +13,7 @@ import { FEATURES } from '../lib/locking';
       <fieldset>
         <legend>Fastener and torque</legend>
         <div class="row2">
-          <label>Thread<select name="th">{THREADS.map((t) => <option value={t.name} selected={t.name === 'M6'}>{t.name} × {t.P}</option>)}</select></label>
+          <label>Thread<ThreadSelect name="th" selected="M6" /></label>
           <label>Bearing face ⌀ (mm)<input name="dw" type="number" min="1" step="any" value="10" /></label>
           <label>Torque, min (N·m)<input name="tmin" type="number" min="0" step="any" value="9.5" /></label>
           <label>Torque, max (N·m)<input name="tmax" type="number" min="0" step="any" value="10.5" /></label>

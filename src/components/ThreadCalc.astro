@@ -1,7 +1,8 @@
 ---
 // Thread engagement: which fails first — the bolt, its threads, or the internal threads (tapped hole, helical-coil
 // insert) — and the engagement length at which the bolt is the weaker. Maths in src/lib/threads.ts (unit-tested).
-import { THREADS, GRADES } from '../lib/bolts';
+import ThreadSelect from './ThreadSelect.astro';
+import { GRADES } from '../lib/bolts';
 ---
 
 <div class="calc thcalc" data-thcalc>
@@ -11,7 +12,7 @@ import { THREADS, GRADES } from '../lib/bolts';
       <fieldset>
         <legend>Bolt</legend>
         <div class="row2">
-          <label>Thread<select name="th">{THREADS.map((t) => <option value={t.name} selected={t.name === 'M6'}>{t.name} × {t.P}</option>)}</select></label>
+          <label>Thread<ThreadSelect name="th" selected="M6" /></label>
           <label>Grade<select name="gr">{GRADES.map((g) => <option value={g.key} selected={g.key === '10.9'}>{g.name}</option>)}</select></label>
           <label>Tensile, R<sub>m</sub> (MPa)<input name="rm" type="number" min="1" step="any" value="1040" /></label>
           <label>Thread shear ultimate (MPa)<input name="tb" type="number" min="1" step="any" value="624" /></label>
@@ -33,16 +34,23 @@ import { THREADS, GRADES } from '../lib/bolts';
         </div>
         <p class="hint">Part shear ultimate is the parent material's (6061-T6 is about 186 MPa): use your allowable. A rated part (nut, insert) uses its specified strength, not a stripping analysis.</p>
       </fieldset>
-      <details class="th-lim">
-        <summary>Minimum-material diameters (optional)</summary>
+      <fieldset>
+        <legend>Tolerance classes</legend>
         <div class="row2">
-          <label>Bolt major, min (mm)<input name="dmin" type="number" step="any" placeholder="basic" /></label>
-          <label>Bolt pitch ⌀, min (mm)<input name="d2min" type="number" step="any" placeholder="basic" /></label>
-          <label>Nut minor, max (mm)<input name="D1max" type="number" step="any" placeholder="basic" /></label>
-          <label>Nut pitch ⌀, max (mm)<input name="D2max" type="number" step="any" placeholder="basic" /></label>
+          <label>Bolt class<select name="ec" data-ec></select></label>
+          <label>Internal class<select name="ic" data-ic></select></label>
         </div>
-        <p class="hint">From the thread's tolerance class (ISO 965, FED-STD-H28). Blank uses basic size, which overstates the shear areas.</p>
-      </details>
+        <details class="th-lim">
+          <summary>Minimum-material diameters</summary>
+          <div class="row2">
+            <label>Bolt major, min (mm)<input name="dmin" type="number" step="any" placeholder="basic" /></label>
+            <label>Bolt pitch ⌀, min (mm)<input name="d2min" type="number" step="any" placeholder="basic" /></label>
+            <label>Nut minor, max (mm)<input name="D1max" type="number" step="any" placeholder="basic" /></label>
+            <label>Nut pitch ⌀, max (mm)<input name="D2max" type="number" step="any" placeholder="basic" /></label>
+          </div>
+        </details>
+        <p class="hint">A class fills the minimum-material diameters from the <a href="#limits-of-size">thread library</a> (ISO 965-2, ISO 5855, ASME B1.1). Basic size overstates the shear areas.</p>
+      </fieldset>
     </form>
     <div>
       <dl class="readouts">
@@ -81,6 +89,7 @@ import { THREADS, GRADES } from '../lib/bolts';
 <script>
   import { THREADS, GRADES } from '../lib/bolts';
   import { stripping, balancedEngagement, helicalTapMajor, platingPitchGrowth, type Limits } from '../lib/threads';
+  import { threadSpec, extLimits, intLimits } from '../lib/threaddb';
 
   const NS = 'http://www.w3.org/2000/svg';
   const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
@@ -99,6 +108,23 @@ import { THREADS, GRADES } from '../lib/bolts';
       return e;
     };
     let last: Parameters<typeof chart> | null = null;
+
+    // Tolerance classes of the chosen thread: "basic" leaves the minimum-material fields blank.
+    const ec = root.querySelector<HTMLSelectElement>('[data-ec]')!, ic = root.querySelector<HTMLSelectElement>('[data-ic]')!;
+    const fillClasses = () => {
+      const s = threadSpec(field('th').value)!;
+      ec.innerHTML = `<option value="">Basic size</option>${s.ext.map((c) => `<option value="${c}">${c}</option>`).join('')}`;
+      ic.innerHTML = `<option value="">Basic size</option>${s.int.map((c) => `<option value="${c}">${c}</option>`).join('')}`;
+      for (const n of ['dmin', 'd2min', 'D1max', 'D2max']) field(n).value = '';
+    };
+    const applyClasses = () => {
+      const s = threadSpec(field('th').value)!, e = ec.value ? extLimits(s, ec.value) : undefined, i = ic.value ? intLimits(s, ic.value) : undefined;
+      field('dmin').value = e ? e.dmin.toFixed(3) : ''; field('d2min').value = e ? e.d2min.toFixed(3) : '';
+      field('D1max').value = i ? i.D1max.toFixed(3) : ''; field('D2max').value = i ? i.D2max.toFixed(3) : '';
+    };
+    field('th').addEventListener('change', fillClasses);
+    ec.addEventListener('change', applyClasses); ic.addEventListener('change', applyClasses);
+    fillClasses();
 
     field('gr').addEventListener('change', () => {
       const g = GRADES.find((x) => x.key === field('gr').value)!;

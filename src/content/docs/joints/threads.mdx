@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import ThreadProfile from '../../../components/ThreadProfile.astro';
 import ThreadCalc from '../../../components/ThreadCalc.astro';
+import ThreadLimitsCalc from '../../../components/ThreadLimitsCalc.astro';
 
 <div class="glance">
   <div><b>In one line</b>Engage sufficient thread so that the bolt breaks before the threads strip: the height of a nut in steel, approximately 1.5–2 d in aluminium, or an insert.</div>
@@ -65,6 +66,27 @@ case letters:
 
 The plating must fit in that allowance. A coating of thickness $c$ on the 60° flanks increases the pitch diameter by
 $4c$. Thus a plated thread made to "h", with no allowance, does not go into its nut.
+
+## Limits of size
+
+Every tool on this site that takes a thread reads it from one **thread library**: 54 ISO metric coarse and fine sizes
+(M1.6 to M60), 18 MJ sizes, and UNC, UNF, UNJC and UNJF from #0 to 1½ in. Each thread carries the limits of its
+classes:
+
+- **ISO metric:** the ISO 965-2 table values for 6g, 6h, 4g6g and 6H. These are table values, not the ISO 965-1
+  formulas: for some sizes (M36 × 4, for example) the two differ by one tolerance step.
+- **MJ (ISO 5855):** external 4h6h from the same tables, with the controlled root radius of 0.15011P to 0.18042P.
+  Internal 4H5H is computed from the ISO 965-1 grades on the MJ profile, whose minor diameter starts at D − 0.974279P:
+  check it against ISO 5855-2.
+- **Unified and UNJ:** the ASME B1.1 formulas for 2A/2B and 3A/3B, with the length of engagement equal to the
+  diameter, tested against the published limits.
+
+**Which limit for which job?** For strength, use the **minimum-material** limits: the smallest pitch and minor
+diameters of the bolt and the largest of the nut. The stress area, the shear areas of both sets of threads and the root
+minor diameter all fall from their basic values. For the fit and the coating, use the **allowance** at the pitch
+diameter. For an FE model of the threads, model both limits.
+
+<ThreadLimitsCalc />
 
 ## Rolled or cut
 
@@ -165,10 +187,18 @@ The four M6 class 10.9 screws that hold the electronics unit on the aft skirt (f
 In a steel nut, equal strength occurs at only 2.9 mm. This is why a standard nut (4.8 mm for M6) never strips before
 the bolt breaks.
 
+**At the tolerance limits.** Now set the classes to 6g and 6H. The screw's minimum pitch diameter is 5.212 mm and
+the tapped hole's maximum is 5.500 mm. In the 9 mm hole the bracket threads now strip at 20.4 kN: the ratio falls
+from 1.32 to **0.98**, and the threads strip just before the bolt breaks. Equal strength moves from 6.8 mm to
+**9.2 mm**. The 1.5 d rule only just covers the tolerances, and nothing is left for dilation and thread bending. For
+this joint, specify 12 mm (2 d) of full thread, or an insert. The bolt's breaking load stays at basic size here, because
+the strongest bolt is the conservative case for "the bolt breaks first".
+
 ## Where this stops
 
-- **Basic-size areas are an upper limit.** For a design value, use the minimum-material diameters from the tolerance
-  class. The full method of VDI 2230 adds nut dilation and thread bending.
+- **Basic-size areas are an upper limit.** For a design value, select the tolerance classes: the tool then uses the
+  minimum-material diameters from the thread library. The full method of VDI 2230 adds nut dilation and thread
+  bending.
 - **Static strength only.** The root of the first engaged thread controls thread fatigue. See rolled threads, MJ/UNJ
   roots and the [fatigue](../../fundamentals/fatigue/) method.
 - **Temperature and creep.** Aluminium threads lose strength when hot. The long-term clamping of soft parts can relax.

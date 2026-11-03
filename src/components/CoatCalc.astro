@@ -3,6 +3,7 @@
 // friction; and the life of a sacrificial zinc coating by ISO 9223 category. Maths in src/lib/coatings.ts
 // (unit-tested); UI only here.
 import { FINISHES, FEATURES, CATEGORIES } from '../lib/coatings';
+import ThreadSelect from './ThreadSelect.astro';
 import { THREADS } from '../lib/bolts';
 
 const TABS = [{ key: 'dim', name: 'Dimensions' }, { key: 'tq', name: 'Friction and torque' }, { key: 'life', name: 'Zinc life' }];
@@ -32,7 +33,7 @@ const TABS = [{ key: 'dim', name: 'Dimensions' }, { key: 'tq', name: 'Friction a
       <fieldset data-panel="tq" hidden>
         <legend>Bolt, torque and friction</legend>
         <div class="row2">
-          <label>Thread<select name="th">{THREADS.map((t) => <option value={t.name} selected={t.name === 'M10'}>{t.name} × {t.P}</option>)}</select></label>
+          <label>Thread<ThreadSelect name="th" selected="M10" /></label>
           <label>Torque (N·m)<input name="T" type="number" min="0.1" step="any" value="60" /></label>
           <label>Head bearing diameter (mm)<input name="dw" type="number" min="1" step="any" value="15" /></label>
           <label>Clearance hole (mm)<input name="dh" type="number" min="1" step="any" value="11" /></label>

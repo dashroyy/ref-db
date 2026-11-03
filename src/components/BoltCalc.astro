@@ -2,6 +2,7 @@
 // Bolted joint: torque → preload with its scatter, stiffness and load factor, separation, yield and ultimate margins,
 // tightening stress, temperature change, and the joint diagram. Maths in src/lib/bolts.ts (unit-tested); UI only here.
 import MaterialSelect from './MaterialSelect.astro';
+import ThreadSelect from './ThreadSelect.astro';
 import { DEFAULTS as D } from '../lib/materials';
 import { THREADS, GRADES, MATERIALS } from '../lib/bolts';
 ---
@@ -13,7 +14,7 @@ import { THREADS, GRADES, MATERIALS } from '../lib/bolts';
       <fieldset>
         <legend>Bolt</legend>
         <div class="row2">
-          <label>Thread<select name="th">{THREADS.map((t) => <option value={t.name} selected={t.name === 'M10'}>{t.name} × {t.P}</option>)}</select></label>
+          <label>Thread<ThreadSelect name="th" selected="M10" /></label>
           <label>Grade<select name="gr">{GRADES.map((g) => <option value={g.key} selected={g.key === '12.9'}>{g.name}</option>)}</select></label>
           <label>Yield, R<sub>p0.2</sub> (MPa)<input name="rp" type="number" min="1" step="any" value="1100" /></label>
           <label>Tensile, R<sub>m</sub> (MPa)<input name="rm" type="number" min="1" step="any" value="1220" /></label>

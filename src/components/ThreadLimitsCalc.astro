@@ -1,0 +1,146 @@
+---
+// Limits of size for any thread of the thread library (src/lib/threaddb.ts) in a chosen pair of classes: the table in mm
+// (and inch for unified threads), a fits-style diagram of the zones against basic size, the stress areas at basic and
+// minimum-material size, and the allowance that a coating can use. UI only here.
+import ThreadSelect from './ThreadSelect.astro';
+---
+
+<div class="calc tlcalc" data-tlcalc>
+  <div class="calc-head"><span>Thread limits of size</span><span class="head-btns"><button type="button" class="chip" data-copy>Copy table</button></span></div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Thread</legend>
+        <div class="row2">
+          <label>Thread<ThreadSelect name="th" selected="M10" /></label>
+          <label>External class<select name="ec" data-ec></select></label>
+          <label>Internal class<select name="ic" data-ic></select></label>
+          <label>Units<select name="u"><option value="mm">mm</option><option value="in">inch</option></select></label>
+        </div>
+      </fieldset>
+    </form>
+    <div class="tl-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig tl-fig"><svg data-chart role="img" aria-label="Tolerance zones of the external and internal thread against basic size"></svg>
+        <figcaption>Zones against basic size, in µm. Red: the external thread (bolt). Blue: the internal thread (nut). The gap between them at the pitch diameter is the allowance.</figcaption></figure>
+      <div class="tl-scroll" data-table></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    ISO metric: ISO 965-2 table values (6g, 6h, 4g6g, 6H). MJ: external 4h6h from the same tables with the ISO 5855 root
+    radius (0.15011P to 0.18042P); internal 4H5H computed from ISO 965-1 grades on the MJ profile. Unified and UNJ: ASME
+    B1.1 formulas, length of engagement equal to the diameter. External minor diameters follow from the root radius at
+    the pitch-diameter limits. Check the governing standard before release.
+  </div>
+</div>
+
+<style is:global>
+  .tlcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .tlcalc .calc-body > * { min-width: 0; }
+  .tl-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+  .tl-out > * { margin: 0 !important; min-width: 0; }
+  .tl-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .tl-scroll { overflow-x: auto; }
+  .tl-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); font-family: var(--sl-font-mono); }
+  .tl-table th, .tl-table td { text-align: right; padding: 0.3rem 0.45rem; border-bottom: 1px solid var(--rd-line); white-space: nowrap; }
+  .tl-table th:first-child, .tl-table td:first-child { text-align: left; font-family: var(--sl-font-system, system-ui); }
+  .tl-table td.muted { color: var(--rd-muted); }
+  .tl-src { display: inline-block; font: 600 0.62rem var(--sl-font-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.05rem 0.35rem; border-radius: 3px; border: 1px solid currentColor; margin-left: 0.3rem; }
+  .tl-src.table { color: var(--rd-ok); }
+  .tl-src.formula { color: var(--rd-blue); }
+  .tl-src.computed { color: var(--rd-warn); }
+</style>
+
+<script>
+  import { threadSpec, extLimits, intLimits, defaultClasses, stressAreaMin, type ExtLimits, type IntLimits } from '../lib/threaddb';
+
+  const IN = 25.4;
+
+  document.querySelectorAll<HTMLElement>('[data-tlcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLSelectElement;
+    const ec = root.querySelector<HTMLSelectElement>('[data-ec]')!, ic = root.querySelector<HTMLSelectElement>('[data-ic]')!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let copyText = '';
+
+    const fillClasses = () => {
+      const s = threadSpec(field('th').value)!, [de, di] = defaultClasses(s);
+      ec.innerHTML = s.ext.map((c) => `<option value="${c}" ${c === de ? 'selected' : ''}>${c}</option>`).join('');
+      ic.innerHTML = s.int.map((c) => `<option value="${c}" ${c === di ? 'selected' : ''}>${c}</option>`).join('');
+      field('u').value = s.inch ? 'in' : 'mm';
+    };
+
+    function chart(s: NonNullable<ReturnType<typeof threadSpec>>, e: ExtLimits, i: IntLimits) {
+      const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 190, L = 78, R = 12, T = 16, B = 30;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const basic = { major: s.d, pitch: s.d2, minor: s.d - 1.082532 * s.P };
+      const rows = [
+        { name: 'Major', ext: [e.dmin, e.dmax], int: [i.Dmin, null] as (number | null)[], b: basic.major },
+        { name: 'Pitch', ext: [e.d2min, e.d2max], int: [i.D2min, i.D2max] as (number | null)[], b: basic.pitch },
+        { name: 'Minor', ext: [e.d3min, e.d3max], int: [i.D1min, i.D1max] as (number | null)[], b: basic.minor },
+      ];
+      const dev = (v: number, b: number) => (v - b) * 1000;
+      const all = rows.flatMap((r) => [...r.ext.map((v) => dev(v, r.b)), ...r.int.filter((v): v is number => v !== null).map((v) => dev(v, r.b))]);
+      const lo = Math.min(0, ...all), hi = Math.max(0, ...all), pad = (hi - lo) * 0.08 + 5;
+      const X = (v: number) => L + ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (W - L - R);
+      const rowH = (H - T - B) / rows.length;
+      const parts: string[] = [`<line x1="${X(0)}" x2="${X(0)}" y1="${T - 6}" y2="${H - B + 4}" stroke="var(--rd-ink)" stroke-width="1.5"/><text x="${X(0)}" y="${T - 8}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">basic</text>`];
+      const span = hi - lo, step = span > 600 ? 200 : span > 300 ? 100 : span > 120 ? 50 : 20;
+      for (let v = Math.ceil((lo - pad) / step) * step; v <= hi + pad; v += step) parts.push(`<text x="${X(v)}" y="${H - 10}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v > 0 ? '+' : ''}${v}</text>`);
+      rows.forEach((r, k) => {
+        const y = T + k * rowH, h = rowH * 0.3;
+        parts.push(`<text x="${L - 8}" y="${y + rowH / 2 + 4}" text-anchor="end" font-size="11" fill="var(--rd-ink)">${r.name}</text>`);
+        const [a, b] = r.ext.map((v) => X(dev(v, r.b)));
+        parts.push(`<rect x="${Math.min(a, b)}" y="${y + rowH * 0.52}" width="${Math.max(2, Math.abs(b - a))}" height="${h}" rx="2" fill="var(--rd-accent)" fill-opacity="0.75"/>`);
+        const [c, d] = r.int;
+        if (c !== null) {
+          const x1 = X(dev(c, r.b)), x2 = d === null ? W - R : X(dev(d, r.b));
+          parts.push(`<rect x="${x1}" y="${y + rowH * 0.14}" width="${Math.max(2, x2 - x1)}" height="${h}" rx="2" fill="var(--rd-blue)" fill-opacity="${d === null ? 0.25 : 0.75}"/>${d === null ? `<text x="${W - R - 2}" y="${y + rowH * 0.14 + h - 3}" text-anchor="end" font-size="9" fill="var(--rd-blue)">no upper limit</text>` : ''}`);
+        }
+      });
+      svg.innerHTML = parts.join('');
+    }
+
+    function run() {
+      const s = threadSpec(field('th').value)!, e = extLimits(s, ec.value), i = intLimits(s, ic.value);
+      if (!e || !i) return;
+      const inch = field('u').value === 'in', k = inch ? 1 / IN : 1, dp = inch ? 4 : 3, u = inch ? 'in' : 'mm';
+      const v = (x: number) => (x * k).toFixed(dp);
+      const asMin = stressAreaMin(e), allowance = i.D2min - e.d2max;
+      const src = (x: string) => `<span class="tl-src ${x}">${x === 'table' ? 'standard table' : x === 'formula' ? 'standard formula' : 'computed'}</span>`;
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>Stress area</dt><dd>${(s.As * (inch ? 1 / 645.16 : 1)).toFixed(inch ? 4 : 1)} ${inch ? 'in²' : 'mm²'} <small>basic · ${(asMin * (inch ? 1 / 645.16 : 1)).toFixed(inch ? 4 : 1)} at minimum material (${((asMin / s.As - 1) * 100).toFixed(1)}%)</small></dd></div>
+        <div class="readout"><dt>Allowance at pitch ⌀</dt><dd>${(allowance * 1000).toFixed(0)} µm <small>${allowance > 0 ? `a coating up to ${(allowance * 250).toFixed(0)} µm thick fits (¼ of the allowance)` : 'no allowance: a plated bolt will not assemble'}</small></dd></div>
+        <div class="readout"><dt>Pitch-diameter clearance</dt><dd>${(allowance * 1000).toFixed(0)} to ${((i.D2max - e.d2min) * 1000).toFixed(0)} µm <small>least to most material</small></dd></div>`;
+      const row = (n: string, a: number | null, b: number | null, c: number | null, d: number | null) =>
+        `<tr><td>${n}</td><td>${a === null ? '—' : v(a)}</td><td>${b === null ? '—' : v(b)}</td><td>${c === null ? '—' : v(c)}</td><td>${d === null ? '—' : v(d)}</td></tr>`;
+      $('[data-table]').innerHTML = `<table class="tl-table"><thead><tr><th>${s.label} (${u})</th><th>Ext ${e.cls} max</th><th>Ext min</th><th>Int ${i.cls} min</th><th>Int max</th></tr></thead><tbody>
+        ${row('Major diameter', e.dmax, e.dmin, i.Dmin, null)}
+        ${row('Pitch diameter', e.d2max, e.d2min, i.D2min, i.D2max)}
+        ${row('Minor diameter (ext: root radius)', e.d3max, e.d3min, i.D1min, i.D1max)}
+        ${row('Ext minor, flat root (max)', e.d1max, null, null, null)}
+        <tr><td>Root radius, external</td><td>${v(e.rootR[1])}</td><td>${v(e.rootR[0])}</td><td class="muted" colspan="2">pitch ${v(s.P)}${s.tpi ? ` · ${s.tpi} tpi` : ''}</td></tr>
+        </tbody></table><p class="hint" style="margin-top:0.4rem">External ${src(e.source)} · internal ${src(i.source)}</p>`;
+      chart(s, e, i);
+      const notes: [string, string][] = [];
+      if (i.source === 'computed') notes.push(['warn', s.family === 'MJ' ? 'MJ internal limits are computed from the ISO 965-1 grades on the MJ profile (minor diameter D − 0.974279P). Check them against ISO 5855-2 before release.' : 'UNJ internal minor diameter starts at D − 0.974279P (AS8879); its upper limit is computed. Check it against AS8879.']);
+      if (s.family === 'MJ' || s.family.startsWith('UNJ')) notes.push(['', 'The controlled root radius (0.15011P to 0.18042P) is mandatory on the external thread. A J bolt goes into a J nut or insert: its larger root does not clear a standard internal minor diameter.']);
+      notes.push(['', 'For stress analysis use the minimum-material limits: the stress area, the thread shear areas and the root minor diameter all fall from basic size. For the fit and the coating, use the allowance at the pitch diameter.']);
+      $('[data-notes]').innerHTML = notes.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+      copyText = [`${s.label} ${e.cls}/${i.cls} (${u})`, 'diameter,ext max,ext min,int min,int max', `major,${v(e.dmax)},${v(e.dmin)},${v(i.Dmin)},`, `pitch,${v(e.d2max)},${v(e.d2min)},${v(i.D2min)},${v(i.D2max)}`, `minor,${v(e.d3max)},${v(e.d3min)},${v(i.D1min)},${v(i.D1max)}`, `stress area basic ${s.As.toFixed(2)} mm2, minimum material ${asMin.toFixed(2)} mm2`].join('\n');
+    }
+
+    field('th').addEventListener('change', fillClasses);
+    form.addEventListener('change', run);
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('[data-chart]')!); }
+    fillClasses();
+    run();
+  });
+</script>

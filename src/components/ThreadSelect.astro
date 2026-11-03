@@ -1,0 +1,17 @@
+---
+// A thread dropdown fed by the thread library (src/lib/threaddb.ts), grouped by family. Every tool that takes a thread
+// uses this, so a thread added to src/data/threads.json appears in all of them.
+import { THREAD_DB, FAMILIES } from '../lib/threaddb';
+
+interface Props { name: string; selected?: string; families?: string[] }
+const { name, selected = 'M10', families } = Astro.props;
+const groups = FAMILIES.filter((f) => !families || families.includes(f.key)).flatMap((f) =>
+  f.key === 'M'
+    ? [{ label: 'ISO metric coarse', items: THREAD_DB.filter((t) => t.family === 'M' && t.coarse) }, { label: 'ISO metric fine', items: THREAD_DB.filter((t) => t.family === 'M' && !t.coarse) }]
+    : [{ label: f.name, items: THREAD_DB.filter((t) => t.family === f.key) }],
+);
+---
+
+<select name={name} data-thread-select>
+  {groups.map((g) => <optgroup label={g.label}>{g.items.map((t) => <option value={t.key} selected={t.key === selected}>{t.label}</option>)}</optgroup>)}
+</select>

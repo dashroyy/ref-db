@@ -3,17 +3,18 @@
 // simplified to one bolt, concentric axial load and one clamped material. Units: mm, N, MPa, °C.
 // Factors and preload uncertainty are always inputs — they come from the programme's requirements.
 import { withProps } from './materials.ts';
+import { THREAD_DB } from './threaddb.ts';
 
-export interface Thread { name: string; d: number; P: number; d2: number; d3: number; As: number }
+/** name is the thread library key ("M10", "M10x1.25", "1/4-28 UNF"); label is for display. */
+export interface Thread { name: string; label?: string; family?: string; d: number; P: number; d2: number; d3: number; As: number }
 
 /** ISO metric thread: pitch and minor diameters, and the tensile stress area. */
 export function metricThread(name: string, d: number, P: number): Thread {
   const d2 = d - 0.649519 * P, d3 = d - 1.226869 * P;
   return { name, d, P, d2, d3, As: (Math.PI / 4) * ((d2 + d3) / 2) ** 2 };
 }
-export const THREADS: Thread[] = (
-  [['M5', 5, 0.8], ['M6', 6, 1.0], ['M8', 8, 1.25], ['M10', 10, 1.5], ['M12', 12, 1.75], ['M14', 14, 2.0], ['M16', 16, 2.0], ['M20', 20, 2.5], ['M24', 24, 3.0]] as const
-).map(([n, d, p]) => metricThread(n, d, p));
+/** Every thread of the thread library (src/lib/threaddb.ts): metric coarse and fine, MJ, UNC, UNF, UNJC, UNJF. */
+export const THREADS: Thread[] = THREAD_DB.map((t) => ({ name: t.key, label: t.label, family: t.family, d: t.d, P: t.P, d2: t.d2, d3: t.d3, As: t.As }));
 
 /** Bolt property classes and stainless grades: minimum yield (or 0.2% proof) and tensile strength, MPa (ISO 898-1, ISO 3506). */
 export const GRADES = [
