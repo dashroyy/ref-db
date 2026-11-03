@@ -1,0 +1,134 @@
+---
+title: Silicone & PU
+description: "Silicone and polyurethane: two elastomers with opposite chemistry, both everywhere in motor hardware, and a mutual incompatibility that ruins hardware quietly. Backbones in 3D, the classes compared, platinum-cure poisoning, and the stress that potting puts on the parts it holds when cold."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import SiliconePuCalc from '../../../components/SiliconePuCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Silicone takes heat and weather; polyurethane takes abrasion and oil. They poison and contaminate each other, so keep them apart and test them together.</div>
+  <div><b>Before this</b><a href="../plastics/">Plastics</a> · <a href="../../seals/o-ring-design/#choosing-the-compound">O-ring compounds</a></div>
+  <div><b>Related</b><a href="../coatings/">Coatings</a> · <a href="../../motor/insulation/">Insulation</a> · <a href="../../joints/differential-expansion/">Differential expansion</a></div>
+</div>
+
+## Why this matters
+
+Silicone and polyurethane are in almost every motor programme: silicone in seals, sealants, potting, conformal
+coatings, cable boots and thermal insulation; polyurethane in potting, cable jackets, wear pads, bump stops and
+handling equipment. They are cheap, easy to cast and forgiving, so they get little design attention.
+
+Their failures are quiet. A silicone that never cures where it touched polyurethane looks like a bad batch. A bond
+that will not hold looks like poor surface preparation, when silicone oil from the next bench is the cause. A potted
+unit that passed its vibration test cracks its solder joints at the cold limit. Each of these comes from the
+chemistry, and each is easy to prevent once you know it.
+
+<Analogy title="Oil and water">
+  Silicone and polyurethane are like oil and water in a kitchen: both are useful, and neither is a problem on its own.
+  The trouble is a trace of one where you need the other. A drop of oil on a clean glass stops the water from wetting
+  it; a trace of amine in a silicone mould stops the cure.
+</Analogy>
+
+## Two chains, opposite properties
+
+- **Silicone (polydimethylsiloxane)** has an inorganic Si–O–Si backbone, the bond of quartz: 452 kJ/mol against
+  348 kJ/mol for carbon–carbon. The Si–O–Si angle opens to about 143°, and the chain rotates almost freely. Strong
+  bond, floppy chain: silicone works from about −55 °C to 200 °C (phenyl grades to −100 °C), but its open coils let gases
+  through and its tear strength is low. The methyl groups on the outside give a surface energy of about 21 mN/m, so
+  almost nothing wets it or sticks to it.
+- **Polyurethane** forms when an isocyanate (–N=C=O) reacts with a polyol (–OH). The urethane link carries an N–H that
+  hydrogen-bonds to the carbonyl of the next chain, and pulls the hard segments into stiff domains in a soft matrix.
+  This two-phase structure gives its abrasion and tear resistance. The same link is hydrolysable: hot water reverts it,
+  polyester grades much faster than polyether grades. Its heat limit is about 80–120 °C.
+
+They fail in opposite environments. Silicone takes heat, ozone, UV and oxidation, and is destroyed by fuels, oils and
+abrasion. Polyurethane takes abrasion, fuels and oils, and is destroyed by heat and hot water. **Choose by the
+dominant threat.** Neither is the general-purpose answer.
+
+## Where they fight
+
+| Problem | Mechanism | Result | Prevention |
+| --- | --- | --- | --- |
+| **Platinum poisoning** | Addition-cure silicone cures on a platinum catalyst at a few ppm. Amines, tin and sulphur, all in polyurethane chemistry, take the platinum sites | A tacky, uncured layer at the interface. Parts per million are enough | Separate storage, tools and gloves; cure the urethane fully first; test a coupon |
+| **Silicone contamination** | Surface energy of about 21 mN/m: silicone oil spreads, and moves on gloves and dust | Paint fisheyes, adhesives do not wet, bonds fail. Hard to clean off | No silicone in or near bonding and painting areas |
+| **Acetoxy cure** | One-part RTV that releases acetic acid as it cures | Corrodes copper and brass, attacks the urethane link | Specify a neutral-cure (alkoxy or oxime) silicone near metal or urethane |
+| **Isocyanate and water** | Free isocyanate and water give an amine and CO₂. Silicone passes water vapour to the urethane | Bubbles and voids in the potting; the amine then poisons platinum silicone | Dry parts and materials; do not cure urethane beside fresh silicone |
+| **No bond between them** | Nothing wets silicone, and its surface has no groups that react | A joint that opens on the first thermal cycle | Mechanical interlock or a dedicated primer, and a test |
+
+The condensation-cure silicones are cured by tin. **A tin-cured RTV can itself poison a platinum silicone.** Keep the
+two silicone families apart too.
+
+## Potting at the cold limit
+
+A potting compound cures at room temperature, then cools with the unit. It shrinks much more than the parts and the
+housing (silicone expands at about 280 × 10⁻⁶/K, aluminium at 24 × 10⁻⁶/K), so it pulls on everything it is bonded to:
+
+- **With a free surface,** the stress depends on the modulus: $\sigma = \frac{E}{1-\nu}\,\Delta\alpha\,\Delta T$. A
+  soft silicone (E of about 2 MPa) puts almost no load on solder joints and glass-bodied parts. A rigid epoxy (about
+  3000 MPa) puts a thousand times more.
+- **Fully confined** (a closed box filled to the lid), the potting cannot shrink at all, and the stress depends on the
+  bulk modulus, not on E: $\sigma = 3K\,\Delta\alpha\,\Delta T$. Rubber is nearly incompressible: K is about 1 GPa for
+  silicone. **A confined rubber is not soft.** It tears, pulls away from a wall, or forms voids.
+- **Below its glass transition** a polyurethane potting becomes many times stiffer. Choose a grade whose Tg is below the
+  coldest temperature.
+
+## Calculator
+
+**Chains** shows the two backbones in 3D: drag to rotate. **Compare** sets the classes side by side, with the service
+range of each. **Poison** is a molar model of platinum poisoning: how many ppm of a poison stop a cure. **Potting**
+gives the stress in a potting compound at the cold limit, with a free surface and fully confined, for a housing from
+the [material library](../datasheet/).
+
+<SiliconePuCalc />
+
+## Worked example: a potted junction box
+
+A junction box on the aft skirt has a 6061-T6 aluminium housing and is potted at 25 °C. For this example only, its
+cold limit is −40 °C. Select **Load worked example**.
+
+1. **Silicone, with a free surface:** 0.065 MPa. The potting can hardly load the parts.
+2. **The same silicone in a box filled to the lid:** **50 MPa** of hydrostatic tension, far above the 3–10 MPa that
+   the silicone can carry. It tears or pulls away from the wall. Leave a free surface, or an air space under the lid.
+3. **Polyurethane potting:** 0.22 MPa free, 86 MPa confined. Its Tg (about −55 °C) is below −40 °C, so it stays
+   rubbery; a grade with a Tg of −30 °C would be rigid at the cold limit.
+4. **Epoxy:** **10.9 MPa** on the parts with a free surface: enough to crack glass diodes and solder joints. Use it
+   only with stress-relief buffers.
+5. **Poisoning.** The silicone has 10 ppm of platinum. The same gloves handled the polyurethane potting of the next
+   unit, and left 5 ppm of amine in the silicone at the interface. That is 0.87 amine molecules for each platinum atom:
+   only 13% of the catalyst is still active, and **the silicone does not cure** there. 5.75 ppm of amine stops it
+   completely. Of a tin catalyst, 32 ppm would do the same.
+
+## Where this stops
+
+- **Typical values for each class.** Grades differ widely: hardness, temperature range, outgassing and adhesion come
+  from the product datasheet.
+- **The poisoning model is a teaching model.** Inhibition depends on the poison and the formulation. Test the actual
+  combination: cast the silicone against the actual cured urethane, from the actual batch.
+- **No viscoelasticity.** The potting modulus changes with rate and temperature
+  ([Viscoelasticity](../../fundamentals/viscoelasticity/)); near Tg it changes by orders of magnitude.
+- **Outgassing** for space or vacuum use comes from ASTM E595 data for the cured product ([Plastics](../plastics/#vacuum-outgassing-and-radiation)).
+
+## On the drawing
+
+- **The product and the cure,** not only "silicone": the specification, the mix ratio, the cure schedule, and the
+  primer.
+- **The free surface or air space** that a potting must keep, and the fill level.
+- **Segregation:** no silicone in bonding or painting areas; separate tools and gloves for silicone and urethane.
+- **A cure-compatibility test** for any silicone that is cast against a urethane or near one.
+
+## References and further reading
+
+- ASTM E595 (outgassing); ASTM D2240 (Shore hardness); ASTM D624 (tear strength); ASTM D412 (tensile properties of
+  elastomers).
+- NASA outgassing database, for low-volatility silicone and polyurethane grades.
+- Supplier technical guides on addition-cure silicone inhibition, and on polyurethane hydrolysis (polyester and
+  polyether).
+
+<Aside type="note">
+  General elastomer chemistry for design awareness. Addition-cure and condensation-cure silicones behave differently,
+  as do polyester and polyether urethanes. Confirm compatibility with the actual products, their datasheets, and by
+  test.
+</Aside>

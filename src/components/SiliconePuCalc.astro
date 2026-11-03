@@ -1,0 +1,292 @@
+---
+// Silicone and polyurethane in four tabs: the two backbones in 3D (drag to rotate), the classes compared, a molar model
+// of platinum-cure poisoning, and the stress a potting compound puts on its parts when it cools (free surface and fully
+// confined). Logic in src/lib/elastomers.ts (unit-tested); UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { ELASTOMERS, POISONS } from '../lib/elastomers';
+import { withProps, slug } from '../lib/materials';
+
+const PARTS = withProps(['alpha']).filter((m) => m.kind === 'metal' || m.kind === 'ceramic' || m.kind === 'composite');
+const MAT = Object.fromEntries(PARTS.map((m) => [m.key, { name: m.name, alpha: m.alpha }]));
+const TABS = [{ key: 'chain', name: 'Chains' }, { key: 'cmp', name: 'Compare' }, { key: 'poison', name: 'Poison' }, { key: 'pot', name: 'Potting' }];
+---
+
+<div class="calc spcalc" data-spcalc>
+  <div class="calc-head"><span>Silicone and polyurethane</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="View">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="chain">
+        <div class="or-seg sp-seg" role="radiogroup" aria-label="Polymer">
+          <label><input type="radio" name="poly" value="si" checked /><span>Silicone (PDMS)</span></label>
+          <label><input type="radio" name="poly" value="pu" /><span>Polyurethane</span></label>
+        </div>
+        <p class="hint">Drag the model to rotate it. Hydrogen atoms are left out, except the N–H that makes the urethane hydrogen bond.</p>
+      </fieldset>
+      <fieldset data-panel="poison" hidden>
+        <div class="row2">
+          <label>Platinum in the silicone (ppm)<input name="pt" type="number" min="0" step="any" value="10" /></label>
+          <label>Poison<select name="pz">{POISONS.map((p) => <option value={p.key}>{p.name}</option>)}</select></label>
+        </div>
+        <label>Contamination <output data-ppm>5</output> ppm<input name="ppm" type="range" min="0" max="40" step="0.5" value="5" /></label>
+        <p class="hint">Platinum catalysts are used at a few to a few tens of ppm. A teaching model: each poison molecule takes one platinum site.</p>
+      </fieldset>
+      <fieldset data-panel="pot" hidden>
+        <div class="row2">
+          <label>Potting<select name="pc">{ELASTOMERS.filter((e) => e.key !== 'si-rtv' && e.key !== 'fvmq').map((e) => <option value={e.key}>{e.name}</option>)}</select></label>
+          <label>Housing or part<MaterialSelect name="mp" list={PARTS} selected={slug('Al 6061-T6')} /></label>
+          <label>Cure temperature (°C)<input name="tc" type="number" step="any" value="25" /></label>
+          <label>Coldest (°C)<input name="tlo" type="number" step="any" placeholder="programme value" /></label>
+        </div>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div class="sp-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig sp-fig"><svg data-svg class="sp-svg" role="img" aria-label="Model"></svg><figcaption data-cap></figcaption></figure>
+      <div class="sp-scroll" data-table></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(MAT)}></script>
+  <div class="calc-foot">
+    Typical values for each class: grades differ widely, so use the product datasheet. The poisoning model is a teaching
+    model. Potting stress: free surface E/(1 − ν)·Δα·ΔT; fully confined 3K·Δα·ΔT, with the bulk modulus K. Neither
+    includes the stiffening of a polymer below its glass transition.
+  </div>
+</div>
+
+<style is:global>
+  .spcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .spcalc .calc-body > * { min-width: 0; }
+  .sp-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .sp-out > * { margin: 0 !important; min-width: 0; }
+  .sp-svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); touch-action: none; }
+  .sp-svg.drag { cursor: grab; border: 1px solid var(--rd-line); border-radius: 8px; }
+  .sp-scroll { overflow-x: auto; }
+  .sp-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); }
+  .sp-table th, .sp-table td { text-align: left; padding: 0.3rem 0.45rem; border-bottom: 1px solid var(--rd-line); vertical-align: top; }
+  .sp-table td.n { font-family: var(--sl-font-mono); white-space: nowrap; }
+  .sp-table tr { cursor: pointer; }
+  .sp-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .spcalc .or-seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--rd-line); border-radius: 6px; overflow: hidden; margin-bottom: 0.5rem; }
+  .spcalc .or-seg label { margin: 0 !important; position: relative; }
+  .spcalc .or-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .spcalc .or-seg span { display: block; text-align: center; padding: 0.4rem 0.3rem; font-size: var(--sl-text-xs); color: var(--rd-muted); cursor: pointer; border-right: 1px solid var(--rd-line); }
+  .spcalc .or-seg label:last-child span { border-right: 0; }
+  .spcalc .or-seg input:checked + span { background: color-mix(in srgb, var(--rd-accent) 16%, transparent); color: var(--rd-ink); font-weight: 600; }
+  .spcalc input[type='range'] { width: 100%; }
+</style>
+
+<script>
+  import { ELASTOMERS, elastomer, POISONS, poisoning, pottingStress } from '../lib/elastomers';
+  import { wireWorkedExample } from '../lib/factors';
+
+  type V3 = [number, number, number];
+  type Atom = { p: V3; el: 'Si' | 'O' | 'C' | 'N' | 'H'; soft?: boolean };
+  const COL: Record<string, string> = { Si: 'var(--rd-warn)', O: 'var(--rd-accent)', C: 'var(--rd-muted)', N: 'var(--rd-blue)', H: 'var(--rd-ink)' };
+  const RAD: Record<string, number> = { Si: 0.42, O: 0.3, C: 0.32, N: 0.31, H: 0.16 };
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  // PDMS: a wavy Si–O backbone (Si–O–Si opens to about 143°), two methyl groups on each silicon.
+  function pdms() {
+    const atoms: Atom[] = [], bonds: [number, number, string?][] = [];
+    let prev = -1;
+    for (let i = 0; i < 5; i++) {
+      const si = atoms.push({ p: [2 * i, 0, 0.15 * Math.sin(i)], el: 'Si' }) - 1;
+      if (prev >= 0) bonds.push([prev, si]);
+      atoms.push({ p: [2 * i, -0.75, 0.9], el: 'C' }, { p: [2 * i, -0.75, -0.9], el: 'C' });
+      bonds.push([si, si + 1], [si, si + 2]);
+      if (i < 4) { const o = atoms.push({ p: [2 * i + 1, 0.33, 0.15 * Math.sin(i + 0.5)], el: 'O' }) - 1; bonds.push([si, o]); prev = o; }
+    }
+    return { atoms, bonds, hb: [] as [number, number][] };
+  }
+  // Polyurethane: two chains with urethane links (–O–C(=O)–NH–); the N–H of one bonds to the C=O of the other.
+  function pu() {
+    const atoms: Atom[] = [], bonds: [number, number, string?][] = [], hb: [number, number][] = [];
+    const chain = (y0: number, x0: number, up: number) => {
+      const ids: number[] = [];
+      const seq: [string, number][] = [['C', 0], ['O', 1.2], ['C', 2.4], ['N', 3.6], ['C', 4.8], ['C', 6.0], ['O', 7.2], ['C', 8.4], ['C', 9.6]];
+      seq.forEach(([el, x], k) => { ids.push(atoms.push({ p: [x0 + x, y0 + (k % 2 ? 0.25 : -0.25) * up, 0], el: el as Atom['el'], soft: k >= 5 }) - 1); if (k) bonds.push([ids[k - 1], ids[k]]); });
+      const co = atoms.push({ p: [x0 + 2.4, y0 + 1.15 * up, 0], el: 'O' }) - 1; bonds.push([ids[2], co, 'double']);
+      const h = atoms.push({ p: [x0 + 3.6, y0 - 0.95 * up, 0], el: 'H' }) - 1; bonds.push([ids[3], h]);
+      return { co, h };
+    };
+    const a = chain(1.4, 0, 1), b = chain(-1.4, 1.2, 1); // b is offset so its C=O sits under the N–H of a
+    hb.push([a.h, b.co]);
+    return { atoms, bonds, hb };
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-spcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => (form.elements.namedItem(n) as RadioNodeList | HTMLInputElement).value;
+    const num = (n: string) => (val(n).trim() === '' ? NaN : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const MATS: Record<string, { name: string; alpha: number }> = JSON.parse($('[data-mats]').textContent!);
+    const svg = root.querySelector<SVGSVGElement>('[data-svg]')!;
+    let mode = 'chain', yaw = -0.5, pitch = 0.35, picked = 'si-add';
+    const width = () => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+
+    function drawChain() {
+      const m = val('poly') === 'si' ? pdms() : pu(), W = 640, H = 300;
+      const xs = m.atoms.map((a) => a.p[0]), cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const span = Math.max(...xs) - Math.min(...xs) + 2, s = (W * 0.85) / span;
+      const proj = (p: V3) => {
+        const x = p[0] - cx, y = p[1], z = p[2];
+        const x1 = Math.cos(yaw) * x + Math.sin(yaw) * z, z1 = -Math.sin(yaw) * x + Math.cos(yaw) * z;
+        const y2 = Math.cos(pitch) * y - Math.sin(pitch) * z1, z2 = Math.sin(pitch) * y + Math.cos(pitch) * z1;
+        const k = 8 / (8 - z2 / 2);
+        return { x: W / 2 + x1 * s * k, y: H / 2 - y2 * s * k, z: z2, k };
+      };
+      const items: { z: number; s: string }[] = [];
+      for (const [i, j, kind] of m.bonds) {
+        const a = proj(m.atoms[i].p), b = proj(m.atoms[j].p), soft = m.atoms[i].soft && m.atoms[j].soft;
+        items.push({ z: (a.z + b.z) / 2 - 0.05, s: `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--rd-ink)" stroke-opacity="${soft ? 0.35 : 0.65}" stroke-width="${kind === 'double' ? 6 : 3.5}"/>${kind === 'double' ? `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--rd-panel)" stroke-width="1.5"/>` : ''}` });
+      }
+      for (const [i, j] of m.hb) {
+        const a = proj(m.atoms[i].p), b = proj(m.atoms[j].p);
+        items.push({ z: 99, s: `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--rd-ok)" stroke-width="2.5" stroke-dasharray="3 4"/><text x="${((a.x + b.x) / 2 + 8).toFixed(1)}" y="${((a.y + b.y) / 2 + 4).toFixed(1)}" font-size="11" fill="var(--rd-ok)">hydrogen bond</text>` });
+      }
+      for (const a of m.atoms) {
+        const q = proj(a.p), r = Math.max(3, RAD[a.el] * s * q.k * 0.75);
+        items.push({ z: q.z, s: `<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${COL[a.el]}" fill-opacity="${a.soft ? 0.55 : 0.95}" stroke="var(--rd-panel)" stroke-width="1"/>${r > 9 && a.el !== 'C' ? `<text x="${q.x.toFixed(1)}" y="${(q.y + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.min(12, r)}" font-weight="700" fill="var(--rd-panel)">${a.el}</text>` : ''}` });
+      }
+      items.sort((a, b) => a.z - b.z);
+      let lx = 12;
+      const legend = (val('poly') === 'si' ? ['Si', 'O', 'C'] : ['C', 'O', 'N', 'H']).map((el) => { const t = `<circle cx="${lx + 6}" cy="${H - 12}" r="6" fill="${COL[el]}"/><text x="${lx + 16}" y="${H - 8}" font-size="11" fill="var(--rd-muted)">${el === 'C' && val('poly') === 'si' ? 'CH₃' : el}</text>`; lx += 52; return t; }).join('');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = items.map((i) => i.s).join('') + legend + (val('poly') === 'pu' ? `<text x="${W - 12}" y="${H - 8}" text-anchor="end" font-size="11" fill="var(--rd-muted)">pale: soft segment</text>` : '');
+    }
+
+    function runChain() {
+      svg.classList.add('drag');
+      const si = val('poly') === 'si';
+      $('[data-out]').innerHTML = si ? `
+        <div class="readout primary"><dt>Backbone</dt><dd>Si–O–Si <small>the bond of quartz: 452 kJ/mol against 348 for C–C</small></dd></div>
+        <div class="readout"><dt>Si–O–Si angle</dt><dd>about 143° <small>against 109° for carbon: the chain rotates almost freely</small></dd></div>
+        <div class="readout"><dt>Surface energy</dt><dd>21 mN/m <small>the methyl groups face outwards: almost nothing wets it</small></dd></div>` : `
+        <div class="readout primary"><dt>Linkage</dt><dd>–NH–CO–O– <small>from an isocyanate (–N=C=O) and a polyol (–OH)</small></dd></div>
+        <div class="readout"><dt>Hydrogen bond</dt><dd>N–H ··· O=C <small>pulls the hard segments into stiff domains in a soft matrix</small></dd></div>
+        <div class="readout"><dt>Surface energy</dt><dd>about 37 mN/m <small>polar: it wets and bonds well</small></dd></div>`;
+      $('[data-cap]').textContent = si ? 'Polydimethylsiloxane: a wavy Si–O chain with two methyl groups on each silicon. Drag to rotate.' : 'Two polyurethane chains: the urethane link of one hydrogen-bonds to the other. Drag to rotate.';
+      $('[data-table]').innerHTML = '';
+      $('[data-notes]').innerHTML = si
+        ? '<li>Strong bond, floppy chain: silicone keeps its temperature capability to about 200 °C and stays rubbery to about −55 °C (phenyl grades to −100 °C).</li><li>The same open coils leave space between the chains: gases and water vapour pass straight through, and the tear strength is low.</li>'
+        : '<li>The two-phase structure (hard domains in a soft matrix) gives polyurethane its abrasion and tear resistance, far above silicone.</li><li>The urethane link is hydrolysable: hot water reverts it, polyester grades much faster than polyether. The heat limit is about 80–120 °C.</li>';
+      drawChain();
+    }
+
+    function runCmp() {
+      svg.classList.remove('drag');
+      const W = width(), row = 22, L = 150, R = 12, T = 18, H = T + ELASTOMERS.length * row + 26, lo = -80, hi = 260;
+      const X = (t: number) => L + ((t - lo) / (hi - lo)) * (W - L - R);
+      const fam = (e: { family: string }) => (e.family === 'si' ? 'var(--rd-blue)' : e.family === 'pu' ? 'var(--rd-accent)' : 'var(--rd-muted)');
+      const p: string[] = [];
+      for (let t = -50; t <= 250; t += 50) p.push(`<line x1="${X(t)}" x2="${X(t)}" y1="${T - 4}" y2="${H - 22}" stroke="var(--rd-line)"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t}</text>`);
+      ELASTOMERS.forEach((e, i) => {
+        const y = T + i * row, sel = e.key === picked;
+        p.push(`<g data-k="${e.key}" style="cursor:pointer"><rect x="0" y="${y}" width="${W}" height="${row}" fill="${sel ? 'color-mix(in srgb, var(--rd-accent) 12%, transparent)' : 'transparent'}"/><text x="${L - 6}" y="${y + 15}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)" font-family="var(--sl-font-system, system-ui)">${esc(e.name.replace(/ \(.*\)/, '').replace('Polyurethane', 'PU').replace('Silicone', 'Si'))}</text><rect x="${X(e.tmin)}" y="${y + 5}" width="${X(e.tmax) - X(e.tmin)}" height="${row - 10}" rx="3" fill="${fam(e)}" fill-opacity="0.6"/></g>`);
+      });
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = p.join('') + `<text x="${W - R}" y="${T - 6}" text-anchor="end" font-size="10" fill="var(--rd-muted)">service range, °C</text>`;
+      $('[data-cap]').textContent = 'Typical service range of each class. Blue: silicone. Red: polyurethane. Grey: epoxy, for comparison. Select a row.';
+      const e = elastomer(picked);
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>${esc(e.name)}</dt><dd>${e.tmin} to ${e.tmax} °C <small>${esc(e.cure)}</small></dd></div>
+        <div class="readout"><dt>Strength</dt><dd>${e.tensile[0]}–${e.tensile[1]} MPa <small>elongation ${e.elong[0]}–${e.elong[1]}%, tear ${e.tear[1] ? `${e.tear[0]}–${e.tear[1]} kN/m` : 'brittle'}, ${e.shore}</small></dd></div>
+        <div class="readout"><dt>Expansion</dt><dd>${(e.cte * 1e6).toFixed(0)} ×10⁻⁶/K <small>E about ${e.E >= 100 ? e.E.toLocaleString('en-GB') : e.E} MPa, Tg about ${e.tg} °C</small></dd></div>`;
+      $('[data-table]').innerHTML = `<table class="sp-table"><thead><tr><th>Class</th><th>Use it for</th><th>Watch for</th><th>Gas</th><th>Water</th><th>Fuels and oils</th><th>Weather</th></tr></thead><tbody>${ELASTOMERS.map((x) => `<tr data-k="${x.key}" class="${x.key === picked ? 'sel' : ''}"><td><b>${esc(x.name)}</b></td><td>${esc(x.use)}</td><td>${esc(x.watch)}</td><td>${esc(x.permeability)}</td><td>${esc(x.hydrolysis)}</td><td>${esc(x.fuels)}</td><td>${esc(x.weather)}</td></tr>`).join('')}</tbody></table>`;
+      $('[data-notes]').innerHTML = '<li>They fail in opposite environments. Silicone takes heat, ozone, UV and oxidation, and is destroyed by fuels, oils and abrasion. Polyurethane takes abrasion, fuels and oils, and is destroyed by heat and hot water. Choose by the dominant threat.</li>';
+    }
+
+    function runPoison() {
+      svg.classList.remove('drag');
+      const pz = POISONS.find((p) => p.key === val('pz'))!, ppm = num('ppm'), r = poisoning(num('pt'), ppm, pz.mw);
+      (root.querySelector('[data-ppm]') as HTMLOutputElement).textContent = String(ppm);
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${r.active >= 0.6 ? 'ok' : r.active >= 0.2 ? 'warn' : 'bad'}"><dt>Platinum still active</dt><dd>${(r.active * 100).toFixed(0)}% <small>the silicone ${r.verdict}</small></dd></div>
+        <div class="readout"><dt>Poison per platinum atom</dt><dd>${Number.isFinite(r.ratio) ? r.ratio.toFixed(2) : '—'} <small>${ppm} ppm of ${pz.name.split(' (')[0].toLowerCase()} against ${num('pt')} ppm platinum</small></dd></div>
+        <div class="readout warn"><dt>Enough to stop the cure</dt><dd>${r.matchPpm.toFixed(1)} ppm <small>of this poison matches all the platinum</small></dd></div>`;
+      // 100 platinum sites: green while active, amber once a poison molecule holds them.
+      const W = width(), cols = 20, rows = 5, cell = Math.min(26, (W - 20) / cols), H = rows * cell + 34, off = (W - cols * cell) / 2;
+      const dead = Math.round((1 - r.active) * 100), p: string[] = [];
+      for (let i = 0; i < 100; i++) {
+        const x = off + (i % cols) * cell + cell / 2, y = 10 + Math.floor(i / cols) * cell + cell / 2, d = i < dead;
+        p.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(cell * 0.32).toFixed(1)}" fill="${d ? 'var(--rd-warn)' : 'var(--rd-ok)'}" fill-opacity="${d ? 0.85 : 0.75}" style="transition: fill 0.3s"/>`);
+      }
+      p.push(`<text x="${off}" y="${H - 6}" font-size="10.5" fill="var(--rd-ok)">● active platinum site</text><text x="${off + cols * cell}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="var(--rd-warn)">● poisoned site</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = p.join('');
+      $('[data-cap]').textContent = `100 platinum sites. Source of this poison: ${pz.source}.`;
+      $('[data-table]').innerHTML = '';
+      $('[data-notes]').innerHTML = '<li>The catalyst itself is at parts per million, so a poison only has to match the catalyst, not the bulk. A trace of urethane on a glove, a mould or a mixing stick is enough to stop a batch at the interface. It looks like a bad batch of silicone, not contamination.</li><li>Keep the two apart: separate storage, tools and gloves; cure the polyurethane fully first; and cast a test coupon of the silicone against the actual cured urethane before you pot hardware.</li>';
+    }
+
+    function runPot() {
+      svg.classList.remove('drag');
+      const m = MATS[val('mp')], tc = num('tc'), tlo = num('tlo');
+      const cand = ['si-add', 'pu-pot', 'epoxy'].map((k) => ({ e: elastomer(k), s: Number.isFinite(tlo) ? pottingStress(elastomer(k), m.alpha, tc, tlo) : null }));
+      const sel = elastomer(val('pc')), r = Number.isFinite(tlo) ? pottingStress(sel, m.alpha, tc, tlo) : null;
+      $('[data-out]').innerHTML = r ? `
+        <div class="readout primary ${r.free > 5 ? 'warn' : 'ok'}"><dt>Free surface, at ${tlo} °C</dt><dd>${r.free.toFixed(r.free < 0.1 ? 3 : r.free < 1 ? 2 : 1)} MPa <small>${esc(sel.name.split(' (')[0])} on ${esc(m.name)}: biaxial ${r.free >= 0 ? 'tension' : 'compression'} on the parts' faces</small></dd></div>
+        <div class="readout ${r.confined > 2 * sel.tensile[0] ? 'bad' : 'warn'}"><dt>Fully confined, at ${tlo} °C</dt><dd>${r.confined.toFixed(0)} MPa <small>hydrostatic ${r.confined >= 0 ? 'tension' : 'compression'}: the bulk modulus, not E, sets it</small></dd></div>
+        <div class="readout ${r.belowTg ? 'bad' : 'ok'}"><dt>Glass transition</dt><dd>${sel.tg} °C <small>${sel.family === 'ep' ? 'a rigid potting at all service temperatures: the stress above is already the glassy value' : r.belowTg ? 'the coldest point is below Tg: the potting becomes rigid and the stress is far higher' : 'above Tg at the cold limit: the potting stays rubbery'}</small></dd></div>`
+        : '<div class="readout warn"><dt>Stress</dt><dd>— <small>enter the coldest temperature</small></dd></div>';
+      // Log-scale bars: free and confined stress of the three pottings.
+      const W = width(), H = 190, L = 120, R = 14, T = 16, rowH = 46;
+      const X = (v: number) => L + (Math.log10(Math.max(0.01, Math.abs(v))) + 2) / 5 * (W - L - R); // 0.01 to 1000 MPa
+      const p: string[] = [];
+      for (const v of [0.01, 0.1, 1, 10, 100, 1000]) p.push(`<line x1="${X(v)}" x2="${X(v)}" y1="${T - 4}" y2="${H - 20}" stroke="var(--rd-line)"/><text x="${X(v)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      cand.forEach(({ e, s }, i) => {
+        const y = T + i * rowH;
+        p.push(`<text x="${L - 6}" y="${y + 14}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)" font-family="var(--sl-font-system, system-ui)">${e.family === 'si' ? 'Silicone' : e.family === 'pu' ? 'Polyurethane' : 'Epoxy'}</text>`);
+        if (s) {
+          p.push(`<rect x="${L}" y="${y + 3}" width="${Math.max(1, X(s.free) - L)}" height="14" fill="var(--rd-ok)" fill-opacity="0.7"/><text x="${X(s.free) + 4}" y="${y + 14}" font-size="10" fill="var(--rd-ink)">${s.free.toFixed(s.free < 1 ? 2 : 1)} free</text>`);
+          p.push(`<rect x="${L}" y="${y + 21}" width="${Math.max(1, X(s.confined) - L)}" height="14" fill="var(--rd-accent)" fill-opacity="0.7"/><text x="${Math.min(X(s.confined) + 4, W - R - 70)}" y="${y + 32}" font-size="10" fill="var(--rd-ink)">${s.confined.toFixed(0)} confined</text>`);
+        }
+      });
+      p.push(`<text x="${W - R}" y="${T - 6}" text-anchor="end" font-size="10" fill="var(--rd-muted)">MPa, log scale</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = p.join('');
+      $('[data-cap]').textContent = Number.isFinite(tlo) ? `Stress in the potting at ${tlo} °C after a cure at ${tc} °C, in ${m.name}. Green: with a free surface. Red: fully confined.` : 'Enter the coldest temperature.';
+      $('[data-table]').innerHTML = '';
+      const notes: [string, string][] = [];
+      if (r && r.confined > 2 * sel.tensile[0]) notes.push(['bad', 'Fully confined, the potting cannot shrink: it pulls away from a wall, tears or forms voids. Leave a free surface, a small air space or a compliant layer, and do not fill a closed box to the lid.']);
+      if (r && r.belowTg) notes.push(['bad', 'Below its glass transition the potting is many times stiffer: the free-surface stress on components rises by the same factor. Choose a grade whose Tg is below the coldest temperature.']);
+      notes.push(['', 'Silicone puts the least stress on soldered parts and glass-bodied components when it can shrink freely. Epoxy is the stiffest: it cracks fragile parts and joints when cold, and needs stress-relief buffers around them.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    const run = () => (mode === 'chain' ? runChain() : mode === 'cmp' ? runCmp() : mode === 'poison' ? runPoison() : runPot());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.addEventListener('click', (e) => { const g = (e.target as Element).closest<HTMLElement | SVGElement>('[data-k]'); if (g && mode === 'cmp') { picked = (g as HTMLElement).dataset.k!; run(); } });
+    // Drag to rotate the chain.
+    let drag = false, px = 0, py = 0;
+    svg.addEventListener('pointerdown', (e) => { if (mode !== 'chain') return; drag = true; px = e.clientX; py = e.clientY; svg.setPointerCapture(e.pointerId); });
+    svg.addEventListener('pointermove', (e) => { if (!drag) return; yaw += (e.clientX - px) * 0.01; pitch = Math.max(-1.4, Math.min(1.4, pitch + (e.clientY - py) * 0.01)); px = e.clientX; py = e.clientY; drawChain(); });
+    const end = () => { drag = false; };
+    svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+    // The worked example: the potted junction box on the aft skirt. The temperature range is for this example only.
+    wireWorkedExample({
+      root,
+      values: { pt: '10', pz: 'amine', ppm: '5', pc: 'si-add', mp: 'al-6061-t6', tc: '25', tlo: '-40' },
+      factorFields: ['tlo'],
+      note: 'Worked example: a potted junction box, cold limit −40 °C, for this example only',
+      onLoad: () => select('pot'),
+    });
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; if (mode !== 'chain') run(); } }).observe(svg); }
+    run();
+  });
+</script>

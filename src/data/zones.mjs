@@ -65,6 +65,7 @@ export const REBUILT = {
   materials: 'materials/selection',
   sheet: 'materials/datasheet',
   plastics: 'materials/plastics',
+  elast: 'materials/silicone-and-pu',
   trade: 'materials/trade-study',
   xref: 'materials/designations',
   rocket: 'motor/hardware',
