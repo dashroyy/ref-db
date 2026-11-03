@@ -1,0 +1,135 @@
+---
+title: Envelope & access
+description: "Reserve space for tools, hands and inspection probes, not only for parts. The space a fastener needs to be fitted, tightened and inspected; assembly order, lifting and inspection access; and clearances at the temperature extremes, with a tool for socket and wrench clearance, insertion paths and thermal gaps."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import AccessCalc from '../../../components/AccessCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The envelope a part needs in service is smaller than the envelope it needs to be assembled, tightened, inspected and taken apart. Design to the second.</div>
+  <div><b>Before this</b><a href="../bolted-joints/">Bolted joints</a> · <a href="../threads/">Threads</a></div>
+  <div><b>Related</b><a href="../differential-expansion/">Differential expansion</a> · <a href="../locking-and-retention/">Locking and retention</a> · <a href="../../make/ndt/">NDT</a></div>
+</div>
+
+## Why this matters
+
+A CAD model shows the parts where they will be at the end. It does not show the hand, the socket, the torque wrench,
+the borescope or the crane hook that put them there. A bolt that cannot be reached is found on the shop floor, when
+the parts are made and the schedule is fixed. Then the fix is a scallop cut in a finished part, a special tool, or a
+fastener tightened to "as tight as it would go": an uncontrolled preload in a joint that the analysis assumed was
+controlled.
+
+<Analogy title="A ship in a bottle">
+  A ship in a bottle fits perfectly once it is in. The skill is all in the order of assembly and the tools, which you
+  never see in the finished model. A motor is the same: every part must go in through a space that the parts already
+  in place leave open.
+</Analogy>
+
+## Check every fastener for
+
+- **Socket clearance.** The outside diameter of the socket, not the bolt head, sets the minimum distance to a wall and
+  the minimum pitch to the next fastener. Check against the actual tool that you will use: sockets of the same size
+  differ by maker and drive.
+- **The torque wrench path.** The wrench length and the swing it needs. A fastener that you can reach but not tighten to
+  its torque has an uncontrolled preload ([Bolted joints](../bolted-joints/#torque-and-preload)).
+- **The insertion path.** The bolt must get into the hole from somewhere: count its full length plus the head.
+- **Visibility.** The assembler must see the fastener seat and the locking feature, and the inspector must see the
+  witness mark or the lock wire ([Locking and retention](../locking-and-retention/)).
+
+| Size | Hex across flats (ISO 4014) | Hex head height | Socket-head ⌀ (ISO 4762) | Hex key | Counterbore (DIN 974-1) | Socket ⌀, typical |
+| --- | --- | --- | --- | --- | --- | --- |
+| M5 | 8 | 3.5 | 8.5 | 4 | 10 | 13 |
+| M6 | 10 | 4 | 10 | 5 | 11 | 16 |
+| M8 | 13 | 5.3 | 13 | 6 | 15 | 20 |
+| M10 | 16 | 6.4 | 16 | 8 | 18 | 24 |
+| M12 | 18 | 7.5 | 18 | 10 | 20 | 27 |
+| M16 | 24 | 10 | 24 | 14 | 26 | 35 |
+
+**Socket-head cap screws in counterbores** need much less space around them than hex heads: the tool is a hex key or a
+bit socket that is about the size of the head. They suit closely spaced bolts and fasteners near walls.
+
+## Beyond fasteners
+
+- **Assembly order.** Can every part get to its position with the others already in place? Write the sequence down
+  while you design, and check it in the model step by step.
+- **Lifting points and the centre of gravity** for anything that you cannot lift by hand: where the hook goes, what it
+  lifts against, and the proof load of the lifting feature.
+- **Inspection access** for the CMM probe, the borescope and the NDT transducer. An ultrasonic probe needs a flat
+  surface and a path for the couplant; radiography needs the film or detector on the other side
+  ([NDT](../../make/ndt/)).
+- **Thermal clearance at the extremes.** Parts that fit at 20 °C can touch at the operating limit
+  ([Differential expansion](../differential-expansion/)).
+- **Harness and pipe routes** with their bend radii, connectors and clamps, not as thin lines. Follow your wiring
+  standard (AS50881 for aerospace) and the tube bend tables of your fitting supplier.
+- **Removal.** What must come off to replace the part that will wear or fail first? Design for the second assembly,
+  too.
+
+**Design rule.** Model the critical tools as solids in the assembly: the socket with its extension and wrench head, the
+key, the borescope. It takes ten minutes and finds the problems that otherwise turn up on the shop floor.
+
+## Calculator
+
+**Socket** gives the outside diameter of the tool (an estimate, or the value you measure), the minimum
+distance from the fastener axis to a wall, the minimum pitch to the next fastener, and how many fasteners fit on a bolt
+circle. The drawing is a plan view along the axis, to scale. **Wrench** gives the hand force and the smallest swing of
+the drive against the free angle. **Insertion and heat** gives the straight approach that a bolt needs, and a gap across
+the temperature range with the expansion of two metals from the [material library](../../materials/datasheet/).
+
+<AccessCalc />
+
+## Worked example: the aft closure bolts
+
+The aft closure has 30 M10 hex bolts on a 285 mm bolt circle ([GD&T](../../drawing/gdt/#worked-example-the-aft-closure-its-bolts-and-the-nozzle-seal-groove)),
+tightened to 60 N·m ([Bolted joints](../bolted-joints/#worked-example-the-aft-closure)). For this example only: the
+nearest wall is 22.5 mm from the bolt axes, there is 45 mm of straight approach above each hole, and the service range
+is −40 to +60 °C. Select **Load worked example**.
+
+1. **Socket.** A standard 16 mm socket is about 24.3 mm across. It needs 13.2 mm from the bolt axis to the wall
+   (22.5 mm is available) and a pitch of 22.4 mm to clear the next head. The bolts are 29.8 mm apart: **the socket
+   fits**. On this circle, at most 39 bolts can be tightened one at a time with this socket.
+2. **Cap screws instead.** Socket-head cap screws in ⌀18 counterbores with an 8 mm bit socket of about 18 mm need a
+   pitch of only 18.0 mm. If the joint later needs more bolts, this is the way to fit them.
+3. **Wrench.** 60 N·m on a 250 mm torque wrench is a hand force of **240 N**. A 72-tooth ratchet needs only 5° of
+   swing (22 mm at the hand), and 40° is free. An open spanner needs 60°: **it does not fit**.
+4. **Insertion.** An M10 × 40 bolt needs 40 + 6.4 + 2 = **48.4 mm** of straight approach, and only 45 mm is available:
+   **the bolt cannot go in**. Use an M10 × 35 (43.4 mm), fit studs in the case, or install the bolts before the part
+   that blocks them.
+5. **Heat.** An aluminium 7075 electronics box, 200 mm long, sits in a 4340 steel bracket with 0.08 mm of clearance at
+   20 °C. At −40 °C the gap opens to 0.213 mm. At +60 °C it is **−0.009 mm: the box touches** and loads its fasteners.
+   Increase the gap to at least 0.1 mm, or let the box slide on slotted holes.
+
+## Where this stops
+
+- **The socket is an estimate.** Real sockets, extensions and wrench heads differ by maker and drive size. Measure the
+  tools that the shop will use and model them.
+- **Straight lines only.** The tool checks one axis and one plane. A 3D model with the tools as solids finds the
+  interference along the whole path.
+- **No human-factors data.** The hand-force limit, reach and posture come from your human-factors standard
+  (DEF STAN 00-250, MIL-STD-1472).
+- **Free expansion.** The thermal gap assumes that both parts expand freely along one line, at a uniform temperature.
+
+## On the drawing
+
+- **Tool access** where it is not obvious: a note that the bolts are installed before a part, or a scallop for a socket.
+- **The torque and the tool** where the access forces a special tool (a crow-foot changes the torque setting).
+- **Assembly sequence** in the assembly drawing or the build instruction, when the order matters.
+- **Lifting points** with their proof load, and the centre of gravity of heavy assemblies.
+- **Clearances at the extremes,** not only at 20 °C, for parts that must not touch in service.
+
+## References and further reading
+
+- ISO 4014 and ISO 4017 (hex bolts and screws), ISO 4032 (hex nuts), ISO 4762 (socket-head cap screws), DIN 974-1
+  (counterbore diameters).
+- ISO 6789-1, *Hand torque tools: Requirements and methods for design conformance testing*.
+- DEF STAN 00-250, *Human Factors for Designers of Systems*; MIL-STD-1472, *Human Engineering*.
+- SAE AS50881, *Wiring, Aerospace Vehicle*.
+- NASA-STD-5020B, *Requirements for Threaded Fastening Systems in Spaceflight Hardware* (installation and torque).
+
+<Aside type="note">
+  Screening guidance from general practice. Tool sizes are typical; the space you need comes from the tools that your
+  shop uses and your human-factors standard.
+</Aside>

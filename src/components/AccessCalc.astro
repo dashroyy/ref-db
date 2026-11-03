@@ -1,0 +1,234 @@
+---
+// Envelope and access in three tabs: the socket and the pitch (tool clearance to a wall and to the next fastener, and
+// how many fasteners fit on a bolt circle), the wrench (hand force and swing), and insertion and thermal clearance
+// (the straight path to fit a bolt, and a gap across the temperature range with metals from the material library).
+// Maths in src/lib/access.ts (unit-tested); UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { HEAD_SIZES } from '../lib/access';
+import { withProps, slug } from '../lib/materials';
+
+const METALS = withProps(['alpha'], ['metal']);
+const MAT = Object.fromEntries(METALS.map((m) => [m.key, { name: m.name, alpha: m.alpha }]));
+const TABS = [{ key: 'socket', name: 'Socket' }, { key: 'wrench', name: 'Wrench' }, { key: 'fit', name: 'Insertion and heat' }];
+---
+
+<div class="calc accalc" data-accalc>
+  <div class="calc-head"><span>Fastener access and assembly envelope</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Check">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Fastener</legend>
+        <div class="row2">
+          <label>Size<select name="d">{HEAD_SIZES.map((d) => <option value={d} selected={d === 10}>M{d}</option>)}</select></label>
+          <label>Head<select name="head"><option value="hex">Hex bolt or nut (ISO 4014 / 4032)</option><option value="shcs">Socket-head cap screw (ISO 4762)</option></select></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="socket">
+        <legend>Tool and space</legend>
+        <div class="row2">
+          <label>Tool outside ⌀ (mm)<input name="tool" type="number" min="1" step="any" placeholder="estimate" /></label>
+          <label>Clearance (mm)<input name="c" type="number" min="0" step="any" value="1" /></label>
+          <label>Axis to wall (mm)<input name="wall" type="number" min="0" step="any" placeholder="if there is one" /></label>
+          <label>Bolt circle ⌀ (mm)<input name="D" type="number" min="0" step="any" placeholder="or a pitch" /></label>
+          <label>Fasteners on it<input name="n" type="number" min="2" step="1" placeholder="number" /></label>
+          <label>Pitch, if in a row (mm)<input name="p" type="number" min="0" step="any" placeholder="optional" /></label>
+        </div>
+        <p class="hint">Measure the socket, bit socket or ring spanner you will use. The estimate is a standard 6-point socket.</p>
+      </fieldset>
+      <fieldset data-panel="wrench" hidden>
+        <legend>Tightening</legend>
+        <div class="row2">
+          <label>Torque (N·m)<input name="T" type="number" min="0" step="any" value="60" /></label>
+          <label>Wrench length to the hand (mm)<input name="L" type="number" min="10" step="any" value="250" /></label>
+          <label>Drive<select name="drive"><option value="72">Ratchet, 72 teeth</option><option value="36">Ratchet, 36 teeth</option><option value="120">Ratchet, 120 teeth</option><option value="spanner60">Open spanner, 60°</option><option value="spanner30">Open spanner, flipped (30°)</option><option value="ring">Ring spanner, 12-point (30°)</option></select></label>
+          <label>Free swing angle (°)<input name="free" type="number" min="0" max="360" step="any" placeholder="from the model" /></label>
+          <label>Hand-force limit (N)<input name="Fmax" type="number" min="0" step="any" placeholder="your human-factors limit" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="fit" hidden>
+        <legend>Insertion</legend>
+        <div class="row2">
+          <label>Bolt length under the head (mm)<input name="bl" type="number" min="1" step="any" value="40" /></label>
+          <label>Straight approach available (mm)<input name="appr" type="number" min="0" step="any" placeholder="from the model" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="fit" hidden>
+        <legend>Gap across the temperature range</legend>
+        <div class="row2">
+          <label>Part inside<MaterialSelect name="m1" list={METALS} selected={slug('Al 7075-T6')} /></label>
+          <label>Part length (mm)<input name="L1" type="number" min="0" step="any" value="200" /></label>
+          <label>Housing<MaterialSelect name="m2" list={METALS} selected={slug('4340 / EN24T')} /></label>
+          <label>Housing length (mm)<input name="L2" type="number" min="0" step="any" value="200" /></label>
+          <label>Gap at assembly (mm)<input name="g0" type="number" step="any" value="0.2" /></label>
+          <label>Assembly temperature (°C)<input name="T0" type="number" step="any" value="20" /></label>
+          <label>Coldest (°C)<input name="Tlo" type="number" step="any" placeholder="programme value" /></label>
+          <label>Hottest (°C)<input name="Thi" type="number" step="any" placeholder="programme value" /></label>
+        </div>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div class="ac-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig ac-fig"><svg data-chart role="img" aria-label="Plan view of the fastener, its tool and the space around it"></svg><figcaption data-cap></figcaption></figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(MAT)}></script>
+  <div class="calc-foot">
+    Head sizes: ISO 4014/4017 hex bolts, ISO 4032 nuts, ISO 4762 socket-head cap screws, DIN 974-1 counterbores
+    (nominal). The socket estimate is the across-corners plus two walls of 0.12·s + 1 mm: measure your tool. Gaps change
+    by (α<sub>housing</sub>·L<sub>housing</sub> − α<sub>part</sub>·L<sub>part</sub>)·ΔT, with expansion from the material library.
+  </div>
+</div>
+
+<style is:global>
+  .accalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .accalc .calc-body > * { min-width: 0; }
+  .ac-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .ac-out > * { margin: 0 !important; min-width: 0; }
+  .ac-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { HEADS, corners, socketOd, headRadius, minWall, minPitch, maxOnCircle, pitchOnCircle, handForce, swingArc, ratchetSwing, insertion, thermalGap, type Head } from '../lib/access';
+  import { wireWorkedExample } from '../lib/factors';
+
+  document.querySelectorAll<HTMLElement>('[data-accalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => field(n).value;
+    const num = (n: string) => (val(n).trim() === '' ? NaN : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const MATS: Record<string, { name: string; alpha: number }> = JSON.parse($('[data-mats]').textContent!);
+    let mode = 'socket';
+    const f1 = (v: number) => (Number.isFinite(v) ? v.toFixed(1) : '—');
+    const svgEl = () => root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const width = () => Math.round(Math.min(640, Math.max(280, svgEl().clientWidth || 560)));
+
+    function runSocket() {
+      const d = +val('d'), head = val('head') as Head, h = HEADS[d], c = Number.isFinite(num('c')) ? num('c') : 0;
+      const est = head === 'hex' ? socketOd(h.hexAF) : Math.max(socketOd(h.shcsKey), h.shcsDk + 2);
+      const tool = Number.isFinite(num('tool')) && num('tool') > 0 ? num('tool') : est, measured = tool !== est;
+      const wNeed = minWall(Math.max(tool, 2 * headRadius(d, head)), c), pNeed = minPitch(tool, headRadius(d, head), c);
+      const D = num('D'), n = num('n'), pAct = D > 0 && n >= 2 ? pitchOnCircle(D, n) : num('p'), wall = num('wall');
+      const wallOk = !Number.isFinite(wall) || wall >= wNeed, pitchOk = !Number.isFinite(pAct) || pAct >= pNeed;
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${!wallOk || !pitchOk ? 'bad' : Number.isFinite(wall) || Number.isFinite(pAct) ? 'ok' : ''}"><dt>Tool outside ⌀</dt><dd>${f1(tool)} mm <small>${measured ? 'entered' : `estimated for ${head === 'hex' ? `a ${h.hexAF} mm socket` : `an ${h.shcsKey} mm hex bit socket`}: measure yours`}</small></dd></div>
+        <div class="readout ${Number.isFinite(wall) ? (wallOk ? 'ok' : 'bad') : ''}"><dt>Axis to wall, minimum</dt><dd>${f1(wNeed)} mm <small>${Number.isFinite(wall) ? `${f1(wall)} mm available: ${wallOk ? 'fits' : `${f1(wNeed - wall)} mm short`}` : 'enter the distance to the nearest wall'}</small></dd></div>
+        <div class="readout ${Number.isFinite(pAct) ? (pitchOk ? 'ok' : 'bad') : ''}"><dt>Pitch to the next fastener, minimum</dt><dd>${f1(pNeed)} mm <small>${Number.isFinite(pAct) ? `${f1(pAct)} mm${D > 0 && n >= 2 ? ` (${n} on ⌀${D})` : ''}: ${pitchOk ? 'fits' : `${f1(pNeed - pAct)} mm short`}` : 'enter a bolt circle or a pitch'}</small></dd></div>
+        ${D > 0 ? `<div class="readout"><dt>Most on ⌀${D}</dt><dd>${maxOnCircle(D, pNeed)} <small>with this tool, one at a time</small></dd></div>` : ''}
+        ${head === 'shcs' ? `<div class="readout"><dt>Counterbore</dt><dd>⌀${h.cbore} <small>DIN 974-1 for ISO 4762; head ⌀${h.shcsDk}, depth at least ${d} mm + flush allowance</small></dd></div>` : ''}`;
+      // Plan view: the wall, the fastener, the tool circle, the neighbour.
+      const W = width(), H = 200, s = Math.min((W - 40) / Math.max(60, (Number.isFinite(pAct) ? pAct : pNeed) + tool + 20), (H - 30) / (tool + 30));
+      const cx = 20 + (tool / 2 + 8) * s, cy = H / 2 + 6;
+      const p: string[] = [];
+      const wx = Number.isFinite(wall) ? cy - wall * s : null;
+      if (wx !== null) p.push(`<rect x="0" y="0" width="${W}" height="${Math.max(0, wx)}" fill="var(--rd-muted)" fill-opacity="0.18"/><line x1="0" x2="${W}" y1="${wx}" y2="${wx}" stroke="var(--rd-ink)" stroke-width="2"/><text x="${W - 6}" y="${Math.max(12, wx - 5)}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)">wall</text>`);
+      const hexPts = (x: number, y: number, af: number) => Array.from({ length: 6 }, (_, k) => { const a = (k * Math.PI) / 3 + Math.PI / 6; return `${(x + (corners(af) / 2) * s * Math.cos(a)).toFixed(1)},${(y + (corners(af) / 2) * s * Math.sin(a)).toFixed(1)}`; }).join(' ');
+      const drawHead = (x: number) => head === 'hex' ? `<polygon points="${hexPts(x, cy, h.hexAF)}" fill="var(--rd-steel, var(--rd-muted))" fill-opacity="0.45" stroke="var(--rd-ink)"/>` : `<circle cx="${x}" cy="${cy}" r="${(h.shcsDk / 2) * s}" fill="var(--rd-steel, var(--rd-muted))" fill-opacity="0.45" stroke="var(--rd-ink)"/><polygon points="${hexPts(x, cy, h.shcsKey)}" fill="var(--rd-panel)"/>`;
+      p.push(drawHead(cx));
+      p.push(`<circle cx="${cx}" cy="${cy}" r="${(tool / 2) * s}" fill="var(--rd-blue)" fill-opacity="0.12" stroke="var(--rd-blue)" stroke-width="2" stroke-dasharray="6 3"/><text x="${cx}" y="${cy + (tool / 2) * s + 13}" text-anchor="middle" font-size="10.5" fill="var(--rd-blue)">tool ⌀${f1(tool)}</text>`);
+      {
+        const px = cx + (Number.isFinite(pAct) ? pAct : pNeed) * s;
+        if (px < W - 5) {
+          p.push(drawHead(px));
+          p.push(`<line x1="${cx}" x2="${px}" y1="${cy}" y2="${cy}" stroke="${pitchOk ? 'var(--rd-ok)' : 'var(--rd-accent)'}" stroke-width="1.5"/><text x="${(cx + px) / 2}" y="${cy - 6}" text-anchor="middle" font-size="10.5" fill="${pitchOk ? 'var(--rd-ok)' : 'var(--rd-accent)'}">${Number.isFinite(pAct) ? `pitch ${f1(pAct)}` : `minimum ${f1(pNeed)}`}</text>`);
+        }
+      }
+      if (wx !== null) p.push(`<line x1="${cx - (tool / 2) * s - 6}" x2="${cx - (tool / 2) * s - 6}" y1="${cy}" y2="${wx}" stroke="${wallOk ? 'var(--rd-ok)' : 'var(--rd-accent)'}" stroke-width="1.5"/><text x="${cx - (tool / 2) * s - 10}" y="${(cy + wx) / 2}" text-anchor="end" font-size="10.5" fill="${wallOk ? 'var(--rd-ok)' : 'var(--rd-accent)'}">${f1(wall)}</text>`);
+      svgEl().setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svgEl().innerHTML = p.join('');
+      $('[data-cap]').textContent = 'Plan view along the fastener axis, to scale. Dashed: the tool. It must clear the wall and the head of the next fastener.';
+      const notes: [string, string][] = [];
+      if (!pitchOk) notes.push(['bad', 'The tool on one fastener hits the next one. Increase the pitch, use a thinner-wall socket or a ring spanner, or change to socket-head cap screws in counterbores.']);
+      if (!wallOk) notes.push(['bad', 'The tool does not fit against the wall. Move the fastener, put a slot or a scallop in the wall for the tool, or change the access direction.']);
+      notes.push(['', 'Check the tool along its whole length: the socket, the extension and the wrench head, not only the part of the socket that touches the fastener. Model the critical tools as solids in the assembly.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function runWrench() {
+      const T = num('T'), L = num('L'), drive = val('drive'), free = num('free'), Fmax = num('Fmax');
+      const swing = drive.startsWith('spanner') ? (drive === 'spanner60' ? 60 : 30) : drive === 'ring' ? 30 : ratchetSwing(+drive);
+      const F = handForce(T, L), arc = swingArc(L, swing), ok = !Number.isFinite(free) || free >= swing, fOk = !Number.isFinite(Fmax) || F <= Fmax;
+      const perTurn = 360 / swing;
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${fOk ? (Number.isFinite(Fmax) ? 'ok' : '') : 'bad'}"><dt>Hand force</dt><dd>${f1(F)} N <small>${Number.isFinite(Fmax) ? (fOk ? `within your ${Fmax} N limit` : `above your ${Fmax} N limit: a longer wrench or a multiplier`) : 'compare it with your human-factors limit'}</small></dd></div>
+        <div class="readout ${Number.isFinite(free) ? (ok ? 'ok' : 'bad') : ''}"><dt>Smallest swing</dt><dd>${f1(swing)}° <small>${f1(arc)} mm of hand travel at ${L} mm; ${perTurn.toFixed(0)} swings per turn${Number.isFinite(free) ? ` · ${free}° free: ${ok ? 'fits' : 'does not fit'}` : ''}</small></dd></div>`;
+      // Top view: the swing sector, and the free angle.
+      const W = width(), H = 200, R = Math.min(W * 0.42, H - 40), cx = W / 2, cy = H - 18;
+      const pt = (deg: number, r: number) => `${(cx + r * Math.cos(((-90 - deg) * Math.PI) / 180)).toFixed(1)},${(cy + r * Math.sin(((-90 - deg) * Math.PI) / 180)).toFixed(1)}`;
+      const sector = (a0: number, a1: number, fill: string, op: number) => `<path d="M${cx},${cy} L${pt(a0, R)} A${R},${R} 0 ${Math.abs(a1 - a0) > 180 ? 1 : 0} 0 ${pt(a1, R)} Z" fill="${fill}" fill-opacity="${op}"/>`;
+      const p: string[] = [];
+      if (Number.isFinite(free)) p.push(sector(-free / 2, free / 2, ok ? 'var(--rd-ok)' : 'var(--rd-accent)', 0.15), `<text x="${cx}" y="${cy - R - 6}" text-anchor="middle" font-size="10.5" fill="var(--rd-muted)">free ${free}°</text>`);
+      p.push(sector(-swing / 2, swing / 2, 'var(--rd-blue)', 0.35));
+      p.push(`<line x1="${cx}" y1="${cy}" x2="${pt(swing / 2, R).split(',')[0]}" y2="${pt(swing / 2, R).split(',')[1]}" stroke="var(--rd-ink)" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="6" fill="var(--rd-ink)"/>`);
+      p.push(`<text x="${cx + 10}" y="${cy - 4}" font-size="10.5" fill="var(--rd-ink)">${L} mm wrench</text><text x="${cx}" y="${cy - R * 0.55}" text-anchor="middle" font-size="11" fill="var(--rd-blue)">${f1(swing)}°</text>`);
+      svgEl().setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svgEl().innerHTML = p.join('');
+      $('[data-cap]').textContent = 'Top view of the wrench (not to scale). Blue: the smallest swing of the drive. Shaded: the free angle that the parts around it allow.';
+      const notes: [string, string][] = [];
+      if (!ok) notes.push(['bad', 'The drive needs more swing than the space allows. Use a ratchet with more teeth, a crow-foot or an offset ring spanner, or open up the space.']);
+      notes.push(['', 'A fastener that can be reached but not tightened to its torque has an uncontrolled preload. The torque wrench, not only the spanner, must fit.']);
+      notes.push(['', 'A crow-foot or an extension that offsets the drive from the wrench axis changes the torque the wrench reads: correct the setting for the offset.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function runFit() {
+      const d = +val('d'), head = val('head') as Head, h = HEADS[d], k = head === 'hex' ? h.hexK : d;
+      const need = insertion(num('bl'), k, 2), appr = num('appr'), iOk = !Number.isFinite(appr) || appr >= need;
+      const a1 = MATS[val('m1')].alpha, a2 = MATS[val('m2')].alpha, L1 = num('L1'), L2 = num('L2'), g0 = num('g0'), T0 = num('T0'), lo = num('Tlo'), hi = num('Thi');
+      const win = Number.isFinite(lo) && Number.isFinite(hi);
+      const gLo = win ? thermalGap(g0, L1, a1, L2, a2, lo - T0) : NaN, gHi = win ? thermalGap(g0, L1, a1, L2, a2, hi - T0) : NaN;
+      const touch = win && Math.min(gLo, gHi) < 0;
+      $('[data-out]').innerHTML = `
+        <div class="readout ${Number.isFinite(appr) ? (iOk ? 'ok' : 'bad') : ''}"><dt>Straight approach needed</dt><dd>${f1(need)} mm <small>${num('bl')} mm bolt + ${k} mm head + 2 mm${Number.isFinite(appr) ? ` · ${appr} mm available: ${iOk ? 'fits' : 'does not fit'}` : ''}</small></dd></div>
+        <div class="readout primary ${win ? (touch ? 'bad' : 'ok') : 'warn'}"><dt>Gap across the range</dt><dd>${win ? `${gLo.toFixed(3)} to ${gHi.toFixed(3)} mm` : '—'} <small>${win ? `at ${lo} and ${hi} °C, from ${g0} mm at ${T0} °C${touch ? ': the parts touch' : ''}` : 'enter the service temperatures'}</small></dd></div>`;
+      const W = width(), H = 170, Lp = 40, Rp = 14, Tp = 14, Bp = 30;
+      const p: string[] = [];
+      if (win) {
+        const ts = [lo, T0, hi].sort((a, b) => a - b), gs = [gLo, g0, gHi];
+        const gmin = Math.min(0, ...gs) - 0.05, gmax = Math.max(...gs) + 0.05;
+        const X = (t: number) => Lp + ((t - ts[0]) / (ts[2] - ts[0] || 1)) * (W - Lp - Rp), Y = (g: number) => Tp + ((gmax - g) / (gmax - gmin)) * (H - Tp - Bp);
+        p.push(`<rect x="${Lp}" y="${Y(0)}" width="${W - Lp - Rp}" height="${Math.max(0, Y(gmin) - Y(0))}" fill="var(--rd-accent)" fill-opacity="0.12"/><line x1="${Lp}" x2="${W - Rp}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--rd-muted)"/><text x="${W - Rp - 4}" y="${Y(0) + 12}" text-anchor="end" font-size="10" fill="var(--rd-accent)">contact</text>`);
+        p.push(`<polyline fill="none" stroke="var(--rd-ink)" stroke-width="2.2" points="${X(lo)},${Y(gLo)} ${X(hi)},${Y(gHi)}"/>`);
+        for (const [t, g] of [[lo, gLo], [T0, g0], [hi, gHi]] as [number, number][]) {
+          const anc = t === ts[2] ? 'end' : t === ts[0] ? 'start' : 'middle';
+          p.push(`<circle cx="${X(t)}" cy="${Y(g)}" r="4" fill="${g < 0 ? 'var(--rd-accent)' : 'var(--rd-ok)'}"/><text x="${X(t)}" y="${Y(g) - 8}" text-anchor="${anc}" font-size="10.5" fill="var(--rd-ink)">${g.toFixed(3)}</text><text x="${X(t)}" y="${H - 10}" text-anchor="${anc}" font-size="10" fill="var(--rd-muted)">${t} °C</text>`);
+        }
+      }
+      svgEl().setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svgEl().innerHTML = p.join('');
+      $('[data-cap]').textContent = win ? `Gap against temperature: ${MATS[val('m1')].name} (${L1} mm) inside ${MATS[val('m2')].name} (${L2} mm).` : 'Enter the coldest and hottest temperatures to see the gap.';
+      const notes: [string, string][] = [];
+      if (!iOk) notes.push(['bad', 'The bolt cannot go in on a straight path. Fit it before the part that blocks it, use a shorter bolt with a stud, or make the fastener captive in the part.']);
+      if (touch) notes.push(['bad', 'The parts touch at one end of the range: the contact loads both parts and the fasteners. Increase the gap, or let the part slide (a slotted hole or a flexure).']);
+      notes.push(['', 'Parts that fit at 20 °C can touch at the operating limit. Check every close clearance at both ends of the range (Differential expansion).']);
+      $('[data-notes]').innerHTML = notes.map(([c2, t]) => `<li class="${c2}">${t}</li>`).join('');
+    }
+
+    const run = () => (mode === 'socket' ? runSocket() : mode === 'wrench' ? runWrench() : runFit());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    // The worked example: the aft closure bolts. The space figures and the temperatures are for this example only.
+    wireWorkedExample({
+      root,
+      values: { d: '10', head: 'hex', tool: '', c: '1', wall: '22.5', D: '285', n: '30', p: '', T: '60', L: '250', drive: '72', free: '40', bl: '40', appr: '45', L1: '200', L2: '200', g0: '0.08', T0: '20', Tlo: '-40', Thi: '60', m1: 'al-7075-t6', m2: '4340-en24t' },
+      factorFields: ['Tlo', 'Thi'],
+      note: 'Worked example: the space around the aft closure, and −40 to +60 °C, for this example only',
+      onLoad: () => select('socket'),
+    });
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(svgEl()); }
+    run();
+  });
+</script>

@@ -75,6 +75,7 @@ export const REBUILT = {
   thermal: 'motor/transient-thermal',
   diffexp: 'joints/differential-expansion',
   loadpath: 'joints/load-paths',
+  access: 'joints/envelope-and-access',
   handcalc: 'fundamentals/hand-calcs',
   residual: 'materials/residual-stress',
   feamat: 'verify/fea-cards',
