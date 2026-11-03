@@ -64,6 +64,7 @@ export const REBUILT = {
   visco: 'fundamentals/viscoelasticity',
   materials: 'materials/selection',
   sheet: 'materials/datasheet',
+  density: 'materials/density',
   plastics: 'materials/plastics',
   elast: 'materials/silicone-and-pu',
   trade: 'materials/trade-study',

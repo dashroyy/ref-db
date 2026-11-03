@@ -1,0 +1,1783 @@
+{
+ "source": "REF·DB v1 density register (public/legacy/index.html). Typical densities at room temperature, g/cm³.",
+ "rows": [
+  {
+   "name": "Aluminium 1050 (pure)",
+   "cat": "al",
+   "rho": 2.71,
+   "use": "Foil, chemical vessels, busbar"
+  },
+  {
+   "name": "Aluminium 2014-T6",
+   "cat": "al",
+   "rho": 2.8,
+   "use": "High-strength forgings"
+  },
+  {
+   "name": "Aluminium 2024-T3",
+   "cat": "al",
+   "rho": 2.78,
+   "use": "Fatigue-tolerant airframe sheet"
+  },
+  {
+   "name": "Aluminium 2219-T87",
+   "cat": "al",
+   "rho": 2.84,
+   "use": "Weldable cryogenic tankage"
+  },
+  {
+   "name": "Aluminium 2195 (Al-Li)",
+   "cat": "al",
+   "rho": 2.71,
+   "use": "Al-Li launch vehicle tankage"
+  },
+  {
+   "name": "Aluminium 8090 (Al-Li)",
+   "cat": "al",
+   "rho": 2.54,
+   "use": "Lightest common Al-Li grade"
+  },
+  {
+   "name": "Aluminium 5083-H111",
+   "cat": "al",
+   "rho": 2.66,
+   "use": "Marine / weldable plate"
+  },
+  {
+   "name": "Aluminium 6061-T6",
+   "cat": "al",
+   "rho": 2.7,
+   "use": "US general-purpose"
+  },
+  {
+   "name": "Aluminium 6082-T6",
+   "cat": "al",
+   "rho": 2.7,
+   "use": "UK general-purpose"
+  },
+  {
+   "name": "Aluminium 7050-T7451",
+   "cat": "al",
+   "rho": 2.83,
+   "use": "Thick plate, machined bulkheads"
+  },
+  {
+   "name": "Aluminium 7075-T6 / T73",
+   "cat": "al",
+   "rho": 2.81,
+   "use": "High-strength fittings"
+  },
+  {
+   "name": "AlSi10Mg (L-PBF)",
+   "cat": "al",
+   "rho": 2.67,
+   "use": "Additive aluminium"
+  },
+  {
+   "name": "A356 / LM25 cast",
+   "cat": "al",
+   "rho": 2.68,
+   "use": "Sand & investment castings"
+  },
+  {
+   "name": "MIC6 / cast tooling plate",
+   "cat": "al",
+   "rho": 2.7,
+   "use": "Stress-relieved jig plate"
+  },
+  {
+   "name": "Magnesium (pure)",
+   "cat": "mg",
+   "rho": 1.74,
+   "use": "Lightest structural metal"
+  },
+  {
+   "name": "Mg AZ31B",
+   "cat": "mg",
+   "rho": 1.77,
+   "use": "General wrought sheet/extrusion"
+  },
+  {
+   "name": "Mg AZ91",
+   "cat": "mg",
+   "rho": 1.81,
+   "use": "Common die-casting alloy"
+  },
+  {
+   "name": "Mg ZE41A-T5",
+   "cat": "mg",
+   "rho": 1.84,
+   "use": "Pressure-tight castings"
+  },
+  {
+   "name": "Mg WE43 / Elektron 43",
+   "cat": "mg",
+   "rho": 1.84,
+   "use": "RE-alloyed, high temp, self-extinguishing"
+  },
+  {
+   "name": "Mg Elektron 21 (EV31A)",
+   "cat": "mg",
+   "rho": 1.82,
+   "use": "Modern castable RE alloy"
+  },
+  {
+   "name": "Mg ZK60A-T5",
+   "cat": "mg",
+   "rho": 1.83,
+   "use": "Highest-strength wrought Mg"
+  },
+  {
+   "name": "CP Titanium Grade 2",
+   "cat": "ti",
+   "rho": 4.51,
+   "use": "Formable, corrosion resistant"
+  },
+  {
+   "name": "Ti-6Al-4V (Grade 5)",
+   "cat": "ti",
+   "rho": 4.43,
+   "use": "The default aerospace titanium"
+  },
+  {
+   "name": "Ti-6Al-4V ELI (Grade 23)",
+   "cat": "ti",
+   "rho": 4.43,
+   "use": "Fracture-critical / cryogenic"
+  },
+  {
+   "name": "Ti-3Al-2.5V (Grade 9)",
+   "cat": "ti",
+   "rho": 4.48,
+   "use": "Hydraulic & pressurant tubing"
+  },
+  {
+   "name": "Ti-5Al-2.5Sn (Grade 6)",
+   "cat": "ti",
+   "rho": 4.48,
+   "use": "Weldable cryogenic alpha alloy"
+  },
+  {
+   "name": "Ti-6Al-2Sn-4Zr-2Mo (6242)",
+   "cat": "ti",
+   "rho": 4.54,
+   "use": "High-temperature titanium"
+  },
+  {
+   "name": "Ti-6Al-6V-2Sn",
+   "cat": "ti",
+   "rho": 4.54,
+   "use": "Higher-strength fittings"
+  },
+  {
+   "name": "Ti-5Al-5Mo-5V-3Cr (5553)",
+   "cat": "ti",
+   "rho": 4.65,
+   "use": "Deep-hardening beta alloy"
+  },
+  {
+   "name": "Beta 21S",
+   "cat": "ti",
+   "rho": 4.94,
+   "use": "Oxidation-resistant beta foil"
+  },
+  {
+   "name": "Mild steel / S355",
+   "cat": "steel",
+   "rho": 7.85,
+   "use": "Rigs, frames, tooling"
+  },
+  {
+   "name": "4130 (25CrMo4)",
+   "cat": "steel",
+   "rho": 7.85,
+   "use": "Weldable chrome-moly"
+  },
+  {
+   "name": "4340 / EN24",
+   "cat": "steel",
+   "rho": 7.85,
+   "use": "Through-hardening alloy steel"
+  },
+  {
+   "name": "15CDV6 (1.7734)",
+   "cat": "steel",
+   "rho": 7.8,
+   "use": "Weldable European case steel"
+  },
+  {
+   "name": "D6AC (AMS 6431)",
+   "cat": "steel",
+   "rho": 7.85,
+   "use": "Classic solid motor case steel"
+  },
+  {
+   "name": "300M",
+   "cat": "steel",
+   "rho": 7.83,
+   "use": "Ultra-high-strength landing gear"
+  },
+  {
+   "name": "HP 9-4-30",
+   "cat": "steel",
+   "rho": 7.83,
+   "use": "Tough weldable UHS steel"
+  },
+  {
+   "name": "AerMet 100",
+   "cat": "steel",
+   "rho": 7.89,
+   "use": "High strength + high toughness"
+  },
+  {
+   "name": "Maraging 18Ni-250 / 300",
+   "cat": "steel",
+   "rho": 8,
+   "use": "Case, flexures, AM tool steel"
+  },
+  {
+   "name": "Tool steel H13",
+   "cat": "steel",
+   "rho": 7.8,
+   "use": "Hot-work dies, moulds"
+  },
+  {
+   "name": "Tool steel D2",
+   "cat": "steel",
+   "rho": 7.7,
+   "use": "Cold-work blanking tools"
+  },
+  {
+   "name": "Tool steel O1",
+   "cat": "steel",
+   "rho": 7.85,
+   "use": "Oil-hardening gauges, jigs"
+  },
+  {
+   "name": "Grey cast iron",
+   "cat": "steel",
+   "rho": 7.2,
+   "use": "Machine bases, tooling"
+  },
+  {
+   "name": "Ductile (SG) cast iron",
+   "cat": "steel",
+   "rho": 7.1,
+   "use": "Housings, brackets"
+  },
+  {
+   "name": "Stainless 304 / 304L",
+   "cat": "ss",
+   "rho": 8,
+   "use": "General austenitic"
+  },
+  {
+   "name": "Stainless 316 / 316L",
+   "cat": "ss",
+   "rho": 8,
+   "use": "Mo-bearing, wet systems"
+  },
+  {
+   "name": "Stainless 321 / 347",
+   "cat": "ss",
+   "rho": 8,
+   "use": "Stabilised for welded hot parts"
+  },
+  {
+   "name": "Stainless 410",
+   "cat": "ss",
+   "rho": 7.8,
+   "use": "Hardenable martensitic"
+  },
+  {
+   "name": "Stainless 440C",
+   "cat": "ss",
+   "rho": 7.65,
+   "use": "Bearings, wear pins"
+  },
+  {
+   "name": "17-4PH",
+   "cat": "ss",
+   "rho": 7.8,
+   "use": "PH stainless, valves & shafts"
+  },
+  {
+   "name": "15-5PH",
+   "cat": "ss",
+   "rho": 7.8,
+   "use": "Cleaner 17-4 variant"
+  },
+  {
+   "name": "13-8Mo PH",
+   "cat": "ss",
+   "rho": 7.76,
+   "use": "Highest-strength PH stainless"
+  },
+  {
+   "name": "Custom 465",
+   "cat": "ss",
+   "rho": 7.84,
+   "use": "Ultra-high-strength PH stainless"
+  },
+  {
+   "name": "21-6-9 (Nitronic 40)",
+   "cat": "ss",
+   "rho": 7.83,
+   "use": "High-pressure tubing"
+  },
+  {
+   "name": "Duplex 2205",
+   "cat": "ss",
+   "rho": 7.8,
+   "use": "Chloride-resistant duplex"
+  },
+  {
+   "name": "A286",
+   "cat": "ss",
+   "rho": 7.94,
+   "use": "Budget superalloy fastener stock"
+  },
+  {
+   "name": "Nickel (pure)",
+   "cat": "ni",
+   "rho": 8.9,
+   "use": "Plating, electroforming"
+  },
+  {
+   "name": "Inconel 718",
+   "cat": "ni",
+   "rho": 8.19,
+   "use": "PH superalloy workhorse"
+  },
+  {
+   "name": "Inconel 625",
+   "cat": "ni",
+   "rho": 8.44,
+   "use": "Weldable, oxidation resistant"
+  },
+  {
+   "name": "Inconel 600",
+   "cat": "ni",
+   "rho": 8.47,
+   "use": "General high-temp"
+  },
+  {
+   "name": "Inconel X-750",
+   "cat": "ni",
+   "rho": 8.28,
+   "use": "Hot springs & fasteners"
+  },
+  {
+   "name": "Waspaloy",
+   "cat": "ni",
+   "rho": 8.19,
+   "use": "High-temperature strength"
+  },
+  {
+   "name": "Hastelloy X",
+   "cat": "ni",
+   "rho": 8.22,
+   "use": "Formable hot sheet"
+  },
+  {
+   "name": "Haynes 230",
+   "cat": "ni",
+   "rho": 8.97,
+   "use": "Very high temp, oxidation resistant"
+  },
+  {
+   "name": "Haynes 188 (Co-base)",
+   "cat": "ni",
+   "rho": 8.98,
+   "use": "Cobalt hot-section alloy"
+  },
+  {
+   "name": "Nimonic 90",
+   "cat": "ni",
+   "rho": 8.18,
+   "use": "Turbine blades, hot bolts"
+  },
+  {
+   "name": "Monel 400",
+   "cat": "ni",
+   "rho": 8.8,
+   "use": "Seawater, oxygen service"
+  },
+  {
+   "name": "Monel K-500",
+   "cat": "ni",
+   "rho": 8.44,
+   "use": "Age-hardened Ni-Cu"
+  },
+  {
+   "name": "Stellite 6",
+   "cat": "ni",
+   "rho": 8.44,
+   "use": "Hardfacing, valve seats"
+  },
+  {
+   "name": "Kovar",
+   "cat": "ni",
+   "rho": 8.36,
+   "use": "Glass-to-metal seals"
+  },
+  {
+   "name": "Invar 36",
+   "cat": "ni",
+   "rho": 8.1,
+   "use": "Near-zero expansion tooling"
+  },
+  {
+   "name": "Copper (pure, C101)",
+   "cat": "cu",
+   "rho": 8.96,
+   "use": "Conductors, heat sinks"
+  },
+  {
+   "name": "GRCop-42 (Cu-4Cr-2Nb)",
+   "cat": "cu",
+   "rho": 8.87,
+   "use": "NASA AM chamber liner, high conductivity"
+  },
+  {
+   "name": "GRCop-84 (Cu-8Cr-4Nb)",
+   "cat": "cu",
+   "rho": 8.75,
+   "use": "Higher-strength GRCop variant"
+  },
+  {
+   "name": "NARloy-Z (Cu-3Ag-0.5Zr)",
+   "cat": "cu",
+   "rho": 9.13,
+   "use": "Heritage SSME chamber liner"
+  },
+  {
+   "name": "AMZIRC (Cu-0.15Zr)",
+   "cat": "cu",
+   "rho": 8.89,
+   "use": "High-conductivity zirconium copper"
+  },
+  {
+   "name": "GRX-810 (NiCoCr ODS)",
+   "cat": "ni",
+   "rho": 8.2,
+   "use": "NASA printable ODS superalloy"
+  },
+  {
+   "name": "NASA HR-1",
+   "cat": "ni",
+   "rho": 7.98,
+   "use": "Hydrogen-resistant Fe-Ni superalloy"
+  },
+  {
+   "name": "JBK-75",
+   "cat": "ni",
+   "rho": 7.96,
+   "use": "Weldable A286 derivative"
+  },
+  {
+   "name": "Haynes 282",
+   "cat": "ni",
+   "rho": 8.27,
+   "use": "Modern weldable hot superalloy"
+  },
+  {
+   "name": "Rene 41",
+   "cat": "ni",
+   "rho": 8.25,
+   "use": "Apollo-era high-temperature superalloy"
+  },
+  {
+   "name": "L-605 / Haynes 25",
+   "cat": "ni",
+   "rho": 9.13,
+   "use": "Cobalt-base hot sheet alloy"
+  },
+  {
+   "name": "Hastelloy C-276",
+   "cat": "ni",
+   "rho": 8.89,
+   "use": "Corrosion-resistant Ni-Mo-Cr"
+  },
+  {
+   "name": "Inconel 939",
+   "cat": "ni",
+   "rho": 8.16,
+   "use": "Castable/printable hot-section superalloy"
+  },
+  {
+   "name": "Aluminium-Lithium 2050 / 2099",
+   "cat": "al",
+   "rho": 2.7,
+   "use": "3rd-generation Al-Li structure"
+  },
+  {
+   "name": "PICA (phenolic impregnated carbon)",
+   "cat": "comp",
+   "rho": 0.27,
+   "use": "Low-density high-heat-flux ablator"
+  },
+  {
+   "name": "AVCOAT 5026-39/HC-G",
+   "cat": "comp",
+   "rho": 0.51,
+   "use": "Honeycomb-filled epoxy-novolac ablator"
+  },
+  {
+   "name": "SLA-561V (cork/silicone)",
+   "cat": "comp",
+   "rho": 0.26,
+   "use": "Super-lightweight backshell ablator"
+  },
+  {
+   "name": "Cork phenolic (Norcoat type)",
+   "cat": "comp",
+   "rho": 0.47,
+   "use": "External stage and motor insulation"
+  },
+  {
+   "name": "Glass phenolic (ablative)",
+   "cat": "comp",
+   "rho": 1.8,
+   "use": "Exit cone and housing insulation"
+  },
+  {
+   "name": "Reinforced carbon-carbon (RCC)",
+   "cat": "comp",
+   "rho": 1.6,
+   "use": "Reusable leading edge, coated"
+  },
+  {
+   "name": "T800 carbon/epoxy",
+   "cat": "comp",
+   "rho": 1.58,
+   "use": "Intermediate-modulus overwrap"
+  },
+  {
+   "name": "M55J carbon/epoxy",
+   "cat": "comp",
+   "rho": 1.63,
+   "use": "High-modulus stability structure"
+  },
+  {
+   "name": "Zylon PBO/epoxy",
+   "cat": "comp",
+   "rho": 1.56,
+   "use": "Highest specific strength overwrap"
+  },
+  {
+   "name": "Boron/epoxy",
+   "cat": "comp",
+   "rho": 2,
+   "use": "High stiffness legacy composite"
+  },
+  {
+   "name": "Al-SiC MMC (AMC225xe)",
+   "cat": "comp",
+   "rho": 2.9,
+   "use": "Particulate metal matrix composite"
+  },
+  {
+   "name": "Glidcop AL-15",
+   "cat": "cu",
+   "rho": 8.9,
+   "use": "Alumina dispersion-strengthened copper"
+  },
+  {
+   "name": "CuCrZr (C18150)",
+   "cat": "cu",
+   "rho": 8.89,
+   "use": "Conductive heat-resistant copper"
+  },
+  {
+   "name": "Beryllium (S-200F)",
+   "cat": "other",
+   "rho": 1.85,
+   "use": "Extreme specific stiffness; toxic dust"
+  },
+  {
+   "name": "AlBeMet AM162 (Al-62Be)",
+   "cat": "other",
+   "rho": 2.07,
+   "use": "Beryllium-aluminium, machinable"
+  },
+  {
+   "name": "Magnesium AZ80A-T5",
+   "cat": "mg",
+   "rho": 1.8,
+   "use": "Higher-strength wrought magnesium"
+  },
+  {
+   "name": "Inconel 617",
+   "cat": "ni",
+   "rho": 8.36,
+   "use": "Very high temperature Ni-Cr-Co-Mo"
+  },
+  {
+   "name": "Haynes 214",
+   "cat": "ni",
+   "rho": 8.05,
+   "use": "Alumina-forming, oxidation resistant"
+  },
+  {
+   "name": "MAR-M-247",
+   "cat": "ni",
+   "rho": 8.54,
+   "use": "Cast turbine superalloy"
+  },
+  {
+   "name": "CMSX-4 (single crystal)",
+   "cat": "ni",
+   "rho": 8.7,
+   "use": "Single-crystal turbine blade alloy"
+  },
+  {
+   "name": "MA956 (ODS FeCrAl)",
+   "cat": "ni",
+   "rho": 7.1,
+   "use": "Oxide dispersion strengthened ferritic"
+  },
+  {
+   "name": "Nimonic 105",
+   "cat": "ni",
+   "rho": 8,
+   "use": "Heritage hot bolting and blades"
+  },
+  {
+   "name": "Gamma TiAl (Ti-48Al-2Cr-2Nb)",
+   "cat": "ti",
+   "rho": 3.9,
+   "use": "Titanium aluminide intermetallic"
+  },
+  {
+   "name": "Nb-1Zr",
+   "cat": "refract",
+   "rho": 8.6,
+   "use": "Ductile weldable niobium"
+  },
+  {
+   "name": "Tungsten heavy alloy (90W-Ni-Fe)",
+   "cat": "refract",
+   "rho": 17.1,
+   "use": "Ballast, inertia weights, shielding"
+  },
+  {
+   "name": "9% Ni cryogenic steel",
+   "cat": "steel",
+   "rho": 7.85,
+   "use": "LNG and cryogenic tankage steel"
+  },
+  {
+   "name": "17-7PH stainless",
+   "cat": "ss",
+   "rho": 7.81,
+   "use": "PH stainless sheet and springs"
+  },
+  {
+   "name": "Nitronic 60 (S21800)",
+   "cat": "ss",
+   "rho": 7.62,
+   "use": "Galling-resistant austenitic"
+  },
+  {
+   "name": "Custom 455 stainless",
+   "cat": "ss",
+   "rho": 7.76,
+   "use": "High-strength machinable PH"
+  },
+  {
+   "name": "Stainless 301 (full hard)",
+   "cat": "ss",
+   "rho": 8,
+   "use": "Work-hardening cryogenic sheet"
+  },
+  {
+   "name": "ZrB2-SiC UHTC",
+   "cat": "glass",
+   "rho": 5.6,
+   "use": "Ultra-high-temperature ceramic"
+  },
+  {
+   "name": "Reusable silica tile TPS",
+   "cat": "comp",
+   "rho": 0.19,
+   "use": "Reusable spacecraft thermal protection"
+  },
+  {
+   "name": "Iridium-coated rhenium",
+   "cat": "refract",
+   "rho": 20.9,
+   "use": "Radiation-cooled thruster chamber"
+  },
+  {
+   "name": "Brass CZ121 (CW614N)",
+   "cat": "cu",
+   "rho": 8.5,
+   "use": "Free-machining brass"
+  },
+  {
+   "name": "Bronze C93200 (bearing)",
+   "cat": "cu",
+   "rho": 8.9,
+   "use": "Bushes, plain bearings"
+  },
+  {
+   "name": "Phosphor bronze C51000",
+   "cat": "cu",
+   "rho": 8.86,
+   "use": "Springs, contacts"
+  },
+  {
+   "name": "Beryllium copper C17200",
+   "cat": "cu",
+   "rho": 8.25,
+   "use": "Non-sparking tools, springs"
+  },
+  {
+   "name": "CuCrZr",
+   "cat": "cu",
+   "rho": 8.89,
+   "use": "Conductive, heat-resistant"
+  },
+  {
+   "name": "GRCop-42 / GRCop-84",
+   "cat": "cu",
+   "rho": 8.8,
+   "use": "Additive combustion chamber liners"
+  },
+  {
+   "name": "Zirconium",
+   "cat": "refract",
+   "rho": 6.51,
+   "use": "Chemical & nuclear service"
+  },
+  {
+   "name": "Vanadium",
+   "cat": "refract",
+   "rho": 6.11,
+   "use": "Alloying, cladding"
+  },
+  {
+   "name": "Niobium (pure)",
+   "cat": "refract",
+   "rho": 8.57,
+   "use": "Superconductors, alloy base"
+  },
+  {
+   "name": "C-103 Niobium (Nb-10Hf-1Ti)",
+   "cat": "refract",
+   "rho": 8.85,
+   "use": "Radiation-cooled nozzle extensions"
+  },
+  {
+   "name": "Molybdenum",
+   "cat": "refract",
+   "rho": 10.22,
+   "use": "Furnace parts, hot tooling"
+  },
+  {
+   "name": "TZM Molybdenum",
+   "cat": "refract",
+   "rho": 10.22,
+   "use": "Creep-resistant hot structure"
+  },
+  {
+   "name": "Hafnium",
+   "cat": "refract",
+   "rho": 13.31,
+   "use": "Carbide former, control rods"
+  },
+  {
+   "name": "Tantalum",
+   "cat": "refract",
+   "rho": 16.6,
+   "use": "Chemically inert hot parts"
+  },
+  {
+   "name": "Ta-10W",
+   "cat": "refract",
+   "rho": 16.8,
+   "use": "Ductile refractory, hot gas"
+  },
+  {
+   "name": "Tungsten",
+   "cat": "refract",
+   "rho": 19.25,
+   "use": "Throat inserts, ballast"
+  },
+  {
+   "name": "W-25Re",
+   "cat": "refract",
+   "rho": 19.7,
+   "use": "Ductile tungsten alloy"
+  },
+  {
+   "name": "Rhenium",
+   "cat": "refract",
+   "rho": 21.02,
+   "use": "Iridium-coated thrusters"
+  },
+  {
+   "name": "Beryllium",
+   "cat": "other",
+   "rho": 1.85,
+   "use": "Extreme specific stiffness; toxic dust"
+  },
+  {
+   "name": "Zinc die-cast ZA-8",
+   "cat": "other",
+   "rho": 6.3,
+   "use": "Housings, low-cost castings"
+  },
+  {
+   "name": "Kirksite (zinc tooling alloy)",
+   "cat": "other",
+   "rho": 6.7,
+   "use": "Short-run press tools"
+  },
+  {
+   "name": "Tin",
+   "cat": "other",
+   "rho": 7.31,
+   "use": "Solder, bearing metal"
+  },
+  {
+   "name": "Zinc",
+   "cat": "other",
+   "rho": 7.14,
+   "use": "Galvanising, castings"
+  },
+  {
+   "name": "Babbitt (white metal)",
+   "cat": "other",
+   "rho": 7.4,
+   "use": "Journal bearing lining"
+  },
+  {
+   "name": "Solder 60/40 Sn-Pb",
+   "cat": "other",
+   "rho": 8.5,
+   "use": "Electrical joints"
+  },
+  {
+   "name": "Cadmium",
+   "cat": "other",
+   "rho": 8.65,
+   "use": "Legacy plating (restricted)"
+  },
+  {
+   "name": "Cerrobend / low-melt alloy",
+   "cat": "other",
+   "rho": 9.4,
+   "use": "Tube bending filler, fixturing"
+  },
+  {
+   "name": "Silver",
+   "cat": "other",
+   "rho": 10.49,
+   "use": "Contacts, brazing alloys"
+  },
+  {
+   "name": "Lead",
+   "cat": "other",
+   "rho": 11.34,
+   "use": "Ballast, radiation shielding"
+  },
+  {
+   "name": "Gold",
+   "cat": "other",
+   "rho": 19.32,
+   "use": "Plating, connectors"
+  },
+  {
+   "name": "Platinum",
+   "cat": "other",
+   "rho": 21.45,
+   "use": "Crucibles, electrodes"
+  },
+  {
+   "name": "Iridium",
+   "cat": "other",
+   "rho": 22.56,
+   "use": "Rhenium thruster coating"
+  },
+  {
+   "name": "PMP / TPX (polymethylpentene)",
+   "cat": "plastic",
+   "rho": 0.833,
+   "use": "Clearest, lightest thermoplastic"
+  },
+  {
+   "name": "PP (polypropylene)",
+   "cat": "plastic",
+   "rho": 0.905,
+   "use": "Chemical tanks, living hinges"
+  },
+  {
+   "name": "LDPE",
+   "cat": "plastic",
+   "rho": 0.92,
+   "use": "Film, squeeze bottles"
+  },
+  {
+   "name": "UHMWPE",
+   "cat": "plastic",
+   "rho": 0.94,
+   "use": "Wear strips, chute liners"
+  },
+  {
+   "name": "EVA",
+   "cat": "plastic",
+   "rho": 0.94,
+   "use": "Foams, padding, gaskets"
+  },
+  {
+   "name": "HDPE",
+   "cat": "plastic",
+   "rho": 0.95,
+   "use": "Tanks, cutting boards, jigs"
+  },
+  {
+   "name": "PPO / PPE (Noryl)",
+   "cat": "plastic",
+   "rho": 1.06,
+   "use": "Dimensionally stable housings"
+  },
+  {
+   "name": "ABS",
+   "cat": "plastic",
+   "rho": 1.04,
+   "use": "Housings, FDM prototypes"
+  },
+  {
+   "name": "HIPS",
+   "cat": "plastic",
+   "rho": 1.04,
+   "use": "Vacuum-formed tooling, packaging"
+  },
+  {
+   "name": "PS (polystyrene)",
+   "cat": "plastic",
+   "rho": 1.05,
+   "use": "Low-cost mouldings"
+  },
+  {
+   "name": "ASA",
+   "cat": "plastic",
+   "rho": 1.07,
+   "use": "UV-stable outdoor ABS"
+  },
+  {
+   "name": "PA12 (nylon 12)",
+   "cat": "plastic",
+   "rho": 1.01,
+   "use": "SLS powder, fuel lines"
+  },
+  {
+   "name": "PA11 (nylon 11)",
+   "cat": "plastic",
+   "rho": 1.03,
+   "use": "Bio-based, tough tubing"
+  },
+  {
+   "name": "PA6 / PA66 (nylon)",
+   "cat": "plastic",
+   "rho": 1.14,
+   "use": "Gears, bushes, guides"
+  },
+  {
+   "name": "Cast nylon (PA6-G)",
+   "cat": "plastic",
+   "rho": 1.15,
+   "use": "Large machined wear parts"
+  },
+  {
+   "name": "PA46 (Stanyl)",
+   "cat": "plastic",
+   "rho": 1.18,
+   "use": "High-temp gears"
+  },
+  {
+   "name": "PMMA (acrylic)",
+   "cat": "plastic",
+   "rho": 1.18,
+   "use": "Windows, guards, light pipes"
+  },
+  {
+   "name": "PVA",
+   "cat": "plastic",
+   "rho": 1.19,
+   "use": "Water-soluble support material"
+  },
+  {
+   "name": "PC (polycarbonate)",
+   "cat": "plastic",
+   "rho": 1.2,
+   "use": "Impact guards, canopies"
+  },
+  {
+   "name": "TPU",
+   "cat": "plastic",
+   "rho": 1.2,
+   "use": "Flexible seals, cable jackets"
+  },
+  {
+   "name": "PPA",
+   "cat": "plastic",
+   "rho": 1.2,
+   "use": "High-temp under-bonnet parts"
+  },
+  {
+   "name": "PC/ABS",
+   "cat": "plastic",
+   "rho": 1.15,
+   "use": "Tough housings"
+  },
+  {
+   "name": "PSU (polysulfone)",
+   "cat": "plastic",
+   "rho": 1.24,
+   "use": "Steam-sterilisable parts"
+  },
+  {
+   "name": "PLA",
+   "cat": "plastic",
+   "rho": 1.24,
+   "use": "FDM prototypes, jigs"
+  },
+  {
+   "name": "PEI (Ultem 1000)",
+   "cat": "plastic",
+   "rho": 1.27,
+   "use": "Flame-retardant aerospace interiors"
+  },
+  {
+   "name": "PETG",
+   "cat": "plastic",
+   "rho": 1.27,
+   "use": "Guards, formed shields"
+  },
+  {
+   "name": "PEKK",
+   "cat": "plastic",
+   "rho": 1.28,
+   "use": "AM high-performance polymer"
+  },
+  {
+   "name": "PPSU (Radel)",
+   "cat": "plastic",
+   "rho": 1.29,
+   "use": "Highest-toughness sulfone"
+  },
+  {
+   "name": "PBI (Celazole)",
+   "cat": "plastic",
+   "rho": 1.3,
+   "use": "Highest-temp thermoplastic"
+  },
+  {
+   "name": "PEEK",
+   "cat": "plastic",
+   "rho": 1.3,
+   "use": "Seals, insulators, hot wear parts"
+  },
+  {
+   "name": "Cellulose acetate",
+   "cat": "plastic",
+   "rho": 1.3,
+   "use": "Tool handles, legacy parts"
+  },
+  {
+   "name": "PBT",
+   "cat": "plastic",
+   "rho": 1.31,
+   "use": "Connectors, electrical housings"
+  },
+  {
+   "name": "PPS (Ryton)",
+   "cat": "plastic",
+   "rho": 1.35,
+   "use": "Chemical pumps, hot fluid parts"
+  },
+  {
+   "name": "PES (polyethersulfone)",
+   "cat": "plastic",
+   "rho": 1.37,
+   "use": "Hot water & steam service"
+  },
+  {
+   "name": "PET",
+   "cat": "plastic",
+   "rho": 1.38,
+   "use": "Bottles, films, straps"
+  },
+  {
+   "name": "POM-C / POM-H (acetal)",
+   "cat": "plastic",
+   "rho": 1.41,
+   "use": "Precision wear parts, jigs"
+  },
+  {
+   "name": "PAI (Torlon)",
+   "cat": "plastic",
+   "rho": 1.42,
+   "use": "Highest-strength machinable polymer"
+  },
+  {
+   "name": "PI (Vespel SP-1)",
+   "cat": "plastic",
+   "rho": 1.43,
+   "use": "Hot, vacuum-rated bushes & seals"
+  },
+  {
+   "name": "PVC (rigid)",
+   "cat": "plastic",
+   "rho": 1.4,
+   "use": "Ducting, chemical pipework"
+  },
+  {
+   "name": "CPVC",
+   "cat": "plastic",
+   "rho": 1.55,
+   "use": "Hot chemical pipework"
+  },
+  {
+   "name": "PVDC",
+   "cat": "plastic",
+   "rho": 1.65,
+   "use": "Barrier films"
+  },
+  {
+   "name": "ETFE (Tefzel)",
+   "cat": "plastic",
+   "rho": 1.7,
+   "use": "Wire insulation, chemical liners"
+  },
+  {
+   "name": "PVDF (Kynar)",
+   "cat": "plastic",
+   "rho": 1.78,
+   "use": "Chemical pumps, high-purity"
+  },
+  {
+   "name": "PCTFE",
+   "cat": "plastic",
+   "rho": 2.12,
+   "use": "Cryogenic seats, low permeation"
+  },
+  {
+   "name": "FEP",
+   "cat": "plastic",
+   "rho": 2.15,
+   "use": "Flexible chemical tubing"
+  },
+  {
+   "name": "PFA",
+   "cat": "plastic",
+   "rho": 2.15,
+   "use": "High-purity semiconductor fluid"
+  },
+  {
+   "name": "PTFE",
+   "cat": "plastic",
+   "rho": 2.16,
+   "use": "Seals, back-up rings, low friction"
+  },
+  {
+   "name": "Natural rubber (NR)",
+   "cat": "elast",
+   "rho": 0.93,
+   "use": "Vibration mounts, general"
+  },
+  {
+   "name": "EPDM",
+   "cat": "elast",
+   "rho": 1.1,
+   "use": "Phosphate ester, water, insulation"
+  },
+  {
+   "name": "Vinyl ester resin",
+   "cat": "elast",
+   "rho": 1.1,
+   "use": "Corrosion-resistant laminates"
+  },
+  {
+   "name": "TPE (thermoplastic elastomer)",
+   "cat": "elast",
+   "rho": 1.1,
+   "use": "Overmoulds, soft grips"
+  },
+  {
+   "name": "Silicone rubber (VMQ)",
+   "cat": "elast",
+   "rho": 1.2,
+   "use": "Extreme-temperature static seals"
+  },
+  {
+   "name": "NBR (nitrile)",
+   "cat": "elast",
+   "rho": 1.2,
+   "use": "Mineral oil, fuel, grease seals"
+  },
+  {
+   "name": "Polyurethane (cast)",
+   "cat": "elast",
+   "rho": 1.15,
+   "use": "Wheels, wear pads, tooling pads"
+  },
+  {
+   "name": "Epoxy resin (unfilled)",
+   "cat": "elast",
+   "rho": 1.15,
+   "use": "Adhesives, laminating, potting"
+  },
+  {
+   "name": "Polyester resin",
+   "cat": "elast",
+   "rho": 1.2,
+   "use": "GRP laminating"
+  },
+  {
+   "name": "Neoprene (CR)",
+   "cat": "elast",
+   "rho": 1.23,
+   "use": "Weather-resistant seals"
+  },
+  {
+   "name": "Phenolic resin",
+   "cat": "elast",
+   "rho": 1.3,
+   "use": "Ablative matrix, laminates"
+  },
+  {
+   "name": "FKM (Viton)",
+   "cat": "elast",
+   "rho": 1.85,
+   "use": "Fuel, hot oil, wide chemical range"
+  },
+  {
+   "name": "FFKM (Kalrez)",
+   "cat": "elast",
+   "rho": 1.95,
+   "use": "Ultimate chemical/temperature seal"
+  },
+  {
+   "name": "Fused silica / quartz",
+   "cat": "glass",
+   "rho": 2.2,
+   "use": "Windows, crucibles, low expansion"
+  },
+  {
+   "name": "Borosilicate (Pyrex)",
+   "cat": "glass",
+   "rho": 2.23,
+   "use": "Lab glass, sight glasses"
+  },
+  {
+   "name": "S-glass fibre",
+   "cat": "glass",
+   "rho": 2.49,
+   "use": "High-strength composite reinforcement"
+  },
+  {
+   "name": "Soda-lime glass",
+   "cat": "glass",
+   "rho": 2.5,
+   "use": "Windows, general glazing"
+  },
+  {
+   "name": "Macor (machinable ceramic)",
+   "cat": "glass",
+   "rho": 2.52,
+   "use": "Machinable insulators, fixtures"
+  },
+  {
+   "name": "E-glass fibre",
+   "cat": "glass",
+   "rho": 2.54,
+   "use": "Standard composite reinforcement"
+  },
+  {
+   "name": "Boron nitride",
+   "cat": "glass",
+   "rho": 2.1,
+   "use": "Machinable, high-temp insulator"
+  },
+  {
+   "name": "Boron carbide",
+   "cat": "glass",
+   "rho": 2.52,
+   "use": "Armour, abrasive, neutron absorber"
+  },
+  {
+   "name": "Cordierite",
+   "cat": "glass",
+   "rho": 2.3,
+   "use": "Thermal shock resistant kiln parts"
+  },
+  {
+   "name": "Steatite",
+   "cat": "glass",
+   "rho": 2.7,
+   "use": "Electrical insulators"
+  },
+  {
+   "name": "Mullite",
+   "cat": "glass",
+   "rho": 2.8,
+   "use": "Furnace refractory"
+  },
+  {
+   "name": "Mica (sheet)",
+   "cat": "glass",
+   "rho": 2.8,
+   "use": "Thermal & electrical barrier"
+  },
+  {
+   "name": "Silicon carbide (SiC)",
+   "cat": "glass",
+   "rho": 3.1,
+   "use": "Hard, hot, erosion resistant"
+  },
+  {
+   "name": "Silicon nitride",
+   "cat": "glass",
+   "rho": 3.2,
+   "use": "Bearings, hot structural ceramic"
+  },
+  {
+   "name": "Alumina 96%",
+   "cat": "glass",
+   "rho": 3.72,
+   "use": "Insulators, wear parts"
+  },
+  {
+   "name": "Alumina 99.5%",
+   "cat": "glass",
+   "rho": 3.9,
+   "use": "High-purity insulators"
+  },
+  {
+   "name": "Zirconia (YSZ)",
+   "cat": "glass",
+   "rho": 6.05,
+   "use": "Thermal barrier, tough ceramic"
+  },
+  {
+   "name": "Zirconium diboride (ZrB2)",
+   "cat": "glass",
+   "rho": 6.09,
+   "use": "Ultra-high-temperature ceramic"
+  },
+  {
+   "name": "Hafnium carbide",
+   "cat": "glass",
+   "rho": 12.2,
+   "use": "Highest-melting-point ceramic"
+  },
+  {
+   "name": "Tantalum carbide",
+   "cat": "glass",
+   "rho": 14.3,
+   "use": "Ultra-high-temp coating"
+  },
+  {
+   "name": "Tungsten carbide (6% Co)",
+   "cat": "glass",
+   "rho": 14.95,
+   "use": "Cutting tools, wear inserts"
+  },
+  {
+   "name": "Bulk graphite (ATJ / POCO)",
+   "cat": "comp",
+   "rho": 1.75,
+   "use": "Machinable throat & liner"
+  },
+  {
+   "name": "Carbon-carbon (2D / 3D)",
+   "cat": "comp",
+   "rho": 1.75,
+   "use": "Light, very high temperature"
+  },
+  {
+   "name": "Pyrolytic graphite",
+   "cat": "comp",
+   "rho": 2.2,
+   "use": "Anisotropic thermal management"
+  },
+  {
+   "name": "C/SiC composite",
+   "cat": "comp",
+   "rho": 2.2,
+   "use": "Oxidation-resistant CMC"
+  },
+  {
+   "name": "SiC/SiC composite",
+   "cat": "comp",
+   "rho": 2.7,
+   "use": "Reusable hot structure"
+  },
+  {
+   "name": "Aramid/epoxy (Kevlar)",
+   "cat": "comp",
+   "rho": 1.38,
+   "use": "Damage-tolerant overwrap"
+  },
+  {
+   "name": "Carbon phenolic",
+   "cat": "comp",
+   "rho": 1.45,
+   "use": "Ablative nozzle liner"
+  },
+  {
+   "name": "Carbon/epoxy fabric",
+   "cat": "comp",
+   "rho": 1.55,
+   "use": "General composite structure"
+  },
+  {
+   "name": "Carbon/epoxy UD laminate",
+   "cat": "comp",
+   "rho": 1.57,
+   "use": "Highest structural efficiency"
+  },
+  {
+   "name": "Carbon/BMI laminate",
+   "cat": "comp",
+   "rho": 1.58,
+   "use": "Hot composite structure"
+  },
+  {
+   "name": "Carbon/PEEK (APC-2)",
+   "cat": "comp",
+   "rho": 1.6,
+   "use": "Thermoplastic composite"
+  },
+  {
+   "name": "Silica phenolic",
+   "cat": "comp",
+   "rho": 1.7,
+   "use": "Exit cone & housing insulation"
+  },
+  {
+   "name": "SMC (sheet moulding compound)",
+   "cat": "comp",
+   "rho": 1.85,
+   "use": "Moulded panels, covers"
+  },
+  {
+   "name": "Glass/epoxy (E-glass)",
+   "cat": "comp",
+   "rho": 1.9,
+   "use": "Budget composite structure"
+  },
+  {
+   "name": "GFRP pultrusion",
+   "cat": "comp",
+   "rho": 1.9,
+   "use": "Ladders, gratings, sections"
+  },
+  {
+   "name": "Glass/epoxy (S-glass)",
+   "cat": "comp",
+   "rho": 1.95,
+   "use": "Higher-performance wound composite"
+  },
+  {
+   "name": "EPS foam",
+   "cat": "core",
+   "rho": 0.02,
+   "use": "Packaging, throwaway patterns"
+  },
+  {
+   "name": "XPS foam",
+   "cat": "core",
+   "rho": 0.035,
+   "use": "Insulation, model cores"
+  },
+  {
+   "name": "PU foam (rigid)",
+   "cat": "core",
+   "rho": 0.04,
+   "use": "Insulation, light cores"
+  },
+  {
+   "name": "Aluminium honeycomb 5052",
+   "cat": "core",
+   "rho": 0.05,
+   "use": "Sandwich panel core"
+  },
+  {
+   "name": "Nomex honeycomb",
+   "cat": "core",
+   "rho": 0.051,
+   "use": "Aerospace sandwich core"
+  },
+  {
+   "name": "PMI foam (Rohacell 71)",
+   "cat": "core",
+   "rho": 0.075,
+   "use": "High-performance structural core"
+  },
+  {
+   "name": "PVC foam (H100)",
+   "cat": "core",
+   "rho": 0.1,
+   "use": "Marine & aerospace core"
+  },
+  {
+   "name": "Syntactic foam",
+   "cat": "core",
+   "rho": 0.6,
+   "use": "Buoyancy, deep-sea, tooling"
+  },
+  {
+   "name": "Balsa",
+   "cat": "wood",
+   "rho": 0.16,
+   "use": "Ultralight cores, models"
+  },
+  {
+   "name": "Cork",
+   "cat": "wood",
+   "rho": 0.24,
+   "use": "Gaskets, vibration pads, insulation"
+  },
+  {
+   "name": "Western red cedar",
+   "cat": "wood",
+   "rho": 0.37,
+   "use": "Light, stable, weather resistant"
+  },
+  {
+   "name": "Obeche",
+   "cat": "wood",
+   "rho": 0.39,
+   "use": "Pattern making, light structure"
+  },
+  {
+   "name": "Sitka spruce",
+   "cat": "wood",
+   "rho": 0.4,
+   "use": "Classic aircraft structural timber"
+  },
+  {
+   "name": "Basswood / lime",
+   "cat": "wood",
+   "rho": 0.42,
+   "use": "Carving, model making"
+  },
+  {
+   "name": "Jelutong",
+   "cat": "wood",
+   "rho": 0.46,
+   "use": "The pattern-maker's timber"
+  },
+  {
+   "name": "Poplar / tulipwood",
+   "cat": "wood",
+   "rho": 0.45,
+   "use": "Jigs, paint-grade joinery"
+  },
+  {
+   "name": "Scots pine",
+   "cat": "wood",
+   "rho": 0.51,
+   "use": "General joinery, crates"
+  },
+  {
+   "name": "Douglas fir",
+   "cat": "wood",
+   "rho": 0.53,
+   "use": "Structural timber, ply faces"
+  },
+  {
+   "name": "Mahogany",
+   "cat": "wood",
+   "rho": 0.55,
+   "use": "Stable patterns, joinery"
+  },
+  {
+   "name": "OSB",
+   "cat": "wood",
+   "rho": 0.65,
+   "use": "Sheathing, throwaway jigs"
+  },
+  {
+   "name": "Teak",
+   "cat": "wood",
+   "rho": 0.66,
+   "use": "Oily, weather resistant"
+  },
+  {
+   "name": "Walnut",
+   "cat": "wood",
+   "rho": 0.66,
+   "use": "Stable, fine finish"
+  },
+  {
+   "name": "Plywood (general)",
+   "cat": "wood",
+   "rho": 0.6,
+   "use": "Jigs, fixtures, forms"
+  },
+  {
+   "name": "Birch plywood",
+   "cat": "wood",
+   "rho": 0.68,
+   "use": "Precision jigs, laser-cut fixtures"
+  },
+  {
+   "name": "Chipboard / particle board",
+   "cat": "wood",
+   "rho": 0.68,
+   "use": "Bench tops, throwaway tooling"
+  },
+  {
+   "name": "Bamboo (laminated)",
+   "cat": "wood",
+   "rho": 0.7,
+   "use": "Stiff, renewable panel"
+  },
+  {
+   "name": "Maple",
+   "cat": "wood",
+   "rho": 0.7,
+   "use": "Bench tops, mallets, jigs"
+  },
+  {
+   "name": "European oak",
+   "cat": "wood",
+   "rho": 0.71,
+   "use": "Heavy joinery"
+  },
+  {
+   "name": "Ash",
+   "cat": "wood",
+   "rho": 0.71,
+   "use": "Tool handles, steam bending"
+  },
+  {
+   "name": "Beech",
+   "cat": "wood",
+   "rho": 0.72,
+   "use": "Jigs, planes, mallets"
+  },
+  {
+   "name": "MDF",
+   "cat": "wood",
+   "rho": 0.75,
+   "use": "Vacuum-form tooling, templates"
+  },
+  {
+   "name": "Hardboard",
+   "cat": "wood",
+   "rho": 1,
+   "use": "Templates, facing"
+  },
+  {
+   "name": "Ebony",
+   "cat": "wood",
+   "rho": 1.2,
+   "use": "Dense, dimensionally stable"
+  },
+  {
+   "name": "Lignum vitae",
+   "cat": "wood",
+   "rho": 1.28,
+   "use": "Self-lubricating bearings"
+  },
+  {
+   "name": "Modelling / tooling board (PU)",
+   "cat": "tool",
+   "rho": 0.7,
+   "use": "CNC-machined patterns & masters"
+  },
+  {
+   "name": "Epoxy tooling board",
+   "cat": "tool",
+   "rho": 1.2,
+   "use": "Stable high-temp master models"
+  },
+  {
+   "name": "Machining wax",
+   "cat": "tool",
+   "rho": 0.95,
+   "use": "Trial cuts, investment patterns"
+  },
+  {
+   "name": "Water (4 °C)",
+   "cat": "tool",
+   "rho": 1,
+   "use": "Reference / displacement checks"
+  },
+  {
+   "name": "Ice",
+   "cat": "tool",
+   "rho": 0.917,
+   "use": "Reference"
+  },
+  {
+   "name": "Plaster of Paris",
+   "cat": "tool",
+   "rho": 1.2,
+   "use": "Splash tooling, moulds"
+  },
+  {
+   "name": "Foundry sand (bonded)",
+   "cat": "tool",
+   "rho": 1.6,
+   "use": "Sand casting moulds"
+  },
+  {
+   "name": "Concrete",
+   "cat": "tool",
+   "rho": 2.4,
+   "use": "Machine foundations, test stands"
+  },
+  {
+   "name": "Granite (surface plate)",
+   "cat": "tool",
+   "rho": 2.75,
+   "use": "Inspection reference"
+  }
+ ],
+ "fillers": [
+  {
+   "name": "Carbon fibre (chopped)",
+   "rho": 1.8
+  },
+  {
+   "name": "Glass fibre (E-glass)",
+   "rho": 2.55
+  },
+  {
+   "name": "Glass bead / sphere",
+   "rho": 2.5
+  },
+  {
+   "name": "Mineral / talc",
+   "rho": 2.7
+  },
+  {
+   "name": "PTFE (lubricant)",
+   "rho": 2.16
+  },
+  {
+   "name": "Carbon black / powder",
+   "rho": 1.85
+  },
+  {
+   "name": "Aramid fibre",
+   "rho": 1.44
+  },
+  {
+   "name": "Molybdenum disulphide",
+   "rho": 4.8
+  },
+  {
+   "name": "Stainless steel fibre",
+   "rho": 7.9
+  }
+ ]
+}

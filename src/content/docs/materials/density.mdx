@@ -1,0 +1,108 @@
+---
+title: Density
+description: "The density register: metals, polymers, glass and ceramics, composites, cores, woods and workshop materials, with the material library. Density in the units of each finite-element system and the cost of the wrong one, the density of filled polymers, and the mass of a part in any two materials."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import DensityCalc from '../../../components/DensityCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Mass is performance: get the density right, in the units your model expects, and check the total mass of every model by hand.</div>
+  <div><b>Before this</b><a href="../selection/">Material selection</a> · <a href="../datasheet/">Material datasheet</a></div>
+  <div><b>Related</b><a href="../plastics/">Plastics</a> · <a href="../../verify/fea-cards/">FEA cards</a> · <a href="../../motor/case-sizing/">Case sizing</a></div>
+</div>
+
+## Why this matters
+
+Every gram of case, insulation, nozzle and hardware is a gram of propellant the motor does not carry, so mass is the
+measure that most design choices are judged by. The mass of a part comes from its volume and its density, and the
+density is the number that most often goes wrong. It is not usually a wrong value: it is a right value in the wrong
+units.
+
+A finite-element model with its density 1000 times too high still runs. Its stresses under pressure are correct, so
+nothing looks wrong. But its natural frequencies are 31.6 times too low, and its gravity, inertia and shock loads 1000
+times too high.
+
+<Analogy title="A recipe in the wrong units">
+  A recipe that says "200" for the flour works in grams and fails in ounces. Nothing in the kitchen tells you the
+  units are wrong: the cake just comes out as a brick. A density in a model is the same. The number is correct; only
+  the units decide whether the result is.
+</Analogy>
+
+## Units: read this once
+
+| Unit system | Density unit | Steel (7.85 g/cm³) |
+| --- | --- | --- |
+| m, kg, s, N, Pa (SI) | kg/m³ | 7850 |
+| mm, tonne, s, N, MPa (most mm models) | t/mm³ | 7.85 × 10⁻⁹ |
+| mm, kg, ms, kN, GPa (LS-DYNA) | kg/mm³ | 7.85 × 10⁻⁶ |
+| in, lbf, s, psi | lbf·s²/in⁴ | 7.35 × 10⁻⁴ |
+
+- **The mm–N–MPa system needs tonnes.** A newton is a kilogram-metre per second squared; in millimetres it is a
+  tonne-millimetre per second squared. So the density is in t/mm³: 10⁻⁹ times the value in g/cm³. Typing the kg/mm³
+  value (10⁻⁶ times) makes the model 1000 times too heavy.
+- **lb/in³ is a weight, not a mass.** In an in–lbf–s model, divide it by g = 386.09 in/s².
+- **Check the total mass** of every model against a hand calculation before you trust a frequency or an inertia load.
+
+## What changes the density
+
+- **Alloying, a little.** Tempers and heat treatments hardly change it. Lithium is the exception: Al-Li alloys are
+  about 4–8% lighter than the 2xxx alloys they replace.
+- **Fibre volume fraction** in a composite, and **filler** in a polymer. Filled polymers are sold by weight percent:
+  blend the specific volumes, not the densities: $1/\rho = w/\rho_f + (1 - w)/\rho_m$.
+- **Porosity** in castings, additive parts and powder-metallurgy parts, and the voids of a moulding.
+- **Cores and foams** are sold by density: the core density sets its stiffness and strength.
+- **Temperature.** Volume grows by about three times the linear expansion; the density falls by the same fraction.
+
+## Calculator
+
+**Register** lists the 290 materials of the v1 density register and the metals, polymers and composites of the
+[material library](../datasheet/) (◆), with the density in the units of the FE system you select. Select a row to send
+its density to the other tabs. **FE units** gives the value for your model's unit system and the error of the wrong
+one. **Filled** gives the density of a filled polymer. **Part mass** gives the mass of a simple shape, or of a volume
+from CAD, in two materials, with four reference materials.
+
+<DensityCalc />
+
+## Worked example: the case, its model and a bracket
+
+Select **Load worked example**.
+
+1. **The mass of the case.** One metre of the 300 mm D6AC case with its 1.377 mm wall
+   ([Case sizing](../../motor/case-sizing/)) is 1.304 litres of steel: **10.23 kg**. The same dimensions in
+   filament-wound carbon/epoxy are 2.05 kg. That is not the mass of a composite case: its wall must be thicker for the
+   same burst pressure. Compare at equal strength ([Material selection](../selection/)).
+2. **The density in the FE model.** The case model is in mm, N and MPa, so D6AC goes in as **7.85 × 10⁻⁹ t/mm³**. If the
+   kg/mm³ value (7.85 × 10⁻⁶) is typed instead, the model is 1000 times too heavy. Its stresses under pressure stay
+   correct, but its first mode falls to 3.16% of the true frequency, and its gravity and acceleration loads rise
+   1000 times. The total mass check (10.23 kg per metre against the model) finds this at once.
+3. **A filled bracket.** PEEK with 30% chopped carbon fibre by weight is **1.418 g/cm³**; with 30% glass fibre it is
+   1.524 g/cm³, 7% heavier for the same weight percent. A linear blend of the densities would give 1.45 and 1.68 g/cm³:
+   too heavy, by 2% and 10%.
+
+## Where this stops
+
+- **Typical densities** at room temperature. The certificate or the datasheet of the actual material governs.
+- **Void-free filled polymers.** Real mouldings and composites have some porosity: measure the density
+  (ASTM D792, ISO 1183) where the mass matters.
+- **Simple shapes only** in the mass tab. For a real part, take the volume from CAD and enter it.
+
+## On the drawing
+
+- **The mass** of the part, with its tolerance where it matters, and how it is checked.
+- **The centre of gravity** of heavy parts and assemblies, for handling and for the mass properties of the motor.
+- **The density basis** of a composite or a filled part: the fibre volume fraction or the grade, not only the resin.
+
+## References and further reading
+
+- ASTM D792 and ISO 1183, *Density of plastics by displacement*.
+- ASTM D3171, *Constituent content of composite materials* (fibre volume fraction).
+- MMPDS, *Metallic Materials Properties Development and Standardization* (densities of aerospace alloys).
+
+<Aside type="note">
+  Typical values from the v1 register and the material library, for screening. Use the density of the actual material
+  from its certificate or datasheet for a mass budget.
+</Aside>

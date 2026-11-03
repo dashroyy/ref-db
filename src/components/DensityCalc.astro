@@ -1,0 +1,224 @@
+---
+// Density in four tabs: the register (the v1 register with the material library), density in the units of each
+// finite-element unit system and the error of the wrong one, the density of a filled polymer, and the mass of a simple
+// shape in two materials. Logic in src/lib/density.ts (unit-tested); UI only here.
+import { ROWS, CATS, FILLERS, UNITS, SHAPES } from '../lib/density';
+
+const TABS = [{ key: 'reg', name: 'Register' }, { key: 'fe', name: 'FE units' }, { key: 'fill', name: 'Filled' }, { key: 'mass', name: 'Part mass' }];
+const PLASTICS = ROWS.map((r, i) => ({ r, i })).filter((x) => x.r.cat === 'plastic' && x.r.src === 'register');
+const byCat = CATS.map((c) => ({ c, items: ROWS.map((r, i) => ({ r, i })).filter((x) => x.r.cat === c.key) }));
+const idx = (name: string) => ROWS.findIndex((r) => r.name === name);
+const D6AC = idx('D6AC (AMS 6431)'), TI = idx('Ti-6Al-4V (Gr 5)'), PEEK = PLASTICS.find((x) => x.r.name === 'PEEK')?.i ?? PLASTICS[0].i;
+---
+
+<div class="calc dncalc2" data-dencalc>
+  <div class="calc-head"><span>Density, units and mass</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button><button type="button" class="chip" data-copy>Copy</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="reg">
+        <div class="row2">
+          <label>Search<input name="q" type="search" placeholder="material, grade or use" autocomplete="off" /></label>
+          <label>Category<select name="cat"><option value="">All</option>{CATS.map((c) => <option value={c.key}>{c.name}</option>)}</select></label>
+          <label>Source<select name="src"><option value="">Register and library</option><option value="register">Register (v1)</option><option value="library">Material library</option></select></label>
+          <label>FE units<select name="u">{UNITS.map((u) => <option value={u.key} selected={u.key === 'mmt'}>{u.unit}: {u.name}</option>)}</select></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="fe" hidden>
+        <div class="row2">
+          <label>Density (g/cm³)<input name="rho" type="number" min="0" step="any" value="7.85" /></label>
+          <label>Model unit system<select name="model">{UNITS.map((u) => <option value={u.key} selected={u.key === 'mmt'}>{u.name}</option>)}</select></label>
+          <label>Value typed from<select name="typed">{UNITS.map((u) => <option value={u.key} selected={u.key === 'mmkg'}>{u.unit} ({u.name.split(' (')[0]})</option>)}</select></label>
+        </div>
+        <p class="hint">Select a row in the register to bring its density here.</p>
+      </fieldset>
+      <fieldset data-panel="fill" hidden>
+        <div class="row2">
+          <label>Base polymer<select name="base">{PLASTICS.map((x) => <option value={x.i} selected={x.i === PEEK}>{x.r.name} ({x.r.rho})</option>)}</select></label>
+          <label>Filler<select name="filler">{FILLERS.map((f, i) => <option value={i} selected={i === 0}>{f.name} ({f.rho})</option>)}</select></label>
+        </div>
+        <label>Filler by weight <output data-wv>30</output>%<input name="w" type="range" min="0" max="60" step="1" value="30" /></label>
+      </fieldset>
+      <fieldset data-panel="mass" hidden>
+        <div class="row2">
+          <label>Shape<select name="shape">{SHAPES.map((s) => <option value={s.key}>{s.name}</option>)}</select></label>
+          <label data-dim="0">Outside ⌀ (mm)<input name="a" type="number" min="0" step="any" value="100" /></label>
+          <label data-dim="1">Inside ⌀ (mm)<input name="b" type="number" min="0" step="any" value="90" /></label>
+          <label data-dim="2">Length (mm)<input name="c" type="number" min="0" step="any" value="1000" /></label>
+          <label>Material A<select name="ma">{byCat.map((g) => <optgroup label={g.c.name}>{g.items.map((x) => <option value={x.i} selected={x.i === D6AC}>{x.r.name}{x.r.src === 'library' ? ' ◆' : ''}</option>)}</optgroup>)}</select></label>
+          <label>Material B<select name="mb">{byCat.map((g) => <optgroup label={g.c.name}>{g.items.map((x) => <option value={x.i} selected={x.i === TI}>{x.r.name}{x.r.src === 'library' ? ' ◆' : ''}</option>)}</optgroup>)}</select></label>
+        </div>
+        <p class="hint">◆ from the material library; the others from the density register.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div class="de-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig de-fig" data-figwrap><svg data-chart role="img" aria-label="Chart"></svg><figcaption data-cap></figcaption></figure>
+      <div class="de-scroll" data-table></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Typical densities at room temperature: the v1 register and the material library. Filled polymers: rule of mixtures
+    on specific volume, void-free. 1 g/cm³ = 1000 kg/m³ = 10⁻⁶ kg/mm³ = 10⁻⁹ t/mm³ = 0.036127 lb/in³ =
+    9.357 × 10⁻⁵ lbf·s²/in⁴.
+  </div>
+</div>
+
+<style is:global>
+  .dncalc2 .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .dncalc2 .calc-body > * { min-width: 0; }
+  .de-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .de-out > * { margin: 0 !important; min-width: 0; }
+  .de-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .de-scroll { overflow: auto; max-height: 24rem; border: 1px solid var(--rd-line); border-radius: 6px; }
+  .de-scroll:empty { display: none; }
+  .de-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); }
+  .de-table th { position: sticky; top: 0; background: var(--rd-panel); z-index: 1; }
+  .de-table th, .de-table td { text-align: right; padding: 0.28rem 0.45rem; border-bottom: 1px solid var(--rd-line); white-space: nowrap; font-family: var(--sl-font-mono); }
+  .de-table th:first-child, .de-table td:first-child, .de-table td.u { text-align: left; font-family: var(--sl-font-system, system-ui); white-space: normal; }
+  .de-table td.u { color: var(--rd-muted); }
+  .de-table tbody tr[data-i] { cursor: pointer; }
+  .de-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .dncalc2 input[type='range'] { width: 100%; }
+</style>
+
+<script>
+  import { ROWS, CATS, FILLERS, UNITS, SHAPES, toUnit, lbPerIn3, unitMistake, filled, volume, massKg, type Shape } from '../lib/density';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const sci = (v: number) => (v === 0 ? '0' : Math.abs(Math.log10(Math.abs(v))) < 4 ? Number(v.toPrecision(4)).toString() : v.toExponential(3).replace('e', ' × 10^').replace(/\^\+?(-?\d+)/, (_, e) => `<sup>${e}</sup>`));
+  const sciText = (v: number) => (v === 0 ? '0' : Math.abs(Math.log10(Math.abs(v))) < 4 ? Number(v.toPrecision(4)).toString() : v.toExponential(4));
+  const catName = (k: string) => CATS.find((c) => c.key === k)?.name ?? k;
+
+  document.querySelectorAll<HTMLElement>('[data-dencalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => field(n).value;
+    const num = (n: string) => (val(n).trim() === '' ? NaN : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    let mode = 'reg', picked = ROWS.findIndex((r) => r.name === 'D6AC (AMS 6431)'), copyText = '';
+    const width = () => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const fig = (show: boolean) => { $('[data-figwrap]').hidden = !show; };
+
+    function runReg() {
+      fig(false);
+      const q = val('q').trim().toLowerCase(), cat = val('cat'), src = val('src'), u = UNITS.find((x) => x.key === val('u'))!;
+      const list = ROWS.map((r, i) => ({ r, i })).filter(({ r }) => (!cat || r.cat === cat) && (!src || r.src === src) && (!q || `${r.name} ${r.use}`.toLowerCase().includes(q)));
+      if (!list.some((x) => x.i === picked) && list.length) picked = list[0].i;
+      const r = ROWS[picked];
+      $('[data-out]').innerHTML = r ? `
+        <div class="readout primary"><dt>${esc(r.name)}</dt><dd>${r.rho} g/cm³ <small>${esc(catName(r.cat))} · ${r.src === 'library' ? 'material library' : 'density register'}</small></dd></div>
+        <div class="readout"><dt>In ${esc(u.unit)}</dt><dd>${sci(toUnit(r.rho, u.key))} <small>${esc(u.name)}</small></dd></div>
+        <div class="readout"><dt>Weight density</dt><dd>${lbPerIn3(r.rho).toFixed(4)} lb/in³ <small>${Math.round(r.rho * 1000)} kg/m³</small></dd></div>` : '';
+      $('[data-table]').innerHTML = `<table class="de-table"><thead><tr><th>Material</th><th>g/cm³</th><th>${esc(u.unit)}</th><th>Use</th></tr></thead><tbody>${list.map(({ r: x, i }) => `<tr data-i="${i}" class="${i === picked ? 'sel' : ''}"><td>${esc(x.name)}${x.src === 'library' ? ' ◆' : ''}</td><td>${x.rho}</td><td>${sci(toUnit(x.rho, u.key))}</td><td class="u">${esc(x.use)}</td></tr>`).join('') || '<tr><td colspan="4">No match.</td></tr>'}</tbody></table>`;
+      $('[data-notes]').innerHTML = `<li>${list.length} of ${ROWS.length} entries. ◆ from the material library, which every tool on this site reads; the others from the v1 density register.</li><li>Select a row: its density goes to the FE units and Part mass tabs.</li>`;
+      copyText = r ? `${r.name}: ${r.rho} g/cm3 = ${sciText(toUnit(r.rho, u.key))} ${u.unit}` : '';
+    }
+
+    function runFe() {
+      fig(false);
+      const rho = num('rho'), m = unitMistake(rho, val('typed'), val('model')), mu = UNITS.find((x) => x.key === val('model'))!, tu = UNITS.find((x) => x.key === val('typed'))!;
+      const ok = Math.abs(m.factor - 1) < 1e-9;
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>Enter in the model</dt><dd>${sci(m.correct)} <small>${esc(mu.unit)}, for ${esc(mu.name)}</small></dd></div>
+        <div class="readout ${ok ? 'ok' : 'bad'}"><dt>If you type the ${esc(tu.unit)} value</dt><dd>${ok ? 'Correct' : `mass × ${sci(m.factor)}`} <small>${ok ? 'the two systems agree' : `${sci(m.typed)} entered: natural frequencies × ${m.freq.toPrecision(3)}, gravity and inertia loads × ${sci(m.factor)}`}</small></dd></div>`;
+      $('[data-table]').innerHTML = `<table class="de-table"><thead><tr><th>Unit system</th><th>Density</th><th>Unit</th></tr></thead><tbody>${UNITS.map((u) => `<tr class="${u.key === mu.key ? 'sel' : ''}"><td>${esc(u.name)}</td><td>${sci(toUnit(rho, u.key))}</td><td class="u">${esc(u.unit)}</td></tr>`).join('')}<tr><td>Weight density (hand calculations only)</td><td>${lbPerIn3(rho).toFixed(4)}</td><td class="u">lb/in³</td></tr></tbody></table>`;
+      $('[data-notes]').innerHTML = '<li>A model that is 1000 times too heavy still runs, and its stresses under pressure are correct. Its natural frequencies are 31.6 times too low, and its gravity, inertia and shock loads 1000 times too high. Check the total mass of every model against a hand calculation.</li><li>Weight density in lb/in³ is a force per volume. In an in–lbf–s model, divide it by g = 386.09 in/s² to get the mass density.</li>';
+      copyText = `${rho} g/cm3 = ${sciText(m.correct)} ${mu.unit} (${mu.name})`;
+    }
+
+    function runFill() {
+      fig(true);
+      const base = ROWS[+val('base')], fl = FILLERS[+val('filler')], w = num('w') / 100, r = filled(base.rho, fl.rho, w);
+      (root.querySelector('[data-wv]') as HTMLOutputElement).textContent = String(Math.round(w * 100));
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>Filled density</dt><dd>${r.rho.toFixed(3)} g/cm³ <small>${esc(base.name.split(' (')[0])} + ${Math.round(w * 100)}% ${esc(fl.name.toLowerCase())} by weight, void-free</small></dd></div>
+        <div class="readout"><dt>Filler by volume</dt><dd>${(r.vf * 100).toFixed(1)}% <small>a dense filler takes little volume for its weight</small></dd></div>
+        <div class="readout warn"><dt>A linear blend would say</dt><dd>${r.linear.toFixed(3)} g/cm³ <small>${((r.linear / r.rho - 1) * 100).toFixed(1)}% too heavy: blend the specific volumes, not the densities</small></dd></div>`;
+      const W = width(), H = 200, L = 46, R = 12, T = 12, B = 30, wmax = 0.6;
+      const pts = Array.from({ length: 61 }, (_, k) => k / 100), ys = pts.map((x) => filled(base.rho, fl.rho, x));
+      const ymin = Math.min(base.rho, fl.rho) * 0.97, ymax = Math.max(...ys.map((y) => y.linear)) * 1.02;
+      const X = (x: number) => L + (x / wmax) * (W - L - R), Y = (y: number) => T + ((ymax - y) / (ymax - ymin)) * (H - T - B);
+      const p: string[] = [];
+      for (let k = 0; k <= 6; k++) p.push(`<text x="${X(k / 10)}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${k * 10}%</text>`);
+      for (let k = 0; k <= 4; k++) { const v = ymin + ((ymax - ymin) * k) / 4; p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(2)}</text>`); }
+      p.push(`<polyline fill="none" stroke="var(--rd-muted)" stroke-width="1.5" stroke-dasharray="5 4" points="${pts.map((x, k) => `${X(x).toFixed(1)},${Y(ys[k].linear).toFixed(1)}`).join(' ')}"/>`);
+      p.push(`<polyline fill="none" stroke="var(--rd-accent)" stroke-width="2.4" points="${pts.map((x, k) => `${X(x).toFixed(1)},${Y(ys[k].rho).toFixed(1)}`).join(' ')}"/>`);
+      p.push(`<circle cx="${X(w)}" cy="${Y(r.rho)}" r="5" fill="var(--rd-accent)"/><text x="${Math.min(X(w) + 8, W - R - 40)}" y="${Y(r.rho) + 16}" font-size="11" fill="var(--rd-ink)">${r.rho.toFixed(3)}</text><text x="${W - R}" y="${T + 10}" text-anchor="end" font-size="10" fill="var(--rd-muted)">dashed: linear blend (wrong)</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = p.join('');
+      $('[data-cap]').textContent = 'Density against filler content by weight, g/cm³.';
+      $('[data-table]').innerHTML = '';
+      $('[data-notes]').innerHTML = '<li>Filled grades are sold by weight percent. The same 30% gives a denser part with glass than with carbon fibre: glass is denser, so it takes less volume but adds more mass.</li><li>This is the void-free value. Real mouldings have some porosity and additives: use the datasheet density when there is one.</li>';
+      copyText = `${base.name} + ${Math.round(w * 100)}% ${fl.name}: ${r.rho.toFixed(3)} g/cm3`;
+    }
+
+    function runMass() {
+      fig(true);
+      const shape = val('shape') as Shape, sh = SHAPES.find((s) => s.key === shape)!;
+      root.querySelectorAll<HTMLElement>('[data-dim]').forEach((l) => { const k = +l.dataset.dim!; l.hidden = !sh.dims[k]; if (sh.dims[k]) l.firstChild!.textContent = shape === 'volume' ? sh.dims[k] : `${sh.dims[k]} (mm)`; });
+      const v = volume(shape, num('a'), num('b'), num('c')), A = ROWS[+val('ma')], B = ROWS[+val('mb')];
+      const mA = massKg(v, A.rho), mB = massKg(v, B.rho), ok = v > 0 && Number.isFinite(v);
+      $('[data-out]').innerHTML = ok ? `
+        <div class="readout"><dt>Volume</dt><dd>${(v / 1000).toFixed(v < 1e4 ? 3 : 1)} cm³ <small>${sci(v)} mm³</small></dd></div>
+        <div class="readout primary"><dt>${esc(A.name)}</dt><dd>${mA.toFixed(mA < 1 ? 4 : 3)} kg <small>${(mA * 2.20462).toFixed(3)} lb at ${A.rho} g/cm³</small></dd></div>
+        <div class="readout"><dt>${esc(B.name)}</dt><dd>${mB.toFixed(mB < 1 ? 4 : 3)} kg <small>${((mB / mA - 1) * 100).toFixed(0)}% against A, at ${B.rho} g/cm³</small></dd></div>`
+        : '<div class="readout bad"><dt>Volume</dt><dd>— <small>check the dimensions</small></dd></div>';
+      // Bars: the same shape in A, B and four reference materials from the library.
+      const refs = ['Al 7075-T6', 'Ti-6Al-4V (Gr 5)', '4340 / EN24T', 'Carbon/epoxy, filament-wound case (hoop)'].map((n) => ROWS.find((r) => r.name === n)).filter(Boolean) as typeof ROWS;
+      const set = [A, B, ...refs.filter((r) => r !== A && r !== B)];
+      const W = width(), rowH = 24, L = Math.min(170, W * 0.4), R = 60, H = set.length * rowH + 10, mmax = Math.max(...set.map((r) => massKg(v, r.rho)));
+      const maxCh = Math.max(8, Math.floor((L - 8) / 6)); // about 6 px a character at this size
+      const p = set.map((r, k) => {
+        const m = massKg(v, r.rho), y = 5 + k * rowH, w = ((W - L - R) * m) / mmax;
+        return `<text x="${L - 6}" y="${y + 15}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)" font-family="var(--sl-font-system, system-ui)">${esc(r.name.length > maxCh ? r.name.slice(0, maxCh - 1) + '…' : r.name)}</text><rect x="${L}" y="${y + 3}" width="${Math.max(1, w)}" height="${rowH - 8}" rx="2" fill="${k === 0 ? 'var(--rd-accent)' : k === 1 ? 'var(--rd-blue)' : 'var(--rd-muted)'}" fill-opacity="0.7"/><text x="${L + w + 4}" y="${y + 15}" font-size="10.5" fill="var(--rd-ink)">${m.toFixed(m < 1 ? 3 : 2)} kg</text>`;
+      });
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = ok ? p.join('') : '';
+      $('[data-cap]').textContent = 'The same shape in A, B and four reference materials. The same dimensions: a real design in each material has a different wall.';
+      $('[data-table]').innerHTML = '';
+      $('[data-notes]').innerHTML = '<li>Equal dimensions are not an equal design. For a pressure case, compare the mass at equal strength: wall ∝ 1/strength, so mass ∝ density/strength (Case sizing and Material selection).</li>';
+      copyText = ok ? `${sh.name}, volume ${(v / 1000).toFixed(3)} cm3: ${A.name} ${mA.toFixed(3)} kg, ${B.name} ${mB.toFixed(3)} kg` : '';
+    }
+
+    const run = () => (mode === 'reg' ? runReg() : mode === 'fe' ? runFe() : mode === 'fill' ? runFill() : runMass());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    // Select a register row: its density goes to the other tabs.
+    root.addEventListener('click', (e) => {
+      const tr = (e.target as Element).closest<HTMLElement>('tr[data-i]');
+      if (!tr || mode !== 'reg') return;
+      picked = +tr.dataset.i!;
+      field('rho').value = String(ROWS[picked].rho); field('ma').value = String(picked);
+      run();
+    });
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    // The worked example: a 1 m length of the 300 mm D6AC case (1.377 mm wall), and its density in a mm–tonne model.
+    const D6 = ROWS.findIndex((r) => r.name === 'D6AC (AMS 6431)'), CF = ROWS.findIndex((r) => r.name === 'Carbon/epoxy, filament-wound case (hoop)');
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => {
+      const v: Record<string, string> = { shape: 'tube', a: '302.754', b: '300', c: '1000', ma: String(D6), mb: String(CF), rho: '7.85', model: 'mmt', typed: 'mmkg' };
+      for (const [k, x] of Object.entries(v)) field(k).value = x;
+      const note = $('[data-example-note]');
+      note.textContent = 'Worked example: 1 m of the 300 mm D6AC case, and its density in a mm–tonne model.';
+      note.hidden = false;
+      select('mass');
+    });
+    if ('ResizeObserver' in window) { let wd = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - wd) > 8) { wd = nw; if (mode === 'fill' || mode === 'mass') run(); } }).observe(svg); }
+    run();
+  });
+</script>
