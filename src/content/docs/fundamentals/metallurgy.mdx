@@ -1,6 +1,6 @@
 ---
 title: Metallurgy
-description: Why metals behave as their datasheets say. Crystal structure and the ductile-to-brittle transition, the six ways to strengthen a metal, the iron–carbon diagram, quenching, hardenability and tempering, precipitation hardening, and diffusion (case hardening, decarburisation, hydrogen), with a calculator and a worked example on the heat treatment of the D6AC case.
+description: Why metals behave as their datasheets say. Metallic bonding and crystal structure in 3D, the ductile-to-brittle transition, the metal families (steels, stainless and duplex, aluminium, titanium, nickel superalloys, copper beryllium and bronze), the six ways to strengthen a metal, the iron–carbon diagram, quenching, hardenability and tempering, precipitation hardening, and diffusion (case hardening, decarburisation, hydrogen), with a calculator and a worked example on the heat treatment of the D6AC case.
 sidebar:
   order: 0
 ---
@@ -11,6 +11,8 @@ import CrystalDbtt from '../../../components/CrystalDbtt.astro';
 import TttPaths from '../../../components/TttPaths.astro';
 import AgeingCurve from '../../../components/AgeingCurve.astro';
 import MetalCalc from '../../../components/MetalCalc.astro';
+import CrystalViewer from '../../../components/CrystalViewer.astro';
+import MetalFamilies from '../../../components/MetalFamilies.astro';
 
 <div class="glance">
   <div><b>In one line</b>Each temper code and heat treatment is a position on a small number of diagrams. Learn the diagrams and the designations stop being arbitrary.</div>
@@ -33,6 +35,28 @@ see which diagram it refers to.
   you eat. A steel is the same: carbon and alloy elements are the ingredients, and the heat treatment is the recipe.
   Like cooking, the time matters as much as the temperature, and you cannot undo a burnt result by cooling it.
 </Analogy>
+
+## Metallic bonding: why metals bend
+
+Three kinds of bond hold solids together:
+
+- **Metallic.** Each atom gives its outer electrons to a "sea" of electrons that all the positive ion cores share. The
+  bond has no direction. When a plane of atoms slides by one spacing, the electron sea holds the ions at every step,
+  and the bonds re-form. This is why metals yield before they break, and why a crack in a metal blunts.
+- **Ionic.** Positive and negative ions attract (alumina, zirconia). If a plane slides, ions of the same sign come
+  together and repel: the crystal cleaves.
+- **Covalent.** Neighbours share pairs of electrons in fixed directions (diamond, silicon carbide, silicon nitride).
+  The bonds must break before the plane can slide: the crystal cracks first.
+
+The free electrons also carry heat and current. That is why metals conduct, and why every insulation and nozzle
+calculation on this site needs the conductivity of the metal behind it. Ceramics are hard and strong in compression,
+but they cannot yield to blunt a crack: their strength depends on the largest flaw.
+
+In the viewer below, **Crystal structures** builds the three metal lattices from their lattice coordinates. Drag to
+rotate, show the bonds to the nearest neighbours, and show the plane on which the atoms slide. **Why metals bend**
+shears the three kinds of bond.
+
+<CrystalViewer />
 
 ## Crystals, grains and dislocations
 
@@ -159,6 +183,150 @@ Twice the depth needs four times the time. Three processes on the drawing follow
   causes delayed brittle fracture under stress. Steels harder than approximately 39 HRC get a bake soon after
   plating (ISO 9588, ASTM B850), so the hydrogen diffuses out before it does damage
   ([Coatings](../../materials/coatings/#hydrogen-embrittlement)).
+
+## The metal families
+
+Each family below uses the same few mechanisms in its own way. The explorer puts every metal of the
+[material library](../../materials/datasheet/) in its family and class, on a chart of yield strength against the
+maximum service temperature. Select a class to see its crystal structure, how it gets its strength and what to watch
+for. A metal added to the library appears here.
+
+<MetalFamilies />
+
+### Carbon and low-alloy steels
+
+| Class | Typical grades (UK / US) | Condition | Aerospace and motor use |
+| --- | --- | --- | --- |
+| Mild and structural | EN3B, S275, S355 | As rolled or bright drawn | Ground equipment, handling frames, test stands. Never flight hardware |
+| Medium carbon | EN8 (080M40) | Normalised, or induction hardened | Shafts, studs, axles for ground equipment |
+| Low-alloy, quenched and tempered | EN16T (605M36), EN19T (709M40, 4140), EN24T (817M40, 4340), 4130 and T45 tube | Hardened and tempered | Fittings, shafts, bolts, tube structures |
+| Motor-case steels | D6AC, 15CDV6 | Hardened and tempered, 1400–1600 MPa | Solid motor cases |
+| Ultra-high strength | 300M, maraging 250 and 300, AerMet 100 | Quenched and tempered, or aged | Landing gear, highly loaded fittings, motor cases |
+
+- **Carbon sets the hardness; alloying sets the depth.** The as-quenched hardness depends on the carbon. Cr, Mo and
+  Ni let a thick section harden through. British Standard bar is specified with a **limiting ruling section**: the
+  largest section that reaches the properties of its condition.
+- **Weldability falls as carbon equivalent rises.** $CE = C + Mn/6 + (Cr + Mo + V)/5 + (Ni + Cu)/15$. Above about 0.45,
+  weld only with preheat, a qualified procedure and a post-weld heat treatment.
+- **Hydrogen embrittlement** above about 1000 MPa: bake after plating
+  ([Drawing frame & notes](../../drawing/drawing-frame/) writes the note).
+- **These steels are BCC.** They have a ductile-to-brittle transition: test the impact energy at the lowest service
+  temperature.
+
+### Stainless steels
+
+Chromium of at least 10.5% forms a thin oxide film that heals itself in air. The other elements decide the structure:
+
+| Class | Structure | Magnetic | Hardened by | Aerospace grades | Use |
+| --- | --- | --- | --- | --- | --- |
+| Austenitic | FCC | No (slightly, after cold work) | Cold work only | 304L, 316L, 321, 347, 21-6-9, Nitronic 60 | Tubing, ducting, cryogenic parts, bellows |
+| Martensitic | BCC/BCT | Yes | Quench and temper | 410, 431 (S80), 440C | Shafts, pins, valve seats, bearings |
+| Precipitation-hardening | Martensite with precipitates | Yes | Ageing (H900 to H1150) | 17-4PH, 15-5PH, 13-8Mo, Custom 465, FV520B | Fittings, actuators, shafts, fasteners |
+| Duplex | Half FCC, half BCC | Yes | Solid solution | 2205, 2507 (super duplex) | Seawater and chloride service |
+
+- **The H number of a PH stainless is its ageing temperature in °F.** H900 (482 °C) is the strongest and least tough;
+  H1025 (552 °C) and H1150 (621 °C) trade strength for toughness and stress-corrosion resistance. 15-5PH and 13-8Mo are
+  cleaner, tougher versions of 17-4PH for fracture-critical parts.
+- **Sensitisation.** Between about 450 and 850 °C, chromium carbides form at the grain boundaries of an austenitic
+  steel, and the chromium-poor zone beside them corrodes. Use the low-carbon (L) grades or the stabilised grades (321,
+  347) for welded parts.
+- **Pitting resistance** grows with $PREN = Cr + 3.3\,Mo + 16\,N$ (mass %): about 18 for 304, 25 for 316, 35 for
+  2205 and above 40 for 2507.
+- **Passivate after machining** (ASTM A967 or AMS 2700) to remove free iron from the surface.
+- **Austenitic threads gall.** Use a lubricant, or a different material for the nut or insert
+  ([Threads](../../joints/threads/#plating-galling-and-lubrication)).
+
+### Duplex and super duplex
+
+A duplex steel is about half austenite and half ferrite. The ferrite gives about twice the yield strength of 316L and
+much better resistance to chloride stress-corrosion cracking; the austenite gives toughness and weldability.
+
+- **Keep it below about 250–300 °C.** The ferrite embrittles slowly between about 300 and 500 °C, fastest near 475 °C. Duplex is
+  not a hot-structure material.
+- **Weld with a qualified procedure.** The heat input and the filler must keep the phase balance near 50/50 and avoid
+  sigma phase, which makes the weld brittle and less resistant to corrosion.
+- **Where it fits on a motor programme:** seawater and marine test equipment, coolant and process pipework, and
+  chloride environments where 316L cracks.
+
+### Aluminium alloys
+
+| Series | Main element | Hardened by | Typical aerospace grades | Notes |
+| --- | --- | --- | --- | --- |
+| 1xxx | Pure | Work | 1050A | Conductivity, cladding |
+| 2xxx | Copper | Ageing | 2024-T3/T351, 2014A, 2219-T87, 2618A | Fatigue (2024), weldable tanks (2219), hot parts (2618A, RR58). Poor corrosion resistance: clad or protect |
+| 5xxx | Magnesium | Work | 5083, 5251 | Weldable sheet and plate, marine |
+| 6xxx | Mg and Si | Ageing | 6061, 6082 | General brackets and housings; weldable |
+| 7xxx | Zinc | Ageing | 7075, 7050, 7010, 7020 | The strongest: frames, fittings, forgings |
+| Al-Li | Lithium | Ageing | 2195, 2050, 2099 | Lighter and stiffer launch-vehicle tanks |
+
+**Tempers.** O is annealed, H is work hardened, T is heat treated. T3 and T4 are naturally aged; T6 is peak aged;
+T73, T74 and T76 are over-aged for stress-corrosion resistance. A "51" after the temper (T351, T651, T7351) means that
+the plate was stretched to relieve the quench stresses, so it moves less when you machine it.
+
+- **Stress corrosion in 7xxx T6** is worst in the short-transverse direction of thick plate and forgings. Use T73 or
+  T7451 where the part has sustained stress in that direction.
+- **Welds lose the temper.** The weld zone of 6061-T6 has a third to a half less strength; most 2xxx and 7xxx alloys are
+  not fusion welded at all (friction stir welding is the exception).
+- **Galvanic corrosion** against steel, stainless steel, titanium and carbon fibre: isolate and seal the joint
+  ([Galvanic](../../materials/galvanic/)).
+
+### Titanium alloys
+
+Titanium is HCP (α) below about 880 °C and BCC (β) above. Aluminium, oxygen and tin keep the α; vanadium,
+molybdenum and iron keep the β.
+
+| Class | Grades | Use |
+| --- | --- | --- |
+| Commercially pure | Grade 2 | Corrosion-resistant ducting and tanks, formed sheet |
+| α and near-α | Ti-5Al-2.5Sn ELI, Ti-6-2-4-2, IMI 834 | Cryogenic tanks (5-2.5 ELI); compressor parts to 600 °C (IMI 834) |
+| α-β | Ti-6Al-4V (Grade 5), Ti-6Al-4V ELI (Grade 23), IMI 550, Ti-3Al-2.5V | Half of all titanium: fittings, frames, pressure vessels, fasteners, AM parts |
+| β and near-β | Ti-10V-2Fe-3Al | Large forgings that must harden through: rotor hubs, landing gear |
+
+- **ELI (extra low interstitial)** grades have less oxygen: lower strength, much higher toughness. Use them for
+  fracture-critical and cryogenic parts.
+- **Alpha case.** Hot work in air makes a brittle, oxygen-rich surface layer. Remove it by machining or chemical
+  milling, and check it on the drawing.
+- **Do not put cadmium- or silver-plated parts on titanium.** Both embrittle titanium. Avoid chlorinated cleaning
+  fluids on hot titanium.
+- **Titanium galls** against itself and many metals. Lubricate threads and sliding faces.
+
+### Nickel superalloys (Inconel, Nimonic, Waspaloy)
+
+Nickel is FCC at all temperatures, with chromium for oxidation resistance. The two ways to make it strong when hot:
+
+- **Solid solution:** Inconel 625 and 600, Hastelloy X, Nimonic 75. Formed and welded sheet for combustors, ducting,
+  bellows and heat shields. No over-ageing.
+- **Precipitation of γ′ (Ni₃(Al,Ti)) or γ″ (Ni₃Nb):** Inconel 718, Waspaloy, Nimonic 80A, 90 and C263, Haynes 282.
+  Inconel 718 is the workhorse to about 650–700 °C: its γ″ forms slowly, so it welds without strain-age cracking.
+  It is solution treated, then aged in two steps (about 720 °C, then 620 °C). The γ′ alloys go hotter but crack on
+  welding.
+
+The Nimonic alloys are the British line: Nimonic 75 sheet, 80A and 90 blades, bolts and springs, and C263 combustors
+and casings. Monel 400 and K-500 (nickel-copper) resist seawater and burn less readily in oxygen. Invar 36 hardly
+expands near room temperature.
+
+- **Superalloys work harden as you machine them.** Use sharp tools, positive cuts and constant feed; budget for slow
+  machining ([Machining cost](../../make/cost/)).
+- **Inconel 718 is embrittled by high-pressure hydrogen.** Check the environment before you use it in hydrogen
+  service.
+
+### Copper beryllium and bronzes
+
+| Alloy | UK / US designation | Condition | Typical strength | Use |
+| --- | --- | --- | --- | --- |
+| Beryllium copper (alloy 25) | CB101, C17200 | Solution treated and aged (TF00, TH04) | 1100–1400 MPa | Springs, bushes, connectors, non-sparking tools |
+| Beryllium copper (alloy 3) | C17510 | Aged | 650–800 MPa, high conductivity | Welding electrodes, current-carrying springs |
+| Aluminium bronze | CA104, C63000 (AMS 4640) | As supplied | About 700 MPa | Landing-gear and flap-track bushes, seawater fittings |
+| Phosphor bronze | PB102, PB103 (CW451K, CW452K) | Work hardened | 400–600 MPa | Springs, contacts, bushes, bellows |
+| Leaded gunmetal and bearing bronze | LG2, LG4 (CC491K, CC492K), CC493K | Cast | 250 MPa | Plain bearings, valve bodies |
+| Free-machining brass | CZ121, CW614N | Drawn | 400 MPa | Turned fittings for ground equipment |
+
+- **Beryllium copper is aged at about 315 °C** after a solution treatment near 790 °C. The temper letters give the
+  condition: TB00 solution treated, TD04 work hardened, TF00 aged, TH04 work hardened and aged.
+- **Beryllium dust and fume are toxic.** Machining, grinding and welding beryllium copper need extraction and controls
+  under your health and safety procedures. Finished solid parts are safe to handle.
+- **Bronze bushes run against steel** without galling. Aluminium bronze, beryllium copper and copper-nickel-tin are the
+  usual choices for highly loaded aerospace bushes.
 
 ## Calculator
 

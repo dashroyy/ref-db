@@ -1,0 +1,144 @@
+---
+// The metal families: every metal of the material library (src/lib/materials.ts) in its family and class
+// (src/lib/metalfamilies.ts), on a chart of yield strength against maximum service temperature, with each class's
+// crystal structure, strengthening mechanism and what to watch for. A metal added to the library appears here.
+import { METAL_FAMILIES, members } from '../lib/metalfamilies';
+
+const DATA = METAL_FAMILIES.map((f) => ({
+  key: f.key, name: f.name, short: ({ steel: 'Steels', ss: 'Stainless', al: 'Aluminium', ti: 'Titanium', ni: 'Nickel', cu: 'Copper' } as Record<string, string>)[f.key] ?? f.name, intro: f.intro,
+  classes: f.classes.map(({ key, name, structure, strength, watch }) => ({ key, name, structure, strength, watch })),
+  members: members(f).map(({ m, cls }) => ({ key: m.key, name: m.name, cls, Fty: m.Fty, Ftu: m.Ftu, rho: m.rho, E: m.E, maxT: m.maxT, summary: m.summary, spec: m.spec })),
+}));
+---
+
+<div class="calc mfcalc" data-mfcalc>
+  <div class="calc-head"><span>Metal families</span><span class="head-btns"><span data-count></span></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Family">
+    {DATA.map((f, i) => <button type="button" role="tab" class="chip" data-fam={f.key} aria-selected={i === 0 ? 'true' : 'false'} title={f.name}>{f.short}</button>)}
+  </div>
+  <div class="calc-body">
+    <div class="mf-out">
+      <p class="mf-intro" data-intro></p>
+      <div class="mf-chips" data-classes></div>
+      <figure class="hc-fig mf-fig"><svg data-chart role="img" aria-label="Yield strength against maximum service temperature for the metals of the family"></svg>
+        <figcaption>Each metal of the material library in this family: typical yield strength against its maximum service temperature. Select a point or a row.</figcaption></figure>
+      <div data-card></div>
+      <div class="mf-classcards" data-cards></div>
+      <div class="mf-scroll" data-table></div>
+    </div>
+  </div>
+  <script type="application/json" data-mf set:html={JSON.stringify(DATA)}></script>
+  <div class="calc-foot">
+    Typical room-temperature values from the material library, not allowables. Each metal falls into its class by its
+    name; a metal added to the library appears here. The maximum service temperature is a screening value: strength,
+    creep and oxidation limits differ.
+  </div>
+</div>
+
+<style is:global>
+  .mfcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .mf-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; min-width: 0; }
+  .mf-out > * { margin: 0 !important; min-width: 0; }
+  .sl-markdown-content .calc.mfcalc .hc-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0.25rem; }
+  .mf-intro { font-size: var(--sl-text-sm); color: var(--rd-ink); }
+  .mf-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .mf-chips > * { margin: 0 !important; }
+  .mf-chips button { font-size: var(--sl-text-xs); padding: 0.25rem 0.55rem; border-radius: 999px; border: 1px solid var(--rd-line); background: transparent; color: var(--rd-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .mf-chips button i { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+  .mf-chips button[aria-pressed='true'] { color: var(--rd-ink); border-color: var(--rd-ink); }
+  .mf-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .mf-fig circle { cursor: pointer; }
+  .mf-card { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-accent); border-radius: 6px; padding: 0.55rem 0.75rem; background: var(--rd-panel2); font-size: var(--sl-text-sm); }
+  .mf-card > * { margin: 0 !important; }
+  .mf-card h4 { font: 700 0.95rem var(--sl-font-mono); color: var(--rd-ink); }
+  .mf-card .mf-props { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; font: 0.72rem var(--sl-font-mono); color: var(--rd-muted); margin-top: 0.3rem !important; }
+  .mf-card .mf-props b { color: var(--rd-ink); }
+  .mf-card p { color: var(--rd-muted); margin-top: 0.35rem !important; }
+  .mf-classcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.5rem; }
+  .mf-classcards > * { margin: 0 !important; }
+  .mf-cc { border: 1px solid var(--rd-line); border-top: 3px solid var(--c, var(--rd-line)); border-radius: 6px; padding: 0.5rem 0.65rem; font-size: var(--sl-text-xs); color: var(--rd-muted); background: color-mix(in srgb, var(--rd-panel) 80%, transparent); }
+  .mf-cc > * { margin: 0 !important; }
+  .mf-cc b { display: block; color: var(--rd-ink); font-size: var(--sl-text-sm); margin-bottom: 0.2rem !important; }
+  .mf-cc dt { color: var(--rd-ink); font-weight: 600; margin-top: 0.3rem !important; }
+  .mf-cc dd { margin: 0 !important; }
+  .mf-scroll { overflow-x: auto; }
+  .mf-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); }
+  .mf-table th, .mf-table td { text-align: right; padding: 0.28rem 0.45rem; border-bottom: 1px solid var(--rd-line); white-space: nowrap; font-family: var(--sl-font-mono); }
+  .mf-table th:first-child, .mf-table td:first-child { text-align: left; font-family: var(--sl-font-system, system-ui); white-space: normal; }
+  .mf-table tbody tr { cursor: pointer; }
+  .mf-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .mf-table i { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; margin-right: 0.35rem; }
+</style>
+
+<script>
+  type Cls = { key: string; name: string; structure: string; strength: string; watch: string };
+  type Mem = { key: string; name: string; cls: string; Fty?: number; Ftu?: number; rho?: number; E?: number; maxT?: number; summary: string; spec: string };
+  type Fam = { key: string; name: string; intro: string; classes: Cls[]; members: Mem[] };
+  const PAL = ['var(--rd-accent)', 'var(--rd-blue)', 'var(--rd-ok)', 'var(--rd-warn)', 'var(--rd-ink)', 'var(--rd-steel)', 'var(--rd-hot)', 'var(--rd-muted)'];
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  document.querySelectorAll<HTMLElement>('[data-mfcalc]').forEach((root) => {
+    const DATA: Fam[] = JSON.parse(root.querySelector('[data-mf]')!.textContent!);
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let fam = DATA[0], cls = '', picked = '';
+    const colour = (k: string) => PAL[fam.classes.findIndex((c) => c.key === k) % PAL.length];
+    const datasheet = (k: string) => `../../materials/datasheet/?m=${encodeURIComponent(k)}#calculator`;
+
+    function chart(list: Mem[]) {
+      const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+      const W = Math.round(Math.min(680, Math.max(280, svg.clientWidth || 600))), H = 260, L = 48, R = 12, T = 14, B = 34;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const pts = list.filter((m) => m.Fty && m.maxT);
+      const xmax = Math.max(200, ...pts.map((m) => m.maxT!)) * 1.08, ymax = Math.max(100, ...pts.map((m) => m.Fty!)) * 1.1;
+      const X = (v: number) => L + (v / xmax) * (W - L - R), Y = (v: number) => H - B - (v / ymax) * (H - T - B);
+      const p: string[] = [];
+      const ys = ymax > 1200 ? 400 : ymax > 600 ? 200 : 100, xs = xmax > 800 ? 200 : 100;
+      for (let v = 0; v <= ymax; v += ys) p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      for (let v = 0; v <= xmax; v += xs) p.push(`<text x="${X(v)}" y="${H - 16}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      p.push(`<text x="${W - R}" y="${H - 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">max service temperature, °C</text><text x="4" y="${T}" font-size="10" fill="var(--rd-muted)">yield, MPa</text>`);
+      for (const m of pts) {
+        const sel = m.key === picked;
+        p.push(`<g data-key="${esc(m.key)}"><title>${esc(m.name)}: ${m.Fty} MPa, ${m.maxT} °C</title><circle cx="${X(m.maxT!).toFixed(1)}" cy="${Y(m.Fty!).toFixed(1)}" r="${sel ? 7 : 5}" fill="${colour(m.cls)}" fill-opacity="${sel ? 1 : 0.8}" stroke="${sel ? 'var(--rd-ink)' : 'var(--rd-panel)'}" stroke-width="${sel ? 2 : 1}"/></g>`);
+      }
+      const s = pts.find((m) => m.key === picked);
+      if (s) p.push(`<text x="${Math.min(X(s.maxT!) + 10, W - R - 4)}" y="${Y(s.Fty!) - 10}" text-anchor="${X(s.maxT!) > W - 160 ? 'end' : 'start'}" font-size="11" fill="var(--rd-ink)" paint-order="stroke" stroke="var(--rd-panel)" stroke-width="3">${esc(s.name)}</text>`);
+      svg.innerHTML = p.join('');
+    }
+
+    function run() {
+      const list = fam.members.filter((m) => !cls || m.cls === cls);
+      if (!list.some((m) => m.key === picked)) picked = list.slice().sort((a, b) => (b.Fty ?? 0) - (a.Fty ?? 0))[0]?.key ?? '';
+      $('[data-count]').textContent = `${fam.members.length} metals in the library`;
+      $('[data-intro]').textContent = fam.intro;
+      $('[data-classes]').innerHTML = `<button type="button" data-cls="" aria-pressed="${!cls}">All</button>` + fam.classes.map((c) => `<button type="button" data-cls="${c.key}" aria-pressed="${cls === c.key}"><i style="background:${colour(c.key)}"></i>${esc(c.name)} (${fam.members.filter((m) => m.cls === c.key).length})</button>`).join('');
+      chart(list);
+      const m = fam.members.find((x) => x.key === picked);
+      $('[data-card]').innerHTML = m ? `<div class="mf-card" style="border-left-color:${colour(m.cls)}"><h4>${esc(m.name)}</h4>
+        <div class="mf-props"><span>yield <b>${m.Fty ?? '—'} MPa</b></span><span>UTS <b>${m.Ftu ?? '—'} MPa</b></span><span>density <b>${m.rho ? (m.rho / 1000).toFixed(2) : '—'} g/cm³</b></span><span>E <b>${m.E ? (m.E / 1000).toFixed(0) : '—'} GPa</b></span><span>max <b>${m.maxT ?? '—'} °C</b></span><span>yield/density <b>${m.Fty && m.rho ? ((m.Fty * 1000) / m.rho).toFixed(0) : '—'} kN·m/kg</b></span></div>
+        <p>${esc(m.summary)}. ${esc(m.spec)} <a href="${datasheet(m.key)}">Full datasheet</a></p></div>` : '';
+      const shown = cls ? fam.classes.filter((c) => c.key === cls) : fam.classes;
+      $('[data-cards]').innerHTML = shown.map((c) => `<div class="mf-cc" style="--c:${colour(c.key)}"><b>${esc(c.name)}</b><dl><dt>Structure</dt><dd>${esc(c.structure)}</dd><dt>Strengthened by</dt><dd>${esc(c.strength)}</dd><dt>Watch for</dt><dd>${esc(c.watch)}</dd></dl></div>`).join('');
+      const rows = list.slice().sort((a, b) => (b.Fty ?? 0) - (a.Fty ?? 0));
+      $('[data-table]').innerHTML = `<table class="mf-table"><thead><tr><th>Metal</th><th>Yield</th><th>UTS</th><th>ρ g/cm³</th><th>E GPa</th><th>Max °C</th></tr></thead><tbody>${rows.map((x) => `<tr data-key="${esc(x.key)}" class="${x.key === picked ? 'sel' : ''}"><td><i style="background:${colour(x.cls)}"></i>${esc(x.name)}</td><td>${x.Fty ?? '—'}</td><td>${x.Ftu ?? '—'}</td><td>${x.rho ? (x.rho / 1000).toFixed(2) : '—'}</td><td>${x.E ? (x.E / 1000).toFixed(0) : '—'}</td><td>${x.maxT ?? '—'}</td></tr>`).join('')}</tbody></table>`;
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-fam]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      fam = DATA.find((f) => f.key === b.dataset.fam)!; cls = ''; picked = '';
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      run();
+    }));
+    root.addEventListener('click', (e) => {
+      const t = e.target as Element;
+      const c = t.closest<HTMLElement>('[data-cls]');
+      if (c && root.contains(c)) { cls = c.dataset.cls!; run(); return; }
+      const k = t.closest<HTMLElement | SVGElement>('[data-key]');
+      if (k) { picked = (k as HTMLElement).dataset.key!; run(); }
+    });
+    // Open on a family named in the URL hash, for links from other pages: #metal-families-ti
+    const h = location.hash.match(/metal-families-(\w+)/);
+    if (h) { const f = DATA.find((x) => x.key === h[1]); if (f) { fam = f; tabs.forEach((x) => x.setAttribute('aria-selected', String(x.dataset.fam === f.key))); } }
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('[data-chart]')!); }
+    run();
+  });
+</script>

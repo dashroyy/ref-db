@@ -1,0 +1,295 @@
+---
+// 3D crystal and bonding viewer: the BCC, FCC and HCP cells built from fractional lattice coordinates (src/lib/crystal.ts),
+// with nearest-neighbour bonds and the slip plane; and three kinds of bond (metallic, ionic, covalent) under a shear, to
+// show why metals bend and ceramics break. Drag to rotate. Auto-rotation and the electron motion stop when motion is
+// paused (the Pause motion button, or the reduced-motion setting).
+const uid = `cv${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div class="calc cvcalc" data-cvcalc data-uid={uid}>
+  <div class="calc-head"><span>Crystals and bonds in 3D</span><span class="head-btns"><button type="button" class="chip" data-spin aria-pressed="true">Auto-rotate</button><button type="button" class="chip" data-reset>Reset view</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="View">
+    <button type="button" role="tab" class="chip" data-tab="crystal" aria-selected="true">Crystal structures</button>
+    <button type="button" role="tab" class="chip" data-tab="bond" aria-selected="false">Why metals bend</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="crystal">
+        <div class="or-seg cv-seg" role="radiogroup" aria-label="Structure">
+          <label><input type="radio" name="st" value="bcc" checked /><span>BCC</span></label>
+          <label><input type="radio" name="st" value="fcc" /><span>FCC</span></label>
+          <label><input type="radio" name="st" value="hcp" /><span>HCP</span></label>
+        </div>
+        <div class="row2">
+          <label>Show<select name="n"><option value="1">One cell</option><option value="2">A block of cells</option></select></label>
+          <label>Atoms<select name="rad"><option value="small">Small: see the lattice</option><option value="true">True size: touching spheres</option></select></label>
+        </div>
+        <label class="inline"><input type="checkbox" name="bonds" checked /> Nearest-neighbour bonds</label>
+        <label class="inline"><input type="checkbox" name="slip" /> Slip plane</label>
+      </fieldset>
+      <fieldset data-panel="bond" hidden>
+        <div class="or-seg cv-seg" role="radiogroup" aria-label="Bond">
+          <label><input type="radio" name="bt" value="metallic" checked /><span>Metallic</span></label>
+          <label><input type="radio" name="bt" value="ionic" /><span>Ionic</span></label>
+          <label><input type="radio" name="bt" value="covalent" /><span>Covalent</span></label>
+        </div>
+        <label>Shear the top layers <output data-shv>0</output><input name="shear" type="range" min="0" max="1" step="0.01" value="0" /></label>
+        <p class="hint">Slide the top half of the crystal by up to one atom spacing, as a dislocation does one row at a time.</p>
+      </fieldset>
+    </form>
+    <div class="cv-out">
+      <svg class="cv-svg" data-svg role="img" aria-label="Rotating three-dimensional model of a crystal">
+        <defs>
+          {[['a', 'var(--rd-blue)'], ['b', 'var(--rd-accent)'], ['c', 'var(--rd-warn)'], ['d', 'var(--rd-muted)'], ['e', 'var(--rd-ok)']].map(([k, c]) => (
+            <radialGradient id={`${uid}-${k}`} cx="35%" cy="32%" r="70%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+              <stop offset="28%" style={`stop-color:${c}`} stop-opacity="1" />
+              <stop offset="100%" style={`stop-color:${c}`} stop-opacity="0.55" />
+            </radialGradient>
+          ))}
+        </defs>
+        <g data-scene></g>
+      </svg>
+      <p class="cv-tip">Drag to rotate.</p>
+      <dl class="readouts" data-out></dl>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Atom positions from fractional lattice coordinates: correct by construction, not drawn by hand. HCP is drawn with the
+    ideal c/a = 1.633 (titanium is 1.587, magnesium 1.624). The bonding view is a teaching model: a simple cubic block in
+    which the ionic lattice alternates in charge and the covalent bonds point at their neighbours.
+  </div>
+</div>
+
+<style is:global>
+  .cvcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .cvcalc .calc-body > * { min-width: 0; }
+  .cvcalc .inline { display: flex !important; align-items: center; gap: 0.45rem; }
+  .cvcalc .inline input { width: auto; }
+  .cv-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+  .cv-out > * { margin: 0 !important; min-width: 0; }
+  .cv-svg { width: 100%; height: auto; aspect-ratio: 16 / 10; display: block; cursor: grab; touch-action: none; user-select: none; border: 1px solid var(--rd-line); border-radius: 8px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rd-ink) 6%, transparent), transparent 70%); }
+  .cv-svg:active { cursor: grabbing; }
+  .cv-tip { font-size: var(--sl-text-xs); color: var(--rd-muted); text-align: center; margin-top: -0.3rem !important; }
+  .cvcalc .or-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--rd-line); border-radius: 6px; overflow: hidden; margin-bottom: 0.6rem; }
+  .cvcalc .or-seg label { margin: 0 !important; position: relative; }
+  .cvcalc .or-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .cvcalc .or-seg span { display: block; text-align: center; padding: 0.4rem 0.3rem; font-size: var(--sl-text-xs); color: var(--rd-muted); cursor: pointer; border-right: 1px solid var(--rd-line); }
+  .cvcalc .or-seg label:last-child span { border-right: 0; }
+  .cvcalc .or-seg input:checked + span { background: color-mix(in srgb, var(--rd-accent) 16%, transparent); color: var(--rd-ink); font-weight: 600; }
+  .cvcalc .or-seg input:focus-visible + span { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+  .cvcalc input[type='range'] { width: 100%; }
+  .cvcalc [data-spin][aria-pressed='false'] { opacity: 0.6; }
+</style>
+
+<script>
+  import { atoms, bonds, coordination, cellFacts, slipPlane, onSlipPlane, RADIUS, STRUCTURES, type V3, type Structure } from '../lib/crystal';
+
+  const calm = () => document.documentElement.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const C_HCP = Math.sqrt(8 / 3);
+
+  document.querySelectorAll<HTMLElement>('[data-cvcalc]').forEach((root) => {
+    const uid = root.dataset.uid!;
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const val = (n: string) => (form.elements.namedItem(n) as RadioNodeList | HTMLInputElement).value;
+    const on = (n: string) => (form.elements.namedItem(n) as HTMLInputElement).checked;
+    const svg = root.querySelector<SVGSVGElement>('[data-svg]')!, scene = root.querySelector<SVGGElement>('[data-scene]')!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const spinBtn = $('[data-spin]');
+    let mode = 'crystal', yaw = -0.6, pitch = 0.42, spin = !calm(), visible = true, raf = 0, last = 0;
+
+    // ---- the model of the current view: points (with a colour and a radius), lines, and a polygon ----
+    type Atom = { p: V3; fill: string; r: number; label?: string; dim?: boolean };
+    type Line = { a: V3; b: V3; stroke: string; w: number; dash?: string; op?: number };
+    let model: { atoms: Atom[]; lines: Line[]; poly?: V3[]; dots?: { p: V3 }[]; centre: V3; size: number } = { atoms: [], lines: [], centre: [0, 0, 0], size: 1 };
+
+    // Electron sea for the metallic view: random walkers inside the block.
+    let electrons: { p: V3; v: V3 }[] = [];
+
+    function buildCrystal() {
+      const s = val('st') as Structure, n = +val('n'), pts = atoms(s, n);
+      const r = val('rad') === 'true' ? RADIUS[s] : RADIUS[s] * 0.42;
+      const slip = on('slip');
+      const lines: Line[] = [];
+      // cell edges
+      if (s === 'hcp') {
+        for (let l = 0; l <= n; l++) for (let k = 0; k < 6; k++) {
+          const a = (k * Math.PI) / 3, b = ((k + 1) * Math.PI) / 3, z = l * C_HCP;
+          lines.push({ a: [Math.cos(a), Math.sin(a), z], b: [Math.cos(b), Math.sin(b), z], stroke: 'var(--rd-muted)', w: 1 });
+          if (l < n) lines.push({ a: [Math.cos(a), Math.sin(a), z], b: [Math.cos(a), Math.sin(a), z + C_HCP], stroke: 'var(--rd-muted)', w: 1 });
+        }
+      } else {
+        for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++) {
+          lines.push({ a: [i, j, 0], b: [i, j, n], stroke: 'var(--rd-muted)', w: 1 });
+          lines.push({ a: [i, 0, j], b: [i, n, j], stroke: 'var(--rd-muted)', w: 1 });
+          lines.push({ a: [0, i, j], b: [n, i, j], stroke: 'var(--rd-muted)', w: 1 });
+        }
+      }
+      if (on('bonds')) for (const [i, j] of bonds(s, pts)) lines.push({ a: pts[i], b: pts[j], stroke: 'var(--rd-ink)', w: 2.2, op: 0.55 });
+      const centre: V3 = s === 'hcp' ? [0, 0, (n * C_HCP) / 2] : [n / 2, n / 2, n / 2];
+      // HCP stands with c vertical: swap y and z so the hexagons lie flat
+      const fix = (p: V3): V3 => (s === 'hcp' ? [p[0], p[2], p[1]] : p);
+      model = {
+        atoms: pts.map((p) => ({ p: fix(p), r, fill: slip ? (onSlipPlane(s, p) ? 'b' : 'd') : 'a', dim: slip && !onSlipPlane(s, p) })),
+        lines: lines.map((l) => ({ ...l, a: fix(l.a), b: fix(l.b) })),
+        poly: slip ? slipPlane(s).map(fix) : undefined,
+        centre: fix(centre), size: s === 'hcp' ? Math.max(1.45, n * C_HCP * 0.75) : n * 0.95,
+      };
+      const f = cellFacts(s), info = STRUCTURES[s];
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>${info.name}</dt><dd>${s.toUpperCase()} <small>${info.metals}</small></dd></div>
+        <div class="readout"><dt>Neighbours per atom</dt><dd>${coordination(s)} <small>atoms per ${s === 'hcp' ? 'hexagonal prism' : 'cell'}: ${f.n}</small></dd></div>
+        <div class="readout"><dt>Packing factor</dt><dd>${(f.apf * 100).toFixed(0)}% <small>${s === 'bcc' ? 'not close packed' : 'close packed: the densest way to stack spheres'}</small></dd></div>
+        <div class="readout ${s === 'bcc' ? 'warn' : s === 'fcc' ? 'ok' : ''}"><dt>Slip</dt><dd>${info.systems} <small>${info.slip}</small></dd></div>`;
+      $('[data-notes]').innerHTML = `<li class="${s === 'bcc' ? 'warn' : ''}">${info.consequence}</li>` + (slip ? `<li>The highlighted plane is the ${s === 'fcc' ? '{111}' : s === 'bcc' ? '{110}' : 'basal (0001)'} slip plane: the plane on which dislocations move most easily.</li>` : '<li>Tick <b>Slip plane</b> to see the plane on which the atoms slide.</li>');
+    }
+
+    function buildBond() {
+      const kind = val('bt'), sh = +val('shear');
+      (root.querySelector('[data-shv]') as HTMLOutputElement).textContent = sh.toFixed(2);
+      const NX = 4, NY = 4, NZ = 2, top = (j: number) => j >= NY / 2;
+      const pos = (i: number, j: number, k: number): V3 => [i + (top(j) ? sh : 0), j, k];
+      const at: Atom[] = [], lines: Line[] = [];
+      for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) for (let k = 0; k < NZ; k++) {
+        const plus = (i + j + k) % 2 === 0;
+        if (kind === 'metallic') at.push({ p: pos(i, j, k), r: 0.24, fill: 'a', label: '+' });
+        else if (kind === 'ionic') at.push({ p: pos(i, j, k), r: plus ? 0.2 : 0.3, fill: plus ? 'a' : 'c', label: plus ? '+' : '−' });
+        else at.push({ p: pos(i, j, k), r: 0.17, fill: 'e' });
+      }
+      let broken = 0, repel = 0;
+      if (kind === 'covalent') {
+        for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) for (let k = 0; k < NZ; k++) {
+          if (i + 1 < NX) lines.push({ a: pos(i, j, k), b: pos(i + 1, j, k), stroke: 'var(--rd-ink)', w: 3, op: 0.7 });
+          if (k + 1 < NZ) lines.push({ a: pos(i, j, k), b: pos(i, j, k + 1), stroke: 'var(--rd-ink)', w: 3, op: 0.7 });
+          if (j + 1 < NY) {
+            const across = !top(j) && top(j + 1);
+            const ok = !across || sh < 0.22 || sh > 0.98;
+            if (!ok) broken++;
+            lines.push({ a: pos(i, j, k), b: pos(i, j + 1, k), stroke: ok ? 'var(--rd-ink)' : 'var(--rd-accent)', w: ok ? 3 : 2, dash: ok ? undefined : '3 4', op: ok ? 0.7 : 0.9 });
+          }
+        }
+      }
+      if (kind === 'ionic') {
+        // across the shear plane: an ion over an ion of the same sign repels
+        const jb = NY / 2 - 1, jt = NY / 2;
+        for (let i = 0; i < NX; i++) for (let k = 0; k < NZ; k++) for (let i2 = 0; i2 < NX; i2++) {
+          const dx = Math.abs(i2 + sh - i);
+          const same = (i + jb + k) % 2 === (i2 + jt + k) % 2;
+          if (same && dx < 0.35) { repel++; lines.push({ a: pos(i, jb, k), b: pos(i2, jt, k), stroke: 'var(--rd-accent)', w: 2.5, dash: '2 3', op: 0.95 }); }
+        }
+      }
+      const centre: V3 = [(NX - 1) / 2 + sh / 2, (NY - 1) / 2, (NZ - 1) / 2];
+      model = { atoms: at, lines, centre, size: 2.6 };
+      if (kind === 'metallic' && electrons.length === 0) {
+        electrons = Array.from({ length: 70 }, () => ({ p: [Math.random() * (NX - 1), Math.random() * (NY - 1), Math.random() * (NZ - 1)] as V3, v: [(Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2] as V3 }));
+      }
+      if (kind !== 'metallic') electrons = [];
+      const verdict = kind === 'metallic' ? ['ok', 'Slides and re-bonds', 'The ion cores slide; the shared electrons hold them at every step. The metal bends.']
+        : kind === 'ionic' ? [repel ? 'bad' : sh > 0.15 ? 'warn' : 'ok', repel ? 'Like charges meet' : sh > 0.15 ? 'Pushed towards repulsion' : 'Stable', repel ? 'Ions of the same sign now sit over each other and repel: the crystal cleaves along the plane.' : 'Each ion is surrounded by the opposite charge. Any slip brings like charges together.']
+        : [broken ? 'bad' : 'ok', broken ? `${broken} bonds broken` : 'Bonds intact', broken ? 'Directional bonds across the plane have stretched and broken. They must break before they can re-form, so the crystal cracks first.' : 'Each atom shares electron pairs with fixed neighbours in fixed directions.'];
+      const facts: Record<string, [string, string, string, string]> = {
+        metallic: ['Positive ion cores in a shared "sea" of free electrons', 'Yes: no bond has a direction, so planes slide', 'Yes: the free electrons carry heat and current', 'Steel, aluminium, titanium, nickel, copper'],
+        ionic: ['Positive and negative ions attract', 'No: slip brings like charges together', 'No (as a solid)', 'Alumina, zirconia, magnesium oxide, salt'],
+        covalent: ['Shared electron pairs between fixed neighbours', 'No: bonds point in fixed directions', 'No, or poorly', 'Diamond, silicon carbide, silicon nitride, silicon'],
+      };
+      const [held, slips, conducts, ex] = facts[kind];
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${verdict[0]}"><dt>Under shear</dt><dd>${verdict[1]} <small>${verdict[2]}</small></dd></div>
+        <div class="readout"><dt>What holds the atoms</dt><dd>${kind[0].toUpperCase() + kind.slice(1)} <small>${held}</small></dd></div>
+        <div class="readout"><dt>Can planes slip?</dt><dd>${slips.split(':')[0]} <small>${slips.split(':').slice(1).join(':').trim()}</small></dd></div>
+        <div class="readout"><dt>Conducts</dt><dd>${conducts.split(':')[0]} <small>${conducts.split(':').slice(1).join(':').trim() || ' '}</small></dd></div>`;
+      $('[data-notes]').innerHTML = `<li>${ex}.</li>` + (kind === 'metallic'
+        ? '<li>This is why metals yield before they break, and why a crack in a metal blunts: the material ahead of it flows. It is also why metals conduct heat, which matters for every insulation and nozzle calculation on this site.</li>'
+        : '<li>Ceramics are strong in compression and very hard, but they cannot yield to blunt a crack. Their strength depends on the largest flaw: design them with Weibull statistics, not a single allowable.</li>');
+    }
+
+    function rebuild() { mode === 'crystal' ? buildCrystal() : buildBond(); draw(); }
+
+    // ---- projection and drawing ----
+    function project(p: V3, W: number, H: number) {
+      const x = p[0] - model.centre[0], y = p[1] - model.centre[1], z = p[2] - model.centre[2];
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
+      const x1 = cy * x + sy * z, z1 = -sy * x + cy * z;
+      const y2 = cp * y - spp * z1, z2 = spp * y + cp * z1;
+      const f = 6, persp = f / (f - z2 / model.size);
+      const scale = (Math.min(W, H) * 0.44) / (model.size + 0.75 * (model.atoms[0]?.r ?? 0));
+      return { x: W / 2 + x1 * scale * persp, y: H / 2 - y2 * scale * persp, z: z2, k: scale * persp };
+    }
+
+    function draw() {
+      const W = 640, H = 400;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const items: { z: number; s: string }[] = [];
+      for (const l of model.lines) {
+        const a = project(l.a, W, H), b = project(l.b, W, H);
+        items.push({ z: (a.z + b.z) / 2 - 0.01, s: `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${l.stroke}" stroke-width="${l.w}" ${l.dash ? `stroke-dasharray="${l.dash}"` : ''} stroke-opacity="${l.op ?? 0.6}" stroke-linecap="round"/>` });
+      }
+      if (model.poly) {
+        const ps = model.poly.map((p) => project(p, W, H)), z = ps.reduce((a, b) => a + b.z, 0) / ps.length;
+        items.push({ z, s: `<polygon points="${ps.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}" fill="var(--rd-accent)" fill-opacity="0.22" stroke="var(--rd-accent)" stroke-width="1.5"/>` });
+      }
+      for (const a of model.atoms) {
+        const q = project(a.p, W, H), r = Math.max(2, a.r * q.k);
+        items.push({ z: q.z, s: `<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r.toFixed(1)}" fill="url(#${uid}-${a.fill})" ${a.dim ? 'fill-opacity="0.45"' : ''}/>${a.label && r > 7 ? `<text x="${q.x.toFixed(1)}" y="${(q.y + r * 0.35).toFixed(1)}" text-anchor="middle" font-size="${Math.min(16, r).toFixed(0)}" font-weight="700" fill="var(--rd-panel)" fill-opacity="0.75" pointer-events="none">${a.label}</text>` : ''}` });
+      }
+      for (const e of electrons) {
+        const q = project(e.p, W, H);
+        items.push({ z: q.z + 0.02, s: `<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${Math.max(1.6, 0.05 * q.k).toFixed(1)}" fill="var(--rd-warn)" fill-opacity="0.85"/>` });
+      }
+      items.sort((a, b) => a.z - b.z);
+      scene.innerHTML = items.map((i) => i.s).join('');
+    }
+
+    // ---- animation: auto-rotate and the electron sea; stops when motion is paused or the viewer is off screen ----
+    const NXm = 3, NYm = 3, NZm = 1;
+    function step(dt: number) {
+      if (spin && !dragging) yaw += dt * 0.35;
+      if (!calm()) for (const e of electrons) {
+        for (let d = 0; d < 3; d++) {
+          e.v[d] += (Math.random() - 0.5) * dt * 3;
+          e.v[d] = Math.max(-1.4, Math.min(1.4, e.v[d]));
+          e.p[d] += e.v[d] * dt;
+          const lo = -0.3, hi = (d === 0 ? NXm + (mode === 'bond' ? +val('shear') : 0) : d === 1 ? NYm : NZm) + 0.3;
+          if (e.p[d] < lo) { e.p[d] = lo; e.v[d] = Math.abs(e.v[d]); }
+          if (e.p[d] > hi) { e.p[d] = hi; e.v[d] = -Math.abs(e.v[d]); }
+        }
+      }
+    }
+    function loop(t: number) {
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      if (!calm() && visible && (spin || electrons.length)) { step(dt); draw(); raf = requestAnimationFrame(loop); }
+      else { raf = 0; last = 0; }
+    }
+    const kick = () => { if (!raf && !calm() && visible && (spin || electrons.length)) raf = requestAnimationFrame(loop); };
+
+    // ---- interaction ----
+    let dragging = false, px = 0, py = 0;
+    svg.addEventListener('pointerdown', (e) => { dragging = true; px = e.clientX; py = e.clientY; svg.setPointerCapture(e.pointerId); });
+    svg.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      yaw += (e.clientX - px) * 0.01; pitch = Math.max(-1.4, Math.min(1.4, pitch + (e.clientY - py) * 0.01));
+      px = e.clientX; py = e.clientY; draw();
+    });
+    const end = () => { dragging = false; };
+    svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+    spinBtn.addEventListener('click', () => { spin = !spin; spinBtn.setAttribute('aria-pressed', String(spin)); kick(); });
+    $('[data-reset]').addEventListener('click', () => { yaw = -0.6; pitch = 0.42; draw(); });
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== mode));
+      if (mode === 'crystal') electrons = [];
+      yaw = mode === 'bond' ? -0.35 : -0.6; pitch = mode === 'bond' ? 0.25 : 0.42;
+      rebuild(); kick();
+    }));
+    form.addEventListener('input', () => { rebuild(); kick(); });
+    form.addEventListener('change', () => { rebuild(); kick(); });
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(svg);
+    new MutationObserver(() => { if (calm()) { spin = false; spinBtn.setAttribute('aria-pressed', 'false'); } kick(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    spinBtn.setAttribute('aria-pressed', String(spin));
+    rebuild(); kick();
+  });
+</script>
