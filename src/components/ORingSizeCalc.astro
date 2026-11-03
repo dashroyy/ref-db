@@ -1,0 +1,153 @@
+---
+// O-ring sizes from the O-ring library (src/lib/oringdb.ts, SAE AS568): look a ring up by dash number, section or ID,
+// or find the stock rings for a groove diameter; the limits of the chosen ring (ID, section, OD, volume) for a model at
+// the extremes; and the AS568 ID tolerance plotted against the ID. UI only here.
+import { SERIES } from '../lib/oringdb';
+---
+
+<div class="calc oscalc" data-oscalc>
+  <div class="calc-head"><span>O-ring sizes and limits (AS568)</span><span class="head-btns"><button type="button" class="chip" data-copy>Copy limits</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="find" aria-selected="true">Look up</button>
+    <button type="button" role="tab" class="chip" data-tab="groove" aria-selected="false">Fit a groove</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="find">
+        <div class="row2">
+          <label>Series<select name="ser"><option value="">All</option>{SERIES.map((s) => <option value={s.key}>{s.name}</option>)}</select></label>
+          <label>Search<input name="q" type="search" placeholder="dash number or ID, e.g. 222 or 37.7" autocomplete="off" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="groove" hidden>
+        <div class="row2">
+          <label>Arrangement<select name="arr"><option value="piston">Piston: ring stretched onto a groove root</option><option value="rod">Rod: ring at or under the rod</option></select></label>
+          <label data-dlab>Groove root ⌀ (mm)<input name="d" type="number" min="1" step="any" value="141.5" /></label>
+          <label>Section (mm)<select name="cs"><option value="1.78">1.78</option><option value="2.62">2.62</option><option value="3.53">3.53</option><option value="5.33" selected>5.33</option><option value="6.99">6.99</option></select></label>
+        </div>
+        <p class="hint">Piston: stretch 0–8% at nominal size. Rod: the ID 0–5% under the rod. The table gives the stretch at the tolerance limits of the ring.</p>
+      </fieldset>
+    </form>
+    <div class="os-out">
+      <dl class="readouts" data-out></dl>
+      <div class="os-scroll" data-table></div>
+      <figure class="hc-fig os-fig"><svg data-chart role="img" aria-label="AS568 inside-diameter tolerance against inside diameter"></svg>
+        <figcaption>AS568 inside-diameter tolerance (±) against the inside diameter. The tolerance steps up with the diameter, not with the section. The selected ring is ringed.</figcaption></figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    SAE AS568 sizes: the same as BS 1806 and the inch series of ISO 3601-1. Inside-diameter tolerance for each dash
+    number; section tolerance for each series (±0.08 mm for 1.78 and 2.62, ±0.10 for 3.53, ±0.13 for 5.33, ±0.15 for 6.99).
+    The 900 series is for straight-thread port bosses (AS5202, MS33656). Check the ring maker's drawing for special
+    compounds: some shrink differently in moulding.
+  </div>
+</div>
+
+<style is:global>
+  .oscalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .oscalc .calc-body > * { min-width: 0; }
+  .os-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+  .os-out > * { margin: 0 !important; min-width: 0; }
+  .os-scroll { overflow: auto; max-height: 22rem; border: 1px solid var(--rd-line); border-radius: 6px; }
+  .os-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); font-family: var(--sl-font-mono); }
+  .os-table th { position: sticky; top: 0; background: var(--rd-panel); z-index: 1; }
+  .os-table th, .os-table td { text-align: right; padding: 0.28rem 0.45rem; border-bottom: 1px solid var(--rd-line); white-space: nowrap; }
+  .os-table th:first-child, .os-table td:first-child { text-align: left; }
+  .os-table tbody tr { cursor: pointer; }
+  .os-table tbody tr:hover td { background: color-mix(in srgb, var(--rd-ink) 5%, transparent); }
+  .os-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 14%, transparent); }
+  .os-table td.bad { color: var(--rd-accent); }
+  .os-table td.ok { color: var(--rd-ok); }
+  .os-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { AS568, SERIES, ring, ringsForGroove, ringLimits, type Ring } from '../lib/oringdb';
+
+  const COL: Record<string, string> = { '1.78': 'var(--rd-blue)', '2.62': 'var(--rd-ok)', '3.53': 'var(--rd-warn)', '5.33': 'var(--rd-accent)', '6.99': 'var(--rd-ink)' };
+
+  document.querySelectorAll<HTMLElement>('[data-oscalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const val = (n: string) => (form.elements.namedItem(n) as HTMLInputElement).value;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'find', picked = '-222', copyText = '';
+    const seriesOf = (r: Ring) => SERIES.find((s) => s.test(+r.dash.slice(1)))!;
+
+    function card(r: Ring) {
+      const l = ringLimits(r);
+      $('[data-out]').innerHTML = `
+        <div class="readout primary"><dt>AS568${r.dash}</dt><dd>${r.id.toFixed(2)} × ${r.cs.toFixed(2)} <small>${r.idIn.toFixed(3)} × ${r.csIn.toFixed(3)} in</small></dd></div>
+        <div class="readout"><dt>Inside ⌀</dt><dd>${l.idMin.toFixed(2)} – ${l.idMax.toFixed(2)} <small>± ${r.idTol.toFixed(2)} mm (± ${r.idTolIn.toFixed(3)} in)</small></dd></div>
+        <div class="readout"><dt>Section</dt><dd>${l.csMin.toFixed(2)} – ${l.csMax.toFixed(2)} <small>± ${r.csTol.toFixed(2)} mm (± ${r.csTolIn.toFixed(3)} in)</small></dd></div>
+        <div class="readout"><dt>Outside ⌀ and volume</dt><dd>${l.odMin.toFixed(2)} – ${l.odMax.toFixed(2)} <small>volume ${(l.volMin / 1000).toFixed(2)} – ${(l.volMax / 1000).toFixed(2)} cm³ (nominal ${(l.volNom / 1000).toFixed(2)})</small></dd></div>`;
+      copyText = [`AS568${r.dash} O-ring (mm)`, 'quantity,min,nominal,max', `ID,${l.idMin.toFixed(2)},${r.id.toFixed(2)},${l.idMax.toFixed(2)}`, `section,${l.csMin.toFixed(2)},${r.cs.toFixed(2)},${l.csMax.toFixed(2)}`, `OD,${l.odMin.toFixed(2)},${(r.id + 2 * r.cs).toFixed(2)},${l.odMax.toFixed(2)}`, `volume mm3,${l.volMin.toFixed(0)},${l.volNom.toFixed(0)},${l.volMax.toFixed(0)}`].join('\n');
+    }
+
+    function chart(sel: Ring | undefined) {
+      const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 200, L = 40, R = 12, T = 12, B = 30;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const pts = AS568.filter((r) => +r.dash.slice(1) < 900), xmax = 700, ymax = 3.2;
+      const X = (v: number) => L + (Math.sqrt(v) / Math.sqrt(xmax)) * (W - L - R), Y = (v: number) => H - B - (v / ymax) * (H - T - B);
+      const p: string[] = [];
+      for (const v of [0, 1, 2, 3]) p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      for (const v of [10, 50, 100, 200, 400, 650]) p.push(`<text x="${X(v)}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      p.push(`<text x="${W - R}" y="${H - 1}" text-anchor="end" font-size="10" fill="var(--rd-muted)">ID, mm (square-root scale)</text><text x="4" y="${T + 2}" font-size="10" fill="var(--rd-muted)">±mm</text>`);
+      for (const r of pts) p.push(`<circle cx="${X(r.id).toFixed(1)}" cy="${Y(r.idTol).toFixed(1)}" r="2.2" fill="${COL[r.cs.toFixed(2)] ?? 'var(--rd-muted)'}" fill-opacity="0.75"/>`);
+      if (sel) p.push(`<circle cx="${X(sel.id)}" cy="${Y(sel.idTol)}" r="7" fill="none" stroke="var(--rd-ink)" stroke-width="2"/><text x="${Math.min(X(sel.id) + 10, W - R - 70)}" y="${Y(sel.idTol) - 9}" font-size="11" fill="var(--rd-ink)">${sel.dash} ±${sel.idTol.toFixed(2)}</text>`);
+      let lx = L + 6;
+      for (const [cs, c] of Object.entries(COL)) { p.push(`<circle cx="${lx}" cy="${T + 6}" r="3" fill="${c}"/><text x="${lx + 6}" y="${T + 10}" font-size="10" fill="var(--rd-muted)">${cs}</text>`); lx += 46; }
+      svg.innerHTML = p.join('');
+    }
+
+    function runFind() {
+      const ser = val('ser'), q = val('q').trim().replace(/^-/, '');
+      const list = AS568.filter((r) => (!ser || seriesOf(r).key === ser) && (!q || r.dash.slice(1).startsWith(q) || r.id.toFixed(2).startsWith(q) || Math.abs(r.id - +q) < 1.5));
+      if (list.length && !list.some((r) => r.dash === picked)) picked = list[0].dash;
+      $('[data-table]').innerHTML = `<table class="os-table"><thead><tr><th>Dash</th><th>ID mm</th><th>± mm</th><th>Section mm</th><th>± mm</th><th>ID in</th><th>Section in</th></tr></thead><tbody>${list.map((r) => `<tr data-dash="${r.dash}" class="${r.dash === picked ? 'sel' : ''}"><td>${r.dash}</td><td>${r.id.toFixed(2)}</td><td>${r.idTol.toFixed(2)}</td><td>${r.cs.toFixed(2)}</td><td>${r.csTol.toFixed(2)}</td><td>${r.idIn.toFixed(3)}</td><td>${r.csIn.toFixed(3)}</td></tr>`).join('') || '<tr><td colspan="7">No ring matches.</td></tr>'}</tbody></table>`;
+      const r = ring(picked);
+      if (r) card(r);
+      chart(r);
+      $('[data-notes]').innerHTML = `<li>${list.length} of ${AS568.length} sizes. Select a row for its limits. For a model of the seal at the extremes, use the smallest ring (ID and section at their minimum) for the least squeeze, and the largest for the most fill.</li>`;
+    }
+
+    function runGroove() {
+      const arr = val('arr') as 'piston' | 'rod', d = +val('d'), cs = +val('cs');
+      $('[data-dlab]').firstChild!.textContent = arr === 'piston' ? 'Groove root ⌀ (mm)' : 'Rod ⌀ (mm)';
+      const fits = d > 0 ? ringsForGroove(cs, arr, d) : [];
+      if (fits.length && !fits.some((x) => x.r.dash === picked)) picked = (arr === 'piston' ? fits.reduce((b, x) => (Math.abs(x.stretch - 0.03) < Math.abs(b.stretch - 0.03) ? x : b)) : fits[fits.length - 1]).r.dash;
+      const pc = (v: number) => `${(v * 100).toFixed(1)}%`;
+      $('[data-table]').innerHTML = fits.length ? `<table class="os-table"><thead><tr><th>Dash</th><th>ID mm</th><th>± mm</th><th>${arr === 'piston' ? 'Stretch' : 'ID under rod'}, nominal</th><th>at ID min</th><th>at ID max</th></tr></thead><tbody>${fits.map(({ r, stretch }) => {
+        const lo = (d - (r.id + r.idTol)) / (r.id + r.idTol), hi = (d - (r.id - r.idTol)) / (r.id - r.idTol);
+        const cl = (v: number) => (arr === 'piston' ? (v < 0 ? 'bad' : v > 0.05 ? 'bad' : 'ok') : v < 0 ? 'bad' : 'ok');
+        return `<tr data-dash="${r.dash}" class="${r.dash === picked ? 'sel' : ''}"><td>${r.dash}</td><td>${r.id.toFixed(2)}</td><td>${r.idTol.toFixed(2)}</td><td class="${cl(stretch)}">${pc(stretch)}</td><td class="${cl(lo)}">${pc(lo)}</td><td class="${cl(hi)}">${pc(hi)}</td></tr>`;
+      }).join('')}</tbody></table>` : '<p class="hint" style="padding:0.6rem">No stock ring of this section fits. Change the section or the diameter, or use a non-standard ring.</p>';
+      const r = ring(picked);
+      if (r && fits.some((x) => x.r.dash === picked)) card(r); else $('[data-out]').innerHTML = '';
+      chart(fits.some((x) => x.r.dash === picked) ? r : undefined);
+      $('[data-notes]').innerHTML = arr === 'piston'
+        ? '<li>Aim for 1–5% stretch at nominal. A ring that can be loose at its largest ID (negative stretch) can roll or be pinched on assembly; above about 5%, the section thins and the life falls.</li><li>The O-ring calculator above uses the same library: its ID list and ID tolerance come from here.</li>'
+        : '<li>A rod ring sits at or slightly under the rod: its ID up to about 5% smaller. A ring larger than the rod is loose in its groove.</li>';
+    }
+
+    const run = () => (mode === 'find' ? runFind() : runGroove());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== mode));
+      run();
+    }));
+    root.addEventListener('click', (e) => { const tr = (e.target as Element).closest<HTMLElement>('tr[data-dash]'); if (tr) { picked = tr.dataset.dash!; run(); } });
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('[data-chart]')!); }
+    run();
+  });
+</script>

@@ -1,15 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { analyseGland, stretchedCs, extrusionLimit, suggestGroove, nearestId, designGland, sectionFor, pointSqueeze, glandAt, type ORingInputs } from '../src/lib/oring.ts';
-import data from '../src/data/orings.json' with { type: 'json' };
+import { idsFor } from '../src/lib/oringdb.ts';
 
 const close = (a: number, b: number, rel = 1e-3) =>
   assert.ok(Math.abs(a - b) <= rel * Math.abs(b), `${a} ≉ ${b}`);
 
-// Worked example on the O-ring page: static radial piston seal, 150 mm bore.
+// Worked example on the O-ring page: static radial piston seal, 150 mm bore, AS568-357 ring.
 const base: ORingInputs = {
   arrangement: 'piston', duty: 'static',
-  cs: 5.33, csTol: 0.13, id: 139.29, idTol: 0.84,
+  cs: 5.33, csTol: 0.13, id: 139.07, idTol: 0.94,
   bore: { min: 150.0, max: 150.063 }, shaft: { min: 149.86, max: 149.9 },
   groove: { min: 141.45, max: 141.55 }, width: { min: 7.0, max: 7.2 }, faceGap: { min: 0, max: 0 },
   eccentric: true, tMin: -40, tMax: 60, tAssembly: 20,
@@ -25,8 +25,8 @@ test('stretch thins the cross-section at constant volume', () => {
 test('nominal piston gland matches the hand calculation', () => {
   const r = analyseGland(base);
   close(r.gNom, 4.26575, 1e-6);
-  close(r.stretchNom, (141.5 - 139.29) / 139.29, 1e-9);
-  close(r.sqNom, 0.1933, 2e-3);
+  close(r.stretchNom, (141.5 - 139.07) / 139.07, 1e-9);
+  close(r.sqNom, 0.1927, 2e-3);
   close(r.fillNom, (Math.PI / 4) * 5.33 ** 2 / (1 + r.stretchNom) / (7.1 * 4.26575), 1e-9);
 });
 
@@ -64,29 +64,30 @@ test('extrusion limits follow the v1 screening table', () => {
 });
 
 test('suggested groove hits the target nominal squeeze and fill', () => {
-  const s = suggestGroove('piston', 150.0315, 5.33, 139.29, 0.2, 0.75);
+  const s = suggestGroove('piston', 150.0315, 5.33, 139.07, 0.2, 0.75);
   const r = analyseGland({ ...base, groove: { min: s.groove, max: s.groove }, width: { min: s.width, max: s.width }, bore: { min: 150.0315, max: 150.0315 } });
   close(r.sqNom, 0.2, 1e-6);
   close(r.fillNom, 0.75, 1e-6);
 });
 
-test('stock ID lookup from ISO 3601 class A data', () => {
-  const ids = (data.idsA as Record<string, number[]>)['5.33'];
-  assert.equal(nearestId(ids, 137.4), 139.29);
+test('stock ID lookup from the AS568 library', () => {
+  const ids = idsFor(5.33);
+  assert.equal(nearestId(ids, 138.5), 139.07);
+  assert.equal(nearestId(ids, 137.4), 135.89);
 });
 
 test('design from the hardware: the nozzle seal of the worked example', () => {
-  const ids = (data.idsA as Record<string, number[]>)['5.33'];
+  const ids = idsFor(5.33);
   const d = designGland({ arrangement: 'piston', duty: 'static', mating: 150, pressure: 10, hardness: 70, clearance: 0.203, squeeze: 0.2, fill: 0.75, ids });
-  assert.equal(d.cs, 5.33); assert.equal(d.id, 139.29);
+  assert.equal(d.cs, 5.33); assert.equal(d.id, 139.07);
   assert.ok(d.stretch > 0.01 && d.stretch < 0.05, 'stretch 1–5%');
   assert.ok(Math.abs(d.groove - 141.54) < 0.01); assert.equal(d.backups, 1, 'a back-up ring at 10 MPa with this clearance');
-  assert.ok(Math.abs(d.idTol - 0.84) < 0.005);
+  assert.ok(Math.abs(d.idTol - 0.94) < 0.005); // AS568-357
   assert.equal(sectionFor(10), 1.78); assert.equal(sectionFor(150), 5.33);
 });
 
 test('face seals put the ring against the pressure side', () => {
-  const ids = (data.idsA as Record<string, number[]>)['3.53'];
+  const ids = idsFor(3.53);
   const inside = designGland({ arrangement: 'face', duty: 'static', mating: 80, pressureInside: true, pressure: 5, hardness: 70, clearance: 0.05, squeeze: 0.25, fill: 0.75, ids });
   assert.ok(inside.od >= 80, 'ring OD on the groove OD');
   const outside = designGland({ arrangement: 'face', duty: 'static', mating: 80, pressureInside: false, pressure: 5, hardness: 70, clearance: 0.05, squeeze: 0.25, fill: 0.75, ids });

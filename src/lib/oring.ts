@@ -1,5 +1,6 @@
 // O-ring gland analysis at the tolerance and temperature extremes.
 // Units: mm, MPa, °C. Shown and derived on /seals/o-ring-design/.
+import { idTolFor } from './oringdb.ts';
 
 export type Arrangement = 'piston' | 'rod' | 'face';
 export type Duty = 'static' | 'dynamic';
@@ -144,8 +145,8 @@ export const nearestId = (ids: number[], target: number) => ids.reduce((b, v) =>
 /** Cross-section tolerances (±, mm) of the ISO 3601-1 class A sections used here. */
 export const CS_TOL: Record<string, number> = { '1.78': 0.08, '2.62': 0.08, '3.53': 0.1, '5.33': 0.13, '6.99': 0.15 };
 
-/** A typical inside-diameter tolerance (±, mm), fitted to the AS568 / ISO 3601-1 inch series: 0.13 + 0.0051·d. */
-export const idTolerance = (id: number) => 0.13 + 0.0051 * id;
+/** Inside-diameter tolerance (±, mm) from the AS568 table of the O-ring library (src/lib/oringdb.ts). */
+export const idTolerance = (id: number) => idTolFor(id);
 
 /** The usual class A section for a seal diameter (mm): larger seals need a larger section to tolerate the hardware. */
 export const sectionFor = (d: number) => (d < 20 ? 1.78 : d < 50 ? 2.62 : d < 120 ? 3.53 : d < 300 ? 5.33 : 6.99);

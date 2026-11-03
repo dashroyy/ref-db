@@ -11,11 +11,11 @@ test('radial growth matches the hoop strain of the case-sizing example', () => {
 });
 
 test('worked example: a bore seal in the plain cylinder unloads; a thick seat keeps it', () => {
-  const ring = 5.33, sMin = 0.108, mate = 0.02; // O-ring page: cold corner after compression set
+  const ring = 5.33, sMin = 0.107, mate = 0.02; // O-ring page: cold corner after compression set
   assert.ok(squeezeAtPressure(ring, sMin, radialGrowth(10, 150, 1.37, 205000) - mate) < 0);
-  close(squeezeAtPressure(ring, sMin, radialGrowth(10, 150, 10, 205000) - mate), 0.094, 0.001);
+  close(squeezeAtPressure(ring, sMin, radialGrowth(10, 150, 10, 205000) - mate), 0.093, 0.001);
   const t = seatWallFor(10, 150, 205000, 0.3, ring, sMin, 0.10, mate);
-  close(t, 14.9, 0.05);
+  close(t, 16.3, 0.05);
   close(squeezeAtPressure(ring, sMin, radialGrowth(10, 150, t, 205000) - mate), 0.10, 1e-9);
   assert.equal(seatWallFor(10, 150, 205000, 0.3, ring, 0.09, 0.10), Infinity);
 });

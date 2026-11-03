@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import ORingStates from '../../../components/ORingStates.astro';
 import ORingCalc from '../../../components/ORingCalc.astro';
+import ORingSizeCalc from '../../../components/ORingSizeCalc.astro';
 
 <div class="glance">
   <div><b>In one line</b>Check the squeeze at the worst tolerance condition and the coldest temperature, with the joint gap at its widest under pressure. Do not check it at nominal.</div>
@@ -84,6 +85,30 @@ Then add the changes that occur after assembly:
   [Bolted joints](../../joints/bolted-joints/). [Sealing strategy](../sealing-strategy/) tells where to put the seal
   so that the gap almost does not move, and how to back it up and do a leak check on it.
 
+## O-ring sizes and tolerances
+
+Every tool on this site that takes an O-ring reads it from one **O-ring library**: all 369 SAE AS568 sizes. These are
+the same sizes as BS 1806 and the inch series of ISO 3601-1. Each dash number has its inside diameter and its ID
+tolerance; each series has its section and its section tolerance:
+
+| Series | Section | Section tolerance | ID tolerance |
+| --- | --- | --- | --- |
+| -004 to -050 | 1.78 mm (0.070 in) | ±0.08 mm | ±0.13 to ±0.94 mm |
+| -102 to -178 | 2.62 mm (0.103 in) | ±0.08 mm | ±0.10 to ±1.40 mm |
+| -201 to -284 | 3.53 mm (0.139 in) | ±0.10 mm | ±0.13 to ±2.16 mm |
+| -309 to -395 | 5.33 mm (0.210 in) | ±0.13 mm | ±0.13 to ±3.05 mm |
+| -425 to -475 | 6.99 mm (0.275 in) | ±0.15 mm | ±0.84 to ±3.05 mm |
+
+The ID tolerance steps up with the diameter, not with the section. A large ring can be several millimetres off its
+nominal ID. This decides the stretch, and with it the section after stretching and the squeeze. For a model of the seal
+at its extremes, use the smallest ring (ID and section at their minimum) for the least squeeze, and the largest ring
+for the most squeeze and fill.
+
+**Use stock sizes, and check that a size is real.** An ID that is standard in one series is not always standard in
+another: 139.29 mm is AS568-254, a 3.53 mm ring. The nearest 5.33 mm rings are -356 (135.89 mm) and -357 (139.07 mm).
+
+<ORingSizeCalc />
+
 ## The Challenger lesson: the seal must follow the joint
 
 <Aside type="caution" title="A seal is a spring, and cold springs are slow">
@@ -134,38 +159,38 @@ section from the diameter, a stock ring with 1–5% stretch (or against the pres
 the target squeeze and fill, and back-up rings if the extrusion check needs them, and writes them into the steps.
 
 The housing material comes from the [material library](../../materials/selection/), so its expansion is the same as
-in the other tools. For a ring that is not in the class A list, select **Other** and type the section and the ID.
+in the other tools. Its section and ID list come from the O-ring library, and the ID tolerance follows the ring you select. For a ring that is not an AS568 size, select **Other** and type the section, the ID and their tolerances.
 
 <ORingCalc />
 
 ## Worked example: a nozzle-to-case radial seal
 
 These are the defaults of the calculator: a static radial seal in a piston-type closure, a 150 mm bore at 10 MPa, a
-steel housing, and a service range of −40 to +60 °C. The ring has a 5.33 mm section and a 139.29 mm stock ID. The
-groove root is Ø141.45–141.55, the width is 7.0–7.2 mm, the bore is Ø150.000–150.063, and the plug is
+steel housing, and a service range of −40 to +60 °C. The ring is AS568-357: a 5.33 ± 0.13 mm section and a
+139.07 ± 0.94 mm ID. The groove root is Ø141.45–141.55, the width is 7.0–7.2 mm, the bore is Ø150.000–150.063, and the plug is
 Ø149.860–149.900. The parts can sit off-centre.
 
 1. **Nominal.** The gland depth is $(150.03 - 141.50)/2 = 4.27$ mm. The stretch onto the root is
-   $(141.5 - 139.29)/139.29 = 1.6\%$, which makes the 5.33 section thinner, at 5.29 mm. The squeeze is
-   $(5.29 - 4.27)/5.29 = 19.3\%$, and the fill is 73%. These values are well in the band.
+   $(141.5 - 139.07)/139.07 = 1.7\%$, which makes the 5.33 section thinner, at 5.28 mm. The squeeze is
+   $(5.28 - 4.27)/5.28 = 19.3\%$, and the fill is 72%. These values are well in the band.
 2. **Worst conditions.** Fully off-centre, the gland is from 4.16 to 4.41 mm. The maximum squeeze (largest ring, hot,
-   with 5% swell) is 25%. The minimum squeeze (smallest ring, most stretch, −40 °C) is 13.5%, and **10.8% after 20%
+   with 5% swell) is 25%. The minimum squeeze (smallest ring, most stretch, −40 °C) is 13.4%, and **10.7% after 20%
    compression set**. This is just above the 10% screening minimum.
 3. **Extrusion.** The clearance can be up to 0.203 mm. At 10 MPa, a 70 Shore ring needs approximately 0.08 mm, and even
    a 90 Shore ring needs approximately 0.15 mm. **A back-up ring is necessary,** or a tighter fit and a harder compound.
 4. **Compound.** Standard FKM usually has a limit of approximately −20 °C. At −40 °C, it does not pass the temperature
    check. Use a low-temperature fluoroelastomer grade or a different compound, and confirm the TR-10.
-5. **Joint opening.** Enter 0.25 mm of radial opening under pressure. The minimum squeeze decreases to **6.9%**, and
+5. **Joint opening.** Enter 0.25 mm of radial opening under pressure. The minimum squeeze decreases to **6.8%**, and
    the cold-resilience check fails. This is the Challenger situation on a small scale. Make the joint stiffer. Do not
    change the seal.
 6. **How rare is the worst case?** With the joint opening back at 0, the Monte Carlo puts the 3σ squeeze at 11.9%,
-   and none of 40,000 assemblies is below 10%. The worst case of 10.8% needs the smallest ring, the most stretch, the
+   and none of 40,000 assemblies is below 10%. The worst case of 10.7% needs the smallest ring, the most stretch, the
    deepest gland, full eccentricity and −40 °C together. Use the worst case for this seal (see
    [Tolerance stack](../../drawing/tolerance-stack/#the-nozzle-seal) for why), but the statistics show where the margin
    is.
-7. **Redesign with a back-up ring.** Push **Design the ring and groove**. It keeps the 139.29 × 5.33 ring, moves the
-   groove root to Ø141.52–141.62 for 20% nominal squeeze, and adds one back-up ring because of item 3: the groove width
-   becomes 8.32–8.52 mm. The minimum squeeze after compression set increases to 11.4%, and the extrusion check passes.
+7. **Redesign with a back-up ring.** Push **Design the ring and groove**. It keeps the -357 ring, moves the groove
+   root to Ø141.497–141.597 for 20% nominal squeeze, and adds one back-up ring because of item 3: the groove width
+   becomes 8.32–8.52 mm. The minimum squeeze after compression set increases to 11.1%, and the extrusion check passes.
    The compound check still fails until you select a low-temperature grade.
 
 ## Choosing the compound

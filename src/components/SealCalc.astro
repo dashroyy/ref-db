@@ -19,7 +19,7 @@ import { MATERIALS } from '../lib/bolts';
           <label>Material<MaterialSelect name="mat" list={MATERIALS} selected={D.caseSteel} /></label>
           <label>Mating part's growth (mm)<input name="mate" type="number" step="any" value="0.02" /></label>
           <label>Ring section (mm)<input name="cs" type="number" min="0.5" step="any" value="5.33" /></label>
-          <label>Minimum squeeze (%)<input name="smin" type="number" min="0" max="50" step="any" value="10.8" /></label>
+          <label>Minimum squeeze (%)<input name="smin" type="number" min="0" max="50" step="any" value="10.7" /></label>
           <label>Squeeze floor (%)<input name="floor" type="number" min="0" max="50" step="any" value="10" /></label>
         </div>
         <p class="hint">Minimum squeeze at the worst corner (smallest ring, cold, after compression set) from the <a href="../o-ring-design/">O-ring design</a> calculator. The mating part's growth comes from your analysis; zero is conservative. Closed-end cylinder, thin wall.</p>

@@ -80,9 +80,9 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
             <label>Section (mm)<select name="cs">{data.classA.map((c) => <option value={c} selected={c === 5.33}>{c.toFixed(2)}</option>)}<option value="other">Other: type it</option></select></label>
             <label>Inside diameter (mm)<select name="id"></select></label>
             <label data-custom hidden>Section (mm)<input name="csX" type="number" min="0.5" step="any" value="5.33" /></label>
-            <label data-custom hidden>Inside diameter (mm)<input name="idX" type="number" min="1" step="any" value="139.29" /></label>
+            <label data-custom hidden>Inside diameter (mm)<input name="idX" type="number" min="1" step="any" value="139.07" /></label>
             <label>Section tolerance ±<input name="csTol" type="number" step="any" min="0" /></label>
-            <label>ID tolerance ±<input name="idTol" type="number" step="any" min="0" value="0.84" /></label>
+            <label>ID tolerance ±<input name="idTol" type="number" step="any" min="0" value="0.94" /></label>
           </div>
           <p class="hint" data-idhint></p>
         </div>
@@ -222,6 +222,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
 <script>
   import { analyseGland, nearestId, designGland, pointSqueeze, glandAt, CS_TOL, type ORingInputs, type Arrangement, type Duty, type Corner } from '../lib/oring';
   import { monteCarlo } from '../lib/stack';
+  import { ringsFor, ringAt, idsFor } from '../lib/oringdb';
 
   const NS = 'http://www.w3.org/2000/svg';
   const pct = (v: number, d = 1) => `${(v * 100).toFixed(d)}%`;
@@ -248,14 +249,17 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
     let corner: Corner = 'nom', view = 'range', chipSel = -1, sweeping = 0;
     let last: { i: ORingInputs; g: ReturnType<typeof analyseGland>; checks: [string, Status, string][]; cmp: any; med: string } | null = null;
 
+    // Stock rings of the section from the O-ring library (AS568): the ID tolerance follows the ring.
     const fillIds = (keep?: number) => {
       if (custom()) return;
-      const ids: number[] = data.idsA[val('cs')] ?? [];
+      const rings = ringsFor(+val('cs')), ids = rings.map((r) => r.id);
       const sel = field('id') as HTMLSelectElement;
-      sel.innerHTML = ids.map((v) => `<option value="${v}">${v.toFixed(2)}</option>`).join('');
+      sel.innerHTML = rings.map((r) => `<option value="${r.id}">${r.dash} · ${r.id.toFixed(2)}</option>`).join('');
       if (keep) sel.value = String(nearestId(ids, keep));
       field('csTol').value = String(CS_TOL[val('cs')] ?? 0.1);
+      setIdTol();
     };
+    const setIdTol = () => { const r = ringAt(+val('cs'), +val('id')); if (r) field('idTol').value = r.idTol.toFixed(2); };
     const labels = () => {
       const a = arr();
       const set = (k: string, t: string, show = true) => {
@@ -533,7 +537,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
       const d = designGland({
         arrangement: a, duty: i.duty, mating, pressureInside: val('dSide') !== 'out', pressure: i.pressure, hardness: i.hardness,
         clearance: a === 'face' ? 2 * i.faceGap.max : i.bore.max - i.shaft.min, squeeze: num('dSq') / 100, fill: num('dFill') / 100,
-        cs: csUse, ids: data.idsA[csUse.toFixed(2)] ?? data.idsA[String(csUse)] ?? [], backups: bu === 'auto' ? undefined : +bu,
+        cs: csUse, ids: idsFor(csUse), backups: bu === 'auto' ? undefined : +bu,
       });
       field('cs').value = String(d.cs);
       fillIds(d.id);
@@ -546,6 +550,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
       run();
     });
     field('cs').addEventListener('change', () => fillIds(num('id') || 100));
+    field('id').addEventListener('change', setIdTol);
     let deb = 0;
     form.addEventListener('input', () => { window.clearTimeout(deb); deb = window.setTimeout(run, 120); });
     form.addEventListener('change', run);
@@ -553,7 +558,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
       let w = 0;
       new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; drawGland(); drawView(); } }).observe(root.querySelector('[data-gland]')!);
     }
-    fillIds(139.29);
+    fillIds(139.07);
     run();
   });
 </script>
