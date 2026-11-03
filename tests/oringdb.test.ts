@@ -30,3 +30,16 @@ test('limits for a model at the extremes, and rings that fit a groove', () => {
   const fits = ringsForGroove(5.33, 'piston', 141.5).map((x) => x.r.dash);
   assert.deepEqual(fits, ['-355', '-356', '-357']);
 });
+
+test('BS 4518 metric sizes: ID tolerance by size range, section tolerance by section', async () => {
+  const { BS4518, ringsFor: rf, ring: rg, idTolFor: tol, bs4518IdTol } = await import('../src/lib/oringdb.ts');
+  assert.equal(BS4518.length, 203);
+  assert.deepEqual([1.6, 2.4, 3.0, 5.7, 8.4].map((cs) => rf(cs).length), [24, 43, 58, 59, 19]);
+  const r = rg('0545-30')!;
+  assert.deepEqual([r.id, r.idTol, r.cs, r.csTol, r.std], [54.5, 0.4, 3, 0.1, 'BS 4518']);
+  const pairs: [number, number][] = [[3.1, 0.15], [10.1, 0.2], [19.5, 0.25], [44.3, 0.3], [54.5, 0.4], [99.5, 0.5], [149.1, 0.6], [209.3, 0.8], [289.3, 1.0], [359.3, 1.5], [459.3, 2.0]];
+  for (const [id, t] of pairs) assert.equal(bs4518IdTol(id), t, String(id));
+  assert.equal(rg('2493-57')!.csTol, 0.12);
+  assert.equal(tol(53, 3.0), 0.4, 'a non-stock metric ID takes the BS 4518 range value');
+  assert.equal(tol(139.07, 5.33), 0.94, 'a stock AS568 ID takes its own value');
+});

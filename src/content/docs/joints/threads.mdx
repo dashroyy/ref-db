@@ -10,6 +10,7 @@ import Analogy from '../../../components/Analogy.astro';
 import ThreadProfile from '../../../components/ThreadProfile.astro';
 import ThreadCalc from '../../../components/ThreadCalc.astro';
 import ThreadLimitsCalc from '../../../components/ThreadLimitsCalc.astro';
+import PipeThreadCalc from '../../../components/PipeThreadCalc.astro';
 
 <div class="glance">
   <div><b>In one line</b>Engage sufficient thread so that the bolt breaks before the threads strip: the height of a nut in steel, approximately 1.5–2 d in aluminium, or an insert.</div>
@@ -87,6 +88,28 @@ minor diameter all fall from their basic values. For the fit and the coating, us
 diameter. For an FE model of the threads, model both limits.
 
 <ThreadLimitsCalc />
+
+## Pipe threads
+
+Pipe threads join ports and fittings, not structure. The thread library holds the three forms that a UK motor
+programme meets most:
+
+| Form | Standard | Profile | Seals on | Toleranced by |
+| --- | --- | --- | --- | --- |
+| **G** (BSPP) | ISO 228-1 | 55°, parallel | A face, a bonded seal or an O-ring: never the thread | Limits of size: external class A or B, one internal class |
+| **R / Rc / Rp** (BSPT) | ISO 7-1 | 55°, taper 1:16 (Rp is parallel internal) | The thread, with a sealant or tape | The position of the gauge plane: ±T1/2 external, ±T2/2 internal |
+| **NPT** | ASME B1.20.1 | 60°, taper 1:16 | The thread, with a sealant (NPTF dryseal without one) | ±1 turn on the gauge at the hand-tight plane L1 |
+
+- **A taper thread has no fixed diameter.** Its diameter changes by 1 in 16 along the axis, and the tolerance is on
+  where the gauge plane falls. For a stress check or a fit, take the diameter at the section from the gauge-plane
+  diameter and the distance: $d(x) = d_\text{gauge} - x/16$, at both limit positions of the gauge plane.
+- **Taper threads wedge.** Tightening a taper thread into a boss puts the boss in hoop tension. Thin aluminium bosses
+  split. On flight hardware, prefer a straight-thread port that seals on an O-ring (AS5202 or ISO 6149 with an AS568
+  900-series or metric ring).
+- **Do not mix the forms.** G does not seal in Rc. BSPT (55°) and NPT (60°) have different profiles, and different
+  pitches above ¼ in.
+
+<PipeThreadCalc />
 
 ## Rolled or cut
 

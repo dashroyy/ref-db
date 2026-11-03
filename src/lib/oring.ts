@@ -142,11 +142,11 @@ export const nearestId = (ids: number[], target: number) => ids.reduce((b, v) =>
 
 // ---------- Design from the hardware ----------
 
-/** Cross-section tolerances (±, mm) of the ISO 3601-1 class A sections used here. */
-export const CS_TOL: Record<string, number> = { '1.78': 0.08, '2.62': 0.08, '3.53': 0.1, '5.33': 0.13, '6.99': 0.15 };
+/** Cross-section tolerances (±, mm): the AS568 series and the BS 4518 metric sections. */
+export const CS_TOL: Record<string, number> = { '1.78': 0.08, '2.62': 0.08, '3.53': 0.1, '5.33': 0.13, '6.99': 0.15, '1.60': 0.08, '2.40': 0.08, '3.00': 0.1, '5.70': 0.12, '8.40': 0.15 };
 
 /** Inside-diameter tolerance (±, mm) from the AS568 table of the O-ring library (src/lib/oringdb.ts). */
-export const idTolerance = (id: number) => idTolFor(id);
+export const idTolerance = (id: number, cs?: number) => idTolFor(id, cs);
 
 /** The usual class A section for a seal diameter (mm): larger seals need a larger section to tolerate the hardware. */
 export const sectionFor = (d: number) => (d < 20 ? 1.78 : d < 50 ? 2.62 : d < 120 ? 3.53 : d < 300 ? 5.33 : 6.99);
@@ -203,7 +203,7 @@ export function designGland(o: DesignInputs) {
   const width = area / (o.fill * depth) + backups * backupThickness(cs);
   const od = id + 2 * cs;
   return {
-    cs, csTol: CS_TOL[cs.toFixed(2)] ?? 0.1, id, idTol: idTolerance(id), od, stretch, groove, depth, width,
+    cs, csTol: CS_TOL[cs.toFixed(2)] ?? 0.1, id, idTol: idTolerance(id, cs), od, stretch, groove, depth, width,
     backups, backupT: backupThickness(cs), extrusionLimit: limit, chamfer: leadIn(cs),
     rootRadius: cs <= 2.62 ? 0.2 : cs <= 5.33 ? 0.4 : 0.6, edgeBreak: 0.1,
     faceRing: o.arrangement === 'face' ? (o.pressureInside !== false ? { od, groove: o.mating, comp: (od - o.mating) / od } : { id, groove: o.mating, stretch: (o.mating - id) / id }) : null,

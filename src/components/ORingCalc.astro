@@ -6,6 +6,7 @@
 import data from '../data/orings.json';
 import MaterialSelect from './MaterialSelect.astro';
 import { withProps, DEFAULTS as D } from '../lib/materials';
+import { SECTIONS, METRIC_SECTIONS } from '../lib/oringdb';
 const HOUSINGS = withProps(['alpha'], ['metal', 'composite']);
 const ALPHA = Object.fromEntries(HOUSINGS.map((m) => [m.key, m.alpha]));
 const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Temperature' }, { key: 'stats', name: 'Statistics' }, { key: 'dwg', name: 'Drawing' }, { key: 'mats', name: 'Compounds' }];
@@ -14,7 +15,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
 <div class="calc orcalc" data-orcalc>
   <div class="calc-head">
     <span>O-ring gland: design and worst-case check</span>
-    <span>ISO 3601 class A · screening values</span>
+    <span>AS568 · BS 4518 · screening values</span>
   </div>
   <div class="calc-body or-body">
     <div class="or-top">
@@ -48,7 +49,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
           <div class="row2">
             <label>Target squeeze (%)<input name="dSq" type="number" min="5" max="40" step="any" value="20" /></label>
             <label>Target fill (%)<input name="dFill" type="number" min="40" max="90" step="any" value="75" /></label>
-            <label>Section<select name="dCs"><option value="auto">Auto, from Ø</option>{data.classA.map((c) => <option value={c}>{c.toFixed(2)} mm</option>)}</select></label>
+            <label>Section<select name="dCs"><option value="auto">Auto, from Ø</option><optgroup label="AS568 / BS 1806 (inch)">{SECTIONS.map((c) => <option value={c}>{c.toFixed(2)} mm</option>)}</optgroup><optgroup label="BS 4518 (metric)">{METRIC_SECTIONS.map((c) => <option value={c}>{c.toFixed(1)} mm</option>)}</optgroup></select></label>
             <label>Back-up rings<select name="dBu"><option value="auto">Auto, from gap</option><option value="0">None</option><option value="1">One</option><option value="2">Two</option></select></label>
             <label data-face hidden>Pressure is<select name="dSide"><option value="in">Inside the ring</option><option value="out">Outside the ring</option></select></label>
             <label data-face hidden>Groove OD or ID (mm)<input name="dFaceD" type="number" min="1" step="any" value="80" /></label>
@@ -77,7 +78,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
         <summary><span class="or-n">2</span> O-ring <small data-sum="ring"></small></summary>
         <div class="or-in">
           <div class="row2">
-            <label>Section (mm)<select name="cs">{data.classA.map((c) => <option value={c} selected={c === 5.33}>{c.toFixed(2)}</option>)}<option value="other">Other: type it</option></select></label>
+            <label>Section (mm)<select name="cs"><optgroup label="AS568 / BS 1806 (inch)">{SECTIONS.map((c) => <option value={c} selected={c === 5.33}>{c.toFixed(2)}</option>)}</optgroup><optgroup label="BS 4518 (metric)">{METRIC_SECTIONS.map((c) => <option value={c}>{c.toFixed(1)}</option>)}</optgroup><option value="other">Other: type it</option></select></label>
             <label>Inside diameter (mm)<select name="id"></select></label>
             <label data-custom hidden>Section (mm)<input name="csX" type="number" min="0.5" step="any" value="5.33" /></label>
             <label data-custom hidden>Inside diameter (mm)<input name="idX" type="number" min="1" step="any" value="139.07" /></label>
@@ -249,14 +250,14 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
     let corner: Corner = 'nom', view = 'range', chipSel = -1, sweeping = 0;
     let last: { i: ORingInputs; g: ReturnType<typeof analyseGland>; checks: [string, Status, string][]; cmp: any; med: string } | null = null;
 
-    // Stock rings of the section from the O-ring library (AS568): the ID tolerance follows the ring.
+    // Stock rings of the section from the O-ring library (AS568 or BS 4518): the ID tolerance follows the ring.
     const fillIds = (keep?: number) => {
       if (custom()) return;
       const rings = ringsFor(+val('cs')), ids = rings.map((r) => r.id);
       const sel = field('id') as HTMLSelectElement;
       sel.innerHTML = rings.map((r) => `<option value="${r.id}">${r.dash} · ${r.id.toFixed(2)}</option>`).join('');
       if (keep) sel.value = String(nearestId(ids, keep));
-      field('csTol').value = String(CS_TOL[val('cs')] ?? 0.1);
+      field('csTol').value = String(CS_TOL[(+val('cs')).toFixed(2)] ?? 0.1);
       setIdTol();
     };
     const setIdTol = () => { const r = ringAt(+val('cs'), +val('id')); if (r) field('idTol').value = r.idTol.toFixed(2); };

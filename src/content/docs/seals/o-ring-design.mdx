@@ -87,9 +87,28 @@ Then add the changes that occur after assembly:
 
 ## O-ring sizes and tolerances
 
-Every tool on this site that takes an O-ring reads it from one **O-ring library**: all 369 SAE AS568 sizes. These are
-the same sizes as BS 1806 and the inch series of ISO 3601-1. Each dash number has its inside diameter and its ID
-tolerance; each series has its section and its section tolerance:
+Every tool on this site that takes an O-ring reads it from one **O-ring library**, with two standards:
+
+- **SAE AS568:** all 369 inch sizes, the same as BS 1806 and the inch series of ISO 3601-1. Each dash number has its
+  inside diameter and its ID tolerance; each series has its section and its section tolerance.
+- **BS 4518:** the 203 UK metric sizes, designated by the ID and the section in tenths of a millimetre (0545-30 is
+  54.5 × 3.0 mm). The ID tolerance follows the size range: ±0.15 mm up to 10 mm, ±0.20 to 18, ±0.25 to 30, ±0.30 to
+  50, ±0.40 to 80, ±0.50 to 120, ±0.60 to 180, ±0.80 to 250, ±1.00 to 315, ±1.50 to 400 and ±2.00 to 500 mm.
+
+| Series | Section | Section tolerance | ID tolerance |
+| --- | --- | --- | --- |
+| AS568 -004 to -050 | 1.78 mm (0.070 in) | ±0.08 mm | ±0.13 to ±0.94 mm |
+| AS568 -102 to -178 | 2.62 mm (0.103 in) | ±0.08 mm | ±0.10 to ±1.40 mm |
+| AS568 -201 to -284 | 3.53 mm (0.139 in) | ±0.10 mm | ±0.13 to ±2.16 mm |
+| AS568 -309 to -395 | 5.33 mm (0.210 in) | ±0.13 mm | ±0.13 to ±3.05 mm |
+| AS568 -425 to -475 | 6.99 mm (0.275 in) | ±0.15 mm | ±0.84 to ±3.05 mm |
+| BS 4518 | 1.6 and 2.4 mm | ±0.08 mm | by size range |
+| BS 4518 | 3.0 mm | ±0.10 mm | by size range |
+| BS 4518 | 5.7 mm | ±0.12 mm | by size range |
+| BS 4518 | 8.4 mm | ±0.15 mm | by size range |
+
+The two standards do not mix: a 3.0 mm BS 4518 ring needs its own groove, not a 3.53 mm AS568 groove. The O-ring
+calculator offers both, and its ID list and ID tolerance follow the standard of the section you select.
 
 | Series | Section | Section tolerance | ID tolerance |
 | --- | --- | --- | --- |

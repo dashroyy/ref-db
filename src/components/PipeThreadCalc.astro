@@ -1,0 +1,157 @@
+---
+// Pipe threads from src/lib/pipethreads.ts: G (BSPP, ISO 228-1) limits of size for the external class A or B and the
+// internal thread; R / Rc / Rp (BSPT, ISO 7-1) and NPT (ASME B1.20.1) gauge-plane dimensions and the tolerance on the
+// gauge-plane position, with a drawing of the taper. UI only here.
+import { PIPE_FORMS, sizes } from '../lib/pipethreads';
+const SIZES = Object.fromEntries(PIPE_FORMS.map((f) => [f.key, sizes(f.key)]));
+---
+
+<div class="calc ptcalc" data-ptcalc>
+  <div class="calc-head"><span>Pipe threads: G, R and NPT</span><span class="head-btns"><button type="button" class="chip" data-copy>Copy table</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Form">
+    {PIPE_FORMS.map((f, i) => <button type="button" role="tab" class="chip" data-form-key={f.key} aria-selected={i === 0 ? 'true' : 'false'}>{f.key === 'G' ? 'G (BSPP)' : f.key === 'R' ? 'R (BSPT)' : 'NPT'}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <div class="row2">
+          <label>Size<select name="size" data-size></select></label>
+          <label data-gcls>External class<select name="cls"><option value="A">A (closer)</option><option value="B">B</option></select></label>
+          <label>Units<select name="u"><option value="mm">mm</option><option value="in">inch</option></select></label>
+        </div>
+      </fieldset>
+    </form>
+    <div class="pt-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig pt-fig" data-figwrap><svg data-chart role="img" aria-label="Taper thread with its gauge plane and tolerance"></svg><figcaption data-cap></figcaption></figure>
+      <div class="pt-scroll" data-table></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-sizes set:html={JSON.stringify(SIZES)}></script>
+  <div class="calc-foot">
+    G: ISO 228-1 limits (external class A and B; internal pitch tolerance equal to class A). R, Rc, Rp: ISO 7-1 gauge
+    diameters, basic gauge length and its tolerance (±T1/2 external, ±T2/2 internal). NPT: ASME B1.20.1 basic dimensions
+    from its formulas; the gauge tolerance is ±1 turn. Taper 1:16 on diameter. The internal minor-diameter tolerance of G
+    is checked for G 1 only. Check the current standard before release.
+  </div>
+</div>
+
+<style is:global>
+  .ptcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .ptcalc .calc-body > * { min-width: 0; }
+  .pt-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .pt-out > * { margin: 0 !important; min-width: 0; }
+  .pt-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .pt-scroll { overflow-x: auto; }
+  .pt-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); font-family: var(--sl-font-mono); }
+  .pt-table th, .pt-table td { text-align: right; padding: 0.3rem 0.45rem; border-bottom: 1px solid var(--rd-line); white-space: nowrap; }
+  .pt-table th:first-child, .pt-table td:first-child { text-align: left; font-family: var(--sl-font-system, system-ui); white-space: normal; }
+</style>
+
+<script>
+  import { gLimits, rLimits, nptLimits, type PipeForm } from '../lib/pipethreads';
+
+  const IN = 25.4;
+
+  document.querySelectorAll<HTMLElement>('[data-ptcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLSelectElement;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const SIZES: Record<string, string[]> = JSON.parse($('[data-sizes]').textContent!);
+    let pf: PipeForm = 'G', copyText = '';
+
+    const fillSizes = () => {
+      const keep = field('size').value;
+      field('size').innerHTML = SIZES[pf].map((s) => `<option value="${s}">${pf === 'G' ? 'G ' : pf === 'R' ? 'R ' : ''}${s}${pf === 'NPT' ? ' NPT' : ''}</option>`).join('');
+      field('size').value = SIZES[pf].includes(keep) ? keep : SIZES[pf].includes('1/2') ? '1/2' : SIZES[pf][0];
+      $('[data-gcls]').hidden = pf !== 'G';
+      field('u').value = pf === 'NPT' ? 'in' : 'mm';
+    };
+
+    // Taper profile, exaggerated: the external thread's major diameter from the small end, the gauge plane, its tolerance.
+    function taper(len: number, gauge: number, tol: number, labels: { gauge: string; end: string }) {
+      const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 190, L = 20, R = 20, T = 18, B = 34;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const X = (x: number) => L + (x / len) * (W - L - R);
+      const span = (H - T - B) / 2, half = (x: number) => span * (0.62 + (0.3 * x) / len); // schematic: the taper is exaggerated
+      const yTop = (x: number) => (H - B) / 2 + T / 2 - half(x), yBot = (x: number) => (H - B) / 2 + T / 2 + half(x);
+      const p: string[] = [];
+      p.push(`<polygon points="${X(0)},${yTop(0)} ${X(len)},${yTop(len)} ${X(len)},${yBot(len)} ${X(0)},${yBot(0)}" fill="var(--rd-steel, var(--rd-muted))" fill-opacity="0.18" stroke="var(--rd-ink)" stroke-width="1.5"/>`);
+      for (let x = 0; x <= len; x += len / 14) p.push(`<line x1="${X(x)}" x2="${X(x)}" y1="${yTop(x)}" y2="${yTop(x) + 7}" stroke="var(--rd-ink)" stroke-opacity="0.5"/><line x1="${X(x)}" x2="${X(x)}" y1="${yBot(x) - 7}" y2="${yBot(x)}" stroke="var(--rd-ink)" stroke-opacity="0.5"/>`);
+      p.push(`<rect x="${X(Math.max(0, gauge - tol))}" y="${T - 4}" width="${X(gauge + tol) - X(Math.max(0, gauge - tol))}" height="${H - B - T + 8}" fill="var(--rd-ok)" fill-opacity="0.14"/>`);
+      p.push(`<line x1="${X(gauge)}" x2="${X(gauge)}" y1="${T - 6}" y2="${H - B + 4}" stroke="var(--rd-ok)" stroke-width="2" stroke-dasharray="5 3"/><text x="${X(gauge)}" y="${T - 8}" text-anchor="middle" font-size="10.5" fill="var(--rd-ok)">${labels.gauge}</text>`);
+      p.push(`<text x="${X(0)}" y="${H - 12}" font-size="10.5" fill="var(--rd-muted)">${labels.end}</text><text x="${X(len)}" y="${H - 12}" text-anchor="end" font-size="10.5" fill="var(--rd-muted)">taper 1:16, exaggerated</text>`);
+      p.push(`<text x="${X(gauge)}" y="${H - 12}" text-anchor="middle" font-size="10.5" fill="var(--rd-ok)">± ${tol.toFixed(tol < 0.5 ? 4 : 1)}</text>`);
+      svg.innerHTML = p.join('');
+    }
+
+    function run() {
+      const size = field('size').value, inch = field('u').value === 'in', k = inch ? 1 / IN : 1, dp = inch ? 4 : 3, u = inch ? 'in' : 'mm';
+      const v = (x: number) => (x * k).toFixed(dp);
+      const notes: [string, string][] = [];
+      if (pf === 'G') {
+        const g = gLimits(size, field('cls').value as 'A' | 'B')!;
+        $('[data-figwrap]').hidden = true;
+        $('[data-out]').innerHTML = `
+          <div class="readout primary"><dt>G ${size}</dt><dd>${g.tpi} tpi <small>pitch ${v(g.P)} ${u} · 55° Whitworth form · parallel</small></dd></div>
+          <div class="readout"><dt>Pitch-diameter clearance</dt><dd>0 to ${((g.int.D2max - g.ext.d2min) * 1000 * (inch ? 1 / IN : 1)).toFixed(inch ? 1 : 0)} ${inch ? 'thou' : 'µm'} <small>external class ${field('cls').value} in the internal thread</small></dd></div>`;
+        const row = (n: string, a: number | null, b: number | null, c: number | null, d: number | null) => `<tr><td>${n}</td><td>${a === null ? '—' : v(a)}</td><td>${b === null ? '—' : v(b)}</td><td>${c === null ? '—' : v(c)}</td><td>${d === null ? '—' : v(d)}</td></tr>`;
+        $('[data-table]').innerHTML = `<table class="pt-table"><thead><tr><th>G ${size} (${u})</th><th>Ext max</th><th>Ext min</th><th>Int min</th><th>Int max</th></tr></thead><tbody>
+          ${row('Major diameter', g.ext.dmax, g.ext.dmin, g.int.Dmin, null)}${row('Pitch diameter', g.ext.d2max, g.ext.d2min, g.int.D2min, g.int.D2max)}${row('Minor diameter', g.ext.d1max, null, g.int.D1min, g.int.D1max)}</tbody></table>`;
+        notes.push(['', 'A G thread does not seal on the thread. It seals on a face: a bonded seal, a flat gasket, or an O-ring in a spot face or an undercut (ISO 1179, ISO 6149 for metric ports). Specify the seal and the face finish.']);
+        notes.push(['warn', 'G is not interchangeable with R or Rc: a parallel thread in a taper thread seals only by luck. On the drawing, write G ½ A (external, class A) or G ½ (internal).']);
+        copyText = `G ${size}, external class ${field('cls').value} (${u})\nmajor ${v(g.ext.dmax)}-${v(g.ext.dmin)}, pitch ${v(g.ext.d2max)}-${v(g.ext.d2min)}\ninternal pitch ${v(g.int.D2min)}-${v(g.int.D2max)}, minor ${v(g.int.D1min)}-${v(g.int.D1max)}`;
+      } else if (pf === 'R') {
+        const r = rLimits(size)!;
+        $('[data-figwrap]').hidden = false;
+        $('[data-out]').innerHTML = `
+          <div class="readout primary"><dt>R ${size}</dt><dd>${r.tpi} tpi <small>pitch ${v(r.P)} ${u} · 55° · taper 1:16</small></dd></div>
+          <div class="readout"><dt>Gauge length (external)</dt><dd>${v(r.a)} ${u} <small>${v(r.aMin)} to ${v(r.aMax)}: ±${v(r.t1)} (±T1/2)</small></dd></div>
+          <div class="readout"><dt>Gauge plane (internal Rc)</dt><dd>± ${v(r.t2)} ${u} <small>±${r.t2turns} turns of the gauge-plane position</small></dd></div>`;
+        const row = (n: string, a: number) => `<tr><td>${n}</td><td>${v(a)}</td></tr>`;
+        $('[data-table]').innerHTML = `<table class="pt-table"><thead><tr><th>R ${size} at the gauge plane (${u})</th><th>Basic</th></tr></thead><tbody>
+          ${row('Major diameter (gauge diameter)', r.d)}${row('Pitch diameter', r.d2)}${row('Minor diameter', r.d1)}${row('Major diameter at the pipe end (basic)', r.smallEnd)}
+          <tr><td>Rp (parallel internal) pitch diameter</td><td>${v(r.rp.D2min)} to ${v(r.rp.D2max)}</td></tr></tbody></table>`;
+        taper(r.a + r.t1 + 4, r.a, r.t1, { gauge: 'gauge plane', end: 'pipe end' });
+        $('[data-cap]').textContent = `The external thread's gauge plane is ${r.a} mm from the pipe end, ±${r.t1} mm. A diameter at any other position: d − x/16 for a distance x towards the small end.`;
+        notes.push(['', 'R (external taper) seals in Rc (internal taper) or in Rp (internal parallel), with a sealant or PTFE tape on the thread. Rc and Rp are not interchangeable with G.']);
+        notes.push(['', 'For stress and fit, the diameter that matters is at the gauge plane, and the gauge plane can move by its tolerance: compute the diameter at a section with d − x/16 from the limit positions.']);
+        copyText = `R ${size} (${u})\ngauge diameter ${v(r.d)}, pitch ${v(r.d2)}, minor ${v(r.d1)}\ngauge length ${v(r.a)} +/- ${v(r.t1)}; internal gauge plane +/- ${v(r.t2)}`;
+      } else {
+        const n = nptLimits(size)!, x = inch ? n.inch : n.mm;
+        $('[data-figwrap]').hidden = false;
+        const f = (a: number) => a.toFixed(inch ? 5 : 3);
+        $('[data-out]').innerHTML = `
+          <div class="readout primary"><dt>${size} NPT</dt><dd>${n.tpi} tpi <small>pipe OD ${f(x.D)} ${u} · 60° · taper 1:16</small></dd></div>
+          <div class="readout"><dt>Hand-tight engagement L1</dt><dd>${f(x.L1)} ${u} <small>pitch ⌀ there E1 = ${f(x.E1)}</small></dd></div>
+          <div class="readout"><dt>Gauge tolerance</dt><dd>± 1 turn <small>±${f(x.tolAxial)} ${u} axially, ±${f(x.tolDia)} ${u} on the pitch diameter</small></dd></div>`;
+        const row = (nm: string, a: number) => `<tr><td>${nm}</td><td>${f(a)}</td></tr>`;
+        $('[data-table]').innerHTML = `<table class="pt-table"><thead><tr><th>${size} NPT (${u})</th><th>Basic</th></tr></thead><tbody>
+          ${row('E0: pitch diameter at the small end', x.E0)}${row('E1: pitch diameter at L1', x.E1)}${row('L1: hand-tight engagement', x.L1)}${row('L2: effective thread length', x.L2)}${row('E2: pitch diameter at L2', x.E2)}${row('K0: minor diameter at the small end', x.K0)}${row('Thread height (0.8p)', x.h)}</tbody></table>`;
+        taper(n.inch.L2 * 1.15, n.inch.L1, n.inch.tolAxial, { gauge: 'L1 (hand tight)', end: 'pipe end' });
+        $('[data-cap]').textContent = `Distances in inches. The hand-tight plane is L1 = ${n.inch.L1} in from the pipe end; a ring gauge must stand within ±1 turn (±${n.inch.tolAxial.toFixed(4)} in) of it. The effective thread runs to L2 = ${n.inch.L2.toFixed(4)} in.`;
+        notes.push(['', 'NPT seals on the thread with a sealant; NPTF (dryseal, ASME B1.20.3) seals on the crests and roots without one. Wrench make-up adds about 3 turns past hand tight on small sizes.']);
+        notes.push(['warn', 'NPT and BSPT are not interchangeable: 60° against 55°, and different pitches above ¼ in. Avoid taper threads in aluminium bosses on flight hardware: they split the boss. Use a straight-thread O-ring port (AS5202 with an AS568-900 series ring) instead.']);
+        copyText = `${size} NPT (${u})\nE0 ${f(x.E0)}, E1 ${f(x.E1)}, L1 ${f(x.L1)}, L2 ${f(x.L2)}, E2 ${f(x.E2)}\ngauge tolerance +/- 1 turn`;
+      }
+      $('[data-notes]').innerHTML = notes.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-form-key]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      pf = b.dataset.formKey as PipeForm;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      fillSizes(); run();
+    }));
+    form.addEventListener('change', run);
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('[data-chart]')!); }
+    fillSizes(); run();
+  });
+</script>
