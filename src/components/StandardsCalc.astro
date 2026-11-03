@@ -1,0 +1,172 @@
+---
+// The standards register: search and filter the standards, see why you would reach for each one, where to get it, and
+// the pages of this site that cite it (found in the page text at build time); and a checker for a list of references
+// as written on a drawing or specification. Logic in src/lib/standards.ts (unit-tested); UI only here.
+import { STANDARDS, CATS, accessFor, citedBy, type Doc } from '../lib/standards';
+
+const raw = import.meta.glob('../content/docs/**/*.mdx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const docs: Doc[] = Object.entries(raw)
+  .map(([p, text]) => {
+    const path = p.replace('../content/docs/', '').replace(/\.mdx$/, '').replace(/(^|\/)index$/, '');
+    const title = text.match(/^title:\s*["']?(.+?)["']?\s*$/m)?.[1] ?? path;
+    return { path, title, text };
+  })
+  .filter((d) => d.path !== 'drawing/standards');
+const DATA = STANDARDS.map((s) => ({ ...s, access: accessFor(s.ref), pages: citedBy(s, docs) }));
+const SAMPLE = ['BS 8888', 'ISO 2768', 'ASME Y14.5', 'AMS 6431', 'MIL-HDBK-5', 'ISO 4287 Ra 1.6', 'BS EN 10204 3.1', 'ASTM E1444', 'AS9102'].join('\n');
+---
+
+<div class="calc stcalc2" data-stcalc>
+  <div class="calc-head"><span>Standards register</span><span class="head-btns"><span data-count></span></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="find" aria-selected="true">Find</button>
+    <button type="button" role="tab" class="chip" data-tab="check" aria-selected="false">Check references</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="find">
+        <div class="row2">
+          <label>Search<input name="q" type="search" placeholder="number, topic or keyword" autocomplete="off" /></label>
+          <label>Category<select name="cat"><option value="">All</option>{CATS.map((c) => <option value={c.key}>{c.name}</option>)}</select></label>
+        </div>
+        <label class="inline"><input type="checkbox" name="cited" /> Only standards cited on this site</label>
+      </fieldset>
+      <fieldset data-panel="check" hidden>
+        <label>References, one on each line<textarea name="refs" rows="9" spellcheck="false">{SAMPLE}</textarea></label>
+        <p class="hint">Paste the references from a drawing, a specification or a test plan. The default list is the worked example.</p>
+      </fieldset>
+    </form>
+    <div class="sr-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig sr-fig" data-figwrap><svg data-chart role="img" aria-label="Standards in each category"></svg><figcaption>Standards in each category: dark, cited on this site. Select a bar to filter.</figcaption></figure>
+      <div data-card></div>
+      <div class="sr-scroll" data-table></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-std set:html={JSON.stringify(DATA)}></script>
+  <div class="calc-foot">
+    REF·DB v1 register, regrouped, with the standards that the rebuilt pages cite. The pages that cite a standard are found
+    in the page text when the site is built. Standards for energetic materials and initiation systems are outside the
+    scope of this site. Confirm the current issue and what your contract invokes before you rely on any of these.
+  </div>
+</div>
+
+<style is:global>
+  .stcalc2 .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .stcalc2 .calc-body > * { min-width: 0; }
+  .stcalc2 .inline { display: flex !important; align-items: center; gap: 0.45rem; }
+  .stcalc2 .inline input { width: auto; }
+  .stcalc2 textarea { width: 100%; font-family: var(--sl-font-mono); font-size: 0.78rem; line-height: 1.5; background: var(--rd-panel); color: var(--rd-ink); border: 1px solid var(--rd-line); border-radius: 5px; padding: 0.5rem; resize: vertical; }
+  .sr-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .sr-out > * { margin: 0 !important; min-width: 0; }
+  .sr-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .sr-fig g[data-c] { cursor: pointer; }
+  .sr-scroll { overflow: auto; max-height: 26rem; border: 1px solid var(--rd-line); border-radius: 6px; }
+  .sr-scroll:empty { display: none; }
+  .sr-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); }
+  .sr-table th { position: sticky; top: 0; background: var(--rd-panel); z-index: 1; text-align: left; }
+  .sr-table th, .sr-table td { padding: 0.3rem 0.45rem; border-bottom: 1px solid var(--rd-line); vertical-align: top; }
+  .sr-table td.ref { font-family: var(--sl-font-mono); font-weight: 600; white-space: nowrap; color: var(--rd-ink); }
+  .sr-table td.n { text-align: right; font-family: var(--sl-font-mono); }
+  .sr-table tbody tr[data-i] { cursor: pointer; }
+  .sr-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .sr-card { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-accent); border-radius: 6px; padding: 0.6rem 0.8rem; background: var(--rd-panel2); font-size: var(--sl-text-sm); }
+  .sr-card > * { margin: 0 !important; }
+  .sr-card h4 { font: 700 1rem var(--sl-font-mono); color: var(--rd-ink); }
+  .sr-card .t { color: var(--rd-muted); margin-top: 0.15rem !important; }
+  .sr-card .w { margin-top: 0.45rem !important; color: var(--rd-ink); }
+  .sr-card .a { margin-top: 0.45rem !important; font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .sr-card .p { margin-top: 0.45rem !important; font-size: var(--sl-text-xs); }
+  .sr-card .p a { margin-right: 0.6rem; white-space: nowrap; }
+  .sr-check { display: grid; gap: 0.35rem; padding: 0 !important; list-style: none; }
+  .sr-check > li { margin: 0 !important; padding: 0.4rem 0.6rem; border: 1px solid var(--rd-line); border-left: 3px solid var(--rd-ok); border-radius: 6px; background: var(--rd-panel2); font-size: var(--sl-text-sm); }
+  .sr-check > li.warn { border-left-color: var(--rd-warn); }
+  .sr-check > li.bad { border-left-color: var(--rd-accent); }
+  .sr-check > li.info { border-left-color: var(--rd-muted); }
+  .sr-check b { font-family: var(--sl-font-mono); }
+  .sr-check small { display: block; color: var(--rd-muted); margin-top: 0.1rem; }
+  .sr-check li.bad small.bad { color: var(--rd-accent); }
+</style>
+
+<script>
+  import { CATS, checkRefs } from '../lib/standards';
+
+  type Std = { ref: string; title: string; cat: string; why: string; access: string; pages: { path: string; title: string }[] };
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const catName = (k: string) => CATS.find((c) => c.key === k)?.name ?? k;
+  const href = (p: string) => `../../${p ? `${p}/` : ''}`;
+
+  document.querySelectorAll<HTMLElement>('[data-stcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const val = (n: string) => field(n).value;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const DATA: Std[] = JSON.parse($('[data-std]').textContent!);
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    let mode = 'find', picked = DATA.findIndex((s) => s.ref === 'BS 8888');
+    const cited = DATA.filter((s) => s.pages.length).length;
+    $('[data-count]').textContent = `${DATA.length} standards · ${cited} cited on this site`;
+
+    function chart() {
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), rowH = 22, L = Math.min(230, W * 0.5), R = 40;
+      const H = CATS.length * rowH + 6, max = Math.max(...CATS.map((c) => DATA.filter((s) => s.cat === c.key).length));
+      const sel = val('cat');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = CATS.map((c, k) => {
+        const all = DATA.filter((s) => s.cat === c.key), n = all.length, nc = all.filter((s) => s.pages.length).length, y = 3 + k * rowH;
+        const w = ((W - L - R) * n) / max, wc = ((W - L - R) * nc) / max, on = !sel || sel === c.key;
+        const label = W < 420 && c.name.length > 22 ? `${c.name.slice(0, 21)}…` : c.name;
+        return `<g data-c="${c.key}" opacity="${on ? 1 : 0.45}"><rect x="0" y="${y}" width="${W}" height="${rowH}" fill="transparent"/><text x="${L - 6}" y="${y + 15}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)" font-family="var(--sl-font-system, system-ui)">${esc(label)}</text><rect x="${L}" y="${y + 4}" width="${w}" height="${rowH - 8}" rx="2" fill="var(--rd-accent)" fill-opacity="0.3"/><rect x="${L}" y="${y + 4}" width="${wc}" height="${rowH - 8}" rx="2" fill="var(--rd-accent)" fill-opacity="0.85"/><text x="${L + w + 5}" y="${y + 15}" font-size="10.5" fill="var(--rd-muted)">${nc}/${n}</text></g>`;
+      }).join('');
+    }
+
+    function card(s: Std) {
+      $('[data-card]').innerHTML = `<div class="sr-card"><h4>${esc(s.ref)}</h4><p class="t">${esc(s.title)} · ${esc(catName(s.cat))}</p><p class="w">${esc(s.why)}</p><p class="a"><b>Where to get it:</b> ${esc(s.access)}</p>
+        <p class="p">${s.pages.length ? `<b>Cited on:</b> ${s.pages.map((p) => `<a href="${href(p.path)}">${esc(p.title)}</a>`).join('')}` : '<span style="color:var(--rd-muted)">Not cited on a page of this site yet.</span>'}</p></div>`;
+    }
+
+    function runFind() {
+      $('[data-figwrap]').hidden = false;
+      const q = val('q').trim().toLowerCase(), cat = val('cat'), only = (field('cited') as HTMLInputElement).checked;
+      const list = DATA.map((s, i) => ({ s, i })).filter(({ s }) => (!cat || s.cat === cat) && (!only || s.pages.length) && (!q || `${s.ref} ${s.title} ${s.why}`.toLowerCase().includes(q)));
+      if (list.length && !list.some((x) => x.i === picked)) picked = list[0].i;
+      $('[data-out]').innerHTML = `<div class="readout primary"><dt>Shown</dt><dd>${list.length} of ${DATA.length} <small>${cat ? esc(catName(cat)) : 'all categories'}${q ? ` · "${esc(q)}"` : ''}</small></dd></div>`;
+      chart();
+      if (list.length) card(DATA[picked]); else $('[data-card]').innerHTML = '';
+      $('[data-table]').innerHTML = `<table class="sr-table"><thead><tr><th>Standard</th><th>What it is</th><th>Pages</th></tr></thead><tbody>${list.map(({ s, i }) => `<tr data-i="${i}" class="${i === picked ? 'sel' : ''}"><td class="ref">${esc(s.ref)}</td><td>${esc(s.title)}</td><td class="n">${s.pages.length || ''}</td></tr>`).join('') || '<tr><td colspan="3">No match.</td></tr>'}</tbody></table>`;
+      $('[data-notes]').innerHTML = '<li>Cite the standard, its issue and the clauses you invoke. An undated reference follows whatever was published last.</li>';
+    }
+
+    function runCheck() {
+      $('[data-figwrap]').hidden = true; $('[data-card]').innerHTML = ''; $('[data-table]').innerHTML = '';
+      const r = checkRefs(val('refs'));
+      $('[data-out]').innerHTML = `
+        <div class="readout primary ${r.bad || r.mix ? 'bad' : r.warn ? 'warn' : 'ok'}"><dt>References</dt><dd>${r.lines.length} <small>${r.bad} withdrawn, ${r.warn} to correct${r.mix ? ', and the tolerancing system is mixed' : ''}</small></dd></div>
+        <div class="readout ${r.mix ? 'bad' : 'ok'}"><dt>Tolerancing system</dt><dd>${r.mix ? 'Mixed' : 'One system'} <small>${r.mix ? 'ISO GPS and ASME Y14.5 on one document' : 'no ISO and ASME conflict found'}</small></dd></div>`;
+      const worst = (l: (typeof r.lines)[number]) => (l.issues.some((i) => i.level === 'bad') ? 'bad' : l.issues.some((i) => i.level === 'warn') ? 'warn' : l.issues.some((i) => i.level === 'info') ? 'info' : 'ok');
+      $('[data-notes]').innerHTML = (r.mix ? '<li class="bad">The list invokes ISO GPS (BS 8888, ISO 8015, ISO 1101) and ASME Y14.5. The same frame means different things under ISO independency and ASME Rule #1: the drawing must say which system governs, and use only that one.</li>' : '')
+        + `<li><ul class="sr-check">${r.lines.map((l) => `<li class="${worst(l)}"><b>${esc(l.line)}</b>${l.std ? ` <span style="color:var(--rd-muted)">· ${esc(l.std.ref)}</span>` : ''}${l.issues.map((i) => `<small class="${i.level}">${esc(i.text)}</small>`).join('')}</li>`).join('')}</ul></li>`;
+    }
+
+    const run = () => (mode === 'find' ? runFind() : runCheck());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.addEventListener('click', (e) => {
+      const t = e.target as Element;
+      const g = t.closest<SVGGElement>('g[data-c]');
+      if (g) { const c = g.dataset.c!; field('cat').value = val('cat') === c ? '' : c; run(); return; }
+      const tr = t.closest<HTMLElement>('tr[data-i]');
+      if (tr) { picked = +tr.dataset.i!; run(); }
+    });
+    if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8 && mode === 'find') { w = nw; chart(); } }).observe(svg); }
+    run();
+  });
+</script>

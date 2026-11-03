@@ -88,6 +88,7 @@ export const REBUILT = {
   fits: 'drawing/fits-and-limits',
   stack: 'drawing/tolerance-stack',
   drawing: 'drawing/drawing-frame',
+  standards: 'drawing/standards',
   release: 'drawing/revision-and-sign-off',
   export: 'drawing/archive-and-export',
   surf: 'drawing/surface-finish',

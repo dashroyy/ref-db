@@ -1,0 +1,139 @@
+---
+title: Standards
+description: "The standards that UK aerospace and defence drawings and specifications invoke, grouped by what they do: what each covers, why you would reach for it, where to get it, and which pages of this site use it. With a checker for the references on a drawing."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import StandardsCalc from '../../../components/StandardsCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Cite the standard, its issue and the clauses you invoke. An undated reference follows whatever was published last.</div>
+  <div><b>Before this</b><a href="../drawing-frame/">Drawing frame & notes</a></div>
+  <div><b>Related</b><a href="../revision-and-sign-off/">Revision & sign-off</a> · <a href="../archive-and-export/">Archive & export</a> · <a href="../../materials/specification/">Material specs</a></div>
+</div>
+
+## Why this matters
+
+A drawing is short because it borrows. "To BS 8888" brings in the meaning of every symbol; "AMS 6431" brings in the
+chemistry, the melting practice and the tests of the steel; "ASTM E1444" brings in how the part is inspected. Each
+reference is a part of the requirement that the drawing does not write out.
+
+That only works if the reference is exact. A standard that was withdrawn twenty years ago, an undated reference that
+changed under the supplier, or two tolerancing systems on one sheet all give a part that passes inspection and still
+does not do what you meant.
+
+<Analogy title="A recipe that says 'as Grandma made it'">
+  A recipe that says "make the sauce as Grandma did" is short, and it works only if everyone has the same Grandma and
+  she never changed her mind. A reference to a standard is the same: it saves writing, but only if it names one
+  document, at one issue, that the reader can get.
+</Analogy>
+
+## Order of precedence
+
+When documents disagree, the one higher in the list governs. The contract usually says so explicitly: check it.
+
+1. **The contract.**
+2. **The programme specification** and the interface control documents.
+3. **Company procedures and standards.**
+4. **National and international standards** that the documents above invoke.
+
+A standard has no force on its own. It applies because a contract, a specification or a drawing invokes it, and only
+to the extent that they say.
+
+## Cite the issue
+
+- **Write the year or the revision:** BS 8888:2020, AS9102C, ASTM E1444/E1444M-22, MMPDS with the edition your stress
+  office uses. An undated reference follows whatever was published last, so the requirement can change after the drawing
+  is released.
+- **Name the clauses or the class** where the standard offers a choice: ISO 2768-mK, not ISO 2768; the acceptance
+  class of an NDT method; the type and class of an anodic coating.
+- **Use one tolerancing system.** ISO GPS (BS 8888, ISO 8015) and ASME Y14.5 look the same on the page and are read
+  differently: the same frame means different things under ISO independency and ASME Rule #1
+  ([Drawing frame & notes](../drawing-frame/#iso-and-asme-read-size-differently)). The title block says which system
+  governs.
+
+## Withdrawn standards that still turn up
+
+| Still seen | Use instead | Why |
+| --- | --- | --- |
+| BS 308 | BS 8888 | Withdrawn in 2000 |
+| MIL-HDBK-5 | MMPDS | Replaced in 2003 |
+| ISO 1302, ISO 4287, ISO 4288 | ISO 21920-1, -2, -3 | Surface texture moved to the ISO 21920 series in 2021 |
+| ISO 2768-2 | ISO 22081 | General geometrical tolerances |
+| ASME Y14.5M-1994, Y14.5-2009 | ASME Y14.5-2018 | Replaced |
+| BS 4500 | BS EN ISO 286-1 and -2 | Limits and fits |
+| EN 10002-1 | BS EN ISO 6892-1 | Tensile testing of metals |
+| QQ-A-250 | AMS-QQ-A-250 | Transferred to SAE |
+| MIL-S-8879 | SAE AS8879 | UNJ threads, transferred to SAE |
+
+## Where to get them
+
+| Publisher | Standards | How |
+| --- | --- | --- |
+| BSI, ISO | BS, BS EN, BS ISO, ISO | BSI Knowledge, iso.org. Many employers have a subscription: ask before you buy |
+| ASME | Y14.5, Y14.35, B1.1, BPVC | asme.org |
+| SAE International | AMS, AS, ARP, EIA-649, CMH-17 | sae.org |
+| UK Defence Standardization | DEF STAN | Free to register; some parts are restricted to the Design Authority |
+| NATO Standardization Office | STANAG, AOP | Public documents free; others through your national authority |
+| NASA | NASA-STD | standards.nasa.gov: free |
+| US DoD | MIL-STD, MIL-HDBK | ASSIST Quick Search: free |
+| ASTM International | ASTM | astm.org |
+| ECSS | ECSS-E-ST | ecss.nl: free after registration |
+
+**Never design from a copy of unknown issue.** A PDF found on the web may be the wrong edition, or a draft. Get the
+document from its publisher or your company library, and record the issue you used.
+
+## Tailoring and deviations
+
+Tailoring is legitimate; silent tailoring is not. If a part does not meet a clause of an invoked standard, record the
+deviation with its justification and get it agreed by the authority that invoked the standard. The register of
+deviations is part of the release ([Revision & sign-off](../revision-and-sign-off/)).
+
+## Calculator
+
+**Find** searches the register: 133 standards in nine groups, with what each one covers, why you would reach for it,
+where to get it, and the pages of this site that cite it. The page list is built from the text of the site, so it
+stays current as pages are added. The chart shows each group, and the dark part is the standards that the site cites.
+**Check references** reads a list of references, one on each line, as on a drawing or a specification. It finds
+withdrawn standards, undated references, ISO 2768 without a class, and a list that mixes ISO and ASME tolerancing.
+
+<StandardsCalc />
+
+## Worked example: the references on the aft closure drawing
+
+A first draft of the aft closure drawing lists these references: BS 8888, ISO 2768, ASME Y14.5, AMS 6431,
+MIL-HDBK-5, ISO 4287 Ra 1.6, BS EN 10204 3.1, ASTM E1444 and AS9102. They are the default text of **Check
+references**.
+
+1. **The tolerancing system is mixed.** BS 8888 invokes ISO GPS, and ASME Y14.5 is the US system. Keep BS 8888, take
+   out ASME Y14.5, and state the ISO system in the title block.
+2. **Two references are withdrawn.** MIL-HDBK-5 was replaced by MMPDS in 2003, and ISO 4287 by ISO 21920-2 in 2021.
+3. **Seven references are undated,** and ISO 2768 has no class.
+4. **The corrected list** passes the check: BS 8888:2020, ISO 2768-mK:1989, AMS 6431 with its revision letter, MMPDS
+   with the edition your stress office uses, ISO 21920-2:2021 for Ra 1.6, BS EN 10204:2004 type 3.1,
+   ASTM E1444/E1444M-22 and AS9102C.
+
+The issues in this example show the form of a dated reference. Use the issues that your contract invokes.
+
+## Where this stops
+
+- **The checker reads patterns.** It knows the register and a list of withdrawn standards. It cannot tell if an issue
+  is the current one, or if the contract invokes a different one.
+- **The register is a starting list,** not a complete one. Your programme's document list governs.
+- **Out of scope:** standards for energetic materials, their qualification and stability, and initiation systems sit
+  with your energetics and safety specialists.
+
+## On the drawing
+
+- **The governing standard and its issue** in the title block: BS 8888:2020, or ASME Y14.5-2018.
+- **Every reference dated,** with the class or type where the standard offers a choice.
+- **One tolerancing system** per drawing.
+- **Deviations** from invoked standards recorded and agreed, not left silent.
+
+<Aside type="note">
+  A starting list from general UK aerospace and defence practice. Confirm the current issue and what your contract
+  invokes before you rely on any of these.
+</Aside>

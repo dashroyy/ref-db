@@ -1,0 +1,803 @@
+{
+ "source": "REF·DB v1 standards register, regrouped, with the standards the rebuilt pages cite. Energetic-material and initiation standards are outside the site scope.",
+ "standards": [
+  {
+   "ref": "BS 8888",
+   "title": "Technical product documentation & specification: the UK umbrella drawing standard",
+   "cat": "drawing",
+   "why": "Put it in every title block. It invokes the ISO GPS suite below, so \"to BS 8888\" pulls in datums, fits, surface texture etc. by reference."
+  },
+  {
+   "ref": "ASME Y14.5-2018",
+   "title": "Dimensioning & tolerancing (US)",
+   "cat": "drawing",
+   "why": "US-origin defence programmes and primes. Differs from ISO in defaults: see the GD&T page (Rule #1 vs independency)."
+  },
+  {
+   "ref": "ISO 128 series",
+   "title": "Presentation: line types, views, sections, hatching",
+   "cat": "drawing",
+   "why": "When you argue about hidden detail, section conventions or line weights."
+  },
+  {
+   "ref": "ISO 5457 / ISO 7200",
+   "title": "Drawing sheet sizes & frames / title block data fields",
+   "cat": "drawing",
+   "why": "Setting up templates; what must appear in a title block."
+  },
+  {
+   "ref": "ISO 129-1",
+   "title": "Presentation of dimensions and tolerances",
+   "cat": "drawing",
+   "why": "How to arrange dimensions, leaders, chain vs baseline."
+  },
+  {
+   "ref": "ISO 3098",
+   "title": "Lettering on technical drawings",
+   "cat": "drawing",
+   "why": "Template/font arguments, min text heights for microfilm/scan legibility."
+  },
+  {
+   "ref": "ISO 13715",
+   "title": "Edge condition callout (burr / undercut / passing)",
+   "cat": "drawing",
+   "why": "Deburr requirements: the ⌐ edge symbol with +/- values instead of a vague \"break all edges\" note."
+  },
+  {
+   "ref": "ISO 2553",
+   "title": "Welding symbols",
+   "cat": "drawing",
+   "why": "Any welded fabrication: fillet/butt symbols, arrow vs other side, site welds, weld-all-round."
+  },
+  {
+   "ref": "ISO 8015",
+   "title": "GPS fundamentals: the independency principle",
+   "cat": "gps",
+   "why": "The ISO ground rule: size does NOT control form unless you add Ⓔ. Explains half of all ISO/ASME arguments."
+  },
+  {
+   "ref": "ISO 1101",
+   "title": "Geometrical tolerancing: symbols, zones, definitions",
+   "cat": "gps",
+   "why": "The core GD&T document in the ISO world. Zone definitions for all characteristics."
+  },
+  {
+   "ref": "ISO 5459",
+   "title": "Datums and datum systems",
+   "cat": "gps",
+   "why": "How datum features become datums; targets, common datums A-B, simulators."
+  },
+  {
+   "ref": "ISO 2692",
+   "title": "MMR / LMR: Ⓜ Ⓛ modifiers & bonus tolerance",
+   "cat": "gps",
+   "why": "Functional gauging, clearance-hole patterns, when bonus tolerance applies."
+  },
+  {
+   "ref": "ISO 5458",
+   "title": "Pattern specification / combined zones (CZ, SIM)",
+   "cat": "gps",
+   "why": "Tolerancing hole patterns as a group in ISO syntax."
+  },
+  {
+   "ref": "ISO 286-1/-2",
+   "title": "Limits & fits: IT grades and the H7/g6 system",
+   "cat": "gps",
+   "why": "Every fit callout. Tables of numeric limits per size band."
+  },
+  {
+   "ref": "ISO 2768-1/-2",
+   "title": "General tolerances (linear/angular + geometry), e.g. \"ISO 2768-mK\"",
+   "cat": "gps",
+   "why": "Legacy but still everywhere. Part 2 is withdrawn in favour of ISO 22081: don't mix regimes on one drawing."
+  },
+  {
+   "ref": "ISO 22081",
+   "title": "General specified geometrical & size tolerances",
+   "cat": "gps",
+   "why": "The modern replacement for blanket drawing tolerances under BS 8888."
+  },
+  {
+   "ref": "ISO 21920 series",
+   "title": "Surface texture: symbols, parameters (Ra, Rz), rules",
+   "cat": "gps",
+   "why": "Current surface-finish callout rules (replaces ISO 1302/4287: old drawings still cite those)."
+  },
+  {
+   "ref": "ISO 10579",
+   "title": "Non-rigid parts",
+   "cat": "gps",
+   "why": "Thin sheet/flexible parts: the \"free state\" vs restrained condition note, F modifier."
+  },
+  {
+   "ref": "ISO 6410",
+   "title": "Screw threads: representation & callout",
+   "cat": "gps",
+   "why": "How M6×1-6H, thread depth and section conventions are drawn."
+  },
+  {
+   "ref": "ISO 4014 / 4017",
+   "title": "Hex head bolts (part thread / full thread)",
+   "cat": "hardware",
+   "why": "Standard metric hex bolts for BOMs."
+  },
+  {
+   "ref": "ISO 4762",
+   "title": "Hexagon socket head cap screws",
+   "cat": "hardware",
+   "why": "The default cap-head. Counterbore data derives from it."
+  },
+  {
+   "ref": "ISO 4032 / 7089",
+   "title": "Hex nuts / plain washers",
+   "cat": "hardware",
+   "why": "Completing the joint on the BOM."
+  },
+  {
+   "ref": "ISO 2338 / 8734",
+   "title": "Dowel pins (soft / hardened, m6)",
+   "cat": "hardware",
+   "why": "Location pins; pair with reamed H7 holes."
+  },
+  {
+   "ref": "ISO 4026-4029",
+   "title": "Socket set screws (flat, cone, dog, cup point)",
+   "cat": "hardware",
+   "why": "Grub screws: pick the point style deliberately."
+  },
+  {
+   "ref": "BS ISO 3601 series",
+   "title": "O-rings: metric sizes, tolerances, quality (incl. AS568 cross-refs)",
+   "cat": "hardware",
+   "why": "Primary o-ring size + quality reference; part 2 covers housing design."
+  },
+  {
+   "ref": "BS 1806 / BS 4518",
+   "title": "O-rings: imperial (BS 1806) & UK metric (BS 4518): legacy",
+   "cat": "hardware",
+   "why": "Heritage UK drawings; BS 4518 grooves differ from ISO 3601: don't mix."
+  },
+  {
+   "ref": "AS568",
+   "title": "US o-ring dash sizes (-0XX, -1XX…)",
+   "cat": "hardware",
+   "why": "US-designed equipment; \"-214\" style callouts."
+  },
+  {
+   "ref": "NAS / MS / AN",
+   "title": "US aerospace standard hardware series",
+   "cat": "hardware",
+   "why": "Flight fasteners: e.g. NAS bolts, MS21042 self-locking nuts, AN washers. Procurement by exact part number."
+  },
+  {
+   "ref": "SAE AMS specs",
+   "title": "Aerospace material specs, e.g. AMS 4911 (Ti-6Al-4V sheet), AMS 5643 (17-4PH bar)",
+   "cat": "material",
+   "why": "Procuring flight material with pedigree; the number to put in the material block."
+  },
+  {
+   "ref": "MMPDS",
+   "title": "Metallic material design allowables (ex MIL-HDBK-5)",
+   "cat": "material",
+   "why": "A/B-basis strength values the stress office will insist on."
+  },
+  {
+   "ref": "BS EN 573 / 755 / 485",
+   "title": "Aluminium: designations, extrusion & sheet/plate conditions",
+   "cat": "material",
+   "why": "Calling up commercial aluminium correctly (e.g. EN AW-6082-T6 to BS EN 755-2)."
+  },
+  {
+   "ref": "BS 'L' series (2L/3L/L)",
+   "title": "Legacy UK aerospace aluminium/steel specs, e.g. L168 (2014A-T6511 bar)",
+   "cat": "material",
+   "why": "Heritage drawings and MoD legacy fleets still call these; keep the cross-ref table handy."
+  },
+  {
+   "ref": "ISO 6892-1",
+   "title": "Tensile testing of metals",
+   "cat": "material",
+   "why": "When cert values are queried: how UTS/proof are derived."
+  },
+  {
+   "ref": "DEF STAN 00-970",
+   "title": "Design & airworthiness requirements for service aircraft (UK MoD)",
+   "cat": "design",
+   "why": "The design bible on UK military air programmes: structure, systems, factors."
+  },
+  {
+   "ref": "DEF STAN 05-61",
+   "title": "Quality assurance procedural requirements",
+   "cat": "quality",
+   "why": "MoD contract QA requirements incl. deliverable records."
+  },
+  {
+   "ref": "DEF STAN 03 series",
+   "title": "Protective treatments of metals (individual parts for anodising, plating, painting…)",
+   "cat": "process",
+   "why": "Calling up finishes on MoD work; each treatment has its own part number: cite the exact one."
+  },
+  {
+   "ref": "AS9100",
+   "title": "Aerospace quality management system",
+   "cat": "quality",
+   "why": "Why every change needs a paper trail; supplier approval questions."
+  },
+  {
+   "ref": "AS9102",
+   "title": "First Article Inspection (FAIR)",
+   "cat": "quality",
+   "why": "Ballooned drawings & the forms the inspector fills for a first-off."
+  },
+  {
+   "ref": "AS13100 / APQP",
+   "title": "Aero engine supply-chain quality (RM13xxx series)",
+   "cat": "quality",
+   "why": "Engine-sector customers (e.g. R-R supply chain): PPAP-style deliverables."
+  },
+  {
+   "ref": "CS-25 / CS-23 (EASA)",
+   "title": "Certification specs: large / normal category aeroplanes",
+   "cat": "design",
+   "why": "Civil airworthiness context; what \"certifiable\" means for your design."
+  },
+  {
+   "ref": "MIL-STD-810",
+   "title": "Environmental test methods (shock, vibe, temp, humidity…)",
+   "cat": "env",
+   "why": "Defence equipment qual test levels: design for the test."
+  },
+  {
+   "ref": "MIL-STD-130",
+   "title": "Item identification / part marking (US)",
+   "cat": "quality",
+   "why": "How US programmes want parts marked; pair with your customer's marking spec."
+  },
+  {
+   "ref": "JSP 520",
+   "title": "MOD safety & environmental management of Ordnance, Munitions and Explosives (OME)",
+   "cat": "env",
+   "why": "The UK MoD governance framework for anything explosive-related, across the whole Manufacture-to-Target-or-Disposal sequence. Sets the safety case, review panel and clearance expectations your hardware sits inside. Note the published parts are being replaced: always confirm the current issue with your safety authority."
+  },
+  {
+   "ref": "DEF STAN 07-085",
+   "title": "Design requirements for weapons and associated systems",
+   "cat": "design",
+   "why": "Mandatory design requirements (Part 1), supplementary/design-process requirements (Part 2) and safety-and-suitability-for-service test procedures (Part 4). Limited distribution: get it via your Design Authority, not the open web."
+  },
+  {
+   "ref": "DEF STAN 05-101",
+   "title": "Proof of ordnance, munitions, armour and explosives",
+   "cat": "design",
+   "why": "Part 1 requirements / Part 2 guidance. The generic proof policy applying to weapons, munitions and explosive-related components: what proof firing and testing your hardware must survive."
+  },
+  {
+   "ref": "DEF STAN 00-035",
+   "title": "Environmental handbook for defence materiel",
+   "cat": "env",
+   "why": "UK equivalent of MIL-STD-810: the environmental conditions and test methods (vibration, shock, temperature, humidity, transit) your motor hardware must be qualified against."
+  },
+  {
+   "ref": "DEF STAN 00-055 / 00-056",
+   "title": "Safety management requirements for defence systems (incl. safety-related software)",
+   "cat": "env",
+   "why": "Hazard analysis, safety case structure and evidence expectations. 00-056 is the general system safety standard your programme safety case follows."
+  },
+  {
+   "ref": "STANAG 4439 / AOP-39",
+   "title": "Insensitive Munitions (IM) policy and assessment",
+   "cat": "im",
+   "why": "NATO IM policy: the six IM threat tests (fast/slow cook-off, bullet impact, fragment impact, sympathetic reaction, shaped charge jet). IM response drives real hardware decisions: case venting features, liner and insulation choice. AOP-39 holds the response descriptors (Type I to VI) and the recognised design techniques."
+  },
+  {
+   "ref": "ASME BPVC VIII Div 1/2",
+   "title": "Boiler & pressure vessel code",
+   "cat": "design",
+   "why": "Used for ground pressure equipment, test rigs, gas storage and pressurisation hardware. Flight motor cases are normally designed to programme-specific criteria rather than BPVC: check which regime applies before you start."
+  },
+  {
+   "ref": "AIAA S-080 / S-081",
+   "title": "Space systems: metallic pressure vessels & COPVs",
+   "cat": "design",
+   "why": "The recognised design, analysis and test criteria for metallic pressure vessels and composite overwrapped pressure vessels: damage tolerance, proof factors, leak-before-burst logic."
+  },
+  {
+   "ref": "ISO 14623",
+   "title": "Space systems: pressure vessels and pressurised structures",
+   "cat": "design",
+   "why": "International equivalent for pressure vessel design and qualification requirements on space hardware."
+  },
+  {
+   "ref": "NASA-STD-5019 / 5009",
+   "title": "Fracture control requirements & NDE",
+   "cat": "design",
+   "why": "The fracture-control framework: which parts are fracture-critical, what flaw sizes you must assume, and what NDE sensitivity is required to find them. Excellent reference even on non-NASA work."
+  },
+  {
+   "ref": "AMS 2750",
+   "title": "Pyrometry: furnace and heat treat control",
+   "cat": "process",
+   "why": "Heat treat is a special process: this governs furnace surveys, thermocouple classes and instrumentation. Call it up whenever heat treatment is a controlled characteristic."
+  },
+  {
+   "ref": "NADCAP special process approvals",
+   "title": "Heat treat, NDT, welding, chemical processing, coatings",
+   "cat": "process",
+   "why": "Not a design standard: the accreditation your suppliers need for special processes. If a process can\"t be verified by inspecting the finished part, it\"s a special process and needs an approved source."
+  },
+  {
+   "ref": "AMS 2644 / ASTM E1417",
+   "title": "Fluorescent penetrant inspection",
+   "cat": "process",
+   "why": "The everyday NDT callout for surface flaw detection on machined and welded parts. State the penetrant sensitivity level on the drawing."
+  },
+  {
+   "ref": "ASTM E1444 / E1742",
+   "title": "Magnetic particle & radiographic inspection",
+   "cat": "process",
+   "why": "MPI for ferromagnetic parts (case steels), RT for welds and castings. Specify acceptance class, not just \"inspect\"."
+  },
+  {
+   "ref": "ASTM E2375 / AMS-STD-2154",
+   "title": "Ultrasonic inspection of wrought products",
+   "cat": "process",
+   "why": "Billet and forging quality classes (e.g. AA/A/B): how you demand clean material for a fracture-critical case or closure."
+  },
+  {
+   "ref": "BS EN 573-3",
+   "title": "Aluminium: chemical composition of wrought products",
+   "cat": "material",
+   "why": "Defines EN AW-6082 etc. Pair with the product standard for properties: composition alone is not a specification."
+  },
+  {
+   "ref": "BS EN 485-2 / 755-2 / 754-2",
+   "title": "Aluminium: mechanical properties: sheet & plate / extrusion / drawn bar & tube",
+   "cat": "material",
+   "why": "The properties half of an aluminium call-out. Values depend on product form and thickness: quote the right one."
+  },
+  {
+   "ref": "BS EN 1706 / BS EN 1676",
+   "title": "Aluminium castings: composition and mechanical properties",
+   "cat": "material",
+   "why": "Replaces BS 1490 LM designations for new work."
+  },
+  {
+   "ref": "BS EN 10025-2",
+   "title": "Hot rolled structural steels",
+   "cat": "material",
+   "why": "S355 and friends. Rigs, stands, handling equipment."
+  },
+  {
+   "ref": "BS EN 10083-3",
+   "title": "Quenched and tempered alloy steels",
+   "cat": "material",
+   "why": "25CrMo4, 42CrMo4, 34CrNiMo6: the EN equivalents of 4130/4140/4340."
+  },
+  {
+   "ref": "BS EN 10027-1/-2",
+   "title": "Steel designation systems: names and numbers",
+   "cat": "material",
+   "why": "How to read 34CrNiMo6 and 1.6582. Worth ten minutes of your life."
+  },
+  {
+   "ref": "BS EN 10088-2/-3",
+   "title": "Stainless steels: sheet & plate / bar and sections",
+   "cat": "material",
+   "why": "The correct UK call-out for 304L, 316L, 321, 17-4PH and friends."
+  },
+  {
+   "ref": "BS EN 10204",
+   "title": "Types of inspection document (2.1, 2.2, 3.1, 3.2)",
+   "cat": "quality",
+   "why": "Which certificate you get. 3.1 is the usual minimum for anything structural; 3.2 adds independent verification."
+  },
+  {
+   "ref": "BS EN 10269 / EN 10302",
+   "title": "Steels & alloys for fasteners and creep-resisting service",
+   "cat": "material",
+   "why": "A286, superalloy bar and hot bolting material in the EN system."
+  },
+  {
+   "ref": "BS EN ISO 4957",
+   "title": "Tool steels",
+   "cat": "material",
+   "why": "H13, D2, O1 equivalents for tooling and moulds."
+  },
+  {
+   "ref": "BS EN 1561 / EN 1563",
+   "title": "Grey and spheroidal graphite cast irons",
+   "cat": "material",
+   "why": "Machine bases, housings, damping-critical tooling."
+  },
+  {
+   "ref": "BS EN 12163 / 12164 / 13601",
+   "title": "Copper and copper alloys: rod, free-machining rod, and conductors",
+   "cat": "material",
+   "why": "CW614N brass, CuBe2, Cu-ETP: the EN copper designations."
+  },
+  {
+   "ref": "BS EN 1753",
+   "title": "Magnesium alloy castings: designation and properties",
+   "cat": "material",
+   "why": "EN-MC magnesium designations; pair with the process approval for aerospace work."
+  },
+  {
+   "ref": "BS EN ISO 6892-1",
+   "title": "Metallic materials: tensile testing at room temperature",
+   "cat": "material",
+   "why": "How UTS and proof stress on your cert were actually derived."
+  },
+  {
+   "ref": "BS EN ISO 6507 / 6508",
+   "title": "Vickers and Rockwell hardness tests",
+   "cat": "material",
+   "why": "Specifying and interpreting a hardness requirement correctly."
+  },
+  {
+   "ref": "BS EN ISO 148-1",
+   "title": "Charpy pendulum impact test",
+   "cat": "material",
+   "why": "Toughness requirements on case and structural steels."
+  },
+  {
+   "ref": "BS EN ISO 3452",
+   "title": "Non-destructive testing: penetrant testing",
+   "cat": "process",
+   "why": "The correct UK reference for FPI. State the sensitivity level and acceptance."
+  },
+  {
+   "ref": "BS EN ISO 9934",
+   "title": "Non-destructive testing: magnetic particle testing",
+   "cat": "process",
+   "why": "Ferromagnetic parts only; the EN equivalent of ASTM E1444."
+  },
+  {
+   "ref": "BS EN ISO 17636",
+   "title": "NDT of welds: radiographic testing",
+   "cat": "process",
+   "why": "Weld RT technique and image quality requirements."
+  },
+  {
+   "ref": "BS EN ISO 16810 / 16811",
+   "title": "Non-destructive testing: ultrasonic testing",
+   "cat": "process",
+   "why": "UT general principles and sensitivity setting."
+  },
+  {
+   "ref": "BS EN ISO 9712",
+   "title": "NDT: qualification and certification of personnel",
+   "cat": "process",
+   "why": "Who is allowed to sign off your inspection, and to what level."
+  },
+  {
+   "ref": "BS EN ISO 15614 / 15609",
+   "title": "Welding procedure specification and qualification",
+   "cat": "process",
+   "why": "WPS/WPQR: what makes a weld procedure legitimate."
+  },
+  {
+   "ref": "BS EN ISO 5817 / 10042",
+   "title": "Weld quality levels for steel / aluminium",
+   "cat": "process",
+   "why": "Quality level B, C or D. This is where welded fabrication cost lives."
+  },
+  {
+   "ref": "BS EN ISO 9606 / 14732",
+   "title": "Qualification testing of welders and operators",
+   "cat": "process",
+   "why": "Welder approval to match your procedure."
+  },
+  {
+   "ref": "BS EN ISO 1461 / EN ISO 2081",
+   "title": "Hot dip galvanizing / electroplated zinc coatings",
+   "cat": "process",
+   "why": "Coating thickness classes for ground equipment and structures."
+  },
+  {
+   "ref": "BS EN ISO 4042",
+   "title": "Fasteners: electroplated coating systems",
+   "cat": "hardware",
+   "why": "Fastener plating, including the hydrogen embrittlement relief requirement."
+  },
+  {
+   "ref": "BS EN ISO 898-1 / 3506-1",
+   "title": "Mechanical properties of fasteners: steel / stainless",
+   "cat": "hardware",
+   "why": "Where property classes 8.8, 10.9, 12.9 and A2-70, A4-80 are actually defined."
+  },
+  {
+   "ref": "STANAG 4240 / AOP-4240",
+   "title": "Fast heating (fast cook-off) test procedures",
+   "cat": "im",
+   "why": "Liquid fuel fire engulfment. Required response no worse than Type V (burning)."
+  },
+  {
+   "ref": "STANAG 4382 / AOP-4382",
+   "title": "Slow heating (slow cook-off) test procedures",
+   "cat": "im",
+   "why": "The hardest thermal case: the whole item heats together, so the case is still strong when the propellant reacts."
+  },
+  {
+   "ref": "STANAG 4241 / AOP-4241",
+   "title": "Bullet impact test procedures",
+   "cat": "im",
+   "why": "Small-arms strike. Venting area and case fragmentation behaviour drive the result."
+  },
+  {
+   "ref": "STANAG 4496 / AOP-4496",
+   "title": "Fragment impact test procedures",
+   "cat": "im",
+   "why": "Standard conical-nosed steel fragment at high velocity: a far more energetic stimulus than a bullet."
+  },
+  {
+   "ref": "STANAG 4396 / AOP-4396",
+   "title": "Sympathetic reaction test procedures",
+   "cat": "im",
+   "why": "Donor/acceptor in stowage configuration. Packaging and spacing count toward the outcome. Type III or better."
+  },
+  {
+   "ref": "STANAG 4526 / AOP-4526",
+   "title": "Shaped charge jet impact test procedures",
+   "cat": "im",
+   "why": "Hard to mitigate by case design alone; relaxed to Type III or better."
+  },
+  {
+   "ref": "BS EN ISO 261 / ISO 965",
+   "title": "Metric screw threads: general plan and tolerances",
+   "cat": "hardware",
+   "why": "The series (which pitches exist) and the tolerance system (what 6H/6g means). The pair behind every metric thread callout."
+  },
+  {
+   "ref": "ASME B1.1 / SAE AS8879",
+   "title": "Unified inch threads / UNJ controlled-root aerospace threads",
+   "cat": "hardware",
+   "why": "B1.1 defines UNC/UNF and classes 1-3; AS8879 is the fatigue-rated UNJ form for aerospace externals."
+  },
+  {
+   "ref": "BS EN ISO 228-1 / EN 10226",
+   "title": "Pipe threads: parallel (G) not pressure-tight / taper (R) pressure-tight",
+   "cat": "hardware",
+   "why": "The two BSP families. G seals on a face, R seals on the thread: mixing the logic is why fittings weep."
+  },
+  {
+   "ref": "BS 84 / BS 93",
+   "title": "Whitworth (BSW/BSF) and BA threads",
+   "cat": "hardware",
+   "why": "Obsolescent: retained for legacy repair and heritage support only. Never for new design."
+  },
+  {
+   "ref": "BS EN 22768-1 (ISO 2768-1)",
+   "title": "General tolerances: linear and angular dimensions",
+   "cat": "gps",
+   "why": "Classes f/m/c/v. The tolerance that applies to every dimension you did not tolerance individually."
+  },
+  {
+   "ref": "BS EN 22768-2 (ISO 2768-2)",
+   "title": "General geometrical tolerances for features without individual indication",
+   "cat": "gps",
+   "why": "Classes H/K/L for straightness, flatness, perpendicularity, symmetry and runout. Superseded by ISO 22081 but still widely used."
+  },
+  {
+   "ref": "BS EN ISO 22081",
+   "title": "General geometrical specification and general size specification",
+   "cat": "gps",
+   "why": "The modern replacement for ISO 2768-2: a general geometrical specification referenced to stated datums rather than fixed H/K/L classes."
+  },
+  {
+   "ref": "BS EN ISO 286-1/-2",
+   "title": "Geometrical product specifications: limits and fits",
+   "cat": "gps",
+   "why": "The ISO fit system in full, with the numeric tables."
+  },
+  {
+   "ref": "BS EN ISO 14405-1",
+   "title": "Dimensional tolerancing: linear sizes",
+   "cat": "gps",
+   "why": "Modern size specification modifiers, including the envelope requirement Ⓔ."
+  },
+  {
+   "ref": "BS EN ISO 1101 / 5459 / 2692",
+   "title": "Geometrical tolerancing, datums, and MMR/LMR",
+   "cat": "gps",
+   "why": "The GPS core set, all adopted as BS EN ISO in the UK."
+  },
+  {
+   "ref": "BS EN ISO 8062",
+   "title": "GPS for moulded parts: dimensional and geometrical tolerances",
+   "cat": "material",
+   "why": "Casting tolerance grades (DCTG): how to tolerance an as-cast surface sensibly."
+  },
+  {
+   "ref": "ISO 5855",
+   "title": "Aerospace MJ threads: general requirements and limits of size",
+   "cat": "hardware",
+   "why": "MJ bolts and nuts with the controlled root radius (0.15011P to 0.18042P), 4h6h external and 4H5H internal. An MJ bolt goes into an MJ nut or insert, not a standard M thread."
+  },
+  {
+   "ref": "ASME B1.20.1",
+   "title": "NPT taper pipe threads (inch)",
+   "cat": "hardware",
+   "why": "US ports and fittings that seal on the thread with a sealant. Not interchangeable with BSPT (55°) or with G."
+  },
+  {
+   "ref": "SAE AS5202 / ISO 6149",
+   "title": "Straight-thread ports with an O-ring seal (inch / metric)",
+   "cat": "hardware",
+   "why": "Ports that seal on an O-ring in a spot face, not on the thread: the preferred port on flight hardware. Pairs with the AS568 900-series rings."
+  },
+  {
+   "ref": "ISO 1179",
+   "title": "Ports and stud ends with ISO 228-1 (G) threads",
+   "cat": "hardware",
+   "why": "How a parallel G port seals: an elastomer seal, a bonded seal or a metal-to-metal face. A G thread itself never seals."
+  },
+  {
+   "ref": "NASM 8846 / MIL-I-45914",
+   "title": "Helical-coil inserts / key-locked inserts",
+   "cat": "hardware",
+   "why": "Inserts for tapped holes in soft parent material. Rate them by their specification, not by a stripping calculation, and prime stainless inserts in aluminium."
+  },
+  {
+   "ref": "DIN 974-1",
+   "title": "Counterbore diameters for cap screws",
+   "cat": "hardware",
+   "why": "The counterbore for a socket-head cap screw (ISO 4762): ⌀18 for M10, ⌀11 for M6. Sets the head clearance and the bolt pitch."
+  },
+  {
+   "ref": "ISO 6789",
+   "title": "Hand torque tools: design conformance and calibration",
+   "cat": "hardware",
+   "why": "The torque wrench tolerance is part of the preload scatter. Calibrated tools on the build instruction, not \"a torque wrench\"."
+  },
+  {
+   "ref": "NASA-STD-5020",
+   "title": "Threaded fastening systems for spaceflight hardware",
+   "cat": "design",
+   "why": "Preload uncertainty, separation and fastener margins, thread engagement, locking features and procured nuts and inserts. A clear method even on non-NASA work."
+  },
+  {
+   "ref": "VDI 2230",
+   "title": "Systematic calculation of highly stressed bolted joints",
+   "cat": "design",
+   "why": "The full bolted-joint method: stiffness, load introduction, embedding, tightening factor, eccentric loads and the minimum engagement length."
+  },
+  {
+   "ref": "NASA-STD-5001",
+   "title": "Structural design and test factors of safety for spaceflight hardware",
+   "cat": "design",
+   "why": "Design and test factors for metallic and composite structure and the proof-test logic. Programme factors override it; it explains where they come from."
+  },
+  {
+   "ref": "ECSS-E-ST-32 series",
+   "title": "Space engineering: structures (-01 fracture control, -02 pressurised hardware, -10 factors of safety)",
+   "cat": "design",
+   "why": "The European space structures standards: the pressure vessel and pressurised hardware rules, fracture control and the factors of safety."
+  },
+  {
+   "ref": "CMH-17",
+   "title": "Composite Materials Handbook",
+   "cat": "material",
+   "why": "Composite allowables and their statistical basis, test methods and design guidance: the composite counterpart of MMPDS."
+  },
+  {
+   "ref": "ASTM E399 / E1820",
+   "title": "Fracture toughness testing (KIc, J-integral)",
+   "cat": "material",
+   "why": "How a toughness value was measured: plane-strain validity, specimen size and orientation. Check them before you use a KIc in a crack calculation."
+  },
+  {
+   "ref": "ASTM D792 / ISO 1183",
+   "title": "Density of plastics by displacement",
+   "cat": "material",
+   "why": "Measured density of mouldings and composites where the mass matters: real parts have voids that a calculated density does not."
+  },
+  {
+   "ref": "ASTM D2240",
+   "title": "Durometer (Shore) hardness of rubber and plastics",
+   "cat": "material",
+   "why": "Shore A and D hardness of seals, pottings and elastomer parts: state the scale and the test conditions."
+  },
+  {
+   "ref": "ASTM E595",
+   "title": "Outgassing of materials in a vacuum (TML, CVCM)",
+   "cat": "env",
+   "why": "Screening of polymers, adhesives and pottings for vacuum use: total mass loss 1.0% and collected condensables 0.10% are the usual limits. Use data for the actual product and cure."
+  },
+  {
+   "ref": "ISO 9587 / ISO 9588",
+   "title": "Hydrogen embrittlement: pre- and post-treatment of plated steel",
+   "cat": "process",
+   "why": "The relief bake for steels above about 1000 MPa after plating or pickling, with the time limit to start it."
+  },
+  {
+   "ref": "AMS 2759 series",
+   "title": "Heat treatment of steel parts",
+   "cat": "process",
+   "why": "Hardening, tempering and stress relief of steel parts, with the furnace and atmosphere controls (pyrometry to AMS 2750)."
+  },
+  {
+   "ref": "AMS 2770",
+   "title": "Heat treatment of wrought aluminium alloy parts",
+   "cat": "process",
+   "why": "Solution treatment, quench and ageing of aluminium parts: how a T6 or T73 condition is made and checked."
+  },
+  {
+   "ref": "ASTM A967 / AMS 2700",
+   "title": "Passivation of stainless steel",
+   "cat": "process",
+   "why": "Removes free iron after machining so that the oxide film forms. Call it up for every machined stainless part."
+  },
+  {
+   "ref": "MIL-A-8625",
+   "title": "Anodic coatings for aluminium (Type I, II, III)",
+   "cat": "process",
+   "why": "Chromic, sulphuric and hard anodising: state the type, the class (dyed or not) and the thickness, and mask the features that must stay bare."
+  },
+  {
+   "ref": "ASME Y14.35",
+   "title": "Revision of engineering drawings and associated documents",
+   "cat": "drawing",
+   "why": "Revision letters (no I, O, Q, S, X or Z; AA after Y), the revision table and what a revision must record."
+  },
+  {
+   "ref": "ASME Y14.41 / ISO 16792",
+   "title": "Digital product definition data practices (model-based definition)",
+   "cat": "drawing",
+   "why": "When the model is the master: annotation in the model, and how a drawing-less release is controlled."
+  },
+  {
+   "ref": "ASME Y14.100",
+   "title": "Engineering drawing practices",
+   "cat": "drawing",
+   "why": "US drawing types, parts lists and the documentation rules around the drawing."
+  },
+  {
+   "ref": "ISO 14253-1",
+   "title": "Decision rules for proving conformity or non-conformity with specifications",
+   "cat": "gps",
+   "why": "How measurement uncertainty is used to accept or reject a part: the inspector must state the decision rule, and guard bands come from it."
+  },
+  {
+   "ref": "SAE EIA-649 / ISO 10007",
+   "title": "Configuration management",
+   "cat": "quality",
+   "why": "Identification, change control, status accounting and audits. The change classes (major/minor, Class I/II) and the change board come from here."
+  },
+  {
+   "ref": "ISO 19005 (PDF/A)",
+   "title": "Electronic documents for long-term preservation",
+   "cat": "quality",
+   "why": "The archive format for released drawings and reports: fonts and images embedded, no dependence on outside software."
+  },
+  {
+   "ref": "ISO 10303-242 (STEP AP242)",
+   "title": "Managed model-based 3D engineering",
+   "cat": "quality",
+   "why": "The neutral 3D format that carries PMI (tolerances and annotation) for the archive and for model-based definition."
+  },
+  {
+   "ref": "EN 9300 (LOTAR)",
+   "title": "Long-term archiving and retrieval of digital product data",
+   "cat": "quality",
+   "why": "Aerospace practice for keeping 3D data readable for the life of the product plus its retention period."
+  },
+  {
+   "ref": "DEF STAN 00-250",
+   "title": "Human factors for designers of systems",
+   "cat": "env",
+   "why": "Reach, force, posture and access for maintenance: the UK source for the human-factors limits of a task."
+  },
+  {
+   "ref": "MIL-STD-1472",
+   "title": "Human engineering",
+   "cat": "env",
+   "why": "The US human-factors design criteria: hand forces, access openings and tool clearances."
+  },
+  {
+   "ref": "SAE AS50881",
+   "title": "Wiring, aerospace vehicle",
+   "cat": "env",
+   "why": "Harness routing, clamping, bend radius and separation. Reserve the space for the harness, not a thin line."
+  }
+ ]
+}
