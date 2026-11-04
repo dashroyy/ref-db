@@ -1,0 +1,284 @@
+---
+title: Cryogenic design
+description: "Design for liquid oxygen, nitrogen, hydrogen, methane and helium: how much parts contract (measured curves, not a constant coefficient), fits and bolted joints that change on cooldown, crystal structure and toughness in the cold, oxygen and hydrogen compatibility, seals and composites, and the heat that supports conduct."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CrystalDbtt from '../../../components/CrystalDbtt.astro';
+import CryoCalc from '../../../components/CryoCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Choose the material by its crystal structure and the fluid, then size every fit, joint and support for the cold as well as the warm.</div>
+  <div><b>Before this</b><a href="../../fundamentals/metallurgy/">Metallurgy</a> · <a href="../selection/">Material selection</a></div>
+  <div><b>Related</b><a href="../../joints/differential-expansion/">Differential expansion</a> · <a href="../../drawing/fits-and-limits/">Fits & limits</a> · <a href="../../joints/bolted-joints/">Bolted joints</a> · <a href="../../seals/sealing-strategy/">Sealing strategy</a></div>
+</div>
+
+## Why this matters
+
+Cold changes three things at once. Parts shrink by different amounts, so fits, joints and seals that work on the
+bench open or close. Some metals lose their toughness and break like glass. And the fluids bring hazards of their own:
+liquid oxygen ignites materials that are safe in air, and hydrogen embrittles some metals and leaks through gaps that
+hold other gases.
+
+Most mistakes come from treating the cold as a larger temperature change. It is not. The expansion coefficient falls
+as the temperature falls, the toughness of some metals drops suddenly, and in oxygen the question is ignition, not
+strength.
+
+<Analogy title="A crowd that stops fidgeting">
+  Atoms in a solid vibrate about their places, like people in a crowd who fidget. Fidgeting takes room, so a warm crowd
+  takes more space. Calm the crowd and it shrinks, but not in a straight line: when most people already stand still,
+  more calming makes almost no difference. Below about 40 K most metals have almost stopped shrinking. A
+  room-temperature expansion coefficient assumes that the crowd keeps calming at the same rate, so it over-predicts
+  the movement.
+</Analogy>
+
+## The cryogens
+
+| Fluid | Boils at 1 atm | Liquid density | Latent heat | Gas from 1 L of liquid | Main concern |
+| --- | --- | --- | --- | --- | --- |
+| Liquid methane (LCH4) | 111.7 K (−161 °C) | 422 kg/m³ | 511 kJ/kg | 633 L | A fuel. It freezes at 90.7 K, near LOX temperature |
+| Liquid oxygen (LOX) | 90.2 K (−183 °C) | 1141 kg/m³ | 213 kJ/kg | 858 L | Ignition and burning of the materials it touches |
+| Liquid nitrogen (LN2) | 77.4 K (−196 °C) | 806 kg/m³ | 199 kJ/kg | 692 L | Asphyxiation. The usual test and chill-down fluid |
+| Liquid hydrogen (LH2) | 20.3 K (−253 °C) | 70.8 kg/m³ | 446 kJ/kg | 845 L | Embrittlement, permeation, leaks, wide flammability limits |
+| Liquid helium (LHe) | 4.2 K (−269 °C) | 125 kg/m³ | 20.6 kJ/kg | 749 L | A very small latent heat: one watt boils 1.4 L an hour |
+
+Values from the NIST WebBook at 1 atm, hydrogen as parahydrogen. Gas at 20 °C and 1 atm.
+
+The gas column gives a rule: **every volume that can trap liquid needs a relief path.** Liquid that is caught between
+two closed valves warms, boils and tries to expand several hundred times. The pressure rises until something fails. A
+relief valve or a burst disc on each such volume is part of the design.
+
+## Crystal structure decides toughness
+
+<CrystalDbtt />
+
+| Structure | Metals | In the cold | Cryogenic use |
+| --- | --- | --- | --- |
+| FCC | Austenitic stainless steel, aluminium, copper, nickel alloys, Invar | No ductile-to-brittle transition. Strength rises and toughness stays high | To 4 K |
+| BCC | Carbon and low-alloy steels, martensitic and PH stainless steel, the ferrite in duplex, Mo, W | A ductile-to-brittle transition, usually between −70 °C and room temperature | None, except 9% Ni steel to 77 K |
+| HCP | Titanium, magnesium, beryllium | Few slip systems. Toughness depends on the interstitials (oxygen, nitrogen, iron) | Titanium ELI grades to 20 K |
+
+FCC metals have close-packed slip planes in many directions, so dislocations keep moving at any temperature
+([Metallurgy](../../fundamentals/metallurgy/#crystals-grains-and-dislocations)). In BCC metals, dislocations need
+thermal energy to move. Take the energy away and the metal cleaves instead of yielding: a carbon steel that is tough in
+the workshop can break like glass at −100 °C.
+
+Two exceptions to the simple rule:
+
+- **9% nickel steel** is BCC, but the nickel lowers its transition far enough for LNG and liquid nitrogen tanks, down
+  to −196 °C. It is not used colder.
+- **304L** is FCC but metastable: cold deformation changes part of it to martensite. It stays tough to 4 K, but the
+  martensite makes it sensitive to hydrogen. 316L, with more nickel, is the stable choice.
+
+Choose on structure first and on strength second. The [Material selection](../selection/) chart ranks by strength and
+mass. It does not know the temperature or the fluid.
+
+## Contraction: a constant α is wrong
+
+| Material | To 77 K (LN2) | To 20 K (LH2) |
+| --- | --- | --- |
+| Aluminium alloys (6061-T6, 5083) | 0.389% | 0.415% |
+| Copper (OFHC) | 0.304% | 0.325% |
+| Austenitic stainless steel (304, 316) | 0.280% | 0.300% |
+| Nickel superalloys (Inconel 718) | 0.224% | 0.239% |
+| Ferritic steels (Fe-2.25Ni to Fe-9Ni) | 0.191% | 0.210% |
+| Ti-6Al-4V | 0.162% | 0.174% |
+| Invar 36 | 0.040% | 0.040% |
+| G-10CR glass/epoxy, in plane | 0.210% | 0.238% |
+| PTFE | 1.940% | 2.115% |
+
+Integrated contraction from 293 K, (L293 − LT)/L293, from the NIST curve fits.
+
+1. **Most of the movement happens above 77 K.** Austenitic stainless steel has done 93% of its total contraction by
+   77 K. A test in LN2 shows almost all the movement of LH2 service.
+2. **A constant room-temperature α over-predicts.** For 6061-T6 to 20 K, the library α (23.6 µm/m·K) × 273 K gives
+   0.644%: 55% more than the real 0.415%. Above about 200 K a constant α is within about 15%, and the
+   [Differential expansion](../../joints/differential-expansion/) tools are good enough, for example for a −54 °C cold
+   soak.
+3. **The differences cause the trouble.** Aluminium shrinks about 0.1% more than stainless steel. On a 40 mm fit at
+   LOX temperature that is 42 µm: as much as the largest interference of an H7/p6 fit.
+
+## Fits and joints change on cooldown
+
+- **An aluminium housing on a steel shaft tightens:** the housing shrinks more. A steel housing on an aluminium part
+  loosens, and the part can move or leak.
+- **An aluminium flange clamped by stainless steel or A-286 bolts loses preload:** over the grip, the flange shrinks
+  more than the bolt. In the worked example the joint loses 29% of its preload.
+- **To keep the preload,** use conical spring (Belleville) washers; bolts that shrink as much as the flange; a
+  low-expansion spacer under the nut, sized so that the stack and the bolt shrink by the same amount; or a higher
+  assembly preload, checked against the bolt and the warm case.
+- **Size each fit at both temperatures.** The room-temperature limits come from
+  [Fits & limits](../../drawing/fits-and-limits/), and the movement comes from here. The warm case governs assembly;
+  the cold case governs service.
+
+## Restraint and chilldown
+
+A part that cannot shrink takes the strain as stress: σ = E × contraction. A 316L line held between two anchors at LOX
+temperature would see 193 GPa × 0.27% = 521 MPa, far past its yield. Cryogenic lines need a way to move: bellows,
+expansion loops or sliding supports.
+
+Chilldown adds stress of its own. The wetted surface cools first, a thick flange lags a thin wall, and the first liquid
+into a warm line boils and surges. Chill down with cold gas or a small flow first, and give thick parts time to follow.
+
+## Oxygen: ignition, not strength
+
+In LOX the question is whether a material can ignite and then keep burning. The ignition sources are:
+
+- **Particle impact** at bends, valves and places where the flow impinges.
+- **Adiabatic compression:** a valve that opens fast onto a dead-end volume heats the gas, and can ignite a polymer
+  seat.
+- **Friction and mechanical impact:** rubbing parts, a dropped tool.
+- **Contamination:** oil, grease or cutting fluid, which ignite far more easily than the metal.
+
+| Material | LOX in tanks and lines | Oxygen at pressure or speed | Note |
+| --- | --- | --- | --- |
+| Austenitic stainless steel (304L, 316L) | Yes | Check | The default for LOX lines and valves |
+| Aluminium alloys | Yes | No | Standard for LOX tanks. Keep it out of valves and impingement points |
+| Copper alloys, Monel, nickel 200 | Yes | Yes | The most burn-resistant: used where the flow impinges |
+| Nickel superalloys (718, 625) | Yes | Check | Between Monel and stainless steel |
+| **Titanium alloys** | **No: prohibited** | **No: prohibited** | Ignites on impact or at a fresh scratch, and burns violently |
+| Magnesium alloys | No | No | Ignition risk |
+| PTFE, PCTFE | Yes, after impact tests | Check | The standard seats and seals |
+| Hydrocarbon polymers, oils and greases | No | No | Use PTFE, PCTFE and fluorinated (PFPE) greases |
+| Composites (epoxy matrix) | Check | No | Need a LOX-compatible resin or a liner, and impact tests |
+
+**The titanium trap.** Titanium alloys have among the highest specific strengths of the metals, and a selection chart
+ranks Ti-6Al-4V high for a pressure vessel. If the vessel holds oxygen, that answer is wrong: titanium can ignite from
+an impact or a fresh scratch, and then it burns. No performance index sees this, so screen for the fluid before you
+rank.
+
+**Cleanliness is a design requirement.** Clean LOX hardware to a stated particle and non-volatile residue level
+(ASTM G93), assemble it with oxygen-compatible lubricants only, and keep it sealed until use. A well-designed part
+that carries cutting fluid is a hazard. The metals and the polymers are assessed by ASTM G94 and ASTM G63; LOX impact
+by ASTM G86 or NASA-STD-6001 Test 13A.
+
+## Hydrogen: two problems at once
+
+LH2 brings the cold and hydrogen together.
+
+- **Embrittlement.** Hydrogen enters some metals and lowers their ductility. It is worst in warm, high-pressure gas,
+  not in the liquid: at 20 K hydrogen hardly diffuses. In austenitic stainless steel the effect peaks near 200 K, so
+  chilldown and warm-up count, and the number of cycles counts as much as the time cold.
+- **Which metals.** Aluminium alloys, copper and stable austenitic stainless steel (316L, 21-6-9, A-286) resist it.
+  Metastable 304L, the nickel superalloys (718, 625, Monel K-500) and high-strength steels are sensitive. Titanium
+  absorbs hydrogen and forms brittle hydrides when warm. Hydrogen piping follows ASME B31.12, and ANSI/AIAA G-095A
+  covers hydrogen systems as a whole.
+- **Permeation and leaks.** Hydrogen leaks through gaps and seals that hold other gases, and permeates polymers and
+  microcracked composites.
+- **Wide flammability.** Hydrogen burns in air from 4% to 75%, and its flame is almost invisible in daylight. Vent it
+  safely, and detect it.
+
+## Seals and polymers in the cold
+
+Elastomers go glassy between about −20 °C (FKM) and −120 °C (silicone), so no elastomer O-ring seals at 77 K.
+Cryogenic seals are:
+
+- **Spring-energised PTFE seals:** the spring keeps the load on as the PTFE shrinks.
+- **Metal seals:** C-rings and E-rings, often with a soft plating (silver, gold, indium) on the seal face.
+- **PCTFE or PTFE seats** in valves, held by metal so that the shrinkage closes on the seat, not away from it.
+
+Polymers shrink 3 to 7 times as much as metals: PTFE 2.1% against 0.30% for stainless steel to 20 K. A PTFE seat or
+seal in a metal body loosens unless the design keeps it loaded. See [Sealing strategy](../../seals/sealing-strategy/)
+and [Plastics](../plastics/).
+
+## Composites microcrack before they break
+
+Carbon/epoxy gains strength and stiffness when cold. But the resin shrinks much more than the fibre, and the mismatch
+drives transverse microcracks in each ply. The cracks join into leak paths long before any structural failure. In the
+X-33 composite LH2 tank (1999), microcracks in the inner skin let hydrogen into the honeycomb core; when the tank
+warmed, the gas debonded the outer skin. Toughened resins, thin plies and liners are the answers. Where a composite
+meets a metal fitting, the difference in contraction loads the bond: see the bonded overlap in
+[Differential expansion](../../joints/differential-expansion/).
+
+## Heat leak through supports
+
+A support conducts Q = (A/L) × ∫k dT: its section over its length, times the conductivity integral of its material
+between the two temperatures.
+
+| Material | 77 K to 293 K | 20 K to 293 K |
+| --- | --- | --- |
+| G-10CR glass/epoxy, in plane | 137 W/m | 154 W/m |
+| PTFE | 56 W/m | 68 W/m |
+| Ti-6Al-4V | 1160 W/m | 1300 W/m |
+| Inconel 718 | 1820 W/m | 2100 W/m |
+| Stainless steel (304, 316) | 2600 W/m | 2910 W/m |
+| Al 6061-T6 | 27 600 W/m | 31 000 W/m |
+| Copper, OFHC (RRR 100) | 91 000 W/m | 164 000 W/m |
+
+Conductivity integrals from the NIST curve fits.
+
+For the same section and length, G-10CR conducts about one twentieth as much as stainless steel, and Ti-6Al-4V less
+than half. Aluminium and copper suit thermal straps, not supports. Every watt boils fluid: one watt boils 22 mL of LN2
+an hour, and 1.4 L of LHe.
+
+## Calculator
+
+All five tabs share the **service fluid** at the top, which sets the temperature; type a temperature to use another
+one. **Contraction** gives the shrinkage of a part in any library material that has a curve, against what a constant
+room-temperature α would say, and the stress if the part is held at both ends. **Fit** moves the room-temperature
+limits of a fit to the service temperature, with the contact pressure. **Joint** gives the preload of a bolted joint
+when cold, and the low-expansion spacer that would balance it. **Heat leak** gives the heat that supports conduct and
+the boil-off it causes, with every NIST material on one chart. **Screen** rates any library material for toughness in
+the cold, oxygen and hydrogen, with a chart of every class in every cryogen.
+
+<CryoCalc />
+
+## Worked example: a LOX valve on a test stand
+
+A LOX valve on an engine test stand has a 6061-T6 body with a 316L seat sleeve pressed into it. Eight M8 A-286 bolts
+clamp a 6061-T6 flange with a 20 mm grip, at 12 kN each; the seal needs at least 6 kN a bolt. A 2 m 316L line joins
+the valve between two anchors. A bracket in Ti-6Al-4V was proposed to save mass. The valve stands on four G-10CR legs,
+each 10 × 10 mm and 100 mm long, on a frame at 293 K. Service is LOX at 90.2 K. These are the default values of the
+calculator.
+
+1. **Screen the bracket.** Ti-6Al-4V in LOX: prohibited. Make the bracket in 316L or Inconel 718.
+2. **The line.** 316L shrinks 0.270% to 90.2 K, so the 2 m line gets 5.40 mm shorter. Held at both anchors it would
+   carry 521 MPa, far past its 220 MPa yield. Add a bellows or a loop.
+3. **The sleeve.** The fit is H7/p6 on 40 mm: 1 to 42 µm of interference at 20 °C. The aluminium body shrinks
+   0.376% and the sleeve 0.270%, so the fit tightens by 42.5 µm, to 44 to 85 µm. At the largest interference the
+   contact pressure is 35.5 MPa and the hoop stress in the body 92 MPa, against 275 MPa yield. The fit holds; check
+   the press force at assembly with the warm limits.
+4. **The flange.** Over the 20 mm grip the aluminium shrinks 21 µm more than the A-286 bolt. The preload falls from
+   12 kN to 8.54 kN, a loss of 29%: still above the 6 kN that the seal needs. An Invar spacer of 9.2 mm under each nut,
+   with longer bolts, would balance the contraction; conical spring washers would hold the preload instead.
+5. **The legs.** Four G-10CR legs conduct 0.53 W from 293 K to 90.2 K: about 0.19 L of LOX a day. The same legs in
+   304 stainless steel would conduct 9.95 W, 19 times as much.
+
+## Where this stops
+
+- **Screening data.** Many alloys use the curve of their class, and the ratings are general practice. For a final
+  design, take alloy data at temperature from NIST, from MMPDS where it covers the temperature, or from test.
+- **Strength in the cold.** FCC metals get stronger as they cool, so room-temperature allowables are conservative for
+  strength. They say nothing about toughness: test welds, castings and anything BCC at temperature.
+- **Not covered here:** two-phase flow, geysering and pressure surge in lines; cryogenic insulation (multilayer
+  insulation, foams); propellant conditioning.
+
+## On the drawing
+
+- **The service fluid and the temperature range** in the notes, for example "LOX service, 90 K to 323 K".
+- **The material and its condition:** 316L, Ti-6Al-4V ELI, never an open "stainless steel".
+- **Cleanliness for oxygen service:** "Clean for oxygen service to ASTM G93, level …", with the level that your
+  programme sets.
+- **Fits and preloads stated for assembly at room temperature,** with the cold check recorded in the analysis.
+- **No titanium, magnesium or hydrocarbon lubricant** on parts wetted by oxygen.
+
+## References and further reading
+
+- NIST, Cryogenic Material Properties (trc.nist.gov/cryogenics/materials): the contraction and conductivity fits.
+- Corruccini, R. J. and Gniewek, J. J., *Thermal Expansion of Technical Solids at Low Temperatures*, NBS Monograph 29,
+  1961.
+- NIST Chemistry WebBook, thermophysical properties of fluid systems.
+- Ekin, J. W., *Experimental Techniques for Low-Temperature Measurements*, Oxford University Press, 2006.
+- ASTM G93, G94, G63, G86 and G72; NASA-STD-6001: oxygen compatibility and cleaning.
+- ANSI/AIAA G-095A, *Guide to Safety of Hydrogen and Hydrogen Systems*; ASME B31.12, *Hydrogen Piping and Pipelines*.
+- San Marchi, C. and Somerday, B. P., *Technical Reference for Hydrogen Compatibility of Materials*, Sandia National
+  Laboratories.
+- NASA, *Final Report of the X-33 Liquid Hydrogen Tank Test Investigation Team*, 2000.
+
+<Aside type="note">
+  Values are typical, for screening and teaching. Take design values and compatibility decisions from your programme's
+  approved sources and the governing standards.
+</Aside>

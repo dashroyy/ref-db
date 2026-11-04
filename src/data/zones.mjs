@@ -65,6 +65,7 @@ export const REBUILT = {
   materials: 'materials/selection',
   sheet: 'materials/datasheet',
   density: 'materials/density',
+  cryo: 'materials/cryogenic',
   plastics: 'materials/plastics',
   elast: 'materials/silicone-and-pu',
   trade: 'materials/trade-study',

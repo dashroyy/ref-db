@@ -1,0 +1,59 @@
+{
+  "sources": {
+    "nist": "NIST Cryogenic Material Properties (trc.nist.gov/cryogenics/materials): curve fits to measured data",
+    "nbs29": "Corruccini and Gniewek, Thermal Expansion of Technical Solids at Low Temperatures, NBS Monograph 29 (1961)",
+    "webbook": "NIST Chemistry WebBook, saturation properties at 101.325 kPa"
+  },
+  "fluids": [
+    { "key": "lch4", "name": "Liquid methane", "sym": "LCH4", "K": 111.7, "rho": 422.4, "hfg": 510.8, "M": 16.043, "note": "The warmest of the common cryogens. Methane freezes at 90.7 K, close to LOX temperature: a methane line chilled by LOX or LN2 can freeze." },
+    { "key": "lox", "name": "Liquid oxygen", "sym": "LOX", "K": 90.2, "rho": 1141, "hfg": 213.1, "M": 31.999, "note": "The oxidiser. Material choice is set by ignition and burning, not by strength." },
+    { "key": "ln2", "name": "Liquid nitrogen", "sym": "LN2", "K": 77.4, "rho": 806.2, "hfg": 199.2, "M": 28.013, "note": "Inert and cheap: the usual test and chill-down fluid, and the stand-in for LOX in structural tests." },
+    { "key": "lh2", "name": "Liquid hydrogen", "sym": "LH2", "K": 20.3, "rho": 70.82, "hfg": 446.0, "M": 2.016, "note": "Very low density, embrittlement, permeation and wide flammability limits. Values for parahydrogen." },
+    { "key": "lhe", "name": "Liquid helium", "sym": "LHe", "K": 4.2, "rho": 124.7, "hfg": 20.56, "M": 4.003, "note": "Pressurant and laboratory fluid. Its latent heat is very small: a few watts boil litres an hour." }
+  ],
+  "contraction": {
+    "aus": { "name": "Austenitic stainless steel", "basis": "NIST fit for 304, 304L, 310 and 316", "src": "nist", "poly": [-295.54, -0.39811, 9.2683e-3, -2.0261e-5, 1.7127e-8], "tLow": 23, "f": -300.04, "range": [4, 300] },
+    "al": { "name": "Aluminium alloys", "basis": "NIST fit for 6061-T6 and 5083-O", "src": "nist", "poly": [-412.77, -0.30389, 8.7696e-3, -9.9821e-6, 0], "tLow": 18, "f": -415.45, "range": [4, 300] },
+    "cu": { "name": "Copper", "basis": "NIST fit for OFHC copper (expansion coefficient, integrated)", "src": "nist", "table": [[4, 325.6], [10, 325.6], [20, 325.4], [30, 324.8], [40, 323.3], [50, 320.3], [60, 315.7], [70, 309.5], [80, 301.8], [90, 292.9], [100, 282.8], [120, 260.2], [140, 235], [160, 207.9], [180, 179.3], [200, 149.4], [220, 118.5], [240, 86.8], [260, 54.4], [273, 33], [280, 21.5], [293, 0]], "range": [4, 300] },
+    "becu": { "name": "Beryllium copper", "basis": "NIST fit for beryllium copper", "src": "nist", "poly": [-311.5, -0.44498, 1.0133e-2, -2.4718e-5, 2.6277e-8], "tLow": 24, "f": -316.68, "range": [4, 300] },
+    "brass": { "name": "Brass", "basis": "NBS Monograph 29, yellow brass (65Cu-35Zn)", "src": "nbs29", "table": [[0, 384], [10, 384], [20, 383], [30, 382], [40, 380], [50, 375], [60, 368], [70, 360], [80, 350], [90, 339], [100, 326], [120, 299], [140, 269], [160, 237], [180, 204], [200, 169], [220, 134], [240, 98.4], [260, 61.8], [273, 37.3], [280, 24.6], [293, 0]], "range": [0, 300] },
+    "in718": { "name": "Nickel superalloys", "basis": "NIST fit for Inconel 718", "src": "nist", "poly": [-236.8, -0.212, 5.497e-3, -6.882e-6, 0], "tLow": 20, "f": -238.87, "range": [4, 300] },
+    "monel": { "name": "Monel", "basis": "NBS Monograph 29, Monel", "src": "nbs29", "table": [[0, 251], [10, 251], [20, 251], [30, 251], [40, 250], [50, 248], [60, 245], [70, 241], [80, 236], [90, 230], [100, 223], [120, 206], [140, 187], [160, 167], [180, 144], [200, 121], [220, 96.4], [240, 70.9], [260, 44.7], [273, 27], [293, 0]], "range": [0, 300] },
+    "invar": { "name": "Invar 36", "basis": "NIST fit for Invar (Fe-36Ni)", "src": "nist", "poly": [-52.65, 0.1009, 8.395e-4, -1.973e-6, 8.794e-11], "tLow": 80, "f": -40, "range": [4, 300] },
+    "ti64": { "name": "Titanium alloys", "basis": "NIST fit for Ti-6Al-4V", "src": "nist", "poly": [-171.1, -0.214, 4.807e-3, -7.111e-6, 0], "tLow": 24, "f": -173.61, "range": [4, 300] },
+    "ti": { "name": "Titanium, unalloyed", "basis": "NBS Monograph 29, titanium", "src": "nbs29", "table": [[0, 151], [20, 151], [30, 151], [40, 150], [50, 149], [60, 148], [70, 145], [80, 142], [90, 139], [100, 134], [120, 125], [140, 113], [160, 101], [180, 87.4], [200, 73.2], [220, 58.3], [240, 42.9], [260, 27], [273, 16.5], [280, 10.8], [293, 0]], "range": [0, 300] },
+    "fe": { "name": "Ferritic and martensitic steels", "basis": "NIST fit for Fe-2.25Ni to Fe-9Ni steels", "src": "nist", "poly": [-210.4, -0.05699, 5.072e-3, -1.381e-5, 1.897e-8], "tLow": 6, "f": -210.56, "range": [4, 300] },
+    "mg": { "name": "Magnesium", "basis": "NBS Monograph 29, magnesium", "src": "nbs29", "table": [[0, 490], [10, 490], [20, 490], [30, 489], [40, 486], [50, 482], [60, 475], [70, 466], [80, 454], [90, 441], [100, 427], [120, 393], [140, 356], [160, 316], [180, 273], [200, 227], [220, 180], [240, 132], [260, 82.9], [273, 50.4], [280, 32.9], [293, 0]], "range": [0, 300] },
+    "mo": { "name": "Molybdenum", "basis": "NIST fit for molybdenum (data from 20 K)", "src": "nist", "poly": [-90.912613, -0.127173, 2.66801e-3, -5.0432e-6, 3.5183e-9], "range": [20, 350] },
+    "w": { "name": "Tungsten", "basis": "NBS Monograph 29, tungsten", "src": "nbs29", "table": [[0, 85.8], [20, 85.8], [30, 85.7], [40, 85.3], [50, 84.5], [60, 83.3], [70, 81.7], [80, 79.7], [90, 77.4], [100, 74.8], [120, 69.1], [140, 62.7], [160, 55.6], [180, 48.1], [200, 40.1], [220, 31.9], [240, 23.4], [260, 14.7], [273, 8.9], [280, 5.8], [293, 0]], "range": [0, 300] },
+    "ta": { "name": "Tantalum", "basis": "NBS Monograph 29, tantalum", "src": "nbs29", "table": [[0, 143], [20, 143], [30, 142], [50, 138], [60, 135], [70, 131], [80, 127], [90, 122], [100, 117], [120, 106], [140, 95.1], [160, 83.5], [180, 71.6], [200, 59.3], [220, 47], [240, 34.4], [260, 21.6], [273, 13.1], [280, 8.5], [293, 0]], "range": [0, 300] },
+    "nb": { "name": "Niobium", "basis": "NBS Monograph 29, niobium", "src": "nbs29", "table": [[0, 143], [20, 143], [30, 143], [40, 141], [50, 139], [60, 137], [70, 133], [80, 129], [90, 125], [100, 121], [120, 111], [140, 99.4], [160, 87.7], [180, 75.5], [200, 63], [220, 50], [240, 36.7], [260, 23.1], [273, 14.1], [280, 9.2], [293, 0]], "range": [0, 300] },
+    "be": { "name": "Beryllium", "basis": "NIST fit for polycrystalline beryllium (data from 75 K)", "src": "nist", "poly": [-120.298, -0.34687, 2.5691e-3, 8.9848e-7, -2.9422e-9], "range": [75, 500] },
+    "ptfe": { "name": "PTFE", "basis": "NIST fit for PTFE (Teflon)", "src": "nist", "poly": [-2125, -0.8201, 6.161e-2, -3.171e-4, 6.85e-7], "range": [4, 300] },
+    "pctfe": { "name": "PCTFE", "basis": "NBS Monograph 29, PCTFE (mean of two samples)", "src": "nbs29", "table": [[0, 1168.5], [20, 1151], [40, 1112], [60, 1061.5], [80, 1002], [100, 935.5], [120, 863.5], [140, 787], [160, 705], [180, 618], [200, 526], [220, 428], [240, 323.5], [260, 210.5], [273, 127], [280, 87], [293, 0]], "range": [0, 300] },
+    "nylon": { "name": "Nylon", "basis": "NIST fit for polyamide (nylon)", "src": "nist", "poly": [-1389, -0.1561, 2.988e-2, -7.948e-5, 1.181e-7], "range": [4, 300] },
+    "pe": { "name": "Polyethylene", "basis": "NBS Monograph 29, polyethylene", "src": "nbs29", "table": [[0, 2449], [20, 2439], [40, 2404], [60, 2349], [80, 2279], [100, 2194], [120, 2089], [140, 1964], [160, 1814], [180, 1639], [200, 1439], [220, 1199], [240, 919], [260, 594], [273, 359], [280, 239], [293, 0]], "range": [0, 300] },
+    "silicone": { "name": "Silicone rubber", "basis": "NBS Monograph 29, silicone rubber", "src": "nbs29", "table": [[0, 2301], [20, 2296], [40, 2276], [60, 2231], [80, 2161], [100, 2066], [120, 1951], [140, 1816], [160, 1656], [180, 1466], [200, 1246], [220, 996], [240, 721], [260, 441], [273, 256], [280, 165], [293, 0]], "range": [0, 300] },
+    "epoxy": { "name": "Epoxy (cast)", "basis": "NBS Monograph 29, cast epoxy resin", "src": "nbs29", "table": [[0, 1061], [20, 1051], [40, 1022], [60, 983], [80, 935], [100, 880], [120, 819], [140, 751], [160, 676], [180, 594], [200, 505], [220, 410], [240, 308], [260, 199], [273, 122], [280, 81], [293, 0]], "range": [0, 300] },
+    "g10w": { "name": "G-10CR glass/epoxy, in plane", "basis": "NIST fit for G-10CR, warp direction (data from 12 K)", "src": "nist", "poly": [-246.9, 0.2064, 3.072e-3, -3.226e-6, 0], "range": [12, 300] },
+    "g10n": { "name": "G-10CR glass/epoxy, through the thickness", "basis": "NIST fit for G-10CR, normal direction (data from 10 K)", "src": "nist", "poly": [-719.8, 0.4455, 7.505e-3, -2.219e-6, 0], "range": [10, 300] }
+  },
+  "conductivity": {
+    "ss": { "name": "Stainless steel 304, 304L, 316", "form": "log", "coef": [-1.4087, 1.3982, 0.2543, -0.626, 0.2334, 0.4256, -0.4658, 0.165, -0.0199], "range": [1, 300] },
+    "al6061": { "name": "Al 6061-T6", "form": "log", "coef": [0.07918, 1.0957, -0.07277, 0.08084, 0.02803, -0.09464, 0.04179, -0.00571, 0], "range": [1, 300] },
+    "al5083": { "name": "Al 5083-O", "form": "log", "coef": [-0.90933, 5.751, -11.112, 13.612, -9.3977, 3.6873, -0.77295, 0.067336, 0], "range": [1, 300] },
+    "al1100": { "name": "Al 1100 (pure)", "form": "log", "coef": [23.39172, -148.5733, 422.1917, -653.6664, 607.0402, -346.152, 118.4276, -22.2781, 1.770187], "range": [4, 300] },
+    "cu": { "name": "Copper, OFHC (RRR 100)", "form": "rational", "coef": [2.2154, -0.47461, -0.88068, 0.13871, 0.29505, -0.02043, -0.04831, 0.001281, 0.003207], "range": [4, 300] },
+    "in718": { "name": "Inconel 718", "form": "log", "coef": [-8.28921, 39.447, -83.4353, 98.169, -67.2088, 26.7082, -5.7205, 0.51115, 0], "range": [4, 300] },
+    "invar": { "name": "Invar 36", "form": "log", "coef": [-2.7064, 8.5191, -15.923, 18.276, -11.9116, 4.40318, -0.86018, 0.068508, 0], "range": [4, 300] },
+    "ti64": { "name": "Ti-6Al-4V", "form": "log", "coef": [-5107.8774, 19240.422, -30789.064, 27134.756, -14226.379, 4438.2154, -763.07767, 55.796592, 0], "range": [20, 300] },
+    "ti15333": { "name": "Ti-15V-3Cr-3Al-3Sn", "form": "log", "coef": [-2.398794842, 8.970743802, -29.19286973, 54.87139779, -59.67137228, 38.89321714, -14.94175848, 3.111616089, -0.270452768], "range": [1.4, 300] },
+    "ni9": { "name": "9% nickel steel", "form": "log", "coef": [-0.0712785, -3.48735, 10.6547, -12.9153, 8.89066, -3.51482, 0.743643, -0.0657884, 0], "range": [4, 300] },
+    "ni225": { "name": "2.25% nickel steel (low-alloy steel)", "form": "log", "coef": [-3.5785, 20.804, -55.826, 87.812, -83.5016, 49.08, -17.4348, 3.4277, -0.28622], "range": [4, 300] },
+    "g10n": { "name": "G-10CR, through the thickness", "form": "log", "coef": [-4.1236, 13.788, -26.068, 26.272, -14.663, 4.4954, -0.6905, 0.0397, 0], "range": [10, 300] },
+    "g10w": { "name": "G-10CR, in plane", "form": "log", "coef": [-2.64827, 8.80228, -24.8998, 41.1625, -39.8754, 23.1778, -7.95635, 1.48806, -0.11701], "range": [12, 300] },
+    "ptfe": { "name": "PTFE", "form": "log", "coef": [2.738, -30.677, 89.43, -136.99, 124.69, -69.556, 23.32, -4.3135, 0.33829], "range": [4, 300] },
+    "nylon": { "name": "Nylon", "form": "log", "coef": [-2.6135, 2.3239, -4.7586, 7.1602, -4.9155, 1.6324, -0.2507, 0.0131, 0], "range": [1, 300] },
+    "kapton": { "name": "Polyimide (Kapton)", "form": "log", "coef": [5.73101, -39.5199, 79.9313, -83.8572, 50.9157, -17.9835, 3.42413, -0.27133, 0], "range": [4, 300] }
+  }
+}

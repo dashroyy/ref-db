@@ -1,0 +1,353 @@
+---
+// Cryogenic design in five tabs that share one service temperature: the contraction of a part, a fit and a bolted
+// joint on cooldown, the heat that supports conduct and the boil-off it causes, and a screen of any library material
+// for toughness in the cold, oxygen and hydrogen. Logic in src/lib/cryogenic.ts (unit-tested); UI only here.
+import { FLUIDS, KFITS, CRYO_MATERIALS, SCREEN_MATERIALS } from '../lib/cryogenic';
+import { slug } from '../lib/materials';
+import MaterialSelect from './MaterialSelect.astro';
+import ThreadSelect from './ThreadSelect.astro';
+
+const TABS = [{ key: 'con', name: 'Contraction' }, { key: 'fit', name: 'Fit' }, { key: 'joint', name: 'Joint' }, { key: 'heat', name: 'Heat leak' }, { key: 'screen', name: 'Screen' }];
+const ELASTIC = CRYO_MATERIALS.filter((m) => m.E && m.nu);
+const BOLTS = ELASTIC.filter((m) => m.kind === 'metal');
+const S316 = slug('Stainless 316L'), AL = slug('Al 6061-T6'), A286 = slug('A286 (Fe-Ni-Cr)'), TI = slug('Ti-6Al-4V (Gr 5)');
+---
+
+<div class="calc crcalc" data-cryocalc>
+  <div class="calc-head"><span>Cryogenic design</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button><button type="button" class="chip" data-copy>Copy</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <div class="row2 cr-temp">
+        <label>Service fluid<select name="fl">{FLUIDS.map((f) => <option value={f.key} selected={f.key === 'lox'}>{f.name} ({f.sym}), {f.K} K</option>)}<option value="custom">Other temperature</option></select></label>
+        <label>Temperature (K)<input name="T" type="number" min="1" max="293" step="any" value="90.2" /></label>
+      </div>
+      <fieldset data-panel="con">
+        <div class="row2">
+          <label>Material<MaterialSelect name="cm" list={CRYO_MATERIALS} selected={S316} /></label>
+          <label>Length (mm)<input name="cl" type="number" min="0" step="any" value="2000" /></label>
+          <label>Diameter (mm)<input name="cd" type="number" min="0" step="any" value="50" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="fit" hidden>
+        <div class="row2">
+          <label>Inner part<MaterialSelect name="fi" list={ELASTIC} selected={S316} /></label>
+          <label>Outer part<MaterialSelect name="fo" list={ELASTIC} selected={AL} /></label>
+          <label>Fit diameter (mm)<input name="fd" type="number" min="0" step="any" value="40" /></label>
+          <label>Smallest fit at 20 °C (µm)<input name="fmin" type="number" step="any" value="1" /></label>
+          <label>Largest fit at 20 °C (µm)<input name="fmax" type="number" step="any" value="42" /></label>
+          <label>Outer part OD (mm)<input name="fD" type="number" min="0" step="any" value="60" /></label>
+          <label>Inner part bore (mm)<input name="fdi" type="number" min="0" step="any" value="30" /></label>
+        </div>
+        <p class="hint">Interference is positive, clearance negative. The OD and bore give the contact pressure (Lamé).</p>
+      </fieldset>
+      <fieldset data-panel="joint" hidden>
+        <div class="row2">
+          <label>Bolt<ThreadSelect name="th" selected="M8" /></label>
+          <label>Bolt material<MaterialSelect name="jb" list={BOLTS} selected={A286} /></label>
+          <label>Clamped parts<MaterialSelect name="jm" list={ELASTIC} selected={AL} /></label>
+          <label>Grip length (mm)<input name="jg" type="number" min="0" step="any" value="20" /></label>
+          <label>Preload at assembly (kN)<input name="jf" type="number" min="0" step="any" value="12" /></label>
+          <label>Clamp needed, optional (kN)<input name="jmin" type="number" min="0" step="any" value="6" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="heat" hidden>
+        <div class="row2">
+          <label>Support material (NIST data)<select name="hm">{Object.entries(KFITS).map(([k, v]) => <option value={k} selected={k === 'g10w'}>{v.name}</option>)}</select></label>
+          <label>Section of one support (mm²)<input name="ha" type="number" min="0" step="any" value="100" /></label>
+          <label>Length (mm)<input name="hl" type="number" min="0" step="any" value="100" /></label>
+          <label>Number of supports<input name="hn" type="number" min="1" step="1" value="4" /></label>
+          <label>Warm end (K)<input name="hw" type="number" min="1" max="300" step="any" value="293" /></label>
+        </div>
+        <p class="hint">The cold end is the service temperature above.</p>
+      </fieldset>
+      <fieldset data-panel="screen" hidden>
+        <div class="row2">
+          <label>Material<MaterialSelect name="sm" list={SCREEN_MATERIALS} selected={TI} /></label>
+        </div>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div class="cr-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig cr-fig"><svg data-chart role="img" aria-label="Chart"></svg><figcaption data-cap></figcaption></figure>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Contraction from 293 K: NIST cryogenic material property fits and NBS Monograph 29. Where an alloy has no data of
+    its own, the curve of its class stands in, and the tool says so. Conductivity: NIST fits, not extrapolated below
+    their data. Fluids: NIST WebBook at 1 atm. Ratings are a screen from general practice: confirm them by the
+    governing standard and by test at temperature.
+  </div>
+</div>
+
+<style is:global>
+  .crcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .crcalc .calc-body > * { min-width: 0; }
+  .sl-markdown-content .calc.crcalc .hc-tabs { flex-wrap: wrap; overflow: visible; }
+  .cr-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .cr-out > * { margin: 0 !important; min-width: 0; }
+  .cr-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .crcalc .cr-temp { margin-bottom: 0.6rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--rd-line); }
+</style>
+
+<script>
+  import { FLUIDS, fluid, fluidAt, CURVES, contraction, naiveContraction, materialContraction, fitShift, preloadShift, balancingSpacer, restrainedStress, KFITS, kIntegral, heatLeak, boilOff, SERVICE, serviceFor, screen, rating, toughness, T0, type Rate } from '../lib/cryogenic';
+  import { material } from '../lib/materials';
+  import { THREADS, boltStiffness, memberStiffness } from '../lib/bolts';
+  import { fitPressure, fitStresses } from '../lib/expansion';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const RATE_WORD: Record<Rate, string> = { ok: 'Suitable', warn: 'Check', bad: 'Not suitable' };
+  const RATE_FILL: Record<Rate, string> = { ok: 'var(--rd-ok)', warn: 'var(--rd-warn)', bad: 'var(--rd-accent)' };
+  const RATE_GLYPH: Record<Rate, string> = { ok: '✓', warn: '!', bad: '✕' };
+  /** A signed number with a true minus sign, and a plus sign if asked. */
+  const sg = (v: number, d: number, plus = false) => `${v < 0 && Number(Math.abs(v).toFixed(d)) !== 0 ? '−' : plus && v > 0 ? '+' : ''}${Math.abs(v).toFixed(d)}`;
+  const degC = (T: number) => `${sg(T - 273.15, 0)} °C`;
+  const pc = (f: number) => (f * 100).toFixed(3);
+  const ro = (cls: string, dt: string, dd: string, small: string) => `<div class="readout ${cls}"><dt>${dt}</dt><dd>${dd} <small>${small}</small></dd></div>`;
+  const BY_K = [...FLUIDS].sort((a, b) => a.K - b.K);
+
+  /** Round tick values between lo and hi, about n of them. */
+  function ticks(lo: number, hi: number, n = 4) {
+    const span = hi - lo || 1, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((s) => span / s <= n + 0.5) ?? 10 * mag;
+    const out: number[] = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(10));
+    return out;
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-cryocalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => field(n).value;
+    const num = (n: string) => (val(n).trim() === '' ? NaN : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const mat = (n: string) => material(val(n))!;
+    let mode = 'con', copyText = '';
+    const width = () => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const temp = () => { const T = num('T'); return Number.isFinite(T) && T > 0 ? Math.min(T0, T) : NaN; };
+    const out = (html: string) => ($('[data-out]').innerHTML = html);
+    const notes = (items: [string, string][]) => ($('[data-notes]').innerHTML = items.map(([c, t]) => `<li class="${c}">${t}</li>`).join(''));
+    const draw = (W: number, H: number, body: string, cap: string) => { svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = body; $('[data-cap]').textContent = cap; };
+
+    // A chart against temperature, 0 to 300 K, with the cryogens marked.
+    interface Line { pts: [number, number][]; color: string; dash?: string; width?: number }
+    function tChart(o: { lines: Line[]; band?: { lo: [number, number][]; hi: [number, number][]; color: string }; yLo: number; yHi: number; fmt: (v: number) => string; hl?: { y: number; color: string; dash?: string; label: string }[]; point?: [number, number, string]; T: number }) {
+      const W = width(), H = 236, L = 52, R = 12, Tp = 32, B = 26;
+      const X = (t: number) => L + (t / 300) * (W - L - R), Y = (v: number) => Tp + ((o.yHi - v) / (o.yHi - o.yLo)) * (H - Tp - B);
+      const p: string[] = [];
+      for (const v of ticks(o.yLo, o.yHi)) p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${o.fmt(v)}</text>`);
+      const xStep = W - L - R < 300 ? 100 : 50; // fewer ticks on a phone, so "300 K" has room
+      for (let t = 0; t <= 300; t += xStep) p.push(`<text x="${X(t).toFixed(1)}" y="${H - 9}" text-anchor="${t === 300 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-muted)">${t}${t === 300 ? ' K' : ''}</text>`);
+      const named = fluidAt(o.T);
+      BY_K.forEach((f, i) => {
+        const x = X(f.K).toFixed(1), sel = f === named;
+        p.push(`<line x1="${x}" x2="${x}" y1="${Tp - 4}" y2="${H - B}" stroke="${sel ? 'var(--rd-accent)' : 'var(--rd-muted)'}" stroke-opacity="${sel ? 0.9 : 0.35}" stroke-dasharray="2 3"/><text x="${x}" y="${i % 2 ? 24 : 12}" text-anchor="middle" font-size="9.5" fill="${sel ? 'var(--rd-accent)' : 'var(--rd-muted)'}">${f.sym}</text>`);
+      });
+      if (!named && Number.isFinite(o.T)) p.push(`<line x1="${X(o.T).toFixed(1)}" x2="${X(o.T).toFixed(1)}" y1="${Tp - 4}" y2="${H - B}" stroke="var(--rd-accent)" stroke-opacity="0.9" stroke-dasharray="2 3"/>`);
+      if (o.band) {
+        const poly = [...o.band.lo, ...[...o.band.hi].reverse()].map(([t, v]) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+        p.push(`<polygon points="${poly}" fill="${o.band.color}" fill-opacity="0.18" stroke="none"/>`);
+      }
+      for (const h of o.hl ?? []) {
+        if (h.y < o.yLo || h.y > o.yHi) continue;
+        p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(h.y).toFixed(1)}" y2="${Y(h.y).toFixed(1)}" stroke="${h.color}" stroke-width="1.3" ${h.dash ? `stroke-dasharray="${h.dash}"` : ''}/>`);
+        if (h.label) p.push(`<text x="${W - R - 2}" y="${(Y(h.y) - 4).toFixed(1)}" text-anchor="end" font-size="9.5" fill="${h.color}">${esc(h.label)}</text>`);
+      }
+      for (const l of o.lines) p.push(`<polyline fill="none" stroke="${l.color}" stroke-width="${l.width ?? 2.2}" ${l.dash ? `stroke-dasharray="${l.dash}"` : ''} points="${l.pts.map(([t, v]) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}"/>`);
+      p.push(`<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="var(--rd-muted)" stroke-opacity="0.6"/>`);
+      if (o.point) {
+        const [t, v, label] = o.point, x = X(t), y = Y(v), tx = Math.min(Math.max(x + 8, L + 4), W - R - 6 * label.length - 4);
+        p.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--rd-accent)"/><text x="${tx.toFixed(1)}" y="${(y < Tp + 20 ? y + 16 : y - 8).toFixed(1)}" font-size="11" fill="var(--rd-ink)">${esc(label)}</text>`);
+      }
+      return { W, H, body: p.join('') };
+    }
+    const GRID = [4, 6, 8, 10, 13, 16, 20, 25, 30, 35, 40, 50, 60, 70, 77.4, 80, 90, 90.2, 100, 111.7, 120, 140, 160, 180, 200, 220, 240, 260, 280, 293];
+
+    function runCon(T: number) {
+      const m = mat('cm'), L = num('cl'), D = num('cd'), r = materialContraction(m, T)!, c = r.value;
+      const c4 = materialContraction(m, 4)!.value, naive = m.alpha ? naiveContraction(m.alpha, T) : NaN;
+      const sig = m.E ? restrainedStress(m.E, c) : NaN, sf = serviceFor(m);
+      out(ro('primary', 'Contraction', `${pc(c)} %`, `${esc(m.name)} from 293 K to ${T} K (${degC(T)})`)
+        + (L > 0 ? ro('', 'On the length', `${(L * c).toFixed(2)} mm`, `${L} mm becomes ${(L * (1 - c)).toFixed(2)} mm`) : '')
+        + (D > 0 ? ro('', 'On the diameter', `${(D * c * 1000).toFixed(0)} µm`, `${D} mm becomes ${(D * (1 - c)).toFixed(3)} mm`) : '')
+        + ro('', 'Of the total to 4 K', `${c4 > 0 ? Math.round((c / c4) * 100) : 0} %`, 'most of the movement happens above 77 K')
+        + (Number.isFinite(naive) && c > 0 ? ro('warn', 'A constant α would say', `${pc(naive)} %`, `${Math.round((naive / c - 1) * 100)}% too much: the library α (${(m.alpha! * 1e6).toFixed(1)} µm/m·K) is a room-temperature value`) : '')
+        + (Number.isFinite(sig) ? ro(m.Fty && sig > m.Fty ? 'bad' : '', 'Held at both ends', `${sig.toFixed(0)} MPa`, m.Fty ? `elastic, against ${m.Fty} MPa yield at room temperature${sig > m.Fty ? ': let it move (bellows, loop or sliding support)' : ''}` : 'elastic') : ''));
+      const n: [string, string][] = [['', `Curve: ${esc(CURVES[r.curve].name)}, ${esc(r.basis)}${r.exact ? '' : '. This is the curve of its class, not of this alloy'}${r.held ? `. The data start at ${CURVES[r.curve].range[0]} K and the value is held below that` : ''}.`]];
+      if (sf && toughness(sf.s, T) === 'bad') n.push(['bad', `${esc(m.name)} is too brittle at ${T} K: see Screen.`]);
+      if (sf && /^ti/.test(sf.s.key) && fluidAt(T)?.key === 'lox') n.push(['bad', 'Titanium is prohibited in oxygen: see Screen.']);
+      if (m.kind === 'polymer' || m.kind === 'elastomer') n.push(['warn', 'Polymers contract 3 to 7 times as much as metals: a polymer seat or seal loosens in a metal body, so cryogenic seals are spring-energised.']);
+      n.push(['', 'Size every gap, fit and support for the cold and for the warm case: parts are made and assembled at room temperature.']);
+      notes(n);
+      const pts = GRID.map((t) => [t, contraction(r.curve, t).value * 100] as [number, number]);
+      const lines: Line[] = [{ pts, color: 'var(--rd-accent)' }];
+      if (Number.isFinite(naive)) lines.unshift({ pts: [[4, naiveContraction(m.alpha!, 4) * 100], [293, 0]], color: 'var(--rd-muted)', dash: '5 4', width: 1.5 });
+      const yHi = Math.max(c4, Number.isFinite(naive) ? naiveContraction(m.alpha!, 4) : 0) * 100 * 1.08;
+      const ch = tChart({ lines, yLo: 0, yHi, fmt: (v) => v.toFixed(yHi < 0.5 ? 2 : 1), T, point: [T, c * 100, `${pc(c)} %`] });
+      draw(ch.W, ch.H, ch.body, 'Contraction from 293 K, %. Solid: the measured curve. Dashed: a constant room-temperature α, which over-predicts the cold end.');
+      copyText = `${m.name}, 293 K to ${T} K: contraction ${pc(c)} %` + (L > 0 ? `; ${L} mm shrinks ${(L * c).toFixed(2)} mm` : '') + (D > 0 ? `; ${D} mm diameter shrinks ${(D * c * 1000).toFixed(0)} um` : '');
+    }
+
+    function runFit(T: number) {
+      const mi = mat('fi'), mo = mat('fo'), d = num('fd'), a = num('fmin'), b = num('fmax'), D = num('fD'), di = num('fdi') || 0;
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      if (!(d > 0) || !Number.isFinite(lo) || !Number.isFinite(hi)) { out(ro('bad', 'Fit', '—', 'enter the diameter and the two limits of the fit')); notes([]); draw(width(), 10, '', ''); copyText = ''; return; }
+      const ci = materialContraction(mi, T)!, co = materialContraction(mo, T)!, s = fitShift(d, ci.value, co.value) * 1000;
+      const lt = lo + s, ht = hi + s;
+      const kind = (x: number, y: number) => (x > 0 ? 'interference' : y < 0 ? 'clearance' : 'transition: clearance to interference');
+      const geo = D > d && d > di;
+      const p = geo && ht > 0 ? fitPressure(ht / 1000, { d, D, di, Eo: mo.E!, nuo: mo.nu!, Ei: mi.E!, nui: mi.nu! }) : 0;
+      const hoop = p > 0 ? fitStresses(p, { d, D, di, Eo: mo.E!, nuo: mo.nu!, Ei: mi.E!, nui: mi.nu! }).hoopOuter : 0;
+      const lost = lo > 0 && lt <= 0, seize = hi < 0 && ht > 0;
+      out(ro(lost ? 'bad' : seize ? 'warn' : 'primary', `Fit at ${T} K`, `${sg(lt, 0)} to ${sg(ht, 0)} µm`, `${kind(lt, ht)}; ${sg(lo, 0)} to ${sg(hi, 0)} µm at 20 °C (${kind(lo, hi)})`)
+        + ro('', 'Change on cooldown', `${sg(s, 1, true)} µm`, `the outer part shrinks ${pc(co.value)} % and the inner ${pc(ci.value)} %: ${s > 0 ? 'tighter' : s < 0 ? 'looser' : 'no change'}`)
+        + (p > 0 ? ro(mo.Fty && hoop >= mo.Fty ? 'bad' : '', 'Contact pressure', `${p.toFixed(1)} MPa`, `at the largest interference; hoop stress in the outer part ${hoop.toFixed(0)} MPa${mo.Fty ? `, against ${mo.Fty} MPa yield at room temperature` : ''}`) : ''));
+      const n: [string, string][] = [];
+      if (lost) n.push(['bad', 'The interference is lost on cooldown: the parts can move or leak cold. Use a larger interference, or a material pair that tightens.']);
+      if (seize) n.push(['warn', 'A clearance fit closes on cooldown: the parts can seize, and a sliding fit stops sliding.']);
+      n.push(['', `Pressure from room-temperature E. E rises by about 5 to 12% as metals cool, so the cold pressure is slightly higher.`]);
+      for (const [mm, c] of [[mi, ci], [mo, co]] as const) if (!c.exact) n.push(['', `${esc(mm.name)}: the curve of its class (${esc(c.basis)}).`]);
+      n.push(['', 'The room-temperature limits come from Fits & limits. Check the fit at both ends: assembly is warm, service is cold.']);
+      notes(n);
+      const band = { lo: GRID.map((t) => [t, lo + fitShift(d, contraction(ci.curve, t).value, contraction(co.curve, t).value) * 1000] as [number, number]), hi: GRID.map((t) => [t, hi + fitShift(d, contraction(ci.curve, t).value, contraction(co.curve, t).value) * 1000] as [number, number]), color: 'var(--rd-blue)' };
+      const ys = [...band.lo, ...band.hi].map(([, v]) => v).concat(0), yLo = Math.min(...ys), yHi = Math.max(...ys), pad = (yHi - yLo) * 0.12 || 5;
+      const ch = tChart({ band, lines: [{ pts: band.lo, color: 'var(--rd-blue)', width: 1.6 }, { pts: band.hi, color: 'var(--rd-blue)', width: 1.6 }], yLo: yLo - pad, yHi: yHi + pad, fmt: (v) => sg(v, 0), hl: [{ y: 0, color: 'var(--rd-muted)', label: 'interference above, clearance below' }], point: [T, ht, `${sg(ht, 0)} µm`], T });
+      draw(ch.W, ch.H, ch.body, 'The fit band against temperature, µm: interference positive. The band moves as one: both limits change by the same amount.');
+      copyText = `${mi.name} in ${mo.name}, d ${d} mm: fit ${lo} to ${hi} um at 20 C becomes ${lt.toFixed(0)} to ${ht.toFixed(0)} um at ${T} K` + (p > 0 ? `; contact pressure ${p.toFixed(1)} MPa, hoop ${hoop.toFixed(0)} MPa` : '');
+    }
+
+    function runJoint(T: number) {
+      const t = THREADS.find((x) => x.name === val('th'))!, mb = mat('jb'), mm = mat('jm'), g = num('jg'), F0 = num('jf') * 1000, Fmin = num('jmin') * 1000;
+      if (!(g > 0) || !(F0 > 0)) { out(ro('bad', 'Joint', '—', 'enter the grip and the preload')); notes([]); draw(width(), 10, '', ''); copyText = ''; return; }
+      const kb = boltStiffness(t, mb.E!, g, 0), km = memberStiffness(t.d, 1.5 * t.d, g, mm.E!);
+      const cb = materialContraction(mb, T)!, cm = materialContraction(mm, T)!;
+      const F = (TT: number) => F0 + preloadShift(g, contraction(cb.curve, TT).value, contraction(cm.curve, TT).value, kb, km);
+      const FT = F(T), dF = FT - F0, inv = balancingSpacer(g, cb.value, cm.value, contraction('invar', T).value);
+      const low = Number.isFinite(Fmin) && Fmin > 0 && FT < Fmin;
+      out(ro(FT <= 0 ? 'bad' : low ? 'bad' : 'primary', `Preload at ${T} K`, `${(Math.max(FT, 0) / 1000).toFixed(2)} kN`, `${sg(dF / 1000, 2, true)} kN (${sg((dF / F0) * 100, 0, true)}%) from ${F0 / 1000} kN at assembly${FT <= 0 ? ': the joint goes slack' : low ? `: below the ${Fmin / 1000} kN needed` : ''}`)
+        + ro('', 'Difference in contraction', `${((cm.value - cb.value) * g * 1000).toFixed(1)} µm`, `over the ${g} mm grip: clamped parts ${pc(cm.value)} %, bolt ${pc(cb.value)} %`)
+        + ro('', 'Stiffness, bolt and parts', `${(kb / 1000).toFixed(0)} and ${(km / 1000).toFixed(0)} kN/mm`, `${esc(t.label ?? t.name)}, fully threaded; 30° cones from a 1.5d bearing face`)
+        + (Number.isFinite(inv) ? ro('', 'Invar spacer to balance', `${inv.toFixed(1)} mm`, 'under the nut, with a longer bolt: the stack then shrinks as much as the bolt') : ''));
+      const n: [string, string][] = [];
+      if (dF < 0) n.push(['', 'To keep the preload: conical spring (Belleville) washers; a bolt that shrinks as much as the parts; a low-expansion spacer sized as shown; or a higher assembly preload, checked against the bolt and the warm case.']);
+      if (dF > 0) n.push(['warn', 'The preload rises on cooldown: check the bolt stress and the bearing stress cold.']);
+      n.push(['', 'Leak test cold as well as warm: a joint that seals at room temperature can leak at LN2.']);
+      for (const [x, c] of [[mb, cb], [mm, cm]] as const) if (!c.exact) n.push(['', `${esc(x.name)}: the curve of its class (${esc(c.basis)}).`]);
+      notes(n);
+      const pts = GRID.map((TT) => [TT, F(TT) / 1000] as [number, number]), ys = pts.map(([, v]) => v).concat(F0 / 1000, Number.isFinite(Fmin) ? Fmin / 1000 : F0 / 1000);
+      const yLo = Math.min(0, ...ys), yHi = Math.max(...ys) * 1.12;
+      const ch = tChart({ lines: [{ pts, color: 'var(--rd-accent)' }], yLo, yHi, fmt: (v) => sg(v, yHi < 10 ? 1 : 0), hl: [...(Number.isFinite(Fmin) && Fmin > 0 ? [{ y: Fmin / 1000, color: 'var(--rd-warn)', dash: '5 4', label: 'clamp needed' }] : []), { y: 0, color: 'var(--rd-muted)', label: '' }], point: [T, Math.max(FT, 0) / 1000, `${(Math.max(FT, 0) / 1000).toFixed(2)} kN`], T });
+      draw(ch.W, ch.H, ch.body, 'Preload against temperature, kN, from the assembly preload at 293 K.');
+      copyText = `${t.name} ${mb.name} bolt, ${g} mm of ${mm.name}: preload ${F0 / 1000} kN at assembly, ${(FT / 1000).toFixed(2)} kN at ${T} K`;
+    }
+
+    function runHeat(T: number) {
+      const key = val('hm'), A = num('ha'), L = num('hl'), n = Math.round(num('hn')), Tw = num('hw');
+      if (!(A > 0 && L > 0 && n >= 1 && Tw > T)) { out(ro('bad', 'Heat leak', '—', 'enter the section, the length, the number, and a warm end above the cold end')); notes([]); draw(width(), 10, '', ''); copyText = ''; return; }
+      const I = kIntegral(key, T, Tw), Q = heatLeak(key, A, L, n, T, Tw), f = fluidAt(T), bo = f ? boilOff(Q, f) : undefined;
+      const W = (q: number) => (q < 1 ? `${(q * 1000).toFixed(0)} mW` : `${q.toFixed(q < 10 ? 2 : 1)} W`);
+      out(ro('primary', 'Heat leak', W(Q), `${n} × ${A} mm² × ${L} mm of ${esc(KFITS[key].name)}, ${T} K to ${Tw} K`)
+        + ro('', 'Conductivity integral', `${I.value.toFixed(0)} W/m`, `∫k dT from ${I.from} K to ${I.to} K${I.from > T ? `: the data start at ${I.from} K, and the part below is not included` : ''}`)
+        + ro('', 'Mean conductivity', `${(I.value / (I.to - I.from)).toFixed(2)} W/m·K`, 'the integral divided by the temperature range')
+        + (bo && f ? ro('', 'Boil-off', `${bo.LPerDay.toFixed(bo.LPerDay < 1 ? 3 : 2)} L/day`, `${(bo.kgPerH * 1000).toFixed(1)} g/h of ${f.sym}: latent heat ${f.hfg} kJ/kg`) : ''));
+      notes([
+        ['', 'A support carries load as well as heat: size it for strength and column buckling first, then make A/L as small as the load allows.'],
+        ['', 'Per unit of heat leak, G-10CR and the titanium alloys carry the most load. Stainless steel is the robust middle choice. Aluminium and copper conduct 10 to 100 times more: they suit thermal straps, not supports.'],
+        ['', 'This is conduction through the supports only. Radiation, gas in the insulation space, pipes and wiring add to it.'],
+      ]);
+      // log bars of the conductivity integral of every material, for the same two temperatures
+      const rows = Object.keys(KFITS).map((k) => ({ k, v: kIntegral(k, T, Tw).value })).filter((r) => r.v > 0).sort((a, b) => a.v - b.v);
+      const Wd = width(), rowH = 20, Lw = Math.min(200, Math.round(Wd * 0.42)), R = 64, H = rows.length * rowH + 28;
+      const lo = 10 ** Math.floor(Math.log10(rows[0].v)), hi = 10 ** Math.ceil(Math.log10(rows[rows.length - 1].v));
+      const X = (v: number) => Lw + ((Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))) * (Wd - Lw - R);
+      const maxCh = Math.max(8, Math.floor((Lw - 8) / 5.9)), p: string[] = [];
+      for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++) { const x = X(10 ** e).toFixed(1); p.push(`<line x1="${x}" x2="${x}" y1="4" y2="${H - 20}" stroke="var(--rd-line)"/><text x="${x}" y="${H - 6}" text-anchor="middle" font-size="9.5" fill="var(--rd-muted)">${10 ** e >= 1000 ? `${10 ** (e - 3)}k` : 10 ** e}</text>`); }
+      rows.forEach((r, i) => {
+        const y = 4 + i * rowH, sel = r.k === key, name = KFITS[r.k].name, w = Math.max(1, X(r.v) - Lw);
+        p.push(`<text x="${Lw - 6}" y="${y + 14}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)" font-weight="${sel ? 700 : 400}" font-family="var(--sl-font-system, system-ui)">${esc(name.length > maxCh ? name.slice(0, maxCh - 1) + '…' : name)}</text><rect x="${Lw}" y="${y + 3}" width="${w.toFixed(1)}" height="${rowH - 7}" rx="2" fill="${sel ? 'var(--rd-accent)' : 'var(--rd-muted)'}" fill-opacity="${sel ? 0.85 : 0.45}"/><text x="${(Lw + w + 4).toFixed(1)}" y="${y + 14}" font-size="10" fill="var(--rd-ink)">${r.v >= 1000 ? `${(r.v / 1000).toFixed(r.v >= 1e4 ? 0 : 1)}k` : r.v.toFixed(0)}</text>`);
+      });
+      draw(Wd, H, p.join(''), `Conductivity integral from ${T} K to ${Tw} K, W/m, log scale. Heat leak = (A/L) × the integral.`);
+      copyText = `${n} supports, ${A} mm2 x ${L} mm, ${KFITS[key].name}, ${T} K to ${Tw} K: integral ${I.value.toFixed(0)} W/m, heat leak ${Q.toFixed(3)} W` + (bo && f ? `, boil-off ${bo.LPerDay.toFixed(3)} L/day of ${f.sym}` : '');
+    }
+
+    function runScreen(T: number) {
+      const m = mat('sm'), r = screen(m, T)!, s = r.s, f = fluidAt(T);
+      const toughWord = r.tough === 'ok' ? `Tough at ${T} K` : r.tough === 'warn' ? `Check at ${T} K` : `Too brittle at ${T} K`;
+      out(ro(r.tough, 'In the cold', toughWord, esc(s.cold))
+        + ro('', 'Structure', esc(r.structure), esc(s.name))
+        + ro(s.lox, 'Liquid oxygen', RATE_WORD[s.lox], esc(s.loxNote))
+        + ro(s.gox, 'Oxygen at pressure', RATE_WORD[s.gox], esc(s.goxNote))
+        + ro(s.h2, 'Hydrogen', RATE_WORD[s.h2], esc(s.h2Note))
+        + (r.c ? ro('', 'Contraction', `${pc(r.c.value)} %`, `from 293 K: ${esc(r.c.basis)}${r.c.exact ? '' : ', the curve of its class'}`) : ro('', 'Contraction', '—', 'no curve held for this material')));
+      notes([
+        ...r.notes.map((t) => ['', esc(t)] as [string, string]),
+        ...(f?.key === 'lox' && s.lox === 'bad' ? [['bad', 'In LOX the question is ignition, not strength. No strength-to-weight index sees this: check it before you rank materials.'] as [string, string]] : []),
+        ['', 'A screen, not a qualification. Confirm by the governing standard: ASTM G94 and G63 for oxygen compatibility, ASTM G86 and NASA-STD-6001 for LOX impact, ANSI/AIAA G-095 and the Sandia hydrogen compatibility reference for hydrogen, and test at temperature.'],
+      ]);
+      // the matrix: every class in every cryogen
+      const W = width(), Lw = Math.min(176, Math.round(W * 0.44)), top = 34, rowH = 18, cw = (W - Lw - 4) / FLUIDS.length, H = top + SERVICE.length * rowH + 4;
+      const maxCh = Math.max(8, Math.floor((Lw - 8) / 5.7)), p: string[] = [];
+      p.push(`<text x="4" y="13" font-size="10" font-weight="700" fill="var(--rd-ink)" font-family="var(--sl-font-system, system-ui)">Class</text><text x="4" y="26" font-size="9" fill="var(--rd-muted)" font-family="var(--sl-font-system, system-ui)">boils at${cw < 46 ? ', K' : ''}</text>`);
+      FLUIDS.forEach((fl, j) => {
+        const x = Lw + j * cw, sel = fl === f;
+        if (sel) p.push(`<rect x="${x.toFixed(1)}" y="0" width="${(cw - 2).toFixed(1)}" height="${H}" rx="3" fill="var(--rd-accent)" fill-opacity="0.1"/>`);
+        p.push(`<text x="${(x + cw / 2).toFixed(1)}" y="13" text-anchor="middle" font-size="10" font-weight="700" fill="${sel ? 'var(--rd-accent)' : 'var(--rd-ink)'}">${fl.sym}</text><text x="${(x + cw / 2).toFixed(1)}" y="26" text-anchor="middle" font-size="9" fill="var(--rd-muted)">${cw < 46 ? Math.round(fl.K) : `${fl.K} K`}</text>`);
+      });
+      SERVICE.forEach((c, i) => {
+        const y = top + i * rowH, sel = c.key === s.key;
+        if (sel) p.push(`<rect x="0" y="${y - 1}" width="${W}" height="${rowH}" rx="3" fill="none" stroke="var(--rd-accent)" stroke-width="1.5"/>`);
+        p.push(`<text x="4" y="${y + 12}" font-size="10.5" fill="var(--rd-ink)" font-weight="${sel ? 700 : 400}" font-family="var(--sl-font-system, system-ui)">${esc(c.short.length > maxCh ? c.short.slice(0, maxCh - 1) + '…' : c.short)}</text>`);
+        FLUIDS.forEach((fl, j) => {
+          const rt = rating(c, fl), x = Lw + j * cw;
+          p.push(`<rect x="${(x + 1).toFixed(1)}" y="${y + 1}" width="${(cw - 4).toFixed(1)}" height="${rowH - 4}" rx="2" fill="${RATE_FILL[rt]}" fill-opacity="${rt === 'ok' ? 0.3 : 0.4}"/><text x="${(x + cw / 2 - 1).toFixed(1)}" y="${y + 12}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">${RATE_GLYPH[rt]}</text>`);
+        });
+      });
+      draw(W, H, p.join(''), `Every class in every cryogen at its boiling point: ✓ suitable, ! check, ✕ not suitable. Toughness in the cold, with oxygen compatibility in LOX and hydrogen in LH2. Outlined: ${s.short}.`);
+      copyText = `${m.name} at ${T} K: ${toughWord}; LOX ${RATE_WORD[s.lox]}; oxygen at pressure ${RATE_WORD[s.gox]}; hydrogen ${RATE_WORD[s.h2]}`;
+    }
+
+    const run = () => {
+      const T = temp();
+      if (!Number.isFinite(T)) { out(ro('bad', 'Temperature', '—', 'enter a temperature between 1 and 293 K')); notes([]); draw(width(), 10, '', ''); copyText = ''; return; }
+      if (mode === 'con') runCon(T); else if (mode === 'fit') runFit(T); else if (mode === 'joint') runJoint(T); else if (mode === 'heat') runHeat(T); else runScreen(T);
+    };
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    // The service fluid sets the temperature; a typed temperature selects its fluid, or "Other temperature".
+    field('fl').addEventListener('change', () => { const f = fluid(val('fl')); if (f) field('T').value = String(f.K); });
+    field('T').addEventListener('input', () => { field('fl').value = fluidAt(num('T'))?.key ?? 'custom'; });
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText(copyText); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    // The worked example: a LOX valve on a test stand. No factors: every value is a dimension, a material or a load.
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => {
+      const v: Record<string, string> = {
+        fl: 'lox', T: '90.2', cm: 'stainless-316l', cl: '2000', cd: '50', fi: 'stainless-316l', fo: 'al-6061-t6', fd: '40', fmin: '1', fmax: '42', fD: '60', fdi: '30',
+        th: 'M8', jb: 'a286-fe-ni-cr', jm: 'al-6061-t6', jg: '20', jf: '12', jmin: '6', hm: 'g10w', ha: '100', hl: '100', hn: '4', hw: '293', sm: 'ti-6al-4v-gr-5',
+      };
+      for (const [k, x] of Object.entries(v)) field(k).value = x;
+      const note = $('[data-example-note]');
+      note.textContent = 'Worked example loaded: a LOX valve on a test stand. Go through the tabs in the order of the worked example, from Screen.';
+      note.hidden = false;
+      select('screen');
+    });
+    if ('ResizeObserver' in window) { let wd = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - wd) > 8) { wd = nw; run(); } }).observe(svg); }
+    run();
+  });
+</script>

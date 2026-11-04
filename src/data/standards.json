@@ -798,6 +798,54 @@
    "title": "Wiring, aerospace vehicle",
    "cat": "env",
    "why": "Harness routing, clamping, bend radius and separation. Reserve the space for the harness, not a thin line."
+  },
+  {
+   "ref": "ASTM G93",
+   "title": "Cleanliness levels and cleaning methods for oxygen-enriched environments",
+   "cat": "process",
+   "why": "Cleaning LOX and oxygen hardware to a stated particle and non-volatile residue level before assembly. Write the level on the drawing."
+  },
+  {
+   "ref": "ASTM G94",
+   "title": "Evaluating metals for oxygen service",
+   "cat": "material",
+   "why": "Ranks metals by their ignition and burn resistance in oxygen: why Monel and copper alloys go where the flow impinges, and titanium nowhere."
+  },
+  {
+   "ref": "ASTM G63",
+   "title": "Evaluating nonmetallic materials for oxygen service",
+   "cat": "material",
+   "why": "Seats, seals and lubricants for oxygen: PTFE, PCTFE and fluorinated greases, and the tests that clear them."
+  },
+  {
+   "ref": "ASTM G86",
+   "title": "Ignition sensitivity to mechanical impact in liquid and gaseous oxygen",
+   "cat": "material",
+   "why": "The LOX impact test that a polymer, a lubricant or a composite must pass before it touches LOX."
+  },
+  {
+   "ref": "ASTM G72",
+   "title": "Autogenous ignition temperature in high-pressure oxygen",
+   "cat": "material",
+   "why": "The temperature at which a polymer or a lubricant ignites in oxygen without a spark: one input to an oxygen compatibility assessment."
+  },
+  {
+   "ref": "NASA-STD-6001",
+   "title": "Flammability, offgassing and compatibility requirements and test procedures",
+   "cat": "material",
+   "why": "NASA's material tests for flammability and oxygen compatibility, including mechanical impact in LOX (Test 13A)."
+  },
+  {
+   "ref": "AIAA G-095",
+   "title": "Guide to safety of hydrogen and hydrogen systems (ANSI/AIAA)",
+   "cat": "env",
+   "why": "Design, materials and operation of gaseous and liquid hydrogen systems: embrittlement, leaks, venting and the cold."
+  },
+  {
+   "ref": "ASME B31.12",
+   "title": "Hydrogen piping and pipelines",
+   "cat": "design",
+   "why": "Material and strength limits for hydrogen piping, including which steels may be used and at what strength."
   }
  ]
 }
