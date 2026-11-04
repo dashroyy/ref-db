@@ -1,0 +1,27 @@
+---
+// STAR MAP: opens the map of the route as an overlay (src/scripts/starmap-overlay.ts). The map and three.js load on the
+// first click (or on hover, to be ready sooner); a link ending in #map opens the page with the map open.
+---
+
+<button type="button" class="hud-chip map-switch" data-starmap-open aria-haspopup="dialog" aria-expanded="false" title="The route as a star map">
+  <span class="v">STAR MAP</span>
+</button>
+
+<script>
+  type Overlay = typeof import('../../scripts/starmap-overlay');
+  let mod: Promise<Overlay> | null = null;
+  const load = () => (mod ??= import('../../scripts/starmap-overlay'));
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-starmap-open]')];
+  buttons.forEach((b) => {
+    b.addEventListener('pointerenter', () => { load().catch(() => (mod = null)); }, { once: true });
+    b.addEventListener('click', () => {
+      load().then((m) => m.toggleStarMap(b)).catch((e) => { mod = null; try { console.warn('Star map unavailable:', e); } catch { /* console may be absent */ } });
+    });
+  });
+  if (/^#map(\/|$)/.test(location.hash)) load().then((m) => m.toggleStarMap(buttons[0], true)).catch(() => (mod = null));
+</script>
+
+<style>
+  .map-switch[aria-expanded='true'] { border-color: var(--sl-color-accent); color: var(--sl-color-accent); }
+  :global(html.sm-loading) .map-switch { cursor: progress; }
+</style>

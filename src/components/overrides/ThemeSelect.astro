@@ -1,7 +1,9 @@
 ---
-// MODE switch in the v1 style: dark ⇄ light, dark by default.
+// STAR MAP, then the MODE switch in the v1 style: dark ⇄ light, dark by default.
+import StarMapButton from '../hud/StarMapButton.astro';
 ---
 
+<StarMapButton />
 <button type="button" class="hud-chip mode-switch" data-mode-switch aria-label="Switch between dark and light theme">
   <span class="k">MODE</span><span class="v" data-mode-label>DARK</span>
 </button>
