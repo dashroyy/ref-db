@@ -1,0 +1,225 @@
+---
+// The reading list: find a source by subject, page or keyword, see why it is worth your time, where to get it and the
+// pages of this site that cite it (found in the page text at build time); and reading paths that put a few sources in
+// order for one kind of work. Logic and data in src/lib/reading.ts (unit-tested); UI only here.
+import { SOURCES, CATS, KINDS, PATHS, citation, citedBy, type Doc } from '../lib/reading';
+
+const raw = import.meta.glob('../content/docs/**/*.mdx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const docs: Doc[] = Object.entries(raw)
+  .map(([p, text]) => {
+    const path = p.replace('../content/docs/', '').replace(/\.mdx$/, '').replace(/(^|\/)index$/, '');
+    const title = text.match(/^title:\s*["']?(.+?)["']?\s*$/m)?.[1] ?? path;
+    return { path, title, text };
+  })
+  .filter((d) => d.path !== 'fundamentals/reading');
+const DATA = SOURCES.map((s) => ({ ...s, cite: citation(s), pages: citedBy(s, docs) }));
+const PAGES = [...new Map(DATA.flatMap((s) => s.pages).map((p) => [p.path, p])).values()].sort((a, b) => a.title.localeCompare(b.title));
+---
+
+<div class="calc rdcalc" data-rdcalc>
+  <div class="calc-head"><span>Reading list</span><span class="head-btns"><span data-count></span><button type="button" class="chip" data-copy>Copy the list</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="View">
+    <button type="button" role="tab" class="chip" data-tab="find" aria-selected="true">Find a source</button>
+    <button type="button" role="tab" class="chip" data-tab="paths" aria-selected="false">Reading paths</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="find">
+        <div class="rd-ctl">
+          <label>Search<input name="q" type="search" placeholder="title, author, topic" autocomplete="off" /></label>
+          <label>Subject<select name="cat"><option value="">All subjects</option>{CATS.map((c) => <option value={c.key}>{c.name}</option>)}</select></label>
+          <label>Cited on the page<select name="page"><option value="">Any page</option>{PAGES.map((p) => <option value={p.path}>{p.title}</option>)}</select></label>
+        </div>
+        <div class="rd-row">
+          <label class="inline"><input type="checkbox" name="free" /> Free only</label>
+          <label class="inline"><input type="checkbox" name="start" /> Start here</label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="paths" hidden>
+        <label>Reading path<select name="path">{PATHS.map((p) => <option value={p.key}>{p.name}</option>)}</select></label>
+        <p class="hint" data-pathd></p>
+      </fieldset>
+    </form>
+    <div class="rd-out">
+      <div class="rd-pane" data-pane="find">
+        <dl class="readouts" data-out></dl>
+        <figure class="hc-fig rd-fig"><svg data-chart role="img" aria-label="Sources in each subject, free and to buy"></svg><figcaption>Sources in each subject: green, free; grey, to buy or under licence. Select a bar to show that subject.</figcaption></figure>
+        <div data-card></div>
+        <div class="rd-scroll" data-table></div>
+      </div>
+      <div class="rd-pane" data-pane="paths" hidden>
+        <ol class="rd-path" data-path></ol>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <script type="application/json" data-src set:html={JSON.stringify({ DATA, CATS, KINDS, PATHS })}></script>
+  <div class="calc-foot">
+    REF·DB v1 reading list, with the sources that the rebuilt pages cite. The pages that cite a source are found in the
+    page text when the site is built, so a new page appears here when it cites a source. The list keeps to the scope of
+    the site: propellant formulation, energetics and initiation are outside it. Check the current edition before you cite
+    a source.
+  </div>
+</div>
+
+<style is:global>
+  .sl-markdown-content .calc.rdcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .rdcalc .calc-body > * { min-width: 0; }
+  .rdcalc fieldset { margin-bottom: 0 !important; }
+  .rd-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.6rem 0.9rem; }
+  .rd-ctl > * { margin: 0 !important; }
+  .rd-row { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; }
+  .rd-row > * { margin: 0 !important; }
+  .rdcalc label.inline { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .rdcalc input[type='checkbox'] { width: auto; margin: 0 !important; }
+  .rd-out, .rd-pane { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .rd-out > *, .rd-pane > * { margin: 0 !important; min-width: 0; }
+  .rd-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .rd-fig g[data-c] { cursor: pointer; }
+  .rd-scroll { overflow: auto; max-height: 28rem; border: 1px solid var(--rd-line); border-radius: 6px; }
+  .rd-scroll:empty { display: none; }
+  .rd-table { width: 100%; border-collapse: collapse; font-size: var(--sl-text-xs); margin: 0 !important; }
+  .rd-table th { position: sticky; top: 0; background: var(--rd-panel); z-index: 1; text-align: left; }
+  .rd-table th, .rd-table td { padding: 0.32rem 0.5rem; border-bottom: 1px solid var(--rd-line); vertical-align: top; }
+  .rd-table td.t { color: var(--rd-ink); font-weight: 600; }
+  .rd-table td.t small { display: block; font-weight: 400; color: var(--rd-muted); }
+  .rd-table td.n { text-align: right; font-family: var(--sl-font-mono); }
+  .rd-table tbody tr[data-i] { cursor: pointer; }
+  .rd-table tr.sel td { background: color-mix(in srgb, var(--rd-accent) 12%, transparent); }
+  .rd-badge { display: inline-block; margin: 0 0.3rem 0 0 !important; padding: 0.02rem 0.4rem; border-radius: 999px; font: 600 0.6rem var(--sl-font-mono); letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid var(--rd-line); color: var(--rd-muted); white-space: nowrap; }
+  .rd-badge.free { color: var(--rd-ok); border-color: color-mix(in srgb, var(--rd-ok) 55%, var(--rd-line)); background: color-mix(in srgb, var(--rd-ok) 10%, transparent); }
+  .rd-badge.start { color: var(--rd-accent); border-color: color-mix(in srgb, var(--rd-accent) 55%, var(--rd-line)); }
+  .rd-card { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-accent); border-radius: 6px; padding: 0.65rem 0.85rem; background: var(--rd-panel2); font-size: var(--sl-text-sm); }
+  .rd-card > * { margin: 0 !important; }
+  .rd-card.free { border-left-color: var(--rd-ok); }
+  .rd-card h4 { font-size: 1.02rem; line-height: 1.3; color: var(--rd-ink); }
+  .rd-card .w { color: var(--rd-muted); margin-top: 0.15rem !important; }
+  .rd-card .b { margin-top: 0.4rem !important; }
+  .rd-card .x { margin-top: 0.45rem !important; color: var(--rd-ink); }
+  .rd-card .y { margin-top: 0.35rem !important; color: var(--rd-ink); }
+  .rd-card .y b, .rd-card .a b, .rd-card .p b { font-family: var(--sl-font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rd-muted); margin-right: 0.45rem; white-space: nowrap; }
+  .rd-card .a, .rd-card .p { margin-top: 0.45rem !important; font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .rd-card .p a { margin-right: 0.65rem; white-space: nowrap; }
+  .rd-card .c { margin-top: 0.55rem !important; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .rd-card .c > * { margin: 0 !important; }
+  .rd-card code { font-size: 0.72rem; white-space: normal; }
+  .rd-path { list-style: none; padding: 0 !important; display: grid; gap: 0.55rem; counter-reset: rd; }
+  .rd-path > li { margin: 0 !important; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 0.6rem; counter-increment: rd; }
+  .rd-path > li::before { content: counter(rd); width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; font: 700 0.85rem var(--sl-font-mono); color: var(--rd-ink); border: 2px solid var(--rd-accent); background: var(--rd-panel2); }
+  .rd-path > li.free::before { border-color: var(--rd-ok); }
+</style>
+
+<script>
+  type Src = { id: string; cat: string; kind: string; title: string; who: string; pub: string; free: boolean; start?: boolean; get: string; url?: string; what: string; why: string; cite: string; pages: { path: string; title: string }[] };
+  type Path = { key: string; name: string; d: string; ids: string[] };
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const href = (p: string) => `../../${p ? `${p}/` : ''}`;
+  const pubText = (p: string) => p.replace(/^\((.*)\)$/, '$1'); // "(1970)" reads as "1970" after a dot
+
+  document.querySelectorAll<HTMLElement>('[data-rdcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => field(n).value;
+    const checked = (n: string) => (field(n) as HTMLInputElement).checked;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const { DATA, CATS, KINDS, PATHS } = JSON.parse($('[data-src]').textContent!) as { DATA: Src[]; CATS: { key: string; name: string; d: string }[]; KINDS: Record<string, string>; PATHS: Path[] };
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    const catName = (k: string) => CATS.find((c) => c.key === k)?.name ?? k;
+    let mode: 'find' | 'paths' = 'find', picked = DATA.findIndex((s) => s.id === 'sp8025'), shown: Src[] = [];
+    const free = DATA.filter((s) => s.free).length, cited = DATA.filter((s) => s.pages.length).length;
+    $('[data-count]').textContent = `${DATA.length} sources · ${free} free · ${cited} cited on this site`;
+
+    const badges = (s: Src) => `${s.start ? '<span class="rd-badge start">Start here</span>' : ''}${s.free ? '<span class="rd-badge free">Free</span>' : ''}<span class="rd-badge">${esc(KINDS[s.kind] ?? s.kind)}</span>`;
+
+    function card(s: Src) {
+      const link = s.url ? ` <a href="${esc(s.url)}" target="_blank" rel="noopener">Open ↗</a>` : '';
+      $('[data-card]').innerHTML = `<div class="rd-card ${s.free ? 'free' : ''}">
+        <h4>${esc(s.title)}</h4><p class="w">${esc(s.who)}${s.pub ? ` · ${esc(pubText(s.pub))}` : ''} · ${esc(catName(s.cat))}</p>
+        <p class="b">${badges(s)}</p>
+        <p class="x">${esc(s.what)}</p><p class="y"><b>Why read it</b>${esc(s.why)}</p>
+        <p class="a"><b>Where to get it</b>${esc(s.get)}${link}</p>
+        <p class="p">${s.pages.length ? `<b>Cited on</b>${s.pages.map((p) => `<a href="${href(p.path)}">${esc(p.title)}</a>`).join('')}` : '<b>Cited on</b>no page of this site yet'}</p>
+        <p class="c"><code>${esc(s.cite)}</code><button type="button" class="chip" data-cite="${esc(s.id)}">Copy reference</button></p></div>`;
+    }
+
+    function chart() {
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), rowH = 22, narrow = W < 440;
+      const L = narrow ? 0 : Math.min(240, W * 0.42), R = 34, top = narrow ? 13 : 0, rh = narrow ? 34 : rowH;
+      const H = CATS.length * rh + 6 + top, max = Math.max(...CATS.map((c) => DATA.filter((s) => s.cat === c.key).length));
+      const sel = val('cat');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = CATS.map((c, k) => {
+        const all = DATA.filter((s) => s.cat === c.key), n = all.length, nf = all.filter((s) => s.free).length;
+        const y = 3 + k * rh + top, x0 = narrow ? 0 : L, span = W - x0 - R, w = (span * n) / max, wf = (span * nf) / max, on = !sel || sel === c.key;
+        const label = narrow ? `<text x="0" y="${y - 2}" font-size="10.5" fill="var(--rd-ink)">${esc(c.name)}</text>` : `<text x="${L - 6}" y="${y + 15}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)">${esc(c.name)}</text>`;
+        const by = narrow ? y + 2 : y + 4;
+        return `<g data-c="${c.key}" opacity="${on ? 1 : 0.4}"><rect x="0" y="${y - (narrow ? 12 : 0)}" width="${W}" height="${rh}" fill="transparent"/>${label}`
+          + `<rect x="${x0}" y="${by}" width="${Math.max(2, w)}" height="14" rx="2" fill="var(--rd-muted)" opacity="0.45"/>`
+          + (nf ? `<rect x="${x0}" y="${by}" width="${Math.max(2, wf)}" height="14" rx="2" fill="var(--rd-ok)"/>` : '')
+          + `<text x="${x0 + w + 5}" y="${by + 11}" font-size="10.5" fill="var(--rd-muted)">${nf}/${n}</text></g>`;
+      }).join('');
+    }
+
+    function runFind() {
+      const q = val('q').trim().toLowerCase(), cat = val('cat'), page = val('page'), fo = checked('free'), so = checked('start');
+      const list = DATA.map((s, i) => ({ s, i })).filter(({ s }) => (!cat || s.cat === cat) && (!fo || s.free) && (!so || s.start)
+        && (!page || s.pages.some((p) => p.path === page))
+        && (!q || `${s.title} ${s.who} ${s.pub} ${s.what} ${s.why} ${KINDS[s.kind]}`.toLowerCase().includes(q)));
+      shown = list.map((x) => x.s);
+      if (list.length && !list.some((x) => x.i === picked)) picked = list[0].i;
+      const nf = shown.filter((s) => s.free).length;
+      $('[data-out]').innerHTML = `<div class="readout primary"><dt>Shown</dt><dd>${list.length} of ${DATA.length} <small>${nf} free${cat ? ` · ${esc(catName(cat))}` : ''}${page ? ` · cited on ${esc(field('page').selectedOptions[0]?.textContent ?? '')}` : ''}${q ? ` · "${esc(q)}"` : ''}</small></dd></div>`;
+      chart();
+      if (list.length) card(DATA[picked]); else $('[data-card]').innerHTML = '';
+      $('[data-table]').innerHTML = list.length
+        ? `<table class="rd-table"><thead><tr><th>Source</th><th>Kind</th><th>Pages</th></tr></thead><tbody>${list.map(({ s, i }) => `<tr data-i="${i}" class="${i === picked ? 'sel' : ''}"><td class="t">${esc(s.title)}<small>${esc(s.who)}${s.pub ? ` · ${esc(pubText(s.pub))}` : ''}</small></td><td>${s.free ? '<span class="rd-badge free">Free</span>' : ''}${esc(KINDS[s.kind] ?? s.kind)}</td><td class="n">${s.pages.length || '—'}</td></tr>`).join('')}</tbody></table>`
+        : '';
+      const notes: [string, string][] = [];
+      if (!list.length) notes.push(['warn', 'Nothing matches. Clear a filter, or search for a shorter word.']);
+      else notes.push(['', 'A textbook gives the method. Your requirements give the factors, and MMPDS, CMH-17 or your specification gives the allowables. Cite the edition that you used.']);
+      $('[data-notes]').innerHTML = notes.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+    }
+
+    function runPaths() {
+      const p = PATHS.find((x) => x.key === val('path')) ?? PATHS[0];
+      $('[data-pathd]').textContent = p.d;
+      shown = p.ids.map((id) => DATA.find((s) => s.id === id)!).filter(Boolean);
+      $('[data-path]').innerHTML = shown.map((s) => `<li class="${s.free ? 'free' : ''}"><div class="rd-card ${s.free ? 'free' : ''}"><h4>${esc(s.title)}</h4><p class="w">${esc(s.who)}${s.pub ? ` · ${esc(pubText(s.pub))}` : ''}</p><p class="b">${badges(s)}</p><p class="y"><b>Why read it</b>${esc(s.why)}</p><p class="a"><b>Where to get it</b>${esc(s.get)}${s.url ? ` <a href="${esc(s.url)}" target="_blank" rel="noopener">Open ↗</a>` : ''}</p></div></li>`).join('');
+      const nf = shown.filter((s) => s.free).length;
+      $('[data-notes]').innerHTML = `<li>${shown.length} sources in the order to read them. ${nf} of them are free. <b>Copy the list</b> gives them as a numbered reference list.</li>`;
+    }
+
+    const run = () => (mode === 'find' ? runFind() : runPaths());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab as 'find' | 'paths';
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.addEventListener('click', async (ev) => {
+      const t = ev.target as HTMLElement;
+      const row = t.closest<HTMLElement>('tr[data-i]');
+      if (row) { picked = +row.dataset.i!; runFind(); return; }
+      const bar = t.closest<SVGGElement>('g[data-c]');
+      if (bar) { const c = bar.getAttribute('data-c')!; field('cat').value = val('cat') === c ? '' : c; runFind(); return; }
+      const cite = t.closest<HTMLButtonElement>('[data-cite]');
+      if (cite) {
+        const s = DATA.find((x) => x.id === cite.dataset.cite);
+        try { await navigator.clipboard.writeText(s ? s.cite : ''); cite.textContent = 'Copied'; } catch { cite.textContent = 'Copy failed'; }
+        window.setTimeout(() => (cite.textContent = 'Copy reference'), 1500);
+      }
+    });
+    $('[data-copy]').addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      const text = shown.map((s, k) => `${k + 1}. ${s.cite}`).join('\n');
+      try { await navigator.clipboard.writeText(text); btn.textContent = `Copied ${shown.length}`; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    if ('ResizeObserver' in window) { let wd = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - wd) > 8) { wd = nw; if (mode === 'find') chart(); } }).observe(svg); }
+    run();
+  });
+</script>

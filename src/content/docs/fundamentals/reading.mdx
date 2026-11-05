@@ -1,0 +1,115 @@
+---
+title: Reading
+description: "Where to learn this properly: the books, NASA monographs, standards, handbooks and libraries behind this site. What each one covers, why it is worth your time, where to get it, and which pages of this site cite it."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ReadingStart from '../../../components/ReadingStart.astro';
+import ReadingCalc from '../../../components/ReadingCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>This site is a starting point. Design values and design methods come from the sources below.</div>
+  <div><b>Before this</b><a href="../../start/how-to-use/">How to use</a></div>
+  <div><b>Related</b><a href="../../drawing/standards/">Standards</a> · <a href="../../materials/allowables/">Allowables</a> · <a href="../../verify/margin-policy/">Margin policy</a></div>
+</div>
+
+## Why this matters
+
+Every number on this site is a screening value. Real allowables come from MMPDS, CMH-17 or the specification that
+your contract invokes. Real methods come from the standards and from the books below. Use this site to find your way
+and to make the list of options shorter. Then go to the source, and record the issue that you used, before anything is
+released.
+
+The sources are also where the experience is. The NASA design monographs were written by the engineers who built the
+hardware, at the time when the industry learned its lessons at high cost. They say what failed, and why. A calculator
+cannot tell you that.
+
+<Analogy title="A road atlas and the survey">
+  A road atlas gets you to the right town, and it shows which roads join. You do not plan a building from it: for that,
+  you get the survey of the site. This site is the atlas. The sources below are the survey. They are slower to read, but
+  they are what you build from.
+</Analogy>
+
+## Start here
+
+If you read nothing else, read these. Two of them are free.
+
+<ReadingStart />
+
+## Free libraries
+
+| Library | What it holds | Access |
+| --- | --- | --- |
+| NASA Technical Reports Server (ntrs.nasa.gov) | NASA reports, the SP-8000 design monographs, the Fastener Design Manual | Free |
+| NASA Technical Standards System (standards.nasa.gov) | NASA-STD and NASA-HDBK documents in their current revisions | Free |
+| ASSIST Quick Search (quicksearch.dla.mil) | MIL standards, specifications and handbooks | Free |
+| ECSS (ecss.nl) | The European space standards | Free after registration |
+| UK Defence Standardization (dstan.mod.uk) | DEF STAN documents | Free to register; some parts go only through the Design Authority |
+| NIST (webbook.nist.gov, trc.nist.gov) | Fluid properties and cryogenic material properties | Free |
+
+**Start with NTRS.** It holds the complete SP-8000 series, NASA Space Vehicle Design Criteria, free and searchable.
+Each monograph states the design criteria, the recommended practice, and the failures that taught them. Search for the
+SP number. This list keeps to the monographs on hardware.
+
+## Calculator
+
+**Find a source** searches the list: 73 sources in ten subjects, with what each one covers, why it is worth your time,
+where to get it, and the pages of this site that cite it. Filter by subject, by the page that cites it, by free sources
+or by the "start here" set. The chart shows each subject; select a bar to show it. **Reading paths** puts a few sources
+in the order to read them, for one kind of work. **Copy the list** gives the shown sources as a numbered reference list,
+and **Copy reference** gives one.
+
+The page list of each source comes from the text of the site when it is built. When a new page cites a source, the page
+appears here.
+
+<ReadingCalc />
+
+## Worked example: a reading pack for a case review
+
+A new engineer joins the team that sizes the 300 mm motor case of the other pages. Select **Reading paths**, then
+**Motor case and pressure vessels**.
+
+1. **The path has eight sources.** Four of them are free: SP-8025, SP-8040, NASA-STD-5019 and SP-8007.
+2. **Read them in order.** SP-8025 gives the criteria for the case and the failures behind them. Sutton gives the
+   context of the motor. Roark gives the hand checks. SP-8040 explains the proof test, and Anderson the fracture
+   mechanics behind it. NASA-STD-5019 gives the requirements of a fracture control plan. SP-8007 covers the buckling of
+   the empty case, and MMPDS the allowables.
+3. **Push Copy the list** and paste the eight references into the induction pack.
+4. **To find the source behind one number,** go to **Find a source** and search for a word. A search for "knockdown"
+   finds SP-8007, the source of the 0.56 factor on the [Shell buckling](../../verify/shell-buckling/) page, and
+   Timoshenko & Gere, which explains why that factor is necessary.
+
+## Where this stops
+
+- **A starting list, not a complete one.** The document list of your programme and your company library govern.
+- **Editions change.** Check the current edition before you cite a page, a table or a clause.
+- **Some sources need a licence** or have a limited distribution: MMPDS, ESDU and the JANNAF mechanical behaviour
+  manual. Get them through your organisation.
+- **A textbook is not a design standard.** Take the method from the textbook, and the factors and the allowables from
+  your requirements.
+- **The page lists come from the text.** A page can use a method without naming its source, so a source can be more
+  important than its list shows.
+- **The scope is the scope of the site:** hardware, structures, materials, process and inspection. Propellant
+  formulation, energetics and initiation are outside it.
+
+## In your stress report
+
+- **Cite the source and its edition** for each method and each allowable, so that a reviewer can find what you used.
+- **Use the primary source,** not this site, for any value that goes into a released analysis.
+- **Keep the identity of each issue that you used** with the report. Sources change, and the analysis must stay
+  traceable to the issue that it used.
+
+## Differences from REF·DB v1
+
+- The v1 list had 31 sources in eight groups. This list has 73 in ten subjects, with the sources that the rebuilt pages
+  cite: polymers and seals, bolts, verification and environments are new.
+- The pages that cite each source are found in the page text when the site is built, so the list stays current.
+- New: reading paths, filters by page and by free sources, and copy buttons that give a reference list.
+
+<Aside type="note">
+  A starting list from general UK aerospace and defence practice. Confirm the current edition, and what your contract
+  invokes, before you rely on any of these.
+</Aside>

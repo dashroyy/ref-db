@@ -64,6 +64,7 @@ export const REBUILT = {
   visco: 'fundamentals/viscoelasticity',
   sandbox: 'fundamentals/molecular-sandbox',
   worked: 'fundamentals/worked-example',
+  read: 'fundamentals/reading',
   materials: 'materials/selection',
   sheet: 'materials/datasheet',
   density: 'materials/density',

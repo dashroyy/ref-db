@@ -42,7 +42,8 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r.find((x) => x.key === 'pv')!.tag, 'Z25');
   assert.equal(r.find((x) => x.key === 'oring')!.tag, 'Z51');
   assert.equal(r.find((x) => x.primer)!.num, null);
-  assert.equal(hrefOf(r.find((x) => x.key === 'read')!, '/'), '/legacy/?z=read');
+  assert.equal(r.filter((x) => x.slug === null).length, 0, 'every zone is rebuilt');
+  assert.equal(hrefOf({ ...r.find((x) => x.key === 'read')!, slug: null }, '/'), '/legacy/?z=read', 'a zone without a page opens the v1 archive');
   assert.equal(hrefOf(r.find((x) => x.key === 'pv')!, '/ref-db/'), '/ref-db/motor/case-sizing/');
   assert.equal(hrefOf(r.find((x) => x.key === 'home')!, '/'), '/');
 });

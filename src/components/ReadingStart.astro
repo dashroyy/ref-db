@@ -1,0 +1,25 @@
+---
+// The "start here" shelf of the reading list, drawn from src/lib/reading.ts so it always matches the tool.
+import { SOURCES } from '../lib/reading';
+const start = SOURCES.filter((s) => s.start);
+---
+
+<ol class="rd-start">
+  {start.map((s) => (
+    <li class:list={[{ free: s.free }]}>
+      <b>{s.title}</b>
+      <span class="who">{s.who}{s.pub ? ` · ${s.pub.replace(/^\((.*)\)$/, '$1')}` : ''}{s.free ? ' · free' : ''}</span>
+      <span class="why">{s.why}</span>
+    </li>
+  ))}
+</ol>
+
+<style is:global>
+  .rd-start { list-style: none; padding: 0 !important; margin: 1rem 0 !important; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); counter-reset: st; }
+  .rd-start > li { margin: 0 !important; position: relative; padding: 0.6rem 0.75rem 0.65rem 2.6rem; border: 1px solid var(--rd-line); border-left: 3px solid var(--rd-accent); border-radius: 8px; background: var(--rd-panel); counter-increment: st; }
+  .rd-start > li.free { border-left-color: var(--rd-ok); }
+  .rd-start > li::before { content: counter(st); position: absolute; left: 0.65rem; top: 0.6rem; width: 1.4rem; height: 1.4rem; border-radius: 50%; display: grid; place-items: center; font: 700 0.75rem var(--sl-font-mono); color: var(--rd-ink); border: 1.5px solid var(--rd-line); }
+  .rd-start b { display: block; color: var(--rd-ink); line-height: 1.3; }
+  .rd-start .who { display: block; margin-top: 0.1rem; font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .rd-start .why { display: block; margin-top: 0.35rem; font-size: var(--sl-text-sm); color: var(--rd-ink); }
+</style>
