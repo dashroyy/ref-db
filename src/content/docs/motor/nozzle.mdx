@@ -1,0 +1,289 @@
+---
+title: Nozzle design
+description: The solid motor nozzle for the hardware designer. How the throat sets the chamber pressure, how the exit cone turns pressure into thrust and when its flow separates, where the heat goes, what throat erosion does to the burn, the materials of each zone and the loads on its joints, with a calculator and a worked example.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import NozzleSection from '../../../components/NozzleSection.astro';
+import NozzleCalc from '../../../components/NozzleCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The throat sets the chamber pressure, the exit cone turns that pressure into speed, and every part must keep its shape in the hottest and fastest gas in the motor for the whole burn.</div>
+  <div><b>Before this</b><a href="../insulation/">Internal insulation and ablative liners</a></div>
+  <div><b>Leads to</b><a href="../../joints/bolted-joints/">Bolted joints</a>, for the nozzle joint</div>
+</div>
+
+## Why this matters
+
+The nozzle makes the thrust, and it has the worst conditions in the motor. At the throat, the gas is at approximately
+3000 K, it moves at the speed of sound, and it carries droplets of aluminium oxide that blast the surface. The throat
+must keep its size, because the chamber pressure depends on it. Many motor failures start in the nozzle: a throat
+insert that cracks or is ejected, a liner that erodes through, or hot gas that gets to a joint seal.
+
+For the hardware designer, the nozzle is also a set of structural parts: a housing that bolts to the aft closure or
+the boss, liners that must stay bonded while they char, and an exit cone that the gas pushes forward. This page
+gives the physics that sets each of these.
+
+## The intuition: a thumb on a hose
+
+<Analogy title="Your thumb on a garden hose">
+  Put your thumb over the end of a garden hose. The water behind your thumb pushes harder, and the water that gets out
+  moves faster. A nozzle throat does the same to the gas: the size of the opening sets the pressure in the motor. A
+  rocket nozzle then does something that the hose cannot do. After the throat, it gets wider again. Water slows down in
+  a wider pipe, but gas that already moves faster than sound speeds up. Thus the exit cone changes the remaining
+  pressure into more speed.
+</Analogy>
+
+## The throat sets the pressure
+
+The gas that the burning surface makes must leave through the throat. The balance of the two
+([How a solid rocket motor works](../../fundamentals/how-a-solid-motor-works/#why-chamber-pressure-settles-at-one-value))
+gives the chamber pressure:
+
+$$
+p_c^{\,1-n} = \rho_p\, a\, c^*\,\frac{A_b}{A_t}
+\qquad\Longrightarrow\qquad
+\frac{\Delta p_c}{p_c} \approx -\frac{1}{1-n}\,\frac{\Delta A_t}{A_t}
+$$
+
+With $n = 0.35$, a throat area 1% too large (0.5% on the diameter) gives a pressure 1.5% too low. Thus the throat
+diameter is one of the most important dimensions of the motor. Its tolerance, its growth by erosion and its movement
+under heat and pressure all go into the pressure and thrust predictions.
+
+## The exit cone: from pressure to speed
+
+Downstream of the throat, the gas expands and speeds up. For ideal one-dimensional flow with a constant ratio of
+specific heats $\gamma$, the area ratio sets the exit Mach number $M_e$, and the Mach number sets the exit pressure:
+
+$$
+\varepsilon = \frac{A_e}{A_t} = \frac{1}{M_e}\left[\frac{2}{\gamma+1}\left(1 + \frac{\gamma-1}{2}M_e^2\right)\right]^{\frac{\gamma+1}{2(\gamma-1)}}
+\qquad
+\frac{p_e}{p_c} = \left(1 + \frac{\gamma-1}{2}M_e^2\right)^{-\frac{\gamma}{\gamma-1}}
+$$
+
+The thrust is $F = C_F\,p_c\,A_t$, with the thrust coefficient
+
+$$
+C_F = \lambda\sqrt{\frac{2\gamma^2}{\gamma-1}\left(\frac{2}{\gamma+1}\right)^{\frac{\gamma+1}{\gamma-1}}\left[1 - \left(\frac{p_e}{p_c}\right)^{\frac{\gamma-1}{\gamma}}\right]}
+\;+\; \frac{p_e - p_a}{p_c}\,\varepsilon
+$$
+
+The first term is the momentum of the jet. The second is the pressure at the exit plane against the ambient
+pressure $p_a$. $\lambda = (1 + \cos\theta)/2$ is the loss of a conical exit cone with a half-angle $\theta$: 0.983 for
+15°, because the gas leaves at an angle to the axis. Contoured (bell) exit cones turn the flow back toward the axis and
+are shorter for the same loss.
+
+- **Underexpanded** ($p_e > p_a$): a longer cone would give more thrust, for more mass and length.
+- **Optimum** ($p_e = p_a$): the most thrust at that ambient pressure.
+- **Overexpanded** ($p_e < p_a$): the end of the cone pulls back. A nozzle that is optimum at altitude is overexpanded
+  at sea level.
+
+These are ideal values. A real nozzle delivers a few per cent less: the particles lag the gas (a two-phase flow loss
+that is largest in small nozzles), the boundary layer is slow, the throat erodes, and the shape is not ideal. The other
+pages of this site use a delivered $C_F$ of 1.5 for the 300 mm motor. That is 0.93 of the ideal value that the worked
+example below finds.
+
+### Flow separation
+
+If the exit pressure is much lower than the ambient pressure, the flow cannot stay on the wall. It separates inside
+the cone. The **Summerfield criterion** is a simple screen: separation is likely when the wall pressure falls below
+approximately 0.4 times the ambient pressure. Other criteria give values between approximately 0.25 and 0.4.
+
+Separated flow is unsteady and not symmetrical, so it puts **side loads** on the exit cone and on any steering
+actuators. This happens:
+
+- in **every sea-level firing**, during ignition and tail-off, when the chamber pressure passes through low values;
+- for the whole burn when an **altitude nozzle is tested at sea level**. Such nozzles are tested with a shorter test
+  cone, or in a vacuum facility.
+
+The calculator gives the chamber pressure below which the flow separates.
+
+## Where the heat goes
+
+The heat transfer from the gas to the wall is highest at the throat, where the gas is densest and fastest at the same
+time. The Bartz correlation is the usual first estimate of the convective heat transfer coefficient:
+
+$$
+h = \frac{0.026}{D_t^{0.2}}\left(\frac{\mu^{0.2}c_p}{Pr^{0.6}}\right)\left(\frac{p_c}{c^*}\right)^{0.8}\left(\frac{D_t}{r_c}\right)^{0.1}\left(\frac{A_t}{A}\right)^{0.9}\sigma
+$$
+
+Here $\mu$, $c_p$ and $Pr$ are gas properties, $r_c$ is the radius of curvature of the throat, and $\sigma$ corrects
+for the change of properties across the boundary layer. Three results are important for the hardware:
+
+- **The throat is the hottest place.** Away from it, $h$ falls approximately as $(A_t/A)^{0.9}$: at the exit of an
+  $\varepsilon = 8$ cone it is 15% of the throat value.
+- **Pressure costs heat.** $h$ increases as $p_c^{0.8}$: twice the pressure gives 1.74 times the heat transfer.
+- **Small nozzles have it worse.** $h$ increases as $D_t^{-0.2}$, and a small throat has less material to absorb the
+  heat.
+
+<NozzleSection />
+
+Two more mechanisms remove material from a carbon throat. **Chemical erosion:** the oxidising species in the exhaust
+(water vapour, carbon dioxide and the OH radical) react with the hot carbon surface. This is usually the main
+mechanism for graphite and carbon-carbon throats. **Mechanical erosion:** the particles in the flow strike the
+entrance and the throat. Submerged nozzles also collect molten slag in the cavity around the entrance.
+
+## Throat erosion
+
+As the throat erodes, its area increases. With a neutral grain (a constant burning area), the pressure falls as
+$p_c \propto A_t^{-1/(1-n)}$, and the burn rate falls with it. If the erosion rate scales with the heat transfer,
+$\dot e \propto p_c^{0.8}$, the throat diameter after a fraction $w$ of the web has burned has a closed form:
+
+$$
+d^{\,k+1} = d_0^{\,k+1} + (k+1)\,2\,\dot e_0\,t_{b0}\,d_0^{\,k}\,w
+\qquad
+k = \frac{2(0.8 - n)}{1 - n}
+$$
+
+where $t_{b0}$ is the burn time without erosion. The results are not obvious:
+
+- **The impulse hardly changes.** A neutral grain discharges the same propellant mass for each part of the web,
+  whatever the pressure. The impulse is $c^*m_p$ times the mean $C_F$, and $C_F$ falls only a little as the area ratio
+  and the pressure fall.
+- **The burn changes shape.** The pressure and thrust fall toward the end, and the burn gets longer. The grain designer
+  can make the grain slightly progressive to hold the pressure up.
+- **The scatter matters.** A small erosion has a large effect on the pressure. The scatter of the erosion is part of the
+  tolerance on pressure and thrust.
+
+MEOP is usually set near ignition, before the throat erodes, so erosion does not increase it. But a throat that
+erodes less than predicted gives a pressure higher than predicted at the end of the burn. Measure the throat before
+and after each development firing, and get the rate at the hot and the cold firing temperatures.
+
+## Materials for each zone
+
+| Zone | Usual materials | Why | Watch for |
+| --- | --- | --- | --- |
+| Throat insert | Bulk graphite; carbon-carbon (2D, 3D or 4D); pyrolytic graphite washers; tungsten in older or small motors | Low erosion at the highest heat flux. Graphite is cheap and easy to machine; carbon-carbon is strong and tough; tungsten does not erode, but it is heavy | Graphite cracks from thermal shock at ignition. Carbon-carbon is costly, with a long lead time. Oxidising species erode all carbon throats |
+| Entrance and throat backup | Carbon phenolic, tape-wrapped or moulded; silica phenolic | They char and erode slowly, and insulate the housing | Ply lift and pocketing: plies that separate or erode unevenly. Voids and delaminations at the bond lines |
+| Exit cone liner | Carbon phenolic near the throat; silica or glass phenolic further aft | The heat transfer falls with the area ratio, so lighter and cheaper liners will do | The wrap angle of the tape to the surface; bond to the shell |
+| Housing | Steel, aluminium, titanium | It carries the pressure and the joint loads, and seals to the case | Its temperature at the end of the soak-back after burnout |
+| Exit cone shell | Glass or carbon composite, aluminium, steel; carbon-carbon or niobium alloy for a radiation-cooled extension | It carries the exit cone load and the side loads | Thermal expansion mismatch with the liner |
+
+Size the liners in each zone with the [insulation calculator](../insulation/#calculator), which has the nozzle
+materials: use the exposure, the surface temperature and the erosion rate of that zone. The erosion rates in the
+material library are illustrative values for moderate flow. Throat rates are higher, and they come from firings.
+
+**Thermal shock of the throat insert.** At ignition, the inner surface of the insert heats in a fraction of a second
+while the outside is still cold. The hot surface tries to expand and the cold material stops it. This puts the surface
+in compression and the outer region in tension, and brittle graphite can crack. A cracked insert that is held in
+place usually survives the burn. A cracked insert that can move changes the throat, or is ejected through it. Thus the
+insert is held in compression by its backup structure, and its retention is a design requirement, not a detail.
+
+## Loads on the nozzle
+
+The momentum balance of the gas from the nozzle joint to the exit gives the axial loads on the nozzle parts. Take the
+attachment sealed at a diameter $d_s$, the throat momentum and pressure force
+$I_t = p_t A_t (1 + \gamma)$ with $p_t = p_c\,(2/(\gamma+1))^{\gamma/(\gamma-1)}$, and the thrust $F$ at the ambient
+pressure:
+
+$$
+F_{\text{joint}} = (p_c - p_a)\,\frac{\pi d_s^2}{4} - F
+\qquad
+F_{\text{exit cone}} = F_{\text{vac}} - I_t - p_a\,(A_e - A_t)
+$$
+
+- **The joint load is mostly pressure.** The pressure inside the seal pushes the nozzle aft. Only the thrust reduces
+  this load. This is the blow-off load of [Load paths](../../joints/load-paths/#follow-the-pressure), with the ambient
+  pressure included.
+- **The exit cone is pushed forward.** The pressure on the divergent wall is the part of the thrust that the exit cone
+  makes. Its attachment to the throat housing carries it.
+- **A pressure test has no thrust.** With the throat plugged, the joint carries the full $(p_c - p_a)\,\pi d_s^2/4$.
+  Size the joint for the test as well as for the firing.
+
+Thermal loads, the side loads of separation, steering loads on a movable nozzle and vibration come on top of these.
+
+## Calculator
+
+<NozzleCalc />
+
+The calculator has three tabs. **Performance** gives the exit conditions, $C_F$, the thrust and the separation check,
+with $C_F$ against the area ratio. **Throat erosion** runs a neutral burn with an eroding throat. **Loads** gives the
+axial loads on the joint and the exit cone at the chamber pressure that you enter. No factors are applied: apply your
+programme's factors in the [bolted-joint calculator](../../joints/bolted-joints/#calculator).
+
+## Worked example: the 300 mm motor's nozzle
+
+This is the nozzle of the 300 mm motor at its MEOP of 10 MPa, with the illustrative 50 mm throat and the 110 mm
+nozzle seal of the [load-path example](../../joints/load-paths/#worked-example-the-300-mm-motors-load-path). The exit
+cone is a 15° cone with an area ratio of 8. $\gamma = 1.2$ and $c^* = 1540$ m/s are illustrative values for a
+metallised composite propellant. The grain is taken as neutral, and it burns its 111.2 kg in 8.7 s. The throat erodes
+at an illustrative 0.10 mm/s. Push **Load worked example** to load these inputs.
+
+1. **Exit.** $\varepsilon = 8$ gives $M_e = 3.12$ and $p_e/p_c = 0.0169$, so $p_e = 169$ kPa. This is 1.66 times the
+   sea-level pressure: the nozzle is **underexpanded** at sea level.
+2. **Thrust coefficient.** The momentum term is $0.983 \times 1.578 = 1.551$. The pressure term is
+   $(0.169 - 0.101)/10 \times 8 = 0.054$. Thus $C_F = 1.605$ at sea level and 1.686 in vacuum.
+3. **Thrust and impulse.** $F = 1.605 \times 10 \times 1963 = 31.5$ kN, and $I_{sp} = 1.605 \times 1540 / 9.807 = 252$ s
+   (ideal). The mass flow is 12.75 kg/s. The delivered $C_F$ of 1.5 on the other pages is 0.93 of this ideal value.
+4. **A longer cone?** The optimum for sea level is $\varepsilon = 11.8$, which gives only 0.6% more thrust. The exit
+   diameter increases from 141 to 171 mm. On a small motor, the extra mass and length at the aft end are not worth it.
+5. **Separation.** At $p_e = 0.4\,p_a$ the flow separates. That happens when $p_c$ is below 2.40 MPa: in every firing,
+   during ignition and tail-off.
+6. **Throat erosion.** At 0.10 mm/s, the throat grows from 50.0 to 51.7 mm. At the end of the burn, the pressure is
+   9.02 MPa (9.8% lower) and the thrust is 30.2 kN (4.3% lower). The burn takes 8.86 s instead of 8.70 s. The impulse
+   is only 0.37% lower.
+7. **Loads.** The seal area is 9503 mm². The joint carries $(10 - 0.101) \times 9503 - 31\,520 = 62.5$ kN in firing,
+   and **94.1 kN** in a pressure test with the throat plugged. That is 50% more. The exit cone is pushed forward with
+   7.3 kN. The load-path page estimated 65.6 kN for the firing, with the delivered $C_F$ of 1.5 and without the ambient
+   pressure.
+
+<Aside type="tip" title="What the example shows">
+  Two results are not obvious. First, the throat erosion changes the shape of the burn much more than its impulse: the
+  pressure at the end is 10% lower, but the impulse changes by less than half a per cent. Second, the largest load on
+  the nozzle joint is in the pressure test, not in the firing, because the test has no thrust to relieve it. Size the
+  joint for the test.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="One-dimensional flow, one γ">
+  The calculator treats the exhaust as an ideal gas with one effective γ, in one-dimensional flow. It is for
+  preliminary sizing and for understanding the trends.
+</Aside>
+
+- **Delivered performance.** Two-phase flow, the boundary layer, chemical kinetics and the real contour cost a few per
+  cent of $C_F$. Use your own firing data, or a two-phase method-of-characteristics analysis.
+- **Separation.** The Summerfield criterion is a screen. The side loads need test data or a detailed analysis.
+- **Erosion.** One rate law, a neutral grain, and the same rate around the throat. Real throats erode unevenly, and
+  the rate changes with the temperature, the propellant and the throat material.
+- **Thermal and structural analysis.** The heat flux, the char depth and the thermal stresses in the insert need a
+  transient thermal model and FEA. See [Insulation](../insulation/) and [Transient thermal](../transient-thermal/).
+- **Movable nozzles.** A flexible bearing for thrust vector control adds actuation loads, a seal under motion and its
+  own thermal protection. NASA SP-8114 covers this.
+
+## On the drawing
+
+- **Materials with their specifications:** the graphite grade and minimum density, the carbon-carbon architecture and
+  density, and the phenolic prepreg by its specification, with limits for resin content and volatiles.
+- **The wrap or ply angle** of each tape-wrapped liner, relative to the centreline or to the surface, and the cure
+  cycle.
+- **The throat diameter** as a critical dimension, with its tolerance from the pressure budget. Measure it before and
+  after each development firing.
+- **NDT** for each part: radiography or computed tomography for voids and delaminations, ultrasonics for the bond
+  lines, and density checks for the graphite and carbon-carbon parts.
+- **Insert retention and fits:** the interference or the retention feature that holds the throat insert, and the bond
+  lines with their adhesive specifications.
+- **The joint:** the seal glands, the bolt torque and the leak test of the nozzle joint
+  ([Bolted joints](../../joints/bolted-joints/), [O-ring design](../../seals/o-ring-design/)).
+
+## References and further reading
+
+- NASA SP-8115, *Solid Rocket Motor Nozzles* (1975) (free on NTRS).
+- NASA SP-8114, *Solid Rocket Thrust Vector Control* (1974) (free on NTRS).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017) (nozzle theory, separation and heat
+  transfer).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993) (nozzle design and materials).
+- D. K. Huzel & D. H. Huang, *Modern Engineering for Design of Liquid-Propellant Rocket Engines*, AIAA (1992) (heat
+  transfer and nozzle contours; the methods also apply to solid motors).
+- D. R. Bartz, "A simple equation for rapid estimation of rocket nozzle convective heat transfer coefficients",
+  *Jet Propulsion* 27 (1957) 49–51.
+- M. Summerfield, C. R. Foster & W. C. Swan, "Flow separation in overexpanded supersonic exhaust nozzles",
+  *Jet Propulsion* 24 (1954) 319–321.
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme and the approval of the responsible
+  authorities control the real nozzle design.
+</Aside>

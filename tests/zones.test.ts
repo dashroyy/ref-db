@@ -44,6 +44,7 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r.find((x) => x.primer)!.num, null);
   assert.deepEqual(r.filter((x) => x.primer).map((x) => x.tag), PRIMERS.map((_, i) => `P${i + 1}`), 'primers numbered once, in route order');
   assert.equal(r[r.findIndex((x) => x.key === 'pv') + 1].key, 'primer-composite', 'the composite primer follows case sizing');
+  assert.equal(r[r.findIndex((x) => x.key === 'ablative') + 1].key, 'primer-nozzle', 'the nozzle primer follows the ablative liners');
   assert.equal(r.filter((x) => x.slug === null).length, 0, 'every zone is rebuilt');
   assert.equal(hrefOf({ ...r.find((x) => x.key === 'read')!, slug: null }, '/'), '/legacy/?z=read', 'a zone without a page opens the v1 archive');
   assert.equal(hrefOf(r.find((x) => x.key === 'pv')!, '/ref-db/'), '/ref-db/motor/case-sizing/');

@@ -11,7 +11,7 @@ export type Motif = (typeof MOTIFS)[number];
 // metallurgy, cracks for fatigue and fracture, a helix for threads, a panel grid for documents, arcs for galvanic
 // corrosion, a scan line for test and inspection, haze for seals and leaks, ripples for vibration and waves.
 const MOON_MOTIF: Record<string, Motif> = {
-  'primer-srm': 'molten', 'primer-composite': 'helix', reqs: 'grid', duty: 'ripple', risk: 'cracked', metal: 'crystal', fatigue: 'cracked', visco: 'ripple',
+  'primer-srm': 'molten', 'primer-composite': 'helix', 'primer-nozzle': 'molten', reqs: 'grid', duty: 'ripple', risk: 'cracked', metal: 'crystal', fatigue: 'cracked', visco: 'ripple',
   sandbox: 'rock', worked: 'scan', read: 'grid',
   materials: 'crystal', trade: 'rock', sheet: 'grid', allow: 'scan', cryo: 'ice', xref: 'grid', density: 'rock', plastics: 'helix',
   elast: 'haze', coat: 'haze',

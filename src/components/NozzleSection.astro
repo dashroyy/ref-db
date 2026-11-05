@@ -1,0 +1,107 @@
+---
+// A solid motor nozzle in half section, with the convective heat transfer along it above (the area scaling of the
+// Bartz correlation, heatRatio in src/lib/nozzle.ts). Schematic: the layers are drawn thicker than to scale.
+import { heatRatio } from '../lib/nozzle';
+
+const yAx = 292, rt = 30, xt = 170; // axis, throat radius (px), throat station
+const xIn = 52, xOut = 424; // entrance (attachment) and exit stations
+const conv = (35 * Math.PI) / 180, div = (15 * Math.PI) / 180;
+const Rc1 = 1.5 * rt, Rc2 = 0.6 * rt; // throat radii of curvature, upstream and downstream
+const xa = xt - Rc1 * Math.sin(conv), xb = xt + Rc2 * Math.sin(div);
+const ra = rt + Rc1 * (1 - Math.cos(conv)), rb = rt + Rc2 * (1 - Math.cos(div));
+/** Radius of the flow surface at station x: a 35° cone, two circular arcs at the throat and a 15° cone. */
+const r = (x: number) =>
+  x <= xa ? ra + (xa - x) * Math.tan(conv)
+  : x <= xt ? rt + Rc1 - Math.sqrt(Rc1 * Rc1 - (x - xt) ** 2)
+  : x <= xb ? rt + Rc2 - Math.sqrt(Rc2 * Rc2 - (x - xt) ** 2)
+  : rb + (x - xb) * Math.tan(div);
+const xs = Array.from({ length: 187 }, (_, k) => xIn + ((xOut - xIn) * k) / 186);
+const Y = (rad: number) => yAx - rad;
+const rIn = r(xIn), rOut = r(xOut);
+// layer thicknesses (px) along the nozzle
+const tLiner = (x: number) => (x < xt - 34 ? 13 : x < xt + 30 ? 0 : x < xt + 120 ? 12 : 12 - (6 * (x - xt - 120)) / (xOut - xt - 120));
+const tInsert = (x: number) => (x >= xt - 34 && x < xt + 30 ? 22 : 0);
+const tIns = (x: number) => (x < xt + 30 ? 7 : 0);
+const tShell = (x: number) => (x < xt + 30 ? 9 : 4);
+const band = (a: (x: number) => number, b: (x: number) => number, keep: (x: number) => boolean) => {
+  const pts = xs.filter(keep);
+  return `M${pts.map((x) => `${x.toFixed(1)},${Y(r(x) + a(x)).toFixed(1)}`).join(' L')} L${pts.slice().reverse().map((x) => `${x.toFixed(1)},${Y(r(x) + b(x)).toFixed(1)}`).join(' L')} Z`;
+};
+const inEntrance = (x: number) => x < xt - 34 + 0.01;
+const inThroat = (x: number) => x >= xt - 34 && x <= xt + 30;
+const inExit = (x: number) => x >= xt + 30 - 0.01;
+const t1 = (x: number) => tLiner(x) + tInsert(x);
+const t2 = (x: number) => t1(x) + tIns(x);
+const t3 = (x: number) => t2(x) + tShell(x);
+const entranceLiner = band(() => 0, tLiner, inEntrance);
+const insert = band(() => 0, tInsert, inThroat);
+const exitLiner = band(() => 0, tLiner, inExit);
+const insulator = band(t1, t2, (x) => x <= xt + 30);
+const housing = band(t2, t3, (x) => x <= xt + 30);
+const shell = band(t1, t3, inExit);
+const flow = `M${xs.map((x) => `${x.toFixed(1)},${Y(r(x)).toFixed(1)}`).join(' L')}`;
+// the heat-transfer band above
+const hTop = 22, hBot = 96, H = (v: number) => hBot - v * (hBot - hTop);
+const heat = `M${xs.map((x) => `${x.toFixed(1)},${H(heatRatio((r(x) / rt) ** 2)).toFixed(1)}`).join(' L')}`;
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)';
+const flangeTop = Y(rIn + t3(xIn) + 30);
+---
+
+<figure class="viz nozzle-sec">
+  <p class="viz-title">A solid motor nozzle, and where the heat goes</p>
+  <svg viewBox="0 0 440 306" role="img" aria-labelledby="nzs-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="nzs-desc">
+      Above: the convective heat transfer coefficient along the nozzle, relative to its value at the throat. It is low in
+      the entrance, rises steeply to a peak at the throat, and falls along the exit cone. Below: the nozzle in half
+      section. A steel housing with a flange bolts to the aft closure and seals to it. Inside the housing, a carbon
+      phenolic liner protects the entrance, a graphite or carbon-carbon insert forms the throat, with an insulator behind
+      it, and the exit cone has a carbon or silica phenolic liner in a composite or metal shell.
+    </desc>
+    <!-- heat transfer -->
+    <line x1={xIn} x2={xOut} y1={hBot} y2={hBot} stroke="var(--rd-line)"></line>
+    <line x1={xIn} x2={xOut} y1={H(0.5)} y2={H(0.5)} stroke="var(--rd-line)" stroke-dasharray="2 3"></line>
+    <line x1={xIn} x2={xOut} y1={hTop} y2={hTop} stroke="var(--rd-line)" stroke-dasharray="2 3"></line>
+    <text x={xIn - 6} y={hBot + 3} font-size="10" fill={muted} text-anchor="end">0</text>
+    <text x={xIn - 6} y={H(0.5) + 3} font-size="10" fill={muted} text-anchor="end">0.5</text>
+    <text x={xIn - 6} y={hTop + 3} font-size="10" fill={muted} text-anchor="end">1</text>
+    <text x="6" y="12" font-size="10.5" fill={ink}>heat transfer, h / h at the throat</text>
+    <path d={heat} fill="none" stroke="var(--rd-hot)" stroke-width="2.4"></path>
+    <line x1={xt} x2={xt} y1={hTop} y2={Y(rt + 22)} stroke="var(--rd-hot)" stroke-width="1" stroke-dasharray="3 3"></line>
+    <text x={xt + 28} y={hTop + 4} font-size="10" fill="var(--rd-hot)">peak at the throat</text>
+    <!-- nozzle -->
+    <line x1="8" x2="434" y1={yAx} y2={yAx} stroke={muted} stroke-dasharray="12 3 2 3" stroke-width="0.8"></line>
+    <path d={housing} fill="var(--rd-steel)" fill-opacity="0.85"></path>
+    <path d={`M${xIn - 4},${Y(rIn + t2(xIn))} L${xIn - 4},${flangeTop} L${xIn + 14},${flangeTop} L${xIn + 14},${Y(r(xIn + 14) + t3(xIn + 14))} Z`} fill="var(--rd-steel)" fill-opacity="0.85"></path>
+    <path d={insulator} fill="var(--rd-insul)" fill-opacity="0.8"></path>
+    <path d={entranceLiner} fill="var(--rd-propellant)" fill-opacity="0.75"></path>
+    <path d={insert} fill="var(--rd-muted)" fill-opacity="0.9"></path>
+    <path d={exitLiner} fill="var(--rd-propellant)" fill-opacity="0.55"></path>
+    <path d={shell} fill="var(--rd-blue)" fill-opacity="0.55"></path>
+    <path d={flow} fill="none" stroke={ink} stroke-width="1.2"></path>
+    <!-- seal and bolt at the flange -->
+    <circle cx={xIn - 6} cy={Y(rIn + t3(xIn) + 6)} r="2.4" fill="var(--rd-ink)"></circle>
+    <line x1={xIn - 10} x2={xIn + 18} y1={Y(rIn + t3(xIn) + 20)} y2={Y(rIn + t3(xIn) + 20)} stroke={ink} stroke-width="2.2"></line>
+    <!-- labels -->
+    <text x={xIn + 26} y={flangeTop + 10} font-size="10.5" fill={ink}>housing and flange</text>
+    <text x={xIn + 26} y={flangeTop + 24} font-size="10" fill={muted}>bolts and seals to the aft closure</text>
+    <line x1={xt - 70} x2={xt - 92} y1={Y(r(xt - 70) + 6)} y2={Y(r(xt - 70) - 30)} stroke={muted}></line>
+    <text x={xt - 92} y={Y(r(xt - 70) - 30) + 12} font-size="10.5" fill={ink} text-anchor="middle">entrance liner</text>
+    <line x1={xt + 6} x2={xt + 6} y1={Y(rt + 9)} y2={yAx - 20} stroke={muted}></line>
+    <text x={xt + 10} y={yAx - 9} font-size="10.5" fill={ink}>throat insert: graphite or C-C</text>
+    <line x1={xt + 22} x2={xt + 58} y1={Y(rt + 25)} y2={Y(rt + 70)} stroke={muted}></line>
+    <text x={xt + 60} y={Y(rt + 70) - 2} font-size="10.5" fill={ink}>insulator</text>
+    <line x1={xt + 150} x2={xt + 150} y1={Y(r(xt + 150) + 5)} y2={Y(r(xt + 150) - 18)} stroke={muted}></line>
+    <text x={xt + 150} y={Y(r(xt + 150) - 18) + 12} font-size="10.5" fill={ink} text-anchor="middle">exit cone liner</text>
+    <text x={xt + 150} y={Y(r(xt + 150) - 18) + 26} font-size="10" fill={muted} text-anchor="middle">carbon or silica phenolic</text>
+    <line x1={xOut - 30} x2={xOut - 44} y1={Y(r(xOut - 30) + 14)} y2={Y(r(xOut - 30) + 40)} stroke={muted}></line>
+    <text x={xOut - 44} y={Y(r(xOut - 30) + 40) - 4} font-size="10.5" fill={ink} text-anchor="end">exit cone shell</text>
+    <text x={xIn - 40} y={yAx - 9} font-size="10" fill={muted}>gas from the chamber</text>
+    <text x={xOut - 6} y={yAx - 8} font-size="10" fill={muted} text-anchor="end">exit</text>
+  </svg>
+  <figcaption>
+    The heat transfer coefficient rises as the gas speeds up and peaks at the throat. Elsewhere it is approximately
+    (A<sub>t</sub>/A)<sup>0.9</sup> times the throat value. Thus the throat gets the most erosion-resistant material: a graphite
+    or carbon-carbon insert, with an insulator behind it so that the housing stays cool. The entrance and the exit cone
+    have tape-wrapped phenolic liners that char and erode slowly. Layers are drawn thicker than to scale.
+  </figcaption>
+</figure>

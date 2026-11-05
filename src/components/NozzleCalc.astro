@@ -1,0 +1,297 @@
+---
+// Nozzle screen: ideal performance and the separation check, throat erosion over a neutral burn, and the axial loads
+// on the nozzle parts. Calculations live in src/lib/nozzle.ts (unit-tested); this file is UI only.
+const AMBIENTS = [
+  { v: '0.101325', t: 'Sea level (101.3 kPa)' },
+  { v: '0.05405', t: '5 km (54.0 kPa)' },
+  { v: '0.0265', t: '10 km (26.5 kPa)' },
+  { v: '0.005529', t: '20 km (5.5 kPa)' },
+  { v: '0', t: 'Vacuum' },
+];
+---
+
+<div class="calc nzcalc" data-nzcalc>
+  <div class="calc-head">
+    <span>Nozzle: performance, throat erosion and loads</span>
+    <span class="head-btns">
+      <span>ideal 1-D flow · conical exit</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="perf" aria-selected="true">Performance</button>
+    <button type="button" role="tab" class="chip" data-tab="erosion" aria-selected="false">Throat erosion</button>
+    <button type="button" role="tab" class="chip" data-tab="loads" aria-selected="false">Loads</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Nozzle</legend>
+        <div class="row2">
+          <label>Chamber pressure (MPa)<input name="pc" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Throat diameter (mm)<input name="dt" type="number" min="1" step="any" value="50" /></label>
+          <label>Area ratio A<sub>e</sub>/A<sub>t</sub><input name="eps" type="number" min="1" step="any" value="8" /></label>
+          <label>Ratio of specific heats γ<input name="g" type="number" min="1.05" max="1.67" step="0.01" value="1.2" /></label>
+        </div>
+        <label>Ambient
+          <select name="pa">{AMBIENTS.map((a) => <option value={a.v}>{a.t}</option>)}</select>
+        </label>
+        <p class="hint">γ is the effective value for the exhaust, with its particles; 1.2 is illustrative for a metallised composite propellant. Get it from your propellant's thermochemistry.</p>
+      </fieldset>
+      <fieldset data-panel="perf">
+        <legend>Exit cone and propellant</legend>
+        <div class="row2">
+          <label>Cone half-angle (°)<input name="th" type="number" min="0" max="30" step="any" value="15" /></label>
+          <label>c* (m/s)<input name="cs" type="number" min="1" step="any" value="1540" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="erosion" hidden>
+        <legend>Burn and erosion</legend>
+        <div class="row2">
+          <label>Burn-rate exponent n<input name="n" type="number" min="0" max="0.9" step="0.01" value="0.35" /></label>
+          <label>Burn time without erosion (s)<input name="tb" type="number" min="0.1" step="any" value="8.7" /></label>
+          <label>Throat erosion rate (mm/s)<input name="er" type="number" min="0" step="any" value="0.10" /></label>
+          <label>Erosion pressure exponent<input name="em" type="number" min="0" max="2" step="0.05" value="0.8" /></label>
+        </div>
+        <p class="hint">The radial recession of the throat surface at the chamber pressure above. 0.10 mm/s is illustrative: measure the throat before and after your own firings. The rate is taken to scale with p<sup>0.8</sup>, as the convective heat transfer does. The grain is neutral: its burning area does not change.</p>
+      </fieldset>
+      <fieldset data-panel="loads" hidden>
+        <legend>Attachment</legend>
+        <div class="row2">
+          <label>Seal diameter of the nozzle joint (mm)<input name="ds" type="number" min="1" step="any" value="110" /></label>
+          <label>Number of bolts<input name="nb" type="number" min="0" step="1" value="12" placeholder="optional" /></label>
+        </div>
+        <p class="hint">The pressure acts over the area inside the seal that closes the nozzle joint. Loads are at the chamber pressure above, without factors: enter MEOP for the design load.</p>
+      </fieldset>
+    </form>
+
+    <div class="nz-out">
+      <div data-out="perf">
+        <dl class="readouts">
+          <div class="readout primary"><dt data-r="cfLab">Thrust coefficient</dt><dd data-r="cf">—</dd></div>
+          <div class="readout"><dt>Thrust</dt><dd data-r="F">—</dd></div>
+          <div class="readout"><dt>Specific impulse</dt><dd data-r="isp">—</dd></div>
+          <div class="readout"><dt>Exit</dt><dd data-r="exit">—</dd></div>
+          <div class="readout" data-state><dt>Expansion</dt><dd data-r="state">—</dd></div>
+          <div class="readout"><dt>Flow separates below</dt><dd data-r="sep">—</dd></div>
+        </dl>
+        <figure class="nz-fig">
+          <svg data-cfchart role="img" aria-label="Thrust coefficient against area ratio, in vacuum and at the ambient pressure"></svg>
+          <figcaption>C<sub>F</sub> against the area ratio at this chamber pressure. Solid: at the ambient pressure. Dashed: in vacuum. The shaded band is where the exit pressure is below 0.4 of ambient and the flow is likely to separate. The dot is your nozzle; the ring is the optimum for this ambient.</figcaption>
+        </figure>
+      </div>
+      <div data-out="erosion" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>Pressure at the end of the burn</dt><dd data-r="pEnd">—</dd></div>
+          <div class="readout"><dt>Throat at the end</dt><dd data-r="dEnd">—</dd></div>
+          <div class="readout"><dt>Burn time</dt><dd data-r="tbE">—</dd></div>
+          <div class="readout"><dt>Thrust, start → end</dt><dd data-r="fE">—</dd></div>
+          <div class="readout"><dt>Total impulse</dt><dd data-r="iE">—</dd></div>
+        </dl>
+        <figure class="nz-fig">
+          <svg data-erchart role="img" aria-label="Chamber pressure against time with and without throat erosion"></svg>
+          <figcaption>Chamber pressure through the burn of a neutral grain. Solid: with throat erosion. Dashed: without it. The throat grows, so the pressure and the burn rate fall and the burn gets longer.</figcaption>
+        </figure>
+      </div>
+      <div data-out="loads" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>Load on the nozzle joint, firing</dt><dd data-r="lJ">—</dd></div>
+          <div class="readout" data-ltest><dt>Pressure test, throat plugged</dt><dd data-r="lT">—</dd></div>
+          <div class="readout"><dt>Entrance and throat (aft)</dt><dd data-r="lC">—</dd></div>
+          <div class="readout"><dt>Exit cone (forward)</dt><dd data-r="lE">—</dd></div>
+          <div class="readout"><dt>Thrust</dt><dd data-r="lF">—</dd></div>
+        </dl>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Ideal one-dimensional isentropic flow with one effective γ, frozen composition and a conical divergence loss.
+    Delivered thrust coefficients are lower: two-phase flow, the boundary layer, erosion and nozzle shape cost a few per
+    cent. Separation uses the Summerfield screen (exit pressure below 0.4 of ambient). Erosion assumes a neutral grain
+    and one rate law. Loads come from the momentum balance of the gas, without dynamic, thermal or TVC loads.
+  </div>
+</div>
+
+<style is:global>
+  .nz-out { min-width: 0; }
+  .nz-out > div > * { min-width: 0; }
+  .nz-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { nozzlePoint, thrustCoefficient, divergence, erodingThroat, nozzleLoads, SEPARATION_RATIO, pressureRatio, machFromArea } from '../lib/nozzle';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const EXAMPLE: Record<string, string> = { pc: '10', dt: '50', eps: '8', g: '1.2', pa: '0.101325', th: '15', cs: '1540', n: '0.35', tb: '8.7', er: '0.10', em: '0.8', ds: '110', nb: '12' };
+
+  document.querySelectorAll<HTMLElement>('[data-nzcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => +field(n).value;
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'perf';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const base = () => ({ pc: num('pc'), dt: num('dt'), eps: num('eps'), g: num('g'), pa: num('pa'), thetaDeg: num('th'), cStar: num('cs') });
+    const valid = () => num('pc') > 0 && num('dt') > 0 && num('eps') >= 1 && num('g') > 1.01 && num('g') < 1.7 && num('pa') >= 0 && num('pa') < num('pc') && num('th') >= 0 && num('th') < 45;
+    const kN = (n: number, d = 1) => `${f(n / 1000, d)} kN`;
+    const stateText: Record<string, string> = {
+      under: 'Underexpanded', optimum: 'Near the optimum', over: 'Overexpanded, attached', separated: 'Separation likely', vacuum: 'Vacuum: always underexpanded',
+    };
+
+    function run() {
+      const notes: [string, string][] = [];
+      if (!valid()) {
+        root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => { if (!el.dataset.r!.endsWith('Lab')) el.textContent = '—'; });
+        root.querySelectorAll<SVGSVGElement>('svg').forEach((s) => (s.innerHTML = ''));
+        $('[data-notes]').innerHTML = '<li class="bad">Check the inputs: the area ratio must be at least 1, γ between 1.01 and 1.7, the cone half-angle below 45°, and the ambient pressure below the chamber pressure.</li>';
+        return;
+      }
+      if (mode === 'perf') runPerf(notes);
+      else if (mode === 'erosion') runErosion(notes);
+      else runLoads(notes);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function runPerf(notes: [string, string][]) {
+      const b = base(), p = nozzlePoint(b), vac = b.pa === 0;
+      r('cfLab').textContent = vac ? 'Thrust coefficient, vacuum' : 'Thrust coefficient at this ambient';
+      r('cf').innerHTML = `${f(p.cf, 3)} <small>${vac ? '' : `vacuum ${f(p.cfVac, 3)} · `}divergence factor λ = ${f(p.lambda, 4)}</small>`;
+      r('F').innerHTML = `${kN(p.thrust, 2)} <small>${vac ? '' : `vacuum ${kN(p.thrustVac, 2)} · `}mass flow ${f(p.massFlow, 2)} kg/s</small>`;
+      r('isp').innerHTML = `${f(p.isp, 1)} s <small>${vac ? '' : `vacuum ${f(p.ispVac, 1)} s · `}C<sub>F</sub>·c*/g₀, ideal</small>`;
+      r('exit').innerHTML = `M ${f(p.Me, 2)} <small>p<sub>e</sub> = ${f(p.pe * 1000, 1)} kPa · exit ⌀ ${f(p.de, 1)} mm</small>`;
+      r('state').innerHTML = `${stateText[p.exp.state]} <small>${vac ? '' : `p<sub>e</sub>/p<sub>a</sub> = ${f(p.exp.ratio, 2)} · optimum ε = ${f(p.epsOpt, 1)}`}</small>`;
+      $('[data-state]').className = `readout ${p.exp.state === 'separated' ? 'bad' : p.exp.state === 'over' ? 'warn' : 'ok'}`;
+      r('sep').innerHTML = vac ? '— <small>no ambient pressure</small>' : `${f(p.pcSeparation, 2)} MPa <small>chamber pressure, during ignition and tail-off</small>`;
+      drawCf(b, p);
+      if (p.exp.state === 'separated') notes.push(['bad', `The exit pressure is ${f(p.exp.ratio, 2)} of ambient: the flow is likely to separate inside the exit cone. Expect side loads and unsteady flow. The C<sub>F</sub> above assumes attached flow, so it is not valid. Test an altitude nozzle with a shorter test cone, or in a vacuum chamber.`]);
+      else if (p.exp.state === 'over') notes.push(['warn', `Overexpanded but attached: the exit pressure is below ambient, so the end of the cone pulls back. The optimum for this ambient is ε = ${f(p.epsOpt, 1)}.`]);
+      else if (p.exp.state === 'under' && !vac) notes.push(['', `Underexpanded: a longer cone would give more thrust at this ambient, up to ε = ${f(p.epsOpt, 1)} (C<sub>F</sub> ${f(thrustCoefficient(b.g, p.epsOpt, b.pc, b.pa, p.lambda).cf, 3)}), for more mass and length at the aft end.`]);
+      if (!vac && p.exp.state !== 'separated') notes.push([p.pcSeparation > 0.3 * b.pc ? 'warn' : '', `Below a chamber pressure of ${f(p.pcSeparation, 2)} MPa the flow separates at this ambient. Every firing passes through this during ignition and tail-off: the exit cone and the TVC must take the side loads.`]);
+      notes.push(['', `Ideal values. Delivered C<sub>F</sub> is usually a few per cent lower: two-phase flow (the particles lag the gas), the boundary layer, erosion and the nozzle shape. The other pages of this site use a delivered C<sub>F</sub> of 1.5 for the 300 mm motor.`]);
+    }
+
+    function runErosion(notes: [string, string][]) {
+      const b = base(), n = num('n'), tb0 = num('tb'), e0 = num('er'), m = num('em');
+      if (!(n >= 0 && n < 0.9 && tb0 > 0 && e0 >= 0)) { notes.push(['bad', 'Check the inputs: n between 0 and 0.9, a burn time above zero and an erosion rate of zero or more.']); return; }
+      const e = erodingThroat({ ...b, n, tb0, e0, m });
+      // no −0.0 from rounding when there is no erosion
+      const z = (v: number) => (Math.abs(v) < 5e-7 ? 0 : v);
+      e.pDrop = z(e.pDrop); e.stretch = z(e.stretch); e.impulseRatio = 1 + z(e.impulseRatio - 1);
+      r('pEnd').innerHTML = `${f(e.pEnd, 2)} MPa <small>${f(e.pDrop * 100, 1)}% below the ${f(b.pc, 2)} MPa at ignition</small>`;
+      r('dEnd').innerHTML = `${f(e.dEnd, 2)} mm <small>+${f(e.dEnd - b.dt, 2)} mm on the diameter; throat area +${f(((e.dEnd / b.dt) ** 2 - 1) * 100, 1)}%; ε falls to ${f(e.epsEnd, 2)}</small>`;
+      r('tbE').innerHTML = `${f(e.tb, 2)} s <small>${f(e.stretch * 100, 1)}% longer than ${f(tb0, 2)} s</small>`;
+      r('fE').innerHTML = `${kN(e.fStart)} → ${kN(e.fEnd)} <small>${f((1 - e.fEnd / e.fStart) * 100, 1)}% lower at the end</small>`;
+      r('iE').innerHTML = `${e.impulseRatio > 1 ? '+' : e.impulseRatio < 1 ? '−' : ''}${f(Math.abs(e.impulseRatio - 1) * 100, 2)}% <small>from the lower C<sub>F</sub> as ε and p<sub>c</sub> fall; the same propellant is burned</small>`;
+      drawErosion(e, b.pc, tb0);
+      notes.push(['', `Throat erosion does not waste propellant: the impulse changes by only ${f(Math.abs(e.impulseRatio - 1) * 100, 2)}%. It changes the shape of the burn: ${f(e.pDrop * 100, 1)}% less pressure and ${f((1 - e.fEnd / e.fStart) * 100, 1)}% less thrust at the end, and a burn ${f(e.stretch * 100, 1)}% longer.`]);
+      notes.push(['', `A small erosion has a large effect, because p ∝ A<sub>t</sub><sup>−1/(1−n)</sup>: here 1% on the throat diameter takes ${f((1 - 1.01 ** (-2 / (1 - n))) * 100, 1)}% off the pressure. The scatter of the erosion is therefore part of the thrust and pressure tolerance.`]);
+      if (e0 > 0) notes.push(['warn', 'The rate is illustrative. Throat erosion depends strongly on the throat material, the propellant (the oxidising species in the exhaust attack carbon), the pressure and the throat size. Measure it on your own firings, and check it at the hot and the cold firing temperature.']);
+    }
+
+    function runLoads(notes: [string, string][]) {
+      const b = base(), ds = num('ds'), nb = Math.round(num('nb'));
+      if (!(ds > num('dt'))) { notes.push(['bad', 'The seal diameter must be larger than the throat.']); return; }
+      const L = nozzleLoads({ ...b, ds });
+      const per = (x: number) => (nb > 0 ? ` · ${f(x / nb / 1000, 2)} kN for each of ${nb} bolts` : '');
+      r('lJ').innerHTML = `${kN(L.joint)} <small>aft: (p<sub>c</sub> − p<sub>a</sub>)·A<sub>seal</sub> − F${per(L.joint)}</small>`;
+      r('lT').innerHTML = `${kN(L.test)} <small>+${f((L.test / L.joint - 1) * 100, 0)}%: no flow, so no thrust to take off${per(L.test)}</small>`;
+      $('[data-ltest]').className = 'readout warn';
+      r('lC').innerHTML = `${kN(L.convergent)} <small>pressure on the entrance to the throat, less the throat momentum I<sub>t</sub> = ${kN(L.It)}</small>`;
+      r('lE').innerHTML = `${kN(L.exitCone)} <small>the exit cone is pushed forward: its share of the thrust</small>`;
+      r('lF').innerHTML = `${kN(L.point.thrust)} <small>C<sub>F</sub> ${f(L.point.cf, 3)} at this ambient</small>`;
+      notes.push(['warn', `Size the nozzle joint for the pressure test as well as for the firing: with the throat plugged, it carries ${kN(L.test)}, not ${kN(L.joint)}. These loads have no factors: apply your programme's factors in the <a href="../../joints/bolted-joints/#calculator">bolted-joint calculator</a>.`]);
+      notes.push(['', `The joint load is ${f(L.joint / L.point.thrust, 1)} times the thrust. Most of the pressure load on the nozzle closes back into the case; only the thrust goes to the vehicle (see <a href="../../joints/load-paths/#follow-the-pressure">Load paths</a>).`]);
+      notes.push(['', 'The exit cone attachment carries the forward load above, plus the side loads of separation at ignition and tail-off, and the TVC loads on a movable nozzle. The model does not include them.']);
+    }
+
+    // C_F against the area ratio, log scale, with the separation band and the design point
+    function drawCf(b: ReturnType<typeof base>, p: ReturnType<typeof nozzlePoint>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-cfchart]')!;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 230, L = 44, R = 12, T = 14, B = 36;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const e0 = 1.5, e1 = Math.max(100, b.eps * 1.5), lam = divergence(b.thetaDeg ?? 0);
+      const X = (e: number) => L + (Math.log(e / e0) / Math.log(e1 / e0)) * (W - L - R);
+      const es = Array.from({ length: 121 }, (_, k) => e0 * (e1 / e0) ** (k / 120));
+      const vac = es.map((e) => thrustCoefficient(b.g, e, b.pc, 0, lam).cfVac);
+      const amb = es.map((e) => thrustCoefficient(b.g, e, b.pc, b.pa, lam).cf);
+      const yMin = Math.max(0, Math.floor((Math.min(...amb.filter((v) => v > 0), ...vac) - 0.1) * 5) / 5), yMax = Math.ceil((Math.max(...vac) + 0.05) * 5) / 5;
+      const Y = (v: number) => T + (H - T - B) * (1 - (Math.max(yMin, Math.min(yMax, v)) - yMin) / (yMax - yMin));
+      const out: string[] = [];
+      // separation band: exit pressure below 0.4 of ambient
+      if (b.pa > 0) {
+        const eSep = es.find((e) => b.pc * pressureRatio(machFromArea(e, b.g), b.g) < SEPARATION_RATIO * b.pa);
+        if (eSep) out.push(`<rect x="${X(eSep).toFixed(1)}" y="${T}" width="${(W - R - X(eSep)).toFixed(1)}" height="${H - T - B}" fill="var(--rd-accent)" fill-opacity="0.09"/><text x="${(W - R - 4).toFixed(1)}" y="${H - B - 6}" text-anchor="end" font-size="10" fill="var(--rd-accent)">separation likely</text>`);
+      }
+      const step = yMax - yMin > 0.8 ? 0.2 : 0.1;
+      for (let v = yMin; v <= yMax + 1e-9; v += step) out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(1)}</text>`);
+      for (const e of [2, 5, 10, 20, 50, 100, 200, 500].filter((e) => e >= e0 && e <= e1)) out.push(`<line x1="${X(e).toFixed(1)}" x2="${X(e).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-line)"/><text x="${X(e).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${e}</text>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">area ratio A<tspan dy="2" font-size="8">e</tspan><tspan dy="-2">/A</tspan><tspan dy="2" font-size="8">t</tspan><tspan dy="-2"> (log scale)</tspan></text>`);
+      out.push(`<text x="4" y="${T - 2}" font-size="10" fill="var(--rd-ink)">C<tspan dy="2" font-size="8">F</tspan></text>`);
+      const line = (ys: number[]) => es.map((e, k) => `${k ? 'L' : 'M'}${X(e).toFixed(1)},${Y(ys[k]).toFixed(1)}`).join('');
+      out.push(`<path d="${line(vac)}" fill="none" stroke="var(--rd-blue)" stroke-width="2" stroke-dasharray="6 4"/>`);
+      if (b.pa > 0) out.push(`<path d="${line(amb)}" fill="none" stroke="var(--rd-blue)" stroke-width="2.4"/>`);
+      if (b.pa > 0 && p.epsOpt >= e0 && p.epsOpt <= e1) out.push(`<circle cx="${X(p.epsOpt).toFixed(1)}" cy="${Y(thrustCoefficient(b.g, p.epsOpt, b.pc, b.pa, lam).cf).toFixed(1)}" r="5" fill="none" stroke="var(--rd-ink)" stroke-width="1.5"/>`);
+      if (b.eps >= e0 && b.eps <= e1) out.push(`<circle cx="${X(b.eps).toFixed(1)}" cy="${Y(p.cf).toFixed(1)}" r="5" fill="var(--rd-accent)"/>`);
+      const kv = Math.round(es.length * 0.18);
+      out.push(`<text x="${X(es[kv]).toFixed(1)}" y="${(Y(vac[kv]) - 8).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--rd-blue)">vacuum</text>`);
+      svg.innerHTML = out.join('');
+    }
+
+    // pressure through the burn, with and without erosion
+    function drawErosion(e: ReturnType<typeof erodingThroat>, pc: number, tb0: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-erchart]')!;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 216, L = 44, R = 14, T = 26, B = 36;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      // the pressure axis is zoomed to the range of the burn, so that the fall is visible; its ticks say where it starts
+      const tMax = Math.max(e.tb, tb0) * 1.04, span = Math.max(pc - e.pEnd, pc * 0.04);
+      const pStep = [0.1, 0.2, 0.5, 1, 2, 5, 10].find((s) => (span * 1.6) / s <= 6) ?? 10;
+      const pMin = Math.max(0, Math.floor((e.pEnd - span * 0.4) / pStep) * pStep), pMax = Math.ceil((pc + span * 0.3) / pStep) * pStep;
+      const X = (t: number) => L + (t / tMax) * (W - L - R), Y = (p: number) => T + (H - T - B) * (1 - (p - pMin) / (pMax - pMin));
+      const out: string[] = [];
+      const dp = pStep < 1 ? 1 : 0;
+      for (let v = pMin; v <= pMax + 1e-9; v += pStep) out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(dp)}</text>`);
+      const tStep = tMax > 40 ? 10 : tMax > 16 ? 5 : tMax > 6 ? 2 : 1;
+      for (let v = 0; v <= tMax; v += tStep) out.push(`<text x="${X(v).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">time, s</text><text x="4" y="12" font-size="10" fill="var(--rd-ink)">p, MPa</text>`);
+      out.push(`<path d="M${X(0)},${Y(pc)} L${X(tb0).toFixed(1)},${Y(pc).toFixed(1)}" fill="none" stroke="var(--rd-muted)" stroke-width="2" stroke-dasharray="6 4"/>`);
+      out.push(`<path d="${e.trace.map((s, k) => `${k ? 'L' : 'M'}${X(s.t).toFixed(1)},${Y(s.p).toFixed(1)}`).join('')}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      out.push(`<text x="${(X(e.tb) - 4).toFixed(1)}" y="${(Y(e.pEnd) + 16).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-accent)">${f(e.pEnd, 2)} MPa at ${f(e.tb, 1)} s</text>`);
+      out.push(`<text x="${(X(tb0) - 4).toFixed(1)}" y="${(Y(pc) - 6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">no erosion</text>`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => {
+      for (const [k, v] of Object.entries(EXAMPLE)) { const el = field(k); if (el) el.value = v; }
+      run();
+    });
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.nz-out')!);
+    }
+    run();
+  });
+</script>
