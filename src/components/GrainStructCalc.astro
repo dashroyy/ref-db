@@ -3,13 +3,10 @@
 // Formulas in src/lib/grain.ts (unit-tested); this file is UI only.
 import MaterialSelect from './MaterialSelect.astro';
 import { withProps, DEFAULTS as D } from '../lib/materials';
+import { PROPELLANT_CLASSES } from '../lib/grain';
 
-// Propellant classes carried over from REF·DB v1. Illustrative, not measured data.
-const PROPS = [
-  { key: 'comp', name: 'Composite (HTPB type)', alpha: 100, E: 3.6, capWarm: 42, capCold: 10, tg: -70 },
-  { key: 'cmdb', name: 'Composite-modified double-base', alpha: 85, E: 105, capWarm: 25, capCold: 3, tg: -5 },
-  { key: 'db', name: 'Double-base', alpha: 80, E: 180, capWarm: 22, capCold: 2, tg: 5 },
-];
+// Propellant classes carried over from REF·DB v1 (src/lib/grain.ts). Illustrative, not measured data.
+const PROPS = PROPELLANT_CLASSES;
 // Case materials: the metals and composites of the material library with E, ν and α (α in µm/m·K, E in GPa here).
 const CASES = withProps(['E', 'nu', 'alpha'], ['metal', 'composite']).map((m) => ({ key: m.key, name: m.name, family: m.family, alpha: +(m.alpha! * 1e6).toPrecision(4), E: m.E! / 1000, nu: m.nu! }));
 const steel = CASES.find((c) => c.key === D.caseSteel)!;
@@ -113,13 +110,13 @@ const steel = CASES.find((c) => c.key === D.caseSteel)!;
 </style>
 
 <script>
-  import { grainStructure, type GrainStructInputs } from '../lib/grain';
+  import { grainStructure, strainCapability, type GrainStructInputs } from '../lib/grain';
   import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
 
   const NS = 'http://www.w3.org/2000/svg';
   const f = (v: number, d = 1) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
-  // Illustrative capability-vs-temperature curve from REF·DB v1 (smooth glass transition).
-  const capCurve = (T: number, warm: number, cold: number, tg: number) => cold + (warm - cold) / (1 + Math.exp(-(T - tg) / 12));
+  // Illustrative capability-vs-temperature curve from REF·DB v1 (smooth glass transition), in src/lib/grain.ts.
+  const capCurve = (T: number, capWarm: number, capCold: number, tg: number) => strainCapability(T, { capWarm, capCold, tg });
 
   document.querySelectorAll<HTMLElement>('[data-gscalc]').forEach((root) => {
     const { PROPS, CASES, STEEL } = JSON.parse(root.querySelector('[data-presets]')!.textContent!);

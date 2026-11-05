@@ -1,0 +1,726 @@
+---
+// Worked example: the 300 mm motor through every step of the site, with the zone tools' own functions. Change one
+// input and every answer that depends on it moves. Logic in src/lib/chain.ts (unit-tested); UI only here.
+import MaterialSelect from './MaterialSelect.astro';
+import { CASE_MATERIALS, STEPS } from '../lib/chain';
+import { PROPELLANT_CLASSES } from '../lib/grain';
+import { DEFAULTS as D } from '../lib/materials';
+import { route, hrefOf } from '../data/zones.mjs';
+
+const base = import.meta.env.BASE_URL;
+const items = route();
+const ZONES = Object.fromEntries(STEPS.map((s) => {
+  const z = items.find((x) => x.key === s.zone)!;
+  return [s.key, { tag: z.tag, label: z.label, phase: z.phase, href: hrefOf(z, base) }];
+}));
+---
+
+<div class="calc wxcalc" data-chaincalc>
+  <div class="calc-head">
+    <span>One motor, end to end</span>
+    <span class="head-btns"><span>{STEPS.length} steps · the zone tools' own functions</span><button type="button" class="chip" data-load-example>Load worked example</button><button type="button" class="chip" data-copy>Copy drawing notes</button></span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="View">
+    <button type="button" role="tab" class="chip" data-tab="chain" aria-selected="true">The chain</button>
+    <button type="button" role="tab" class="chip" data-tab="compare" aria-selected="false">Compare case alloys</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <div class="wx-in">
+        <fieldset>
+          <legend>Motor</legend>
+          <label>Case alloy<MaterialSelect name="m" list={CASE_MATERIALS} selected={D.caseSteel} /></label>
+          <div class="row2">
+            <label>Internal Ø (mm)<input name="id" type="number" min="50" step="any" value="300" /></label>
+            <label>Cylinder length (mm)<input name="L" type="number" min="50" step="any" value="1000" /></label>
+            <label>Bore Ø (mm)<input name="bore" type="number" min="1" step="any" value="100" /></label>
+            <label>Weld efficiency
+              <select name="e">
+                <option value="1">1.00 seamless</option>
+                <option value="0.9" selected>0.90 full radiography</option>
+                <option value="0.85">0.85 spot radiography</option>
+                <option value="0.7">0.70 no radiography</option>
+              </select>
+            </label>
+          </div>
+          <p class="hint" data-matnote></p>
+        </fieldset>
+        <fieldset>
+          <legend>Propellant and temperatures</legend>
+          <label>Propellant class<select name="prop">{PROPELLANT_CLASSES.map((p) => <option value={p.key}>{p.name}</option>)}</select></label>
+          <div class="row2">
+            <label>Peak pressure at 20 °C (MPa)<input name="pn" type="number" min="0.1" step="any" value="8.8" /></label>
+            <label>Stress-free temp. (°C)<input name="tsf" type="number" step="any" value="60" /></label>
+            <label>Coldest firing (°C)<input name="tc" type="number" step="any" value="-40" /></label>
+            <label>Hottest firing (°C)<input name="th" type="number" step="any" value="60" /></label>
+          </div>
+          <details class="wx-more">
+            <summary>More propellant values</summary>
+            <div class="row2">
+              <label>Pressure exponent n<input name="n" type="number" min="0" max="0.8" step="0.01" value="0.35" /></label>
+              <label>σ<sub>p</sub>, burn rate (%/K)<input name="sp" type="number" min="0" step="any" value="0.13" /></label>
+              <label>Burn-rate variation ± (%)<input name="vr" type="number" min="0" step="any" value="3" /></label>
+              <label>Burning-area variation ± (%)<input name="va" type="number" min="0" step="any" value="1" /></label>
+              <label>Throat-area variation ± (%)<input name="vt" type="number" min="0" step="any" value="1" /></label>
+              <label>Capability left at end of life (%)<input name="ret" type="number" min="1" max="100" step="any" value="75" /></label>
+            </div>
+          </details>
+          <p class="hint">Illustrative values, as on the Propellant page. Use the data of your ballistics and propellant teams.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Your programme's factors</legend>
+          <div class="row2">
+            <label>Proof (× MEOP)<input name="pf" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Burst (× MEOP)<input name="bf" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Grain safety factor<input name="gsf" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Insulation SF (depth)<input name="isf" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Buckling factor<input name="kf" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Life (scatter) factor<input name="lf" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Preload scatter ± (%)<input name="gam" type="number" min="0" max="80" step="any" placeholder="your value" autocomplete="off" /></label>
+            <label>Separation factor<input name="sep" type="number" min="1" step="any" placeholder="your value" autocomplete="off" /></label>
+          </div>
+          <p class="hint">Factors come from your governing requirement, not from this site. A step that needs a factor waits for it.</p>
+          <p class="hint example-note" data-example-note hidden></p>
+        </fieldset>
+      </div>
+    </form>
+    <div class="wx-out">
+      <div class="wx-pane" data-pane="chain">
+        <dl class="readouts" data-sum></dl>
+        <div class="wx-strip" data-strip aria-label="Steps"></div>
+        <figure class="wx-fig"><svg data-ladder role="img" aria-label="The margins of the chain"></svg><figcaption data-ladcap></figcaption></figure>
+        <ol class="wx-steps" data-steps></ol>
+      </div>
+      <div class="wx-pane" data-pane="compare" hidden>
+        <p class="wx-progress" data-progress></p>
+        <figure class="wx-fig"><svg data-map role="img" aria-label="Case mass against the margin on crack length"></svg><figcaption data-mapcap></figcaption></figure>
+        <div class="wx-cmp" data-cmp></div>
+        <ul class="pv-notes" data-cmpnotes></ul>
+      </div>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Each step calls the function of its zone's tool: MEOP build-up, Lamé case sizing, the case-bonded grain screen, the
+    1-D insulation transient, the rocket equation, SP-8007 buckling, Newman–Raju crack growth to breakthrough, the proof
+    flaw screen, NDT against the critical flaw, the bolted-joint diagram and equivalent cycles for the duty. Values that
+    come from the other worked examples (the insulation exposure, the closure, the events of the life) are fixed and
+    named in each step. Screening values throughout: each step has the limits of its zone page.
+  </div>
+  <script type="application/json" data-zones set:html={JSON.stringify(ZONES)}></script>
+</div>
+
+<style is:global>
+  .sl-markdown-content .calc.wxcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .wxcalc .calc-body > * { min-width: 0; }
+  .wx-in { display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); gap: 0 1.4rem; }
+  .wx-in fieldset { align-content: start; }
+  .wx-more { margin: 0 !important; }
+  .wx-more summary { cursor: pointer; font-size: 0.78rem; color: var(--rd-muted); margin-bottom: 0.5rem; }
+  .wx-more[open] summary { color: var(--rd-ink); }
+  .wx-pane { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+  .wx-pane > * { margin: 0 !important; min-width: 0; }
+  .wx-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .wx-progress { font: 0.72rem var(--sl-font-mono); color: var(--rd-muted); }
+  .wx-progress:empty { display: none; }
+
+  /* the strip: one square for each step, coloured by its verdict */
+  .wx-strip { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .wx-strip button {
+    margin: 0 !important; width: 1.85rem; height: 1.7rem; padding: 0; border-radius: 4px; cursor: pointer;
+    font: 700 0.72rem var(--sl-font-mono); color: var(--rd-ink); background: var(--rd-panel2);
+    border: 1px solid var(--rd-line); border-bottom: 3px solid var(--pc);
+  }
+  .wx-strip button.v-ok { background: color-mix(in srgb, var(--rd-ok) 16%, var(--rd-panel2)); }
+  .wx-strip button.v-warn { background: color-mix(in srgb, var(--rd-warn) 20%, var(--rd-panel2)); }
+  .wx-strip button.v-bad { background: color-mix(in srgb, var(--rd-accent) 24%, var(--rd-panel2)); }
+  .wx-strip button.v-wait { color: var(--rd-muted); border-style: dashed; border-bottom-style: solid; }
+  .wx-strip button:hover, .wx-strip button:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+
+  /* the steps: a numbered line with a card for each step */
+  .wx-steps { list-style: none; padding: 0 !important; display: grid; }
+  .wx-step { position: relative; display: grid; grid-template-columns: 2.1rem minmax(0, 1fr); gap: 0.75rem; padding-bottom: 0.9rem; margin: 0 !important; scroll-margin-top: 5rem; }
+  .wx-step::before { content: ''; position: absolute; left: calc(1.05rem - 1px); top: 2.2rem; bottom: 0.1rem; width: 2px; background: var(--rd-line); }
+  .wx-step:last-child { padding-bottom: 0; }
+  .wx-step:last-child::before { display: none; }
+  .wx-num {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center; margin: 0 !important;
+    font: 700 0.85rem var(--sl-font-mono); color: var(--rd-ink); background: var(--rd-panel2); border: 2px solid var(--pc);
+  }
+  .wx-step.chg .wx-num { box-shadow: 0 0 0 5px color-mix(in srgb, var(--pc) 40%, transparent); }
+  html:not(.motion-off) .wx-num { transition: box-shadow 0.5s ease-out; }
+  @media (prefers-reduced-motion: reduce) { .wx-num { transition: none !important; } }
+  .wx-card { border: 1px solid var(--rd-line); border-left: 3px solid var(--pc); border-radius: 6px; background: var(--rd-panel2); padding: 0.6rem 0.8rem 0.7rem; min-width: 0; margin: 0 !important; }
+  .wx-card > * { margin: 0 !important; }
+  .wx-top { display: flex; justify-content: space-between; align-items: center; gap: 0.3rem 0.6rem; flex-wrap: wrap; }
+  .wx-top > * { margin: 0 !important; }
+  .wx-zone { font: 600 0.66rem var(--sl-font-mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--pc); text-decoration: none; }
+  .wx-zone:hover { text-decoration: underline; }
+  .wx-v { font: 700 0.6rem var(--sl-font-mono); letter-spacing: 0.08em; padding: 0.1rem 0.5rem; border-radius: 999px; }
+  .wx-step.v-ok .wx-v { color: var(--rd-ok); background: color-mix(in srgb, var(--rd-ok) 14%, transparent); }
+  .wx-step.v-warn .wx-v { color: var(--rd-warn); background: color-mix(in srgb, var(--rd-warn) 15%, transparent); }
+  .wx-step.v-bad .wx-v { color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 15%, transparent); }
+  .wx-step.v-wait .wx-v { color: var(--rd-muted); border: 1px dashed var(--rd-line); }
+  .wx-step.v-info .wx-v { display: none; }
+  .wx-step.v-bad .wx-card { border-color: color-mix(in srgb, var(--rd-accent) 45%, var(--rd-line)); border-left-color: var(--pc); }
+  .wx-card h4 { margin: 0.2rem 0 0.45rem !important; font-size: 0.98rem; line-height: 1.3; color: var(--rd-ink); }
+  .wx-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.4rem 0.9rem; }
+  .wx-kv > div { margin: 0 !important; min-width: 0; }
+  .wx-kv dt { font: 600 0.62rem var(--sl-font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--rd-muted); }
+  .wx-kv dd { margin: 0.05rem 0 0 !important; font: 600 0.9rem var(--sl-font-mono); color: var(--rd-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .wx-kv dd small { font: 400 0.72rem var(--sl-font-system, system-ui); color: var(--rd-muted); }
+  .wxcalc .lc, .wxcalc dt sub, .wxcalc th sub { text-transform: none; }
+  .wx-kv dd.ok { color: var(--rd-ok); } .wx-kv dd.bad { color: var(--rd-accent); } .wx-kv dd.warn { color: var(--rd-warn); }
+  .wx-say { margin-top: 0.5rem !important; font-size: 0.82rem; line-height: 1.5; color: var(--rd-ink); }
+  .wx-need { margin-top: 0.45rem !important; font-size: 0.78rem; color: var(--rd-muted); font-style: italic; }
+  .wx-flow { margin-top: 0.45rem !important; display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; font-size: 0.72rem; color: var(--rd-muted); }
+  .wx-flow > span { margin: 0 !important; }
+  .wx-flow b { font: 600 0.66rem var(--sl-font-mono); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.3rem; }
+  .wx-notes { margin-top: 0.5rem !important; white-space: pre-wrap; font: 0.74rem/1.6 var(--sl-font-mono); letter-spacing: 0.02em; padding: 0.65rem 0.85rem; border: 1.5px dashed var(--rd-accent); border-radius: 4px; background: color-mix(in srgb, var(--rd-accent) 5%, transparent); color: var(--rd-ink); overflow-x: auto; }
+
+  /* the comparison table */
+  .wx-cmp { overflow-x: auto; }
+  .wx-cmp table { width: 100%; min-width: 44rem; margin: 0 !important; }
+  .wx-cmp td, .wx-cmp th { padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap; }
+  .wx-cmp td:first-child, .wx-cmp th:first-child { text-align: left; white-space: normal; }
+  .wx-cmp tr.sel td { background: color-mix(in srgb, var(--rd-accent) 9%, transparent); font-weight: 600; }
+  .wx-cmp .ok { color: var(--rd-ok); } .wx-cmp .bad { color: var(--rd-accent); } .wx-cmp .warn { color: var(--rd-warn); } .wx-cmp .mu { color: var(--rd-muted); }
+  .wx-cmp p { margin: 0.4rem 0 0 !important; font-size: 0.74rem; color: var(--rd-muted); }
+</style>
+
+<script>
+  import {
+    STEPS, LOOPS, CASE_MATERIALS, CANDIDATES, EXAMPLE, STEP_FACTORS, FACTOR_NAMES, runChain, verdicts, drawingNotes, domeInsulation, stepIndex,
+    type ChainInputs, type Chain, type StepKey, type Verdict, type CaseMat, type InsulationResult, type Factors,
+  } from '../lib/chain';
+  import { PROPELLANT_CLASSES } from '../lib/grain';
+  import { readFactor } from '../lib/factors';
+
+  type Zone = { tag: string; label: string; phase: string; href: string };
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const fx = (v: number | null | undefined, d = 2) => (v === null || v === undefined || !Number.isFinite(v) ? '—'
+    : v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−'));
+  /** A margin with its sign: −0.00 stays negative, because a negative margin fails however small. */
+  const sg = (v: number | null | undefined) => {
+    if (v === null || v === undefined || Number.isNaN(v)) return '—';
+    if (!Number.isFinite(v)) return 'no load';
+    const d = Math.abs(v) >= 10 ? 1 : 2, s = Math.abs(v).toFixed(d);
+    return `${v < 0 ? '−' : '+'}${s}`;
+  };
+  const cyc = (n: number) => (!Number.isFinite(n) ? 'no growth' : n >= 1e6 ? `${fx(n / 1e6, 1)} million` : n >= 10 ? fx(Math.round(n), 0) : fx(n, 1));
+  const msCls = (v: number | null | undefined) => (v === null || v === undefined ? '' : v < 0 ? 'bad' : 'ok');
+  const kN = (n: number) => fx(n / 1000, 1);
+
+  document.querySelectorAll<HTMLElement>('[data-chaincalc]').forEach((root) => {
+    const ZONES: Record<StepKey, Zone> = JSON.parse(root.querySelector('[data-zones]')!.textContent!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const ladder = $<SVGSVGElement>('[data-ladder]'), map = $<SVGSVGElement>('[data-map]');
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(720, Math.max(280, svg.clientWidth || 600)));
+    const number = (k: StepKey) => stepIndex(k) + 1;
+    const feeds = (k: StepKey) => STEPS.filter((s) => s.uses.includes(k)).map((s) => number(s.key));
+    let mode: 'chain' | 'compare' = 'chain';
+
+    // ---------- inputs ----------
+    const factorOf = (n: string, min = 1) => readFactor(field(n).value, min);
+    function inputs(): ChainInputs | string {
+      const mat = CASE_MATERIALS.find((m) => m.key === field('m').value);
+      if (!mat) return 'Choose a case alloy.';
+      const id = num('id'), L = num('L'), bore = num('bore'), pn = num('pn'), n = num('n');
+      if (!(id >= 50 && L >= 50)) return 'Enter an internal diameter and a cylinder length of 50 mm or more.';
+      if (!(bore > 0 && bore < id * 0.95)) return 'The bore must be smaller than the case: the grain needs a web.';
+      if (!(pn > 0)) return 'Enter the nominal peak pressure.';
+      if (!(n >= 0 && n < 0.9)) return 'The pressure exponent must be between 0 and 0.9.';
+      if (!(num('tc') < num('th'))) return 'The coldest firing temperature must be below the hottest.';
+      const ret = num('ret');
+      const gam = field('gam').value.trim() === '' ? null : Math.min(80, Math.max(0, num('gam'))) / 100;
+      const f: Factors = {
+        proof: factorOf('pf'), burst: factorOf('bf'), grain: factorOf('gsf'), ins: factorOf('isf'), buck: factorOf('kf'), life: factorOf('lf'),
+        scatter: gam !== null && Number.isFinite(gam) ? gam : null, sep: factorOf('sep'),
+      };
+      return {
+        mat, idMm: id, lengthMm: L, boreMm: bore, weldEff: +field('e').value,
+        prop: PROPELLANT_CLASSES.find((p) => p.key === field('prop').value) ?? PROPELLANT_CLASSES[0],
+        pNom: pn, n, sigmaP: (num('sp') || 0) / 100, rateVar: (num('vr') || 0) / 100, abVar: (num('va') || 0) / 100, atVar: (num('vt') || 0) / 100,
+        tCold: num('tc'), tHot: num('th'), tSf: num('tsf'), retained: Math.min(1, Math.max(0.01, (Number.isFinite(ret) ? ret : 100) / 100)), f,
+      };
+    }
+
+    // The dome insulation is the slow step (a few hundred transients): keep each answer.
+    const insCache = new Map<string, InsulationResult>();
+    const cachedInsulation = (mat: CaseMat, wall: number, sf: number | null) => {
+      const key = `${mat.key}|${wall.toFixed(5)}|${sf ?? '-'}`;
+      let v = insCache.get(key);
+      if (!v) { v = domeInsulation(mat, wall, sf); insCache.set(key, v); }
+      return v;
+    };
+    const cachedOnly = (mat: CaseMat, wall: number, sf: number | null) => insCache.get(`${mat.key}|${wall.toFixed(5)}|${sf ?? '-'}`) ?? null;
+
+    // ---------- what each step shows ----------
+    type KV = [string, string, string?];
+    interface View { kv: KV[]; say?: string; need?: string; extra?: string }
+
+    // The earlier steps that hold a step up (the matrix also shows uses that do not block, such as the grain's
+    // propellant load for the mass).
+    const BLOCK: Partial<Record<StepKey, StepKey[]>> = { mass: ['case', 'insulation'], notes: ['case'] };
+    const list = (a: (string | number)[]) => (a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
+    function waitsFor(k: StepKey, c: Chain, v: Record<StepKey, Verdict>, f: Factors): string {
+      const own = STEP_FACTORS[k].filter((x) => f[x] === null).map((x) => FACTOR_NAMES[x]);
+      const up = (BLOCK[k] ?? STEPS[stepIndex(k)].uses).filter((u) => v[u] === 'wait' && (u !== 'duty' || c.duty === null));
+      const parts: string[] = [];
+      if (up.length) parts.push(`step${up.length > 1 ? 's' : ''} ${list(up.map(number))} (${up.map((u) => STEPS[stepIndex(u)].short).join(', ')})`);
+      if (own.length) parts.push(`your ${list(own)}`);
+      return parts.length ? `Waits for ${parts.join(', and for ')}.` : '';
+    }
+
+    function view(k: StepKey, c: Chain): View {
+      const i = c.inputs, m = i.mat, cs = c.case;
+      switch (k) {
+        case 'duty': {
+          const d = c.duty;
+          if (!d) return { kv: [['Events', 'proof, 4 leak checks, 1 firing']], say: 'Each event is a cycle from zero to its pressure. Written as cycles at MEOP with the slope m = 3 of a weld, they add up to one number.' };
+          return {
+            kv: [
+              ['MEOP cycles, whole life', `${fx(d.all, 2)} <small>m = ${EXAMPLE.slope}</small>`],
+              ['Proof test share', `${fx(d.proofShare * 100, 0)}%`],
+              ['After the proof test', fx(d.after, 2)],
+              ['Life to show, from NDT', d.reqAll === null ? '—' : `${fx(d.reqAll, 1)} <small>cycles</small>`],
+              ['Life to show, after proof', d.reqAfter === null ? '—' : `${fx(d.reqAfter, 1)} <small>cycles</small>`],
+            ],
+            say: `The proof test is the largest cycle in the life: ${fx(d.proofShare * 100, 0)}% of the damage. A flaw that inspection misses must survive it. A flaw that the proof test leaves must survive only the events after it.`,
+          };
+        }
+        case 'material': {
+          const x = c.material, notes: string[] = [];
+          if (m.kicDefault) notes.push('Its K<sub>IC</sub> is a family default, not a value for this alloy.');
+          if (!m.weldable && i.weldEff < 1) notes.push('This alloy is not weldable. A welded case needs a weldable alloy, or set the weld efficiency to 1.00 for a seamless (forged or spun) case.');
+          return {
+            kv: [
+              ['F<sub>tu</sub> / F<sub>ty</sub>', `${m.uts} / ${m.yld} <small>MPa</small>`],
+              ['Density', `${fx(m.rho / 1000, 2)} <small>g/cm³</small>`],
+              ['K<sub>IC</sub>', `${m.kic}${m.kicDefault ? '*' : ''} <small>MPa√m</small>`],
+              ['E · <span class="lc">α</span>', `${fx(m.E / 1000, 0)} GPa · ${fx(m.alpha * 1e6, 1)} <small>µm/m·K</small>`],
+              ['Specific strength', `${fx(x.specific, 0)} <small>kN·m/kg</small>`],
+              ['(K<sub>IC</sub> / F<sub>ty</sub>)²', `${fx(x.tolerance, 2)} <small>mm</small>`],
+            ],
+            say: `Strength sets the wall (step ${number('case')}) and density the mass (${number('mass')}). Toughness decides the fracture steps (${number('lbb')}, ${number('proof')}, ${number('ndt')}). Stiffness and expansion set the grain strain (${number('grain')}) and the buckling (${number('buckling')}). (K<sub>IC</sub>/F<sub>ty</sub>)² is about the depth of flaw that the alloy holds at yield: compare it with the wall.`,
+            extra: notes.join(' '),
+          };
+        }
+        case 'meop': {
+          const b = c.meop, hot = (b.pHot - i.pNom) / (b.value - i.pNom);
+          return {
+            kv: [
+              ['Nominal at 20 °C', `${fx(i.pNom, 2)} <small>MPa</small>`],
+              [`Hot day, ${fx(i.tHot, 0)} °C`, `${fx(b.pHot, 2)} <small>MPa</small>`],
+              ['Variations (RSS)', `+${fx(b.rssHi * 100, 2)}%`],
+              ['MEOP', `${fx(b.value, 2)} <small>MPa</small>`, 'primary'],
+              ['Worst-case stack', `${fx(b.meopWorst, 2)} <small>MPa</small>`],
+            ],
+            say: Number.isFinite(hot) && hot > 0 ? `The hot day gives ${fx(hot * 100, 0)}% of the rise from nominal to MEOP. Temperature, more than manufacturing, sets the design pressure. Every pressure step below starts from this number.` : 'Every pressure step below starts from this number.',
+          };
+        }
+        case 'case': {
+          if (!cs) return { kv: [] };
+          if (!c.sized) return { kv: [['Burst pressure', `${fx(cs.pBurst, 1)} MPa`, 'bad']], say: `This alloy cannot hold ${fx(cs.pBurst, 1)} MPa at any wall: the burst pressure is above its allowable stress. Choose a stronger alloy or a lower MEOP.` };
+          const other = cs.governs === 'burst' ? ['MS, yield at proof', sg(cs.msProof), msCls(cs.msProof)] : ['MS, burst', sg(cs.msBurst), msCls(cs.msBurst)];
+          return {
+            kv: [
+              ['Wall', `${fx(cs.t, 3)} <small>mm, ${cs.governs} governs</small>`, 'primary'],
+              ['Hoop stress at MEOP', `${fx(cs.hoopMeop, 0)} <small>MPa</small>`],
+              ['Proof / burst', `${fx(cs.pProof, 2)} / ${fx(cs.pBurst, 2)} <small>MPa</small>`],
+              ['Case mass', `${fx(cs.mass, 2)} <small>kg</small>`],
+              other as KV,
+            ],
+            say: `t/r = ${fx(cs.tOverR, 4)}: a thin membrane. Irwin's screen gives a critical half-length of ${fx(cs.cMeop, 2)} mm for a through crack, against this ${fx(cs.t, 2)} mm wall, so ${cs.leakBeforeBreak ? 'a crack should leak first' : `the case can burst before it leaks (step ${number('lbb')})`}.`,
+          };
+        }
+        case 'grain': {
+          const g = c.grain;
+          if (!g) return { kv: [] };
+          return {
+            kv: [
+              [`Cool-down, ${fx(i.tSf, 0)} → ${fx(i.tCold, 0)} °C`, `${fx(g.thermal * 100, 1)}%`],
+              ['Ignition at MEOP', `${fx(g.pressure * 100, 1)}%`],
+              ['Cold ignition', `${fx(g.combined * 100, 1)}%`],
+              [`Capability at ${fx(i.tCold, 0)} °C`, `${fx(g.cap * 100, 1)}%`],
+              ['MS, bore strain', sg(g.msStrain), msCls(g.msStrain)],
+              ['Bond tension', `${fx(g.bond, 3)} <small>MPa · MS ${sg(g.msBond)}</small>`, msCls(g.msBond)],
+            ],
+            say: `The case stretches ${fx(g.caseHoop * 100, 2)}% at MEOP, and the bore stretches ${fx(g.pressure / g.caseHoop, 1)} times as much. A stiffer or thicker case decreases the ignition strain. A circular bore is assumed: a star point can multiply the strain by two or three.`,
+          };
+        }
+        case 'insulation': {
+          const s = c.insulation;
+          if (!s) return { kv: [] };
+          return {
+            kv: [
+              ['Affected depth (char)', `${fx(s.mad, 2)} <small>mm</small>`],
+              [`Bondline below ${s.limit} °C`, `${fx(s.tBond, 2)} <small>mm</small>`],
+              ['Required, domes', s.required === null ? '—' : `${fx(s.required, 2)} <small>mm</small>`, s.required === null ? '' : 'primary'],
+              ['Governs', s.required === null ? '—' : s.governs],
+            ],
+            say: `The example of the Insulation page: aramid EPDM, a low-velocity region, ${EXAMPLE.exposure} s of exposure, behind this case wall. ${s.governs === 'bondline temperature' ? 'The bondline governs: a thin wall stores little heat, so the soak-back after burnout heats the bond.' : 'The char depth governs here.'}`,
+          };
+        }
+        case 'mass': {
+          const x = c.mass;
+          if (!x) return { kv: [] };
+          return {
+            kv: [
+              ['Propellant', `${fx(x.propellant, 1)} <small>kg</small>`],
+              ['Case + insulation', `${fx(x.caseMass, 2)} + ${fx(x.insulation, 2)} <small>kg</small>`],
+              ['Inert, with nozzle and hardware', `${fx(x.inert, 2)} <small>kg</small>`],
+              ['Mass fraction <span class="lc">ζ</span>', fx(x.fraction, 3)],
+              ['<span class="lc">Δv</span>', `${fx(x.dv, 0)} <small>m/s with ${EXAMPLE.payload} kg</small>`, 'primary'],
+              ['Cost of 1 inert kg', `${fx(x.dvPerKgInert, 1)} <small>m/s</small>`],
+            ],
+            say: `The dome insulation (${fx(x.domes, 2)} kg) costs about ${fx(x.domes * x.dvPerKgInert, 0)} m/s. Nozzle ${EXAMPLE.nozzle} kg, other hardware ${EXAMPLE.other} kg and I<sub>sp</sub> ${fx(x.isp, 1)} s are the values of the Rocket motor example.`,
+          };
+        }
+        case 'buckling': {
+          const b = c.buckling;
+          if (!b) return { kv: [] };
+          return {
+            kv: [
+              ['<span class="lc">r / t</span>', fx(b.rt, 0)],
+              ['Allowable outside pressure', `${fx(b.pressure.allow, 3)} <small>MPa, γ ${EXAMPLE.gammaP}</small>`],
+              ['Reserve', `${fx(b.reserve, 2)} <small>pressure and the load on the closures</small>`],
+              ['MS', sg(b.ms), msCls(b.ms)],
+            ],
+            say: b.ms !== null && b.ms < 0
+              ? `A vacuum leak check puts ${EXAMPLE.vacuum} MPa on the outside of the empty case. The case that holds ${fx(cs!.pBurst, 1)} MPa from inside does not hold one atmosphere from outside. Vent it, support it on a mandrel, or add a ring.`
+              : `A vacuum leak check puts ${EXAMPLE.vacuum} MPa on the outside of the empty case. A thin case is strong under internal pressure and weak under external pressure.`,
+          };
+        }
+        case 'lbb': {
+          if (c.yields) return { kv: [['Hoop stress', `${fx((c.meop.value * (i.idMm / 2 + cs!.t / 2)) / cs!.t, 0)} MPa`, 'bad']], say: 'The hoop stress at MEOP is above yield.' };
+          const l = c.lbb;
+          if (!l) return { kv: [] };
+          const word = l.outcome === 'leak' ? 'Leaks first' : l.outcome === 'runs' ? 'Runs along the wall' : 'Bursts at breakthrough';
+          return {
+            kv: [
+              ['Outcome', word, l.outcome === 'leak' ? 'ok' : 'warn'],
+              ['Length when it goes', `${fx(l.through, 2)} <small>mm at ${fx(l.depth * 100, 0)}% of the wall</small>`],
+              ['Longest stable crack', `${fx(l.critical, 2)} <small>mm, ${l.critMode}</small>`],
+              ['Margin on length', `${fx(l.ratio, 2)}×`, l.ratio >= 1 ? 'ok' : 'warn'],
+              ['Cycles to that point', cyc(l.cycles)],
+            ],
+            say: l.outcome === 'leak'
+              ? 'A 0.25 mm surface flaw grows through the wall and the through crack holds: the case leaks before it bursts.'
+              : `A 0.25 mm surface flaw reaches K<sub>IC</sub> before it goes through the wall, and then it runs. There is no leak to give warning. The proof test (step ${number('proof')}) and NDT (step ${number('ndt')}) must carry the fracture case.`,
+          };
+        }
+        case 'proof': {
+          const p = c.proof;
+          if (!p) return { kv: [] };
+          return {
+            kv: [
+              ['Proof stress', `${fx(p.sigmaProof, 0)} <small>MPa, ${fx(p.proofToYield * 100, 0)}% of yield</small>`, p.proofToYield > 1 ? 'bad' : ''],
+              ['Largest flaw after proof', `${fx(p.aScreen, 2)} <small>mm</small>`],
+              ['Critical flaw at MEOP', `${fx(p.aCrit, 2)} <small>mm, ${fx(p.deepCrack * 100, 0)}% of the wall</small>`],
+              ['Cycles, screened to critical', cyc(p.cyclesFromProof)],
+              ['MS on life', p.margin === null ? '—' : sg(p.margin), msCls(p.margin)],
+            ],
+            say: p.proofToYield > 1
+              ? 'The proof stress is above yield: the proof test would deform the case.'
+              : `After the proof test, no crack is deeper than ${fx(p.aScreen, 2)} mm, even a crack that no inspection can find. ${p.deepCrack > 0.5 ? 'The critical flaw is deep in the wall, where a constant Y makes these sizes optimistic: see Proof testing.' : ''}`,
+          };
+        }
+        case 'ageing': {
+          const a = c.ageing;
+          if (!a) return { kv: [] };
+          return {
+            kv: [
+              ['Capability, new', `${fx(c.grain!.cap * 100, 1)}%`],
+              ['At end of life', `${fx(a.cap * 100, 1)}% <small>${fx(a.retained * 100, 0)}% kept</small>`],
+              ['MS, new', sg(a.msNew), msCls(a.msNew)],
+              ['MS, end of life', sg(a.ms), msCls(a.ms)],
+            ],
+            say: `The binder continues to cure in storage, so the strain capability falls. The strain from step ${number('grain')} does not change. The grain must pass at the end of its life, not only on delivery.`,
+          };
+        }
+        case 'closure': {
+          const x = c.closure;
+          return {
+            kv: [
+              ['Closure load', `${fx(x.load / 1000, 0)} <small>kN on a Ø${EXAMPLE.sealD} mm seal</small>`],
+              ['Each bolt', `${kN(x.P)} <small>kN, ${EXAMPLE.bolts} × M10 12.9</small>`],
+              ['Preload, nominal', `${kN(x.preload)} <small>kN at ${EXAMPLE.torque} N·m</small>`],
+              ['Load factor Φ', fx(x.phi, 3)],
+              ['Opens at', x.opens === null ? '—' : `${kN(x.opens)} <small>kN, minimum preload</small>`],
+              ['MS, separation', sg(x.ms), msCls(x.ms)],
+            ],
+            say: `The flange is the case alloy, assembled at ${EXAMPLE.tAssembly} °C. ${Math.min(x.dCold, x.dHot) < -200 ? `At ${x.dCold <= x.dHot ? fx(i.tCold, 0) : fx(i.tHot, 0)} °C it loses ${kN(-Math.min(x.dCold, x.dHot))} kN of preload against the steel bolts. ` : ''}A softer flange sends more of each load into the bolt. The bolt, yield and fatigue checks are on Bolted joints.`,
+          };
+        }
+        case 'ndt': {
+          const x = c.ndt;
+          if (!x) return { kv: [] };
+          const miss = x.rows.filter((r) => r.usable && !r.ok).map((r) => r.short);
+          return {
+            kv: [
+              ['Critical surface flaw', `${fx(x.aCrit, 2)} <small>mm deep, a/c ${EXAMPLE.ndtAc}</small>`],
+              ['Life to show', x.required === null ? '—' : `${fx(x.required, 1)} <small>cycles</small>`],
+              ['Methods that clear it', x.clear.length ? x.clear.map((r) => `${r.short} ${cyc(r.life)}`).join(' · ') : 'none', x.clear.length ? 'ok' : 'warn'],
+              ['Cannot clear it', miss.length ? miss.join(', ') : '—'],
+            ],
+            say: x.best
+              ? `${x.best.name} finds ${fx(x.best.aNde!, 2)} mm flaws: ${cyc(x.best.life)} cycles of growth to critical. Penetrant and eddy current need the surface, and the inside of a welded case is reached only through its openings.`
+              : 'No method finds a flaw smaller than critical with the life still to come. The proof test must carry the fracture case alone.',
+          };
+        }
+        case 'notes': {
+          const lines = drawingNotes(c);
+          return { kv: [], say: lines.length ? 'The chain becomes the notes of the case drawing. Square brackets are for your programme to fill.' : undefined, extra: lines.length ? `<pre class="wx-notes">${esc(lines.join('\n'))}</pre>` : '' };
+        }
+      }
+    }
+
+    // ---------- the chain ----------
+    let last: Record<string, string> = {};
+    let chain: Chain | null = null;
+    function renderChain() {
+      const inp = inputs();
+      if (typeof inp === 'string') {
+        $('[data-sum]').innerHTML = `<div class="readout bad"><dt>Inputs</dt><dd>—<small>${esc(inp)}</small></dd></div>`;
+        $('[data-steps]').innerHTML = ''; $('[data-strip]').innerHTML = ''; ladder.innerHTML = ''; $('[data-ladcap]').textContent = '';
+        chain = null; return;
+      }
+      const c = runChain(inp, cachedInsulation), v = verdicts(c);
+      chain = c;
+      $('[data-matnote]').textContent = `${inp.mat.name}: K_IC ${inp.mat.kic} MPa√m${inp.mat.kicDefault ? ' (family default)' : ''}, ${inp.mat.weldable ? 'weldable' : 'not weldable'}. Library values for screening.`;
+
+      // summary
+      const cs = c.case, lo = c.lowest;
+      const ro = (cls: string, dt: string, dd: string, small = '') => `<div class="readout ${cls}"><dt>${dt}</dt><dd>${dd}${small ? ` <small>${small}</small>` : ''}</dd></div>`;
+      $('[data-sum]').innerHTML =
+        ro('', 'MEOP', `${fx(c.meop.value, 2)} MPa`, `hot day ${fx(c.meop.pHot, 2)} MPa`)
+        + (cs && c.sized ? ro('', 'Case wall', `${fx(cs.t, 3)} mm`, `${esc(inp.mat.name)}, ${cs.governs} governs`) : ro(cs ? 'bad' : '', 'Case wall', '—', cs ? 'cannot hold the burst pressure' : 'needs your proof and burst factors'))
+        + ro('', 'Case mass', cs && c.sized ? `${fx(cs.mass, 2)} kg` : '—', cs && c.sized ? 'cylinder and hemispherical domes' : '')
+        + ro('', '<span class="lc">Δv</span>', c.mass ? `${fx(c.mass.dv, 0)} m/s` : '—', c.mass ? `ζ = ${fx(c.mass.fraction, 3)}` : 'waits for the insulation')
+        + ro(c.lbb ? (c.lbb.outcome === 'leak' ? 'ok' : 'warn') : '', 'Fracture', c.lbb ? (c.lbb.outcome === 'leak' ? 'Leaks first' : 'Breaks first') : '—', c.lbb ? (c.lbb.outcome === 'leak' ? `${fx(c.lbb.ratio, 2)}× margin on crack length` : 'proof and NDT carry it') : '')
+        + (lo ? ro(`primary ${lo.ms! < 0 ? 'bad' : 'ok'}`, 'Lowest margin', `MS ${sg(lo.ms)}`, `${esc(lo.label)} (step ${number(lo.step)})`) : ro('primary', 'Lowest margin', '—', 'enter your factors, or load the worked example'));
+
+      // strip
+      $('[data-strip]').innerHTML = STEPS.map((s, k) => `<button type="button" class="v-${v[s.key]}" style="--pc: var(--ph-${ZONES[s.key].phase})" data-go="${s.key}" title="${k + 1}. ${esc(s.short)}: ${v[s.key] === 'wait' ? 'waiting' : v[s.key]}">${k + 1}</button>`).join('');
+
+      // steps
+      const label: Record<Verdict, string> = { ok: 'OK', warn: 'CHECK', bad: 'FAIL', info: '', wait: 'WAITING' };
+      const now: Record<string, string> = {};
+      $('[data-steps]').innerHTML = STEPS.map((s, k) => {
+        const z = ZONES[s.key], vw = view(s.key, c), state = v[s.key];
+        const sig = JSON.stringify([vw.kv, vw.extra]); now[s.key] = sig;
+        const kv = vw.kv.length ? `<dl class="wx-kv">${vw.kv.map(([dt, dd, cl]) => `<div><dt>${dt}</dt><dd class="${cl ?? ''}">${dd}</dd></div>`).join('')}</dl>` : '';
+        const need = state === 'wait' || (state !== 'info' && vw.kv.some(([, dd]) => dd === '—')) ? waitsFor(s.key, c, v, inp.f) : '';
+        const uses = s.uses.length ? `<span><b>Uses</b>${s.uses.map(number).join(' · ')}</span>` : '';
+        const fd = feeds(s.key);
+        const flow = `<p class="wx-flow">${uses}${fd.length ? `<span><b>Feeds</b>${fd.join(' · ')}: ${esc(s.carries)}</span>` : ''}</p>`;
+        return `<li class="wx-step v-${state}" id="wx-${s.key}" data-step="${s.key}" style="--pc: var(--ph-${z.phase})">`
+          + `<div class="wx-num">${k + 1}</div><div class="wx-card">`
+          + `<div class="wx-top"><a class="wx-zone" href="${z.href}">${z.tag} · ${esc(z.label)}</a><span class="wx-v">${label[state]}</span></div>`
+          + `<h4>${esc(s.title)}</h4>${kv}${vw.say ? `<p class="wx-say">${vw.say}</p>` : ''}${vw.extra ? (vw.extra.startsWith('<') ? vw.extra : `<p class="wx-say">${vw.extra}</p>`) : ''}`
+          + `${need ? `<p class="wx-need">${need}</p>` : ''}${flow}</div></li>`;
+      }).join('');
+      // mark the steps whose answers moved
+      if (Object.keys(last).length) {
+        const moved = STEPS.filter((s) => last[s.key] !== now[s.key]).map((s) => s.key);
+        for (const k of moved) root.querySelector(`[data-step="${k}"]`)?.classList.add('chg');
+        if (moved.length) window.setTimeout(() => root.querySelectorAll('.wx-step.chg').forEach((e) => e.classList.remove('chg')), 1400);
+      }
+      last = now;
+      drawLadder(c);
+    }
+
+    // ---------- the margin ladder ----------
+    function drawLadder(c: Chain) {
+      const W = width(ladder), narrow = W < 520;
+      const rows = c.checks;
+      const lab = narrow ? 0 : Math.min(190, W * 0.32), x0 = lab + 8, x1 = W - 58;
+      const lo = -1, hi = 1.5;
+      const X = (v: number) => x0 + ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (x1 - x0);
+      const rh = narrow ? 34 : 24, top = 20, H = top + rows.length * rh + 22;
+      let s = '';
+      for (const g of [-1, -0.5, 0, 0.5, 1, 1.5]) {
+        s += `<line x1="${X(g)}" x2="${X(g)}" y1="${top - 4}" y2="${H - 18}" stroke="var(--rd-line)" ${g === 0 ? 'stroke-width="2" stroke="var(--rd-ink)" opacity="0.55"' : ''}/>`;
+        s += `<text x="${X(g)}" y="${H - 5}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${g === 0 ? '0' : sg(g).replace('.00', '').replace(/0$/, '')}</text>`;
+      }
+      s += `<text x="${x1}" y="11" text-anchor="end" font-size="10" fill="var(--rd-muted)">margin of safety →</text>`;
+      rows.forEach((r, k) => {
+        const yb = top + k * rh + (narrow ? 14 : 4), bh = narrow ? 12 : 14, ty = narrow ? top + k * rh + 9 : yb + 11;
+        const lx = narrow ? x0 : lab;
+        const name = `${number(r.step)} · ${r.label}`;
+        s += `<text x="${lx}" y="${ty}" ${narrow ? '' : 'text-anchor="end"'} font-size="${narrow ? 10 : 10.5}" fill="var(--rd-ink)">${esc(name)}</text>`;
+        if (r.ms === null) { s += `<text x="${X(0) + 6}" y="${yb + bh - 3}" font-size="10" fill="var(--rd-muted)" font-style="italic">waits</text>`; return; }
+        if (r.sized) {
+          s += `<rect x="${X(0) - 4}" y="${yb + bh / 2 - 4}" width="8" height="8" transform="rotate(45 ${X(0)} ${yb + bh / 2})" fill="var(--rd-muted)"/>`;
+          s += `<text x="${X(0) + 10}" y="${yb + bh - 3}" font-size="10" fill="var(--rd-muted)">${sg(r.ms)} sized to it</text>`;
+          return;
+        }
+        const col = r.ms < 0 ? 'var(--rd-accent)' : 'var(--rd-ok)';
+        const a = X(Math.min(0, r.ms)), b = X(Math.max(0, r.ms)), w = Math.max(2, b - a);
+        s += `<rect x="${a}" y="${yb}" width="${w}" height="${bh}" rx="2" fill="${col}" opacity="0.85"/>`;
+        if (r.ms > hi) s += `<path d="M${X(hi)},${yb - 1} l7,${bh / 2 + 1} l-7,${bh / 2 + 1} z" fill="${col}"/>`;
+        const tx = r.ms < 0 ? Math.min(a, X(0)) - 4 : X(Math.min(r.ms, hi)) + (r.ms > hi ? 11 : 4);
+        s += `<text x="${tx}" y="${yb + bh - 3}" font-size="10.5" font-weight="600" ${r.ms < 0 ? 'text-anchor="end"' : ''} fill="${col}">${sg(r.ms)}</text>`;
+      });
+      ladder.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      ladder.innerHTML = s;
+      const known = rows.filter((r) => r.ms !== null && !r.sized);
+      $('[data-ladcap]').textContent = known.length
+        ? 'Every margin of the chain on one scale, clipped at −1 and +1.5. A negative margin fails, however small. The diamond is the check the wall was sized to, which is zero by definition.'
+        : 'The margins appear as you enter your factors.';
+    }
+
+    // ---------- compare the case alloys ----------
+    let job = 0;
+    function runCompare() {
+      const my = ++job;
+      const inp = inputs();
+      const prog = $('[data-progress]');
+      if (typeof inp === 'string') { prog.textContent = inp; $('[data-cmp]').innerHTML = ''; map.innerHTML = ''; $('[data-mapcap]').textContent = ''; $('[data-cmpnotes]').innerHTML = ''; return; }
+      if (inp.f.proof === null || inp.f.burst === null) {
+        prog.textContent = '';
+        $('[data-cmp]').innerHTML = '';
+        map.innerHTML = ''; $('[data-mapcap]').textContent = '';
+        $('[data-cmpnotes]').innerHTML = '<li class="warn">Each alloy needs its own wall, so the comparison needs your proof and burst factors. Enter them, or press “Load worked example”.</li>';
+        return;
+      }
+      const sel = inp.mat;
+      const list = [sel, ...CANDIDATES.filter((k) => k !== sel.key).map((k) => CASE_MATERIALS.find((m) => m.key === k)!).filter(Boolean)];
+      const rows = new Map<string, Chain>();
+      let k = 0;
+      const tick = () => {
+        if (my !== job) return;
+        const t0 = performance.now();
+        while (k < list.length && performance.now() - t0 < 40) { rows.set(list[k].key, runChain({ ...inp, mat: list[k] }, cachedInsulation)); k++; }
+        prog.textContent = k < list.length ? `Computing ${k} of ${list.length} alloys…` : '';
+        renderCompare(list, rows, sel.key);
+        if (k < list.length) window.setTimeout(tick, 0);
+      };
+      tick();
+    }
+
+    function renderCompare(list: CaseMat[], rows: Map<string, Chain>, sel: string) {
+      const done = list.filter((m) => rows.has(m.key)).map((m) => ({ m, c: rows.get(m.key)! }));
+      done.sort((a, b) => (b.c.mass?.dv ?? -Infinity) - (a.c.mass?.dv ?? -Infinity) || (a.c.case?.mass ?? Infinity) - (b.c.case?.mass ?? Infinity));
+      const frac = (c: Chain) => c.yields ? '<span class="bad">yields</span>' : !c.lbb ? '—'
+        : c.lbb.outcome === 'leak' ? `<span class="ok">leaks · ${fx(c.lbb.ratio, 2)}×</span>` : `<span class="warn">${c.lbb.outcome === 'runs' ? 'runs' : 'bursts'} · ${fx(c.lbb.ratio, 2)}×</span>`;
+      const ms = (v: number | null | undefined) => (v === null || v === undefined ? '<span class="mu">—</span>' : `<span class="${v < 0 ? 'bad' : 'ok'}">${sg(v)}</span>`);
+      const weld = +field('e').value < 1;
+      const body = done.map(({ m, c }) => {
+        const nd = c.ndt ? (c.ndt.required === null ? `<span class="mu">${c.ndt.rows.filter((r) => r.usable && r.aNde! < c.ndt!.aCrit).length} find it</span>` : c.ndt.clear.length ? `<span class="ok">${c.ndt.clear.length} · best ${c.ndt.best!.short}</span>` : '<span class="warn">none</span>') : '—';
+        return `<tr class="${m.key === sel ? 'sel' : ''}"><td>${esc(m.name)}${m.kicDefault ? '*' : ''}${weld && !m.weldable ? '†' : ''}</td>`
+          + `<td>${c.sized ? fx(c.case!.t, 2) : '<span class="bad">—</span>'}</td><td>${c.sized ? fx(c.case!.mass, 1) : '—'}</td>`
+          + `<td>${c.mass ? fx(c.mass.dv, 0) : '<span class="mu">—</span>'}</td><td>${ms(c.grain?.msStrain)}</td><td>${ms(c.buckling?.ms)}</td>`
+          + `<td>${frac(c)}</td><td>${nd}</td></tr>`;
+      }).join('');
+      $('[data-cmp]').innerHTML = `<table><thead><tr><th>Alloy</th><th>Wall <span class="lc">(mm)</span></th><th>Case <span class="lc">(kg)</span></th><th><span class="lc">Δv (m/s)</span></th><th>Grain MS</th><th>Vacuum MS</th><th>Fracture</th><th>NDT</th></tr></thead><tbody>${body}</tbody></table>`
+        + `<p>Each alloy gets its own wall from your factors, then goes through every step. Sorted by Δv. * K<sub>IC</sub> is a family default.${weld ? ' † Not weldable: this welded case would have to be seamless.' : ''}</p>`;
+      drawMap(done, sel);
+      // notes
+      const ok = done.filter((d) => d.c.mass && d.c.lbb);
+      const out: [string, string][] = [];
+      if (ok.length >= 3) {
+        const best = ok[0], leak = ok.find((d) => d.c.lbb!.outcome === 'leak');
+        out.push(['', `Most Δv: ${esc(best.m.name)}, ${fx(best.c.mass!.dv, 0)} m/s with a ${fx(best.c.case!.t, 2)} mm wall. It ${best.c.lbb!.outcome === 'leak' ? 'also leaks before it breaks.' : 'breaks before it leaks, so the proof test and NDT carry its fracture case.'}`]);
+        if (leak && leak !== best) out.push(['', `The alloy with the most Δv that also leaks first is ${esc(leak.m.name)}: ${fx(leak.c.mass!.dv, 0)} m/s, ${fx(best.c.mass!.dv - leak.c.mass!.dv, 0)} m/s less.`]);
+        const thin = ok.filter((d) => d.c.buckling?.ms !== null && d.c.buckling!.ms! < 0).length;
+        if (thin) out.push(['warn', `${thin} of ${ok.length} alloys cannot take a vacuum on the empty case with your buckling factor. The thinner the wall, the weaker it is from outside.`]);
+      }
+      $('[data-cmpnotes]').innerHTML = out.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+    }
+
+    function drawMap(done: { m: CaseMat; c: Chain }[], sel: string) {
+      const pts = done.filter((d) => d.c.sized && d.c.lbb).map((d) => ({ m: d.m, x: d.c.case!.mass, y: d.c.lbb!.ratio, leak: d.c.lbb!.outcome === 'leak' }));
+      const W = width(map), H = Math.round(Math.min(340, Math.max(230, W * 0.5)));
+      if (pts.length < 2) { map.setAttribute('viewBox', `0 0 ${W} 40`); map.innerHTML = `<text x="8" y="24" font-size="11" fill="var(--rd-muted)">Computing…</text>`; $('[data-mapcap]').textContent = ''; return; }
+      const L = 40, R = 14, T = 24, B = 34;
+      const xMax = Math.max(...pts.map((p) => p.x)) * 1.08, yMax = Math.max(2, Math.max(...pts.map((p) => p.y)) * 1.1);
+      const X = (v: number) => L + (v / xMax) * (W - L - R), Y = (v: number) => H - B - (v / yMax) * (H - T - B);
+      let s = '';
+      const step = xMax > 40 ? 10 : 5;
+      for (let v = 0; v <= xMax; v += step) s += `<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}" stroke="var(--rd-line)"/><text x="${X(v)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`;
+      for (let v = 0; v <= yMax; v += 0.5) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${fx(v, 1)}</text>`;
+      s += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${Y(1) - T}" fill="var(--rd-ok)" opacity="0.06"/>`;
+      s += `<line x1="${L}" x2="${W - R}" y1="${Y(1)}" y2="${Y(1)}" stroke="var(--rd-ok)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+      s += `<text x="${W - R - 4}" y="${Y(1) - 5}" text-anchor="end" font-size="10" fill="var(--rd-ok)">leaks before it breaks ↑</text>`;
+      s += `<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10.5" fill="var(--rd-ink)">case mass (kg)</text>`;
+      s += `<text x="${L}" y="12" font-size="10.5" fill="var(--rd-ink)">↑ margin on crack length${W >= 440 ? ' (stable ÷ breakthrough)' : ''}</text>`;
+      // the light-and-tough edge: no other alloy is both lighter and further above the line
+      const front = pts.filter((p) => !pts.some((q) => q !== p && q.x <= p.x && q.y >= p.y && (q.x < p.x || q.y > p.y))).sort((a, b) => a.x - b.x);
+      if (front.length > 1) s += `<path d="${front.map((p, k) => `${k ? 'L' : 'M'}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join('')}" fill="none" stroke="var(--rd-blue)" stroke-width="1.5" opacity="0.7"/>`;
+      for (const p of pts) {
+        const me = p.m.key === sel;
+        s += `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${me ? 6.5 : 4.5}" fill="${p.leak ? 'var(--rd-ok)' : 'var(--rd-accent)'}" ${me ? 'stroke="var(--rd-ink)" stroke-width="2.5"' : 'opacity="0.85"'}><title>${esc(p.m.name)}: ${fx(p.x, 1)} kg, ${fx(p.y, 2)}×</title></circle>`;
+      }
+      // labels: the edge and the selected alloy, placed to avoid each other
+      const placed: { x: number; y: number; w: number }[] = [{ x: W - R - 150, y: Y(1) - 5, w: 146 }]; // the 'leaks before it breaks' text
+      const lab = [...front, ...pts.filter((p) => p.m.key === sel && !front.includes(p))];
+      for (const p of lab) {
+        const text = p.m.name.replace(/\s*\(.*\)$/, ''), w = text.length * 5.6 + 4;
+        const cands = [[8, -6], [8, 13], [-8 - w, -6], [-8 - w, 13]];
+        for (const [dx, dy] of cands) {
+          const x = X(p.x) + dx, y = Y(p.y) + dy;
+          if (x < L || x + w > W - R || y < T + 8 || y > H - B - 2) continue;
+          if (placed.some((q) => Math.abs(q.y - y) < 12 && x < q.x + q.w && x + w > q.x)) continue;
+          placed.push({ x, y, w });
+          s += `<text x="${x}" y="${y}" font-size="10" fill="var(--rd-ink)" ${p.m.key === sel ? 'font-weight="700"' : ''}>${esc(text)}</text>`;
+          break;
+        }
+      }
+      map.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      map.innerHTML = s;
+      $('[data-mapcap]').textContent = 'Each alloy with its own wall. Up is a longer stable crack than the one that breaks through (leak before break above 1); left is a lighter case. The blue line joins the alloys that no other alloy beats on both. The ringed dot is your alloy.';
+    }
+
+    // ---------- wiring ----------
+    let timer = 0;
+    const run = () => { if (mode === 'chain') renderChain(); else runCompare(); };
+    const schedule = () => { window.clearTimeout(timer); timer = window.setTimeout(run, 140); };
+    form.addEventListener('input', schedule);
+    form.addEventListener('change', schedule);
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab as 'chain' | 'compare';
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== mode));
+      run();
+    }));
+    root.addEventListener('click', (ev) => {
+      const go = (ev.target as HTMLElement).closest<HTMLElement>('[data-go]');
+      if (!go) return;
+      const el = root.querySelector(`#wx-${go.dataset.go}`);
+      const still = document.documentElement.classList.contains('motion-off') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+    });
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      const text = chain ? drawingNotes(chain).join('\n') : '';
+      if (!text) { btn.textContent = 'Size the case first'; window.setTimeout(() => (btn.textContent = label), 1500); return; }
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    // The worked example: the 300 mm motor of the page. Its factors are for this example only.
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => {
+      const v: Record<string, string> = {
+        m: 'd6ac-ams-6431', id: '300', L: '1000', bore: '100', e: '0.9', prop: 'comp', pn: '8.8', tsf: '60', tc: '-40', th: '60',
+        n: '0.35', sp: '0.13', vr: '3', va: '1', vt: '1', ret: '75',
+        pf: '1.10', bf: '1.25', gsf: '1.5', isf: '1.5', kf: '1.25', lf: '4', gam: '25', sep: '1.2',
+      };
+      for (const [k, x] of Object.entries(v)) field(k).value = x;
+      const note = $('[data-example-note]');
+      note.textContent = 'Worked-example factors loaded: proof 1.10, burst 1.25, grain 1.5, insulation 1.5, buckling 1.25, life 4, preload scatter ±25%, separation 1.2. They are for this example only. Replace them with your programme\'s values.';
+      note.hidden = false;
+      last = {};
+      run();
+    });
+    for (const n of ['pf', 'bf', 'gsf', 'isf', 'kf', 'lf', 'gam', 'sep']) field(n).addEventListener('input', () => ($('[data-example-note]').hidden = true));
+    if ('ResizeObserver' in window) {
+      let wd = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - wd) > 8) { wd = nw; if (chain && mode === 'chain') drawLadder(chain); else if (mode === 'compare') runCompare(); } }).observe(root);
+    }
+    renderChain();
+  });
+</script>

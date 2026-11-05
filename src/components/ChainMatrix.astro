@@ -1,0 +1,70 @@
+---
+// The dependency matrix of the worked example (a design structure matrix): which step uses which answer, and the
+// loops that can send the design back. Drawn from STEPS and LOOPS in src/lib/chain.ts, so it always matches the tool.
+import { STEPS, LOOPS } from '../lib/chain';
+import { route } from '../data/zones.mjs';
+
+const items = route();
+const phaseOf = (zone: string) => items.find((x) => x.key === zone)!.phase;
+const idx = Object.fromEntries(STEPS.map((s, k) => [s.key, k]));
+const kind = (r: number, c: number) => {
+  if (r === c) return 'self';
+  if (STEPS[r].uses.includes(STEPS[c].key)) return 'use';
+  return LOOPS.some((l) => idx[l.to] === r && idx[l.from] === c) ? 'loop' : '';
+};
+const title = (r: number, c: number, k: string) => {
+  if (k === 'use') return `${STEPS[r].short} uses the answer of ${STEPS[c].short}: ${STEPS[c].carries}`;
+  if (k === 'loop') return `${STEPS[c].short} can send the design back to ${STEPS[r].short}: ${LOOPS.find((l) => idx[l.to] === r && idx[l.from] === c)!.why}`;
+  return k === 'self' ? STEPS[r].title : '';
+};
+---
+
+<figure class="viz wx-dsm">
+  <p class="viz-title">What each step uses</p>
+  <div class="wx-dsm-wrap not-content">
+    <table>
+      <thead>
+        <tr><th class="corner" scope="col"><span>step</span></th>{STEPS.map((s, k) => <th scope="col" style={`--pc: var(--ph-${phaseOf(s.zone)})`} title={s.short}>{k + 1}</th>)}</tr>
+      </thead>
+      <tbody>
+        {STEPS.map((s, r) => (
+          <tr style={`--pc: var(--ph-${phaseOf(s.zone)})`}>
+            <th scope="row"><span>{r + 1}</span>{s.short}</th>
+            {STEPS.map((c, j) => {
+              const k = kind(r, j);
+              return <td class={k} title={title(r, j, k)} style={k === 'self' ? undefined : `--pc: var(--ph-${phaseOf(c.zone)})`}>{k === 'self' ? r + 1 : k === 'use' ? '●' : k === 'loop' ? '◆' : ''}</td>;
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <figcaption>
+    Read across a row for the answers that a step uses, and down a column for the steps that use its answer. ● an
+    answer that goes forward. ◆ a loop: a result that can send the design back to an earlier step. The colours are the
+    phases of the site. The matrix is drawn from the same list of steps as the calculator below.
+  </figcaption>
+</figure>
+
+<style is:global>
+  .wx-dsm .wx-dsm-wrap { overflow-x: auto; scrollbar-width: thin; }
+  .wx-dsm table { border-collapse: separate; border-spacing: 2px; margin: 0 auto; font-family: var(--sl-font-mono); font-size: 0.72rem; line-height: 1; }
+  .wx-dsm th, .wx-dsm td { padding: 0; border: 0; text-align: center; font-variant-numeric: tabular-nums; }
+  .wx-dsm thead th { min-width: 1.55rem; height: 1.45rem; color: var(--pc); font-weight: 700; border-bottom: 2px solid var(--pc); }
+  .wx-dsm thead th.corner { text-align: left; border: 0; position: sticky; left: 0; z-index: 2; background: var(--rd-panel); }
+  .wx-dsm thead th.corner span { color: var(--rd-muted); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.62rem; padding-left: 0.4rem; }
+  .wx-dsm tbody th {
+    position: sticky; left: 0; z-index: 1; background: var(--rd-panel);
+    text-align: left; white-space: nowrap; padding: 0 0.7rem 0 0.4rem; font-weight: 500; color: var(--rd-ink); border-left: 3px solid var(--pc);
+  }
+  .wx-dsm tbody th span { display: inline-block; min-width: 1.7em; color: var(--pc); font-weight: 700; }
+  .wx-dsm td { min-width: 1.55rem; height: 1.5rem; border-radius: 3px; background: color-mix(in srgb, var(--rd-ink) 4%, transparent); color: var(--rd-ink); }
+  .wx-dsm td.self { background: var(--pc); color: var(--rd-panel); font-weight: 700; }
+  .wx-dsm td.use { color: var(--pc); font-size: 0.8rem; }
+  .wx-dsm td.loop { color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 12%, transparent); font-size: 0.75rem; }
+  .wx-dsm tbody tr:hover td:not(.self), .wx-dsm tbody tr:hover th { background: color-mix(in srgb, var(--pc) 14%, var(--rd-panel)); }
+  @media (max-width: 40rem) {
+    .wx-dsm table { font-size: 0.66rem; border-spacing: 1.5px; }
+    .wx-dsm thead th, .wx-dsm td { min-width: 1.3rem; height: 1.35rem; }
+  }
+</style>

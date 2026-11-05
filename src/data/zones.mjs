@@ -62,6 +62,7 @@ export const REBUILT = {
   metal: 'fundamentals/metallurgy',
   fatigue: 'fundamentals/fatigue',
   visco: 'fundamentals/viscoelasticity',
+  worked: 'fundamentals/worked-example',
   materials: 'materials/selection',
   sheet: 'materials/datasheet',
   density: 'materials/density',

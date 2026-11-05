@@ -1,0 +1,202 @@
+---
+title: Worked example
+description: "One motor through the whole site: the 300 mm D6AC motor of the other pages, from its duty cycle to the notes on its drawing. Each step uses the same function as the tool of its zone, so when you change one input, every answer that depends on it changes."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ChainMatrix from '../../../components/ChainMatrix.astro';
+import ChainCalc from '../../../components/ChainCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The answer of one step is an input of the next. A design is the chain, not the separate steps.</div>
+  <div><b>Before this</b><a href="../how-a-solid-motor-works/">How a solid motor works</a> · <a href="../requirements/">Requirements & ICD</a></div>
+  <div><b>Related</b><a href="../../verify/margin-policy/">Margin policy</a> · <a href="../../motor/hardware/">Rocket motor</a> · <a href="../../motor/case-sizing/">Case sizing</a></div>
+</div>
+
+## Why this matters
+
+Each zone of this site does one job. The case-sizing tool gives a wall. The grain screen gives a strain. The NDT tool
+tells you which method finds the critical flaw. But a motor is one design, and these answers depend on each other. The
+case alloy sets the wall. The wall sets the strain in the grain, the buckling pressure and the heat that the case can
+absorb. The toughness decides if a crack leaks first, or if the proof test and the inspection must carry the fracture
+case.
+
+A change that makes one step better can make other steps worse. A stronger steel gives a thinner wall and more Δv. The
+thinner wall buckles at a lower outside pressure, needs more insulation, and can burst before it leaks. You see this
+only when the steps are connected.
+
+This page takes the 300 mm motor of the other pages through every step, in order. Each step calls the same function as
+the tool of its zone. When you change one input, every answer that depends on it changes.
+
+<Analogy title="A workbook with linked sheets">
+  Think of the site as a workbook. Each zone is a sheet with its own calculation. This page is the summary sheet: its
+  cells refer to the cells of the other sheets. Change the alloy on the first sheet, and the wall, the strain, the mass
+  and the margins change on each sheet that uses it. A sheet with a value typed in by hand does not change. That is how
+  a design gets out of step with itself.
+</Analogy>
+
+## The motor
+
+| Part | Example values |
+| --- | --- |
+| Case | D6AC to AMS 6431, 300 mm internal diameter, 1000 mm cylinder, hemispherical domes, welded with full radiography (joint efficiency 0.90) |
+| Grain | Composite propellant (illustrative values), 300 mm outside diameter, 100 mm circular bore, 1000 mm long, bonded to the case, stress-free at 60 °C |
+| Firing range | −40 °C to +60 °C |
+| Pressure | 8.8 MPa nominal peak at 20 °C, $n = 0.35$, $\sigma_p = 0.13$ %/K |
+| Insulation | Aramid-filled EPDM: 2 mm in the cylinder, sized in the domes |
+| Aft closure | 30 × M10 class 12.9 bolts on a 260 mm seal diameter, 60 N·m with μ = 0.12 |
+| Other mass | Nozzle 6 kg, other hardware 4 kg, payload 50 kg |
+| Life | One proof test, four leak checks, one firing |
+
+These are the values of the worked examples on the other pages. The factors are given in the
+[worked example](#worked-example-the-300-mm-motor-end-to-end) below. They are for that example only.
+
+## How the steps connect
+
+The matrix shows what each step uses. A dot below the diagonal is an answer that goes forward to a later step. A
+diamond above the diagonal is a loop: a result that can send the design back to an earlier step.
+
+<ChainMatrix />
+
+- **The case wall is the centre of the chain.** Eight steps use it. A change of alloy or factor that moves the wall
+  moves most of the chain.
+- **The loops are where the design changes.** A negative buckling margin adds a ring or wall, and that changes the
+  mass. Break before leak puts the fracture case on the proof test and NDT, or asks for a tougher alloy. A grain that
+  fails at the end of its life changes the bore or the firing range.
+- **The factors come in at the steps.** The proof and burst factors set the wall, so every step after the wall waits
+  for them. When you enter your programme's factors, the chain fills in.
+
+## Calculator
+
+**The chain** runs the fourteen steps. Each card shows the answers of its step, its verdict, the steps that it uses
+and the steps that it feeds. The zone tag on each card opens the full tool of that zone. The strip at the top gives the
+verdict of each step, and the chart puts every margin on one scale. When you change an input, the number of each step
+whose answers changed is marked for a moment.
+
+**Compare case alloys** puts each classic case alloy of the material library through the same chain. Each alloy gets
+its own wall from your factors. The chart puts the case mass against the margin on crack length, so you can see which
+alloys are both light and tolerant of a crack.
+
+The factors start blank. A step that needs a factor waits for it, and so do the steps after it. Push **Load worked
+example** to load the factors of the example below.
+
+<ChainCalc />
+
+## Worked example: the 300 mm motor, end to end
+
+The factors are for this example only: proof 1.10, burst 1.25, grain 1.5, insulation 1.5 on the affected depth,
+buckling 1.25, life 4, a bolt preload scatter of ±25% and a separation factor of 1.2. Push **Load worked example** to
+load them. The other pages round MEOP to 10 MPa. Here the chain carries 10.02 MPa, so some answers are different from
+those pages in the third figure.
+
+1. **Duty cycle.** The proof test, four leak checks at 0.7 MPa and the firing add up to 2.33 cycles at MEOP, with the
+   slope $m = 3$ of a weld. The proof test is 57% of this. With the life factor of 4, a flaw that NDT can miss must
+   last 9.3 cycles. A flaw that the proof test leaves must last only the cycles after the proof test: 4.0.
+   ([Duty cycle](../duty-cycle/))
+2. **Material.** D6AC has 1520 MPa ultimate strength, 1450 MPa yield, a density of 7.85 g/cm³ and
+   $K_{IC} = 70$ MPa√m. Its $(K_{IC}/F_{ty})^2$ is 2.3 mm. This is approximately the depth of flaw that it holds at
+   yield. ([Materials](../../materials/selection/))
+3. **MEOP.** The 8.8 MPa at 20 °C becomes 9.53 MPa on the 60 °C day. The variations add 5.14% (root-sum-square), so
+   MEOP is 10.02 MPa. ([Propellant](../../motor/propellant/))
+4. **Case wall.** Burst governs: the wall is 1.380 mm, and the hoop stress at MEOP is 1094 MPa. The case is 11.80 kg.
+   The margin on yield at the 11.03 MPa proof pressure is +0.08. ([Case sizing](../../motor/case-sizing/))
+5. **Grain.** On the −40 °C day, the bore strain is 10.4% from the cool-down and 5.7% from ignition: 16.1% in total.
+   The illustrative capability is 39.6%, so the margin is +0.64. The bond tension is 0.25 MPa, with a margin of +0.85.
+   ([Propellant grain](../../motor/propellant-grain/))
+6. **Insulation.** The char goes 2.38 mm deep, which is 3.6 mm with the factor. But the bondline needs 8.9 mm, because
+   a 1.38 mm steel wall stores little of the soak-back heat. ([Ablative liners](../../motor/insulation/))
+7. **Mass and Δv.** 111.2 kg of propellant and 26.65 kg of inert mass give $\zeta = 0.807$ and Δv = 2071 m/s with the
+   50 kg payload. Each inert kilogram costs 17.8 m/s. The bondline adds 1.7 kg to the dome insulation, which costs
+   approximately 30 m/s. ([Rocket motor](../../motor/hardware/))
+8. **Buckling.** A vacuum leak check on the empty case puts 0.101 MPa on the outside. The allowable pressure is
+   0.127 MPa, and the pressure on the closures adds a little axial load. The reserve is 1.24, so with the factor of
+   1.25 the margin is **−0.01. This is a fail.** ([Shell buckling](../../verify/shell-buckling/))
+9. **Leak before break.** A 0.25 mm surface flaw grows for approximately 1800 cycles. At 92% of the wall it is 3.29 mm
+   long, and its ends get to $K_{IC}$. The longest stable through crack is 2.58 mm, so the crack runs along the case.
+   The case breaks before it leaks. ([Leak before break](../../verify/leak-before-break/))
+10. **Proof test.** At 1204 MPa (83% of yield), the test leaves no crack deeper than 0.86 mm. The critical flaw at MEOP
+    is 1.04 mm. Growth from 0.86 to 1.04 mm takes 105 cycles, and 4.0 are necessary: the margin on life is +25.1.
+    ([Proof testing](../../verify/proof-testing/))
+11. **Ageing.** If 75% of the strain capability is left at the end of life, the grain margin decreases from +0.64 to
+    +0.23. ([Storage & ageing](../../verify/storage-ageing/))
+12. **Closure bolts.** MEOP puts 532 kN on the closure, which is 17.7 kN on each bolt. At the minimum preload the joint
+    opens at 32.1 kN, so the separation margin is +0.51. ([Bolted joints](../../joints/bolted-joints/))
+13. **NDT.** The critical surface flaw ($a/c = 0.4$) is 0.88 mm deep. Eddy current, penetrant and ultrasonic find
+    smaller flaws, with 309, 165 and 70 cycles of growth to critical. All three are more than the 9.3 cycles
+    necessary. Magnetic particle and radiography miss flaws that are larger than critical. ([NDT](../../make/ndt/))
+14. **Drawing notes.** The chain writes nine notes for the case drawing: the material, the minimum walls, the welds,
+    the proof test, the NDT, the leak test, the insulation, a caution against a vacuum in the empty case, and the
+    closure torque. Push **Copy drawing notes**. ([Drawing frame & notes](../../drawing/drawing-frame/))
+
+### What the example shows
+
+- **The lowest margin is not in the load case that sized the wall.** The wall was sized for pressure from inside. Its
+  lowest margin is for one atmosphere from outside, during a leak check on the empty case. Vent the case, support it
+  on a mandrel, or add a ring at mid-length.
+- **The alloy decides who carries the fracture case.** D6AC breaks before it leaks. The proof test and NDT carry the
+  fracture case for it: the proof screen has a large margin on life, and three NDT methods find the critical flaw.
+- **A thin case costs insulation.** The bondline sets the dome insulation, not the char. The extra 1.7 kg costs
+  approximately 30 m/s.
+- **Margins decrease with age.** The grain has a margin of +0.64 when it is new and +0.23 at the end of its life. The
+  aged margin is the one that must pass.
+
+## Change the alloy
+
+Open **Compare case alloys** with the example factors. Each alloy gets its own wall.
+
+- **15CDV6** has a 2.23 mm wall and leaks first, with a margin of 1.8 on crack length. The case is 7.2 kg heavier, so
+  Δv decreases by 115 m/s to 1956 m/s. Its buckling margin is +2.27.
+- **HP 9-4-30** is almost as strong as D6AC and much tougher. Its 1.41 mm wall leaks first, with a margin of 2.4 on
+  length. It gives only 4 m/s less Δv, and it passes the vacuum check with a margin of +0.02.
+- **AerMet 100 and maraging 18Ni-250** give more Δv (2115 and 2090 m/s), and both leak first. But their walls are so
+  thin that the empty case fails the vacuum check by a large amount (−0.50 and −0.34). They need a ring, or a leak
+  check that does not put a vacuum in the case.
+- **Ti-6Al-4V** gives 2091 m/s and leaks first. The titanium case contracts less in the cold and stretches more at
+  ignition, so the grain margin decreases to +0.56.
+- **The aluminium alloys** have thick walls that do not buckle, but they break before they leak. A thick wall stores
+  more heat, but the bondline limit is lower (120 °C), so the strong alloys need more dome insulation than D6AC. At
+  −40 °C an aluminium flange loses 3.4 to 3.9 kN of preload on each steel bolt.
+
+No alloy is the best at every step. The comparison shows what each choice costs.
+
+## Where this stops
+
+- **Each step has the limits of its zone.** The case is a membrane, the grain is a long cylinder, the insulation model
+  is one-dimensional and the cracks follow linear-elastic fracture mechanics. Read the limits on each zone page.
+- **There is one load case for each check.** A real stress report has many: flight loads, handling, transport and
+  thermal transients, each at each temperature.
+- **Some values are fixed.** The insulation exposure, the closure, the events of the life and the nozzle and payload
+  masses come from the other worked examples. Change them in the tools of their zones.
+- **The chain does not optimise.** It shows what a choice does. The engineer makes the choice.
+- **The propellant values are illustrative.** Use the measured and aged properties of your propellant, at the rate and
+  temperature that apply.
+- **Out of scope:** propellant formulation, energetics processing, and ignition and initiation systems. These stay with
+  your energetics and safety specialists.
+
+## On the drawing
+
+- **Each requirement traces to a step.** The minimum wall comes from the case sizing, the proof pressure from MEOP and
+  the proof factor, and the NDT sensitivity from the critical flaw. Keep this trace in the stress report, so that the
+  effect of a change can be followed.
+- **When an input changes, run the chain again.** A new MEOP or a new alloy changes the wall, and then the notes.
+- **Copy the notes from the calculator** and fill in the square brackets from the documents of your programme.
+
+## References and further reading
+
+- NASA SP-8025, *Solid Rocket Motor Metal Cases* (1970); NASA SP-8093, *Solid Rocket Motor Internal Insulation*
+  (1976). These are open NASA design monographs.
+- NASA SP-8007, *Buckling of Thin-Walled Circular Cylinders* (1965, revised 1968).
+- NASA-STD-5019, *Fracture Control Requirements for Spaceflight Hardware*; NASA-STD-5009, *Nondestructive Evaluation
+  Requirements for Fracture Critical Metallic Components*.
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017).
+- S. D. Eppinger & T. R. Browning, *Design Structure Matrix Methods and Applications*, MIT Press (2012) (the dependency
+  matrix).
+- The worked example of each zone, linked from each step above.
+
+<Aside type="note">
+  A worked example of the method, with illustrative propellant values and example factors. It is not a design. A real
+  programme uses its own allowables, measured propellant data and the factors of its governing requirements.
+</Aside>

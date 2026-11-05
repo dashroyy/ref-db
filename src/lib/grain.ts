@@ -436,6 +436,21 @@ export function performance(bb: BurnBack, prop: Propellant, throatD: number, cf:
 // a = bore radius, b = grain outer (bond) radius, m = b/a.
 // ---------------------------------------------------------------------------
 
+/**
+ * Propellant classes for the structural screen, carried over from REF·DB v1. Illustrative, not measured data:
+ * α in µm/m·K, relaxed modulus E in MPa, strain capability in % on the warm and cold plateaus, Tg in °C.
+ */
+export const PROPELLANT_CLASSES = [
+  { key: 'comp', name: 'Composite (HTPB type)', alpha: 100, E: 3.6, capWarm: 42, capCold: 10, tg: -70 },
+  { key: 'cmdb', name: 'Composite-modified double-base', alpha: 85, E: 105, capWarm: 25, capCold: 3, tg: -5 },
+  { key: 'db', name: 'Double-base', alpha: 80, E: 180, capWarm: 22, capCold: 2, tg: 5 },
+] as const;
+export type PropellantClass = (typeof PROPELLANT_CLASSES)[number];
+
+/** Illustrative strain capability (%) at temperature T: a smooth step from the warm to the cold plateau through Tg. */
+export const strainCapability = (T: number, p: { capWarm: number; capCold: number; tg: number }) =>
+  p.capCold + (p.capWarm - p.capCold) / (1 + Math.exp(-(T - p.tg) / 12));
+
 export interface GrainStructInputs {
   boreD: number; // mm
   od: number; // mm
