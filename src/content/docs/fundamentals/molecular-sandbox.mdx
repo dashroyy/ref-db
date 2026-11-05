@@ -1,0 +1,165 @@
+---
+title: Molecular sandbox
+description: "What the curves of the Viscoelasticity page are made of: polymer chains that move, tangle, link and pull away from filler particles. A live 3D bead-spring model, and one chain network at two temperatures with its Deborah number."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import PolymerCurves from '../../../components/PolymerCurves.astro';
+import SandboxCalc from '../../../components/SandboxCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A polymer is stiff or soft because of how far its chain segments can move in the time that you look.</div>
+  <div><b>Before this</b><a href="../viscoelasticity/">Viscoelasticity</a></div>
+  <div><b>Related</b><a href="../../motor/propellant/">Propellant</a> · <a href="../../seals/o-ring-design/">O-ring design</a> · <a href="../../materials/silicone-and-pu/">Silicone & PU</a> · <a href="../../materials/plastics/">Plastics</a></div>
+</div>
+
+## Why this matters
+
+Seals, case insulation, propellant binder, adhesives and the matrix of a composite case are all polymers. Their
+stiffness can change by a factor of a thousand with temperature and with the duration of the load. The
+[Viscoelasticity](../viscoelasticity/) page gives the numbers: the Prony series, the WLF shift and the master curve.
+This page shows the mechanism behind those numbers: chain segments that move, chains that tangle, links that tie them
+together, and the bond between binder and particle that breaks.
+
+When you can see the mechanism, you can predict the behaviour before you have the data. A plasticiser that leaves the
+material makes it brittle. More crosslinks give a stiffer plateau and less strain capability. A cold seal cannot follow
+a joint that opens. A filled binder makes voids before it tears.
+
+<Analogy title="A bowl of spaghetti">
+  Cooked spaghetti is a good model of a polymer. Short pieces slide past each other: tip the bowl and they flow. Long
+  strands tangle: pull one and it resists, then it slides out slowly along its own path. Tie the strands together at a
+  few points, and the bowl becomes one net that stretches but does not flow. Let the bowl go cold, and the strands
+  stick together: the mass is stiff, and it cracks when you bend it.
+</Analogy>
+
+## What the model shows
+
+| Part | In the model | What it does | Where you meet it |
+| --- | --- | --- | --- |
+| Chain segment | A bead, in the colour of its chain | Carries load along the chain. How freely the segments move decides if the material is glassy or rubbery. | The backbone of every polymer: HTPB, nitrocellulose, an elastomer |
+| Backbone bond | A stick between two beads | Holds the chain together. It stretches a little and does not break. | Every covalent bond along a chain |
+| Entanglement | Not drawn: the chains cannot go through each other | A temporary link. A chain must snake out along its own path. This delay makes the rubbery plateau. | Long-chain thermoplastics, uncured binder |
+| Crosslink | A red link between two chains | A permanent link. A network of links cannot flow at any temperature. The number of links sets the plateau modulus. | The cure of an elastomer or of an HTPB binder. Too few links and it creeps; too many and it is brittle. |
+| Plasticiser | The smallest beads | Free small molecules between the chains. They give the chains room to move, which decreases T<sub>g</sub>. | Double-base propellant, plasticised PVC, seal compounds |
+| Filler particle | A large grey sphere | A rigid particle in a soft binder. Many particles make a highly filled elastomer: stiffer, and with less strain capability. | Ammonium perchlorate and aluminium in a composite propellant; carbon black in rubber |
+| Bond to a particle | A green line to a particle | Carries load from the binder into the particle. It is the weakest link. When it breaks (dewetting), a void opens. | The bonding agent of a composite propellant |
+| Crystalline block | A purple cube | Ordered chains that stay rigid above T<sub>g</sub>, up to the melting point. | PTFE, PEEK, polyethylene, nylon |
+
+## The curve that each structure gives
+
+The Viscoelasticity page measures a curve. The structure of the chains decides its shape. Time and temperature do the
+same thing to it (time–temperature superposition), so the time axis is also a temperature axis.
+
+<PolymerCurves />
+
+## Calculator
+
+**Live model** runs the chains in 3D. Select a material and a temperature. Then drag to rotate the view, to push the
+chains with the cursor, or to pull one bead. **Heat pulse** adds heat for 1.5 s. **Stretch 40%** stretches the
+material along its length, and **Release** unloads it. The readouts are measured from the model: its temperature, how
+far the chain segments and the plasticiser move, and how many bonds to the particles still hold. **Trails** draws the
+recent path of some beads.
+
+**Two temperatures** shows one chain network at a cold and a warm temperature. The shaded volume around each segment
+shows how far it can move in the time that you look. The numbers come from the Prony series and the WLF shift of the
+Viscoelasticity page, in real units: the modulus, the Deborah number and the state.
+
+If motion is paused for the site, the live model starts paused. Push **Run** to start it.
+
+<SandboxCalc />
+
+## Worked example: a seal on a cold morning
+
+Use **Two temperatures** with the seal compound of the Viscoelasticity page ($T_g = -20$ °C). Look for 0.1 s: about the
+time in which a joint opens at ignition. These are the starting values of the tool.
+
+1. **At 20 °C** the Deborah number is $2.4 \times 10^{-3}$. The segments follow easily. The modulus at 0.1 s is
+   17 MPa, and the compound is rubbery.
+2. **At 0 °C** every process is 555 times slower than at 20 °C. The Deborah number is 1.3, so the compound is in its
+   transition. The modulus is 82 MPa, almost five times the warm value, and the seal follows the joint only slowly.
+3. **At −40 °C**, 20 K below $T_g$, the compound is glassy: approximately 950 MPa. Below $T_g$ the WLF shift is only an
+   indication, but the result is the same: the seal cannot follow a joint that opens. This is how the Challenger
+   field-joint seals failed ([O-ring design](../../seals/o-ring-design/)).
+4. **Change to the propellant** ($T_g = -70$ °C). At −40 °C and 0.1 s the Deborah number is 0.25 and the modulus is
+   48 MPa. The grain is in its transition, and it is ten times stiffer than at 20 °C (4.8 MPa). For this reason the
+   cold ignition is the critical load case of a case-bonded grain ([Propellant grain](../../motor/propellant-grain/)).
+
+### In the live model: dewetting
+
+Select **Filled binder** and push **Stretch 40%**. Each chain bead is held at the place where the average stretch
+puts it. The first bonds between the binder and the particles break at approximately 15 to 25% stretch, and they
+break at the poles: within 45° of the direction of the stretch. A rigid particle in a soft binder concentrates the
+strain at its poles. Push **Release**. The broken bonds stay broken, and the voids stay open.
+
+In a real composite propellant this damage increases the volume under strain, so Poisson's ratio decreases below 0.5.
+A tensile test that measures the change of volume (dilatation) shows the strain at which dewetting starts.
+
+## What to try
+
+1. **Short linear chains** at a temperature of 1.2: select Push and move the cursor through the chains. They slide
+   apart and stay where you put them.
+2. **Long entangled chains**: push them in the same way. They resist, then move slowly, because each chain must snake
+   along its own path to get out of the loops of its neighbours.
+3. **Stiff chains with plasticiser**: turn on Trails. The small beads go two to three times as far as the chain
+   segments in the same time.
+4. **Thermoset**: push Heat pulse. The segments shake faster, but the network stays where it is.
+5. **Semi-crystalline**: the blocks do not move. Only the chains between them move.
+6. **Any material at a temperature of 0.05**: almost all motion stops. This is the glassy state of the model.
+
+## Where this stops
+
+- **A teaching model in reduced units.** Its temperature is not in °C and its time is not in seconds. The Two
+  temperatures view uses real units, from the Prony series of the Viscoelasticity page.
+- **No glass transition.** In the model, motion decreases smoothly as the temperature decreases. A real polymer has a
+  narrow band of temperature, $T_g$, in which the segmental motion stops.
+- **No entropic elasticity.** The bonds are springs, so a stretched network does not pull back to its shape as real
+  rubber does. Real rubber elasticity comes from the entropy of the coiled chains. The model is too small to show it,
+  and this page does not claim it.
+- **A small model.** It has approximately 150 beads in a box. Real chains have thousands of segments, and
+  entanglement needs long chains. The model shows the mechanisms, not the numbers.
+- **The stretch is affine.** Each chain bead is held where the average stretch puts it, as if the rest of the material
+  were outside the box. A bond to a particle breaks if it stays longer than a set amount for a set time.
+- **No chemistry:** no cure, no ageing reactions and no combustion. Propellant formulation and energetic chemistry are
+  outside the scope of this site.
+
+## On the drawing and in the specifications
+
+- **Specify the low-temperature limit of an elastomer as a test result at a rate:** TR-10 (ASTM D1329, ISO 2921), or
+  $T_g$ by DMA at a stated frequency. A compound name is not a specification.
+- **For a seal,** show that the compound is rubbery at the coldest service temperature, at the time scale at which the
+  joint opens.
+- **For a filled elastomer,** ask for stress, strain and dilatation in the tensile test, at the temperatures and rates
+  of your load cases. The dilatation shows where dewetting starts.
+- **Where a plasticiser can migrate** into a liner, an adhesive or a fluid, specify a barrier or a compatibility test.
+  Add an ageing test that measures the change in modulus and in strain capability.
+
+## Differences from REF·DB v1
+
+- The v1 zone also explained nitration and oxygen balance. That is energetic chemistry, which is outside the scope of
+  this site, so it is not here.
+- The two-temperature view now uses the Prony series and the WLF shift of the Viscoelasticity page, so the Deborah
+  number and the modulus are in real units.
+- The live model has a stretch test for dewetting and readouts measured from the model. Its thermostat is checked by
+  the unit tests: the measured kinetic temperature is the temperature that you set.
+
+## References and further reading
+
+- M. Rubinstein & R. H. Colby, *Polymer Physics*, Oxford University Press (2003).
+- P.-G. de Gennes, *Scaling Concepts in Polymer Physics*, Cornell University Press (1979) (reptation).
+- M. Doi & S. F. Edwards, *The Theory of Polymer Dynamics*, Oxford University Press (1986).
+- J. D. Ferry, *Viscoelastic Properties of Polymers*, 3rd ed., Wiley (1980).
+- K. Kremer & G. S. Grest, "Dynamics of entangled linear polymer melts: a molecular-dynamics simulation",
+  *J. Chem. Phys.* 92, 5057 (1990) (the bead-spring model).
+- B. Leimkuhler & C. Matthews, "Rational construction of stochastic numerical methods for molecular sampling",
+  *Applied Mathematics Research eXpress* 2013(1), 34–56 (BAOAB).
+- M. Reiner, "The Deborah number", *Physics Today* 17(1), 62 (1964).
+- A. E. Oberth & R. S. Bruenner, "Tear phenomena around solid inclusions in castable elastomers", *Transactions of the
+  Society of Rheology* 9(2), 165–185 (1965) (dewetting).
+
+<Aside type="note">
+  A teaching model. The material values are illustrative. Real design values come from tests of your compound, at the
+  temperatures and rates of your load cases.
+</Aside>

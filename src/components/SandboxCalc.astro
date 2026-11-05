@@ -1,0 +1,671 @@
+---
+// Molecular sandbox: a live bead-spring polymer model in 3D (src/lib/sandbox.ts: Langevin dynamics, unit-tested), and
+// one chain network at two temperatures with its Deborah number from the Prony series of the Viscoelasticity page
+// (src/lib/visco.ts). The model starts paused when motion is paused for the site.
+import { PRESETS } from '../lib/sandbox';
+import { VISCO_PRESETS } from '../lib/visco';
+---
+
+<div class="calc sbcalc" data-sbcalc>
+  <div class="calc-head">
+    <span>Molecular sandbox</span>
+    <span class="head-btns"><span>bead-spring chains · Langevin dynamics</span></span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="View">
+    <button type="button" role="tab" class="chip" data-tab="live" aria-selected="true">Live model</button>
+    <button type="button" role="tab" class="chip" data-tab="temps" aria-selected="false">Two temperatures</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="live">
+        <div class="sb-ctl">
+          <label>Material<select name="pre">{PRESETS.map((p) => <option value={p.key} selected={p.key === 'entangled'}>{p.name}</option>)}</select></label>
+          <label>Temperature <output data-tval>0.60</output><input name="T" type="range" min="0.05" max="1.6" step="0.05" value="0.6" /></label>
+          <div class="sb-mode">
+            <span class="sb-lbl">Drag to</span>
+            <div class="sb-seg" role="radiogroup" aria-label="Drag to">
+              <label><input type="radio" name="mode" value="rotate" checked /><span>Rotate</span></label>
+              <label><input type="radio" name="mode" value="push" /><span>Push</span></label>
+              <label><input type="radio" name="mode" value="pull" /><span>Pull a bead</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="sb-row">
+          <button type="button" class="chip" data-run aria-pressed="true">Pause</button>
+          <button type="button" class="chip" data-heat>Heat pulse</button>
+          <button type="button" class="chip" data-stretch>Stretch 40%</button>
+          <button type="button" class="chip" data-reset>Reset</button>
+          <label class="inline"><input type="checkbox" name="bonds" checked /> Bonds</label>
+          <label class="inline"><input type="checkbox" name="trails" /> Trails</label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="temps" hidden>
+        <div class="sb-ctl sb-ctl4">
+          <label>Material<select name="vm">{Object.entries(VISCO_PRESETS).map(([k, p]) => <option value={k}>{p.label}</option>)}</select></label>
+          <label>Cold (°C)<input name="ta" type="number" step="any" value="-40" /></label>
+          <label>Warm (°C)<input name="tb" type="number" step="any" value="20" /></label>
+          <label>Time you look <output data-oval>0.1 s</output><input name="obs" type="range" min="-3" max="8.5" step="0.1" value="-1" /></label>
+        </div>
+        <label class="inline"><input type="checkbox" name="vol" checked /> Show how far each segment can move</label>
+      </fieldset>
+    </form>
+    <div class="sb-out">
+      <div class="sb-pane" data-pane="live">
+        <div class="sb-stage">
+          <canvas data-canvas tabindex="0" role="img" aria-label="Three-dimensional bead-spring model of polymer chains. Drag to rotate, push or pull. Arrow keys rotate; the space bar runs or pauses the model."></canvas>
+          <div class="sb-hud" data-hud aria-live="polite"></div>
+        </div>
+        <dl class="readouts" data-live></dl>
+        <ul class="pv-notes" data-notes></ul>
+      </div>
+      <div class="sb-pane" data-pane="temps" hidden>
+        <div class="sb-twin">
+          <figure><canvas data-twin="a" role="img" aria-label="The chain network at the cold temperature"></canvas><figcaption data-twincap="a"></figcaption></figure>
+          <figure><canvas data-twin="b" role="img" aria-label="The same chain network at the warm temperature"></canvas><figcaption data-twincap="b"></figcaption></figure>
+        </div>
+        <dl class="readouts" data-temps></dl>
+        <figure class="sb-fig"><svg data-curve role="img" aria-label="Relaxation modulus against time at the two temperatures"></svg><figcaption data-curvecap></figcaption></figure>
+        <ul class="pv-notes" data-tnotes></ul>
+      </div>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Live model: beads joined by springs, with a weak bending stiffness and soft excluded volume, in reduced units (bond
+    length 1, bead mass 1, k<sub>B</sub>T = 1 at temperature 1). Langevin dynamics, BAOAB splitting. Bonds to particles
+    break under a sustained overload. Stretch holds each chain bead where the average stretch puts it (affine). Two
+    temperatures: the Prony series and WLF shift of the Viscoelasticity page; Deborah number = the time at the middle
+    of the transition, shifted to the temperature, divided by the time you look. A teaching model, not a material model.
+  </div>
+</div>
+
+<style is:global>
+  .sl-markdown-content .calc.sbcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .sbcalc .calc-body > * { min-width: 0; }
+  .sbcalc fieldset { margin-bottom: 0 !important; }
+  .sb-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.65rem 1rem; align-items: end; }
+  .sb-ctl > * { margin: 0 !important; }
+  .sbcalc output { font-family: var(--sl-font-mono); color: var(--rd-ink); font-weight: 600; margin-left: 0.3rem; }
+  .sbcalc input[type='range'] { display: block; width: 100%; margin-top: 0.45rem !important; }
+  .sb-lbl { display: block; font-size: 0.8rem; color: var(--rd-muted); margin-bottom: 0.2rem; }
+  .sb-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--rd-line); border-radius: 6px; overflow: hidden; }
+  .sb-seg label { margin: 0 !important; position: relative; }
+  .sb-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .sb-seg span { display: block; text-align: center; padding: 0.42rem 0.2rem; font-size: 0.76rem; color: var(--rd-muted); cursor: pointer; border-right: 1px solid var(--rd-line); white-space: nowrap; }
+  .sb-seg label:last-child span { border-right: 0; }
+  .sb-seg input:checked + span { background: color-mix(in srgb, var(--rd-accent) 16%, transparent); color: var(--rd-ink); font-weight: 600; }
+  .sb-seg input:focus-visible + span { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+  .sb-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem 0.6rem; margin-top: 0.2rem !important; }
+  .sb-row > * { margin: 0 !important; }
+  .sbcalc label.inline { display: inline-flex; align-items: center; gap: 0.35rem; justify-self: start; }
+  .sbcalc input[type='checkbox'] { width: auto; margin: 0 !important; }
+  .sb-ctl4 { grid-template-columns: minmax(12rem, 1.4fr) repeat(2, minmax(6rem, 0.7fr)) minmax(12rem, 1.4fr); }
+  @container (max-width: 44rem) { .sb-ctl4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .sbcalc [data-run][aria-pressed='false'] { border-color: color-mix(in srgb, var(--rd-ok) 70%, var(--rd-line)); color: var(--rd-ok); }
+  .sbcalc [data-stretch].on { border-color: color-mix(in srgb, var(--rd-warn) 70%, var(--rd-line)); color: var(--rd-warn); }
+  .sb-pane { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
+  .sb-pane > * { margin: 0 !important; min-width: 0; }
+  .sb-stage {
+    position: relative; border: 1px solid var(--rd-line); border-radius: 8px; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--rd-blue) 9%, var(--rd-panel2)), var(--rd-panel2) 70%);
+  }
+  .sb-stage canvas { display: block; width: 100%; touch-action: none; cursor: grab; outline: none; }
+  .sb-stage canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--rd-accent); }
+  .sb-stage canvas.push { cursor: crosshair; } .sb-stage canvas.pull { cursor: pointer; }
+  .sb-hud { position: absolute; left: 0.55rem; top: 0.5rem; right: 0.55rem; display: flex; flex-wrap: wrap; gap: 0.3rem; pointer-events: none; }
+  .sb-hud > span {
+    margin: 0 !important; padding: 0.12rem 0.45rem; border-radius: 4px; border: 1px solid var(--rd-line);
+    background: color-mix(in srgb, var(--rd-panel) 90%, transparent); font: 600 0.66rem var(--sl-font-mono); letter-spacing: 0.05em; color: var(--rd-ink);
+  }
+  .sb-hud > span.run { color: var(--rd-ok); } .sb-hud > span.hot { color: var(--rd-hot); } .sb-hud > span.str { color: var(--rd-warn); } .sb-hud > span.mu { color: var(--rd-muted); font-weight: 500; }
+  .sb-twin { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.6rem; }
+  .sb-twin figure { margin: 0 !important; border: 1px solid var(--rd-line); border-radius: 8px; overflow: hidden; background: var(--rd-panel2); padding: 0 !important; }
+  .sb-twin canvas { display: block; width: 100%; touch-action: none; cursor: grab; }
+  .sb-twin figcaption { margin: 0 !important; padding: 0.4rem 0.6rem 0.5rem !important; border-top: 1px solid var(--rd-line) !important; font-size: 0.78rem !important; color: var(--rd-ink) !important; }
+  .sb-twin figcaption b { font-family: var(--sl-font-mono); }
+  .sb-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .sbcalc .lc { text-transform: none; }
+  .sl-markdown-content .sbcalc .readout.sb-g { border-left-color: var(--rd-blue); }
+  .sl-markdown-content .sbcalc .readout.sb-t { border-left-color: var(--rd-warn); }
+  .sl-markdown-content .sbcalc .readout.sb-r { border-left-color: var(--rd-ok); }
+  .sl-markdown-content .sbcalc .readout.sb-x { border-left-color: var(--rd-accent); }
+  .sl-markdown-content .sbcalc .readout.sb-g dd { color: var(--rd-blue); }
+  .sl-markdown-content .sbcalc .readout.sb-t dd { color: var(--rd-warn); }
+  .sl-markdown-content .sbcalc .readout.sb-r dd { color: var(--rd-ok); }
+</style>
+
+<script>
+  import {
+    PRESETS, build, step, gaussian, mulberry32, kineticTemperature, rmsDisplacement, dewetting,
+    beginStretch, setStrain, endStretch, BEAD, PLAST, FILLER, CRYST, type System, type Preset,
+  } from '../lib/sandbox';
+  import { VISCO_PRESETS, pronyOf, wlfFromTg, lookAt, stateOf, relaxation, instantaneous } from '../lib/visco';
+
+  type V3 = [number, number, number];
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−') : '—');
+  const supx = (e: number) => String(e).replace('-', '⁻').replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]);
+  const sci = (v: number) => {
+    if (!Number.isFinite(v)) return '—';
+    if (v >= 0.01 && v < 1000) return f(v, v < 1 ? 3 : v < 10 ? 2 : 0);
+    const e = Math.floor(Math.log10(v)); return `${f(v / 10 ** e, 1)}×10${supx(e)}`;
+  };
+  const deg = (c: number) => `${f(c, 0)} °C`;
+  const when = (s: number) => s < 1e-3 ? `${f(s * 1e6, 0)} µs` : s < 1 ? `${f(s * 1e3, s < 0.01 ? 1 : 0)} ms` : s < 60 ? `${f(s, s < 10 ? 1 : 0)} s`
+    : s < 3600 ? `${f(s / 60, 0)} min` : s < 86400 ? `${f(s / 3600, 1)} h` : s < 3.156e7 ? `${f(s / 86400, 0)} days` : `${f(s / 3.156e7, 1)} years`;
+  const calm = () => document.documentElement.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  // ---------- drawing helpers shared by both views ----------
+  interface Palette { chains: string[]; plast: string; filler: string; cryst: string; cross: string; anchor: string; line: string; muted: string; ink: string; hot: string; panel: string }
+  function palette(): Palette {
+    const cs = getComputedStyle(document.documentElement), v = (n: string, d: string) => cs.getPropertyValue(n).trim() || d;
+    return {
+      chains: [v('--rd-blue', '#5aa9e6'), v('--ph-detail', '#e0a94e'), v('--ph-make', '#b98bd9'), v('--ph-verify', '#3ec5d3'), v('--ph-feature', '#c77baa'), v('--ph-orient', '#7ba7c7'), v('--rd-warn', '#e0a94e'), v('--ph-spec', '#8ca0ac')],
+      plast: v('--rd-ink', '#e6e6e6'), filler: v('--rd-steel', '#9aa3ad'), cryst: v('--rd-insul', '#7d6a8c'), cross: v('--rd-accent', '#fc3d21'),
+      anchor: v('--rd-ok', '#5bc48a'), line: v('--rd-line', '#333'), muted: v('--rd-muted', '#888'), ink: v('--rd-ink', '#eee'), hot: v('--rd-hot', '#d1561a'), panel: v('--rd-panel', '#111'),
+    };
+  }
+  const sprites = new Map<string, HTMLCanvasElement>();
+  function sphere(color: string) {
+    let c = sprites.get(color);
+    if (c) return c;
+    c = document.createElement('canvas'); c.width = c.height = 96;
+    const g = c.getContext('2d')!;
+    g.beginPath(); g.arc(48, 48, 46, 0, Math.PI * 2); g.fillStyle = color; g.fill();
+    const gr = g.createRadialGradient(36, 32, 3, 48, 48, 47);
+    gr.addColorStop(0, 'rgba(255,255,255,0.85)'); gr.addColorStop(0.22, 'rgba(255,255,255,0.18)');
+    gr.addColorStop(0.62, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.5)');
+    g.fillStyle = gr; g.beginPath(); g.arc(48, 48, 46, 0, Math.PI * 2); g.fill();
+    sprites.set(color, c);
+    return c;
+  }
+  interface View { rx: number; ry: number }
+  /** A camera; with `box` (half sizes) and no k, the scale fits that box's corners in the frame at this view. */
+  function camera(view: View, W: number, H: number, reach: number, kGiven?: number, box?: number[]) {
+    const cyw = Math.cos(view.ry), syw = Math.sin(view.ry), cxp = Math.cos(view.rx), sxp = Math.sin(view.rx);
+    const D = reach * 4.2;
+    let k = kGiven ?? (Math.min(W, H) / 2) * 0.94 / (reach * (D / (D - reach)));
+    if (kGiven === undefined && box) {
+      let mx = 1e-9, my = 1e-9;
+      for (const a of [-1, 1]) for (const b of [-1, 1]) for (const c of [-1, 1]) {
+        const px = a * box[0], py = b * box[1], pz = c * box[2];
+        const x1 = cyw * px + syw * pz, z1 = -syw * px + cyw * pz, y2 = cxp * py - sxp * z1, z2 = sxp * py + cxp * z1, p = D / (D - z2);
+        mx = Math.max(mx, Math.abs(x1) * p); my = Math.max(my, Math.abs(y2) * p);
+      }
+      k = 0.9 * Math.min(W / 2 / mx, H / 2 / my);
+    }
+    const toView = (px: number, py: number, pz: number): V3 => {
+      const x1 = cyw * px + syw * pz, z1 = -syw * px + cyw * pz;
+      return [x1, cxp * py - sxp * z1, sxp * py + cxp * z1];
+    };
+    const persp = (z: number) => D / (D - z);
+    const project = (px: number, py: number, pz: number) => {
+      const [x, y, z] = toView(px, py, pz), s = k * persp(z);
+      return { x: W / 2 + x * s, y: H / 2 - y * s, z, s };
+    };
+    const unproject = (sx: number, sy: number, z: number): V3 => {
+      const s = k * persp(z), x = (sx - W / 2) / s, y = -(sy - H / 2) / s;
+      const py = cxp * y + sxp * z, z1 = -sxp * y + cxp * z;
+      return [cyw * x - syw * z1, py, syw * x + cyw * z1];
+    };
+    return { project, unproject, k, persp, D };
+  }
+  function sizeCanvas(cv: HTMLCanvasElement, aspect: number, minH: number, maxH: number) {
+    const W = Math.max(240, Math.round(cv.clientWidth || 600)), H = Math.round(Math.max(minH, Math.min(maxH, W * aspect)));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = `${H}px`; }
+    const g = cv.getContext('2d')!; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { g, W, H };
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-sbcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const cv = $<HTMLCanvasElement>('[data-canvas]');
+    let pal = palette();
+    let tab: 'live' | 'temps' = 'live';
+    let visible = true;
+
+    // ================= live model =================
+    let preset: Preset = PRESETS.find((p) => p.key === field('pre').value) ?? PRESETS[1];
+    let sys: System = build(preset, 1);
+    let noise = gaussian(mulberry32(17));
+    let running = !calm(), heatUntil = 0, stretch: 'none' | 'loading' | 'held' | 'unloading' = 'none';
+    const view: View = { rx: -0.38, ry: 0.62 };
+    let probe: { sx: number; sy: number } | null = null, grab: { i: number; sx: number; sy: number; z: number } | null = null;
+    let drag: { x: number; y: number } | null = null;
+    let snaps: { t: number; x: Float64Array }[] = [], lastSnap = -1;
+    let trails: { i: number; pts: number[] }[] = [];
+    const breaks = new Map<number, number>(); // anchor index → time it broke (ms)
+    let lastShown = 0, raf = 0, last = 0, zoom = 0;
+
+    const T = () => +field('T').value;
+    const mode = () => (form.querySelector<HTMLInputElement>('input[name="mode"]:checked')?.value ?? 'rotate') as 'rotate' | 'push' | 'pull';
+
+    function reset() {
+      preset = PRESETS.find((p) => p.key === field('pre').value) ?? PRESETS[1];
+      sys = build(preset, 1);
+      noise = gaussian(mulberry32(17));
+      stretch = 'none'; heatUntil = 0; grab = null; breaks.clear(); zoom = 0;
+      snaps = []; lastSnap = -1;
+      // trails: the middle bead of each chain, and a few plasticiser beads
+      trails = sys.chains.map((c) => ({ i: c[Math.floor(c.length / 2)], pts: [] }));
+      let p = 0; for (let i = 0; i < sys.n && p < 4; i++) if (sys.kind[i] === PLAST) { trails.push({ i, pts: [] }); p++; }
+      notes();
+      update(true);
+      draw();
+      kick();
+    }
+
+    function notes() {
+      const items: [string, string][] = [
+        ['', `<b>What it is.</b> ${esc(preset.what)}`],
+        ['', `<b>What to look for.</b> ${esc(preset.see)}`],
+        ['', `<b>Where you meet it.</b> ${esc(preset.where)}`],
+      ];
+      if (!running && calm()) items.unshift(['warn', 'Motion is paused for this site, so the model starts paused. Push <b>Run</b> to start it.']);
+      $('[data-notes]').innerHTML = items.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+    }
+
+    function hud() {
+      const s = stretch !== 'none' ? `<span class="str">STRETCH ${f(sys.strain * 100, 0)}%</span>` : '';
+      const h = performance.now() < heatUntil ? '<span class="hot">HEAT PULSE</span>' : '';
+      const m = mode(), hint = m === 'rotate' ? 'drag to rotate' : m === 'push' ? 'move over the model to push' : 'drag a bead to pull it';
+      $('[data-hud]').innerHTML = `<span class="${running ? 'run' : ''}">${running ? 'RUNNING' : 'PAUSED'}</span><span>T ${f(T(), 2)}</span>${s}${h}<span class="mu">${hint}</span>`;
+    }
+
+    // live readouts, four times a second
+    function update(force = false) {
+      const now = performance.now();
+      if (!force && now - lastShown < 250) return;
+      lastShown = now;
+      const ref = snaps.length ? snaps.reduce((a, b) => (Math.abs(b.t - (sys.t - 2)) < Math.abs(a.t - (sys.t - 2)) ? b : a)) : null;
+      const span = ref ? sys.t - ref.t : 0;
+      const rms = (kind: number) => (ref && span > 0.5 ? rmsDisplacement(sys, ref.x, kind) : NaN);
+      const chain = rms(BEAD), plast = rms(PLAST), part = rms(FILLER);
+      const ro = (cls: string, dt: string, dd: string, small = '') => `<div class="readout ${cls}"><dt>${dt}</dt><dd>${dd}${small ? ` <small>${small}</small>` : ''}</dd></div>`;
+      let h = ro('', 'Temperature', f(T() + (now < heatUntil ? 1 : 0), 2), `measured ${f(kineticTemperature(sys), 2)} (k<sub>B</sub>T units)`);
+      h += ro('', 'Chain segments move', Number.isFinite(chain) ? f(chain, 2) : '—', `bond lengths in the last ${f(Math.max(span, 0), 1)} time units`);
+      if (preset.plast) h += ro('', 'Plasticiser moves', Number.isFinite(plast) ? f(plast, 2) : '—', Number.isFinite(plast) && chain > 0 ? `${f(plast / chain, 1)} times the chains` : 'free small molecules');
+      if (preset.filler) {
+        const d = dewetting(sys), cls = d.broken ? 'sb-t' : 'sb-r';
+        h += ro(cls, 'Binder bonded to particles', `${d.total - d.broken} of ${d.total}`, d.broken ? `${d.broken} broke (dewetting), ${d.poles} of them at the poles` : 'all bonds hold');
+        h += ro('', 'Particles move', Number.isFinite(part) ? f(part, 2) : '—', 'large, heavy particles');
+      }
+      if (preset.cross) h += ro('', 'Crosslinks', String(sys.cross.length / 2), 'permanent links between chains');
+      if (preset.cryst) h += ro('', 'Crystalline blocks', String(preset.cryst), 'fixed: they hold the chains that pass them');
+      if (stretch !== 'none') h += ro('', 'Stretch', `${f(sys.strain * 100, 0)}%`, stretch === 'held' ? 'held: push Release to unload' : stretch);
+      $('[data-live]').innerHTML = h;
+      hud();
+    }
+
+    function draw() {
+      if (tab !== 'live') return;
+      const { g, W, H } = sizeCanvas(cv, 0.62, 260, 470);
+      g.clearRect(0, 0, W, H);
+      const b = sys.box, reach = Math.hypot(b[0], b[1], b[2]);
+      // fit the box at this view, easing the zoom so that it does not jump while the view turns or the box stretches
+      const kFit = camera(view, W, H, reach, undefined, [b[0], b[1], b[2]]).k;
+      zoom = zoom && Math.abs(zoom / kFit - 1) < 0.6 ? zoom + (kFit - zoom) * 0.25 : kFit;
+      const cam = camera(view, W, H, reach, zoom);
+      // box edges
+      g.lineWidth = 1; g.strokeStyle = pal.line; g.globalAlpha = 0.9;
+      const corners: { x: number; y: number }[] = [];
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) corners.push(cam.project(sx * b[0], sy * b[1], sz * b[2]));
+      g.beginPath();
+      for (const [a, c] of [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]]) { g.moveTo(corners[a].x, corners[a].y); g.lineTo(corners[c].x, corners[c].y); }
+      g.stroke(); g.globalAlpha = 1;
+
+      const n = sys.n, x = sys.x, P = new Array(n);
+      for (let i = 0; i < n; i++) P[i] = cam.project(x[3 * i], x[3 * i + 1], x[3 * i + 2]);
+      const zmax = reach, fog = (z: number) => 0.45 + 0.55 * Math.min(1, Math.max(0, (z + zmax) / (2 * zmax)));
+      // the draw list: beads, bonds, links; far first
+      type Item = { z: number; t: number; a: number; b: number };
+      const items: Item[] = [];
+      for (let i = 0; i < n; i++) items.push({ z: P[i].z, t: 0, a: i, b: 0 });
+      const showBonds = field('bonds').checked;
+      if (showBonds) for (let k = 0; k < sys.bonds.length; k += 2) { const i = sys.bonds[k], j = sys.bonds[k + 1]; items.push({ z: (P[i].z + P[j].z) / 2 - 0.01, t: 1, a: i, b: j }); }
+      for (let k = 0; k < sys.cross.length; k += 2) { const i = sys.cross[k], j = sys.cross[k + 1]; items.push({ z: (P[i].z + P[j].z) / 2 - 0.01, t: 2, a: i, b: j }); }
+      sys.anchors.forEach((an, k) => { if (!an.broken) items.push({ z: (P[an.a].z + P[an.b].z) / 2 - 0.4, t: 3, a: k, b: 0 }); });
+      items.sort((p, q) => p.z - q.z);
+      const color = (i: number) => (sys.kind[i] === PLAST ? pal.plast : sys.kind[i] === FILLER ? pal.filler : pal.chains[Math.max(0, sys.chain[i]) % pal.chains.length]);
+      g.lineCap = 'round';
+      for (const it of items) {
+        if (it.t === 0) {
+          const i = it.a, p = P[i], kind = sys.kind[i];
+          g.globalAlpha = fog(p.z);
+          if (kind === CRYST) { cube(g, cam, x[3 * i], x[3 * i + 1], x[3 * i + 2], sys.r[i] * 0.95); continue; }
+          const rv = kind === FILLER ? sys.r[i] * 0.98 : kind === PLAST ? 0.26 : 0.36;
+          const r = Math.max(1.5, rv * p.s);
+          g.drawImage(sphere(color(i)), p.x - r, p.y - r, 2 * r, 2 * r);
+        } else if (it.t === 3) {
+          const an = sys.anchors[it.a], pa = P[an.a], pb = P[an.b];
+          const dx = x[3 * an.b] - x[3 * an.a], dy = x[3 * an.b + 1] - x[3 * an.a + 1], dz = x[3 * an.b + 2] - x[3 * an.a + 2], d = Math.hypot(dx, dy, dz) || 1;
+          const rr = sys.r[an.a] * 0.98, s = cam.project(x[3 * an.a] + (dx / d) * rr, x[3 * an.a + 1] + (dy / d) * rr, x[3 * an.a + 2] + (dz / d) * rr);
+          g.globalAlpha = 0.85 * fog(pb.z); g.strokeStyle = sys.kind[an.a] === CRYST ? pal.cryst : pal.anchor; g.lineWidth = Math.max(1, 0.1 * pa.s);
+          g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(pb.x, pb.y); g.stroke();
+        } else {
+          const pa = P[it.a], pb = P[it.b];
+          g.globalAlpha = fog((pa.z + pb.z) / 2);
+          g.strokeStyle = it.t === 2 ? pal.cross : color(it.a);
+          g.lineWidth = Math.max(1.2, (it.t === 2 ? 0.22 : 0.17) * (pa.s + pb.s) / 2);
+          g.beginPath(); g.moveTo(pa.x, pa.y); g.lineTo(pb.x, pb.y); g.stroke();
+        }
+      }
+      g.globalAlpha = 1;
+      // where bonds to particles broke, for two seconds
+      const now = performance.now();
+      g.strokeStyle = pal.cross; g.lineWidth = 2;
+      for (const [k, t0] of breaks) {
+        if (now - t0 > 2200) { breaks.delete(k); continue; }
+        const p = P[sys.anchors[k].b], r = 5 + (now - t0) / 220;
+        g.globalAlpha = 1 - (now - t0) / 2200;
+        g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.stroke();
+      }
+      g.globalAlpha = 1;
+      // trails
+      if (field('trails').checked) {
+        for (const tr of trails) {
+          const pts = tr.pts, m = pts.length / 3;
+          if (m < 2) continue;
+          g.strokeStyle = sys.kind[tr.i] === PLAST ? pal.plast : color(tr.i); g.lineWidth = 1.6;
+          let prev = cam.project(pts[0], pts[1], pts[2]);
+          for (let k = 1; k < m; k++) {
+            const q = cam.project(pts[3 * k], pts[3 * k + 1], pts[3 * k + 2]);
+            g.globalAlpha = 0.15 + 0.75 * (k / m);
+            g.beginPath(); g.moveTo(prev.x, prev.y); g.lineTo(q.x, q.y); g.stroke();
+            prev = q;
+          }
+        }
+        g.globalAlpha = 1;
+      }
+      // the cursor
+      if (probe && mode() === 'push') {
+        g.strokeStyle = pal.hot; g.lineWidth = 1.5; g.setLineDash([4, 4]);
+        g.beginPath(); g.arc(probe.sx, probe.sy, 1.5 * cam.k * cam.persp(0), 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+      }
+      if (grab) {
+        const p = P[grab.i];
+        g.strokeStyle = pal.hot; g.lineWidth = 2;
+        g.beginPath(); g.arc(p.x, p.y, 0.6 * p.s, 0, Math.PI * 2); g.stroke();
+        g.setLineDash([3, 3]); g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(grab.sx, grab.sy); g.stroke(); g.setLineDash([]);
+      }
+      lastCam = cam;
+    }
+    let lastCam: ReturnType<typeof camera> | null = null;
+
+    function cube(g: CanvasRenderingContext2D, cam: ReturnType<typeof camera>, cx: number, cy: number, cz: number, h: number) {
+      const v = [-1, 1].flatMap((a) => [-1, 1].flatMap((b) => [-1, 1].map((c) => cam.project(cx + a * h, cy + b * h, cz + c * h))));
+      const faces = [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]];
+      faces.map((fc) => ({ fc, z: fc.reduce((s, k) => s + v[k].z, 0) / 4 })).sort((a, b) => a.z - b.z).forEach(({ fc }, k) => {
+        g.beginPath(); fc.forEach((q, m) => (m ? g.lineTo(v[q].x, v[q].y) : g.moveTo(v[q].x, v[q].y))); g.closePath();
+        g.fillStyle = pal.cryst; const a0 = g.globalAlpha; g.globalAlpha = a0 * (0.35 + 0.12 * k); g.fill(); g.globalAlpha = a0;
+        g.strokeStyle = pal.ink; g.lineWidth = 1; g.stroke();
+      });
+      // lattice lines on the faces: a crystal is ordered
+      g.strokeStyle = pal.ink; g.lineWidth = 0.6;
+      for (const t of [-0.33, 0.33]) {
+        const a = cam.project(cx + t * h, cy + h, cz + h), b = cam.project(cx + t * h, cy - h, cz + h);
+        g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+      }
+    }
+
+    function frame(ts: number) {
+      raf = 0;
+      if (!visible || document.hidden || tab !== 'live') return;
+      const dt = last ? Math.min(50, ts - last) : 16.7; last = ts;
+      if (running) {
+        const now = performance.now(), Tn = T() + (now < heatUntil ? 1 : 0);
+        if (stretch === 'loading') { setStrain(sys, Math.min(0.4, sys.strain + 0.16 * dt / 1000)); if (sys.strain >= 0.4) stretch = 'held'; }
+        else if (stretch === 'unloading') { setStrain(sys, Math.max(0, sys.strain - 0.3 * dt / 1000)); if (sys.strain <= 0) { endStretch(sys); stretch = 'none'; stretchBtn(); } }
+        const P: Parameters<typeof step>[1] = { T: Tn };
+        if (probe && mode() === 'push' && lastCam) { const w = lastCam.unproject(probe.sx, probe.sy, 0); P.probe = { x: w[0], y: w[1], z: w[2], R: 1.5, K: 90 }; }
+        if (grab && lastCam) { const w = lastCam.unproject(grab.sx, grab.sy, grab.z); P.grab = { i: grab.i, x: w[0], y: w[1], z: w[2], K: 70 }; }
+        const before = sys.anchors.map((a) => a.broken);
+        step(sys, P, noise, Math.max(1, Math.min(16, Math.round((8 * dt) / 16.7))));
+        sys.anchors.forEach((a, k) => { if (a.broken && !before[k]) breaks.set(k, now); });
+        if (sys.t - lastSnap >= 0.25) { snaps.push({ t: sys.t, x: sys.x.slice() }); lastSnap = sys.t; if (snaps.length > 14) snaps.shift(); }
+        for (const tr of trails) { tr.pts.push(sys.x[3 * tr.i], sys.x[3 * tr.i + 1], sys.x[3 * tr.i + 2]); if (tr.pts.length > 3 * 48) tr.pts.splice(0, 3); }
+        update();
+      }
+      draw();
+      if (running || breaks.size) kick();
+    }
+    const kick = () => { if (!raf && visible && tab === 'live') { last = 0; raf = requestAnimationFrame(frame); } };
+
+    // ---------- controls ----------
+    const runBtn = $<HTMLButtonElement>('[data-run]'), stretchEl = $<HTMLButtonElement>('[data-stretch]');
+    const runLabel = () => { runBtn.textContent = running ? 'Pause' : 'Run'; runBtn.setAttribute('aria-pressed', String(running)); };
+    const stretchBtn = () => { stretchEl.textContent = stretch === 'none' || stretch === 'unloading' ? 'Stretch 40%' : 'Release'; stretchEl.classList.toggle('on', stretch === 'loading' || stretch === 'held'); };
+    runBtn.addEventListener('click', () => { running = !running; runLabel(); notes(); hud(); kick(); });
+    $('[data-heat]').addEventListener('click', () => { heatUntil = performance.now() + 1500; if (!running) { running = true; runLabel(); } kick(); });
+    stretchEl.addEventListener('click', () => {
+      if (stretch === 'none') { beginStretch(sys); stretch = 'loading'; }
+      else if (stretch === 'unloading') stretch = 'loading';
+      else stretch = 'unloading';
+      if (!running) { running = true; runLabel(); }
+      stretchBtn(); update(true); kick();
+    });
+    $('[data-reset]').addEventListener('click', () => { reset(); stretchBtn(); });
+    field('pre').addEventListener('change', () => { reset(); stretchBtn(); });
+    field('T').addEventListener('input', () => { $('[data-tval]').textContent = f(T(), 2); hud(); });
+    form.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListener('change', () => { cv.className = mode(); probe = null; grab = null; hud(); draw(); }));
+    for (const n of ['bonds', 'trails']) field(n).addEventListener('change', draw);
+
+    const local = (e: PointerEvent) => { const b = cv.getBoundingClientRect(); return { sx: e.clientX - b.left, sy: e.clientY - b.top }; };
+    cv.addEventListener('pointerdown', (e) => {
+      try { cv.setPointerCapture(e.pointerId); } catch { /* a pointer that is already gone */ }
+      const p = local(e), m = mode();
+      if (m === 'pull' && lastCam) {
+        let best = -1, bd = 26 * 26;
+        for (let i = 0; i < sys.n; i++) {
+          if (sys.fixed[i]) continue;
+          const q = lastCam.project(sys.x[3 * i], sys.x[3 * i + 1], sys.x[3 * i + 2]), d = (q.x - p.sx) ** 2 + (q.y - p.sy) ** 2;
+          if (d < bd) { bd = d; best = i; }
+        }
+        if (best >= 0) {
+          const q = lastCam.project(sys.x[3 * best], sys.x[3 * best + 1], sys.x[3 * best + 2]);
+          grab = { i: best, sx: p.sx, sy: p.sy, z: q.z };
+          if (!running) { running = true; runLabel(); hud(); }
+          kick(); return;
+        }
+      }
+      if (m === 'push') { probe = p; if (!running) { running = true; runLabel(); hud(); } kick(); return; }
+      drag = { x: e.clientX, y: e.clientY };
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const p = local(e);
+      if (grab) { grab.sx = p.sx; grab.sy = p.sy; if (!running) draw(); return; }
+      if (mode() === 'push' && (e.pointerType === 'mouse' || e.buttons)) { probe = p; if (!running) draw(); return; }
+      if (drag) {
+        view.ry += (e.clientX - drag.x) * 0.01; view.rx = Math.max(-1.45, Math.min(1.45, view.rx + (e.clientY - drag.y) * 0.01));
+        drag = { x: e.clientX, y: e.clientY };
+        if (!running) draw();
+      }
+    });
+    const end = () => { drag = null; grab = null; if (mode() === 'push') probe = null; if (!running) draw(); };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+    cv.addEventListener('pointerleave', () => { if (!drag && !grab) { probe = null; if (!running) draw(); } });
+    cv.addEventListener('keydown', (e) => {
+      const s = 0.12;
+      if (e.key === 'ArrowLeft') view.ry -= s; else if (e.key === 'ArrowRight') view.ry += s;
+      else if (e.key === 'ArrowUp') view.rx = Math.max(-1.45, view.rx - s); else if (e.key === 'ArrowDown') view.rx = Math.min(1.45, view.rx + s);
+      else if (e.key === ' ') { running = !running; runLabel(); notes(); hud(); kick(); }
+      else return;
+      e.preventDefault(); if (!running) draw();
+    });
+
+    // ================= two temperatures =================
+    const twinSys = (() => {
+      const base = PRESETS.find((p) => p.key === 'elastomer')!;
+      const s = build({ ...base, chains: 5, len: 14, cross: 6 }, 4, 3.3);
+      step(s, { T: 0.3 }, gaussian(mulberry32(4)), 300);
+      return s;
+    })();
+    // centre the network, then fit the view to it (the box is only for the model)
+    for (let d = 0; d < 3; d++) {
+      let c = 0; for (let i = 0; i < twinSys.n; i++) c += twinSys.x[3 * i + d];
+      c /= twinSys.n; for (let i = 0; i < twinSys.n; i++) twinSys.x[3 * i + d] -= c;
+    }
+    const twinExtent = [0, 1, 2].map((d) => { let m = 0; for (let i = 0; i < twinSys.n; i++) m = Math.max(m, Math.abs(twinSys.x[3 * i + d])); return m + 0.5; });
+    const jig = Array.from({ length: twinSys.n }, (_, i) => {
+      const r = mulberry32(911 + i * 37);
+      return Array.from({ length: 3 }, () => { const u: V3 = [r() - 0.5, r() - 0.5, r() - 0.5], L = Math.hypot(...u) || 1; return { u: u.map((c) => c / L) as V3, w: 1.3 + r() * 2.2, ph: r() * 6.283 }; });
+    });
+    const tview: View = { rx: -0.35, ry: 0.55 };
+    let tclock = 0, traf = 0, tlast = 0, tdrag: { x: number; y: number } | null = null;
+    let mob = { a: 0, b: 0 };
+
+    function twinDraw(which: 'a' | 'b') {
+      const c = $<HTMLCanvasElement>(`[data-twin="${which}"]`);
+      const { g, W, H } = sizeCanvas(c, 0.78, 200, 300);
+      g.clearRect(0, 0, W, H);
+      const s = twinSys, cam = camera(tview, W, H, Math.hypot(...twinExtent), undefined, twinExtent);
+      const m = mob[which], amp = 0.04 + 0.5 * m, move = !calm();
+      const pos = (i: number): V3 => {
+        const p: V3 = [s.x[3 * i], s.x[3 * i + 1], s.x[3 * i + 2]];
+        if (!move) return p;
+        for (const j of jig[i]) { const a = (amp * Math.sin(tclock * j.w + j.ph)) / Math.sqrt(3); p[0] += j.u[0] * a; p[1] += j.u[1] * a; p[2] += j.u[2] * a; }
+        return p;
+      };
+      const P = Array.from({ length: s.n }, (_, i) => cam.project(...pos(i)));
+      const col = (i: number) => pal.chains[Math.max(0, s.chain[i]) % pal.chains.length];
+      if (field('vol').checked) {
+        for (let i = 0; i < s.n; i++) {
+          const q = cam.project(s.x[3 * i], s.x[3 * i + 1], s.x[3 * i + 2]);
+          g.globalAlpha = 0.16; g.fillStyle = col(i);
+          g.beginPath(); g.arc(q.x, q.y, Math.max(1.5, (amp + 0.2) * q.s), 0, Math.PI * 2); g.fill();
+        }
+      }
+      const items: { z: number; i: number; j: number }[] = [];
+      for (let i = 0; i < s.n; i++) items.push({ z: P[i].z, i, j: -1 });
+      for (let k = 0; k < s.bonds.length; k += 2) items.push({ z: (P[s.bonds[k]].z + P[s.bonds[k + 1]].z) / 2 - 0.01, i: s.bonds[k], j: s.bonds[k + 1] });
+      for (let k = 0; k < s.cross.length; k += 2) items.push({ z: (P[s.cross[k]].z + P[s.cross[k + 1]].z) / 2 - 0.01, i: s.cross[k], j: -2 - s.cross[k + 1] });
+      items.sort((p, q) => p.z - q.z);
+      g.lineCap = 'round';
+      for (const it of items) {
+        g.globalAlpha = 0.55 + 0.45 * Math.min(1, Math.max(0, (it.z + 4) / 8));
+        if (it.j === -1) { const p = P[it.i], r = Math.max(1.5, 0.34 * p.s); g.drawImage(sphere(col(it.i)), p.x - r, p.y - r, 2 * r, 2 * r); continue; }
+        const j = it.j <= -2 ? -2 - it.j : it.j, pa = P[it.i], pb = P[j];
+        g.strokeStyle = it.j <= -2 ? pal.cross : col(it.i); g.lineWidth = Math.max(1.2, 0.17 * (pa.s + pb.s) / 2);
+        g.beginPath(); g.moveTo(pa.x, pa.y); g.lineTo(pb.x, pb.y); g.stroke();
+      }
+      g.globalAlpha = 1;
+    }
+
+    function tempsRun() {
+      const pr = VISCO_PRESETS[field('vm').value as keyof typeof VISCO_PRESETS] ?? VISCO_PRESETS.seal;
+      const p = pronyOf(pr), w = { tRef: pr.tRef, ...wlfFromTg(pr.tg, pr.tRef) };
+      const ta = +field('ta').value, tb = +field('tb').value, tObs = 10 ** +field('obs').value;
+      $('[data-oval]').textContent = when(tObs);
+      const A = lookAt(p, w, ta, tObs), B = lookAt(p, w, tb, tObs);
+      const out: [string, string][] = [];
+      const ro = (cls: string, dt: string, dd: string, small = '') => `<div class="readout ${cls}"><dt>${dt}</dt><dd>${dd}${small ? ` <small>${small}</small>` : ''}</dd></div>`;
+      const card = (lab: string, T: number, r: typeof A) => r.valid
+        ? ro(stateOf(r.mobility) === 'glassy' ? 'sb-g' : stateOf(r.mobility) === 'transition' ? 'sb-t' : 'sb-r', `${lab}, ${deg(T)}`, stateOf(r.mobility), `E = ${sci(r.E)} MPa at ${when(tObs)} · Deborah number ${r.De > 1e6 ? 'more than 10⁶' : sci(r.De)} · ${f(r.mobility * 100, 0)}% of the way to rubbery`)
+        : ro('sb-x', `${lab}, ${deg(T)}`, '—', `more than 46 K below T<sub>g</sub> (${deg(pr.tg)}): the WLF shift is not used there`);
+      let h = card('Cold', ta, A) + card('Warm', tb, B);
+      if (A.valid && B.valid) {
+        const ratio = A.aT / B.aT;
+        h += ro('', 'Cold is slower by', ratio > 1e6 ? 'more than 10⁶×' : `${sci(ratio)}×`, ratio > 1e6 ? 'below T<sub>g</sub> the WLF number has no meaning: the cold material is glassy' : `every relaxation at ${deg(ta)} takes this many times as long as at ${deg(tb)}`);
+      }
+      $('[data-temps]').innerHTML = h;
+      mob = { a: A.valid ? A.mobility : 0, b: B.valid ? B.mobility : 0 };
+      const cap = (T: number, r: typeof A) => (r.valid ? `<b>${deg(T)}</b> · ${stateOf(r.mobility)} · E ${sci(r.E)} MPa` : `<b>${deg(T)}</b> · outside the WLF range`);
+      $('[data-twincap="a"]').innerHTML = cap(ta, A);
+      $('[data-twincap="b"]').innerHTML = cap(tb, B);
+      out.push(['', 'The Deborah number is the relaxation time divided by the time you look. Much more than 1: the segments cannot follow, and the material acts as a glass. Much less than 1: they follow, and it acts as a rubber. Near 1 it is in its transition, where the stiffness changes fast with time and temperature.']);
+      if (field('vm').value === 'seal') out.push(['', 'A seal must follow a joint that opens in a fraction of a second. If the compound is glassy at the coldest temperature for that time, it cannot follow: see the Challenger lesson on the O-ring design page.']);
+      else out.push(['', 'The grain is loaded at ignition in a fraction of a second. On a cold day the propellant is much stiffer at that time scale, and its strain capability is lower: see Propellant grain.']);
+      if ((A.valid && ta < pr.tg) || (B.valid && tb < pr.tg)) out.push(['warn', `Below T<sub>g</sub> (${deg(pr.tg)}) the WLF shift is only an indication. The material is glassy, and its real shift is smaller than WLF gives.`]);
+      $('[data-tnotes]').innerHTML = out.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+      curve(p, w, pr.tg, ta, tb, A, B, tObs);
+      twinDraw('a'); twinDraw('b');
+      tkick();
+    }
+
+    function curve(p: ReturnType<typeof pronyOf>, w: { tRef: number; c1: number; c2: number }, tg: number, ta: number, tb: number, A: ReturnType<typeof lookAt>, B: ReturnType<typeof lookAt>, tObs: number) {
+      const svg = $<SVGSVGElement>('[data-curve]'), W = Math.round(Math.min(680, Math.max(280, svg.clientWidth || 600))), H = Math.round(Math.max(220, Math.min(300, W * 0.48)));
+      const L = 44, R = 12, Tp = 14, Bt = 34, e0 = instantaneous(p), einf = p.eInf;
+      const x0 = -6, x1 = 9, y0 = Math.log10(einf / 2), y1 = Math.log10(e0 * 2);
+      const X = (lt: number) => L + ((lt - x0) / (x1 - x0)) * (W - L - R), Y = (le: number) => H - Bt - ((le - y0) / (y1 - y0)) * (H - Tp - Bt);
+      let s = '';
+      const band = (m0: number, m1: number, label: string, col: string) => {
+        const top = Math.max(Tp, Y(Math.log10(e0 * (einf / e0) ** m0))), bot = Math.min(H - Bt, Y(Math.log10(e0 * (einf / e0) ** m1)));
+        s += `<rect x="${L}" y="${top}" width="${W - L - R}" height="${bot - top}" fill="${col}" opacity="0.07"/><text x="${W - R - 4}" y="${top + 12}" text-anchor="end" font-size="10" fill="${col}">${label}</text>`;
+      };
+      band(-0.3, 0.15, 'glassy', 'var(--rd-blue)'); band(0.65, 1.15, 'rubbery', 'var(--rd-ok)');
+      for (let k = Math.ceil(y0); k <= y1; k++) s += `<line x1="${L}" x2="${W - R}" y1="${Y(k)}" y2="${Y(k)}" stroke="var(--rd-line)"/><text x="${L - 5}" y="${Y(k) + 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${k >= 0 && k <= 3 ? 10 ** k : `10${supx(k)}`}</text>`;
+      const ticks: [number, string][] = [[-6, '1 µs'], [-3, '1 ms'], [0, '1 s'], [Math.log10(3600), '1 h'], [Math.log10(86400 * 30), '1 mo'], [Math.log10(3.156e8), '10 y']];
+      for (const [lt, lab] of ticks) s += `<line x1="${X(lt)}" x2="${X(lt)}" y1="${Tp}" y2="${H - Bt}" stroke="var(--rd-line)"/><text x="${X(lt)}" y="${H - Bt + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${lab}</text>`;
+      s += `<text x="${L}" y="10" font-size="10" fill="var(--rd-ink)">E (MPa)</text><text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10.5" fill="var(--rd-ink)">time you look</text>`;
+      const path = (r: typeof A) => {
+        if (!r.valid) return '';
+        let d = '';
+        for (let k = 0; k <= 160; k++) { const lt = x0 + ((x1 - x0) * k) / 160, le = Math.log10(relaxation(p, 10 ** lt / r.aT)); d += `${k ? 'L' : 'M'}${X(lt).toFixed(1)},${Y(Math.max(y0, Math.min(y1, le))).toFixed(1)}`; }
+        return d;
+      };
+      const ca = 'var(--rd-blue)', cb = 'var(--rd-hot)';
+      if (A.valid) s += `<path d="${path(A)}" fill="none" stroke="${ca}" stroke-width="2.4"/>`;
+      if (B.valid) s += `<path d="${path(B)}" fill="none" stroke="${cb}" stroke-width="2.4"/>`;
+      const lo = Math.log10(tObs);
+      s += `<line x1="${X(lo)}" x2="${X(lo)}" y1="${Tp}" y2="${H - Bt}" stroke="var(--rd-ink)" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+      const dot = (r: typeof A, col: string, lab: string, dy: number) => {
+        if (!r.valid || lo < x0 || lo > x1) return '';
+        const y = Y(Math.log10(r.E)), anchor = X(lo) > W * 0.62 ? 'end' : 'start', dx = anchor === 'end' ? -8 : 8;
+        return `<circle cx="${X(lo)}" cy="${y}" r="5" fill="${col}" stroke="var(--rd-panel)" stroke-width="1.5"/><text x="${X(lo) + dx}" y="${y + dy}" text-anchor="${anchor}" font-size="10.5" font-weight="600" fill="${col}">${lab}</text>`;
+      };
+      s += dot(A, ca, deg(ta), -7) + dot(B, cb, deg(tb), 14);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = s;
+      $('[data-curvecap]').textContent = `Relaxation modulus at the two temperatures (Prony series of the Viscoelasticity page, WLF shift from Tg = ${f(tg, 0)} °C). The dashed line is the time you look. The cold curve is the warm curve moved to the right: every process is slower.`;
+    }
+
+    function tframe(ts: number) {
+      traf = 0;
+      if (!visible || document.hidden || tab !== 'temps' || calm()) return;
+      const dt = tlast ? Math.min(50, ts - tlast) : 16.7; tlast = ts;
+      tclock += dt / 1000;
+      twinDraw('a'); twinDraw('b');
+      tkick();
+    }
+    const tkick = () => { if (!traf && visible && tab === 'temps' && !calm()) { tlast = 0; traf = requestAnimationFrame(tframe); } };
+    for (const n of ['vm', 'ta', 'tb', 'obs', 'vol']) field(n).addEventListener(n === 'vm' || n === 'vol' ? 'change' : 'input', tempsRun);
+    root.querySelectorAll<HTMLCanvasElement>('[data-twin]').forEach((c) => {
+      c.addEventListener('pointerdown', (e) => { try { c.setPointerCapture(e.pointerId); } catch { /* gone */ } tdrag = { x: e.clientX, y: e.clientY }; });
+      c.addEventListener('pointermove', (e) => {
+        if (!tdrag) return;
+        tview.ry += (e.clientX - tdrag.x) * 0.01; tview.rx = Math.max(-1.45, Math.min(1.45, tview.rx + (e.clientY - tdrag.y) * 0.01));
+        tdrag = { x: e.clientX, y: e.clientY }; twinDraw('a'); twinDraw('b');
+      });
+      const up = () => (tdrag = null);
+      c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+    });
+
+    // ================= tabs, visibility, theme =================
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      tab = b.dataset.tab as 'live' | 'temps';
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== tab));
+      root.querySelectorAll<HTMLElement>('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== tab));
+      if (tab === 'live') { draw(); kick(); } else tempsRun();
+    }));
+    if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) { kick(); tkick(); } }).observe(root);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { kick(); tkick(); } });
+    new MutationObserver(() => {
+      pal = palette(); sprites.clear();
+      if (calm() && running) { running = false; runLabel(); notes(); }
+      if (tab === 'live') { draw(); hud(); } else { twinDraw('a'); twinDraw('b'); tkick(); }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    if ('ResizeObserver' in window) {
+      let wd = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - wd) > 4) { wd = nw; if (tab === 'live') draw(); else tempsRun(); } }).observe(root);
+    }
+
+    cv.className = mode();
+    runLabel(); stretchBtn();
+    reset();
+  });
+</script>
