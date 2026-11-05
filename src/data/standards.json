@@ -846,6 +846,24 @@
    "title": "Hydrogen piping and pipelines",
    "cat": "design",
    "why": "Material and strength limits for hydrogen piping, including which steels may be used and at what strength."
+  },
+  {
+   "ref": "BS EN 13906-1",
+   "title": "Cylindrical helical springs: compression springs, calculation and design",
+   "cat": "hardware",
+   "why": "Rate, stress with the stress correction factor, solid length, the minimum gaps between coils and buckling for a compression spring; and the permissible stress from the wire strength."
+  },
+  {
+   "ref": "BS EN 15800",
+   "title": "Cylindrical helical springs made from round wire: quality specifications",
+   "cat": "hardware",
+   "why": "The tolerance grades (1, 2, 3) for coil diameter, free length, load and the squareness of a spring. Name the grade on the drawing."
+  },
+  {
+   "ref": "BS EN 10270-1 / -2 / -3",
+   "title": "Steel wire for mechanical springs: patented, oil-hardened and tempered, stainless",
+   "cat": "material",
+   "why": "The spring wire grades and their minimum tensile strength by diameter, which sets the permissible stress of the spring."
   }
  ]
 }

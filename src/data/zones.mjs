@@ -90,6 +90,7 @@ export const REBUILT = {
   stack: 'drawing/tolerance-stack',
   drawing: 'drawing/drawing-frame',
   standards: 'drawing/standards',
+  guides: 'drawing/design-guides',
   release: 'drawing/revision-and-sign-off',
   export: 'drawing/archive-and-export',
   surf: 'drawing/surface-finish',

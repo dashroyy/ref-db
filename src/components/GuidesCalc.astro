@@ -1,0 +1,293 @@
+---
+// Design guides: three tools for the guides that no other zone covers. The flat pattern of a bent part, a helical
+// compression spring to EN 13906-1, and the shear along a bonded lap joint under load. Each ends with a callout to
+// copy onto the drawing. Logic in src/lib/guides.ts (unit-tested); UI only here.
+import { BEND_CLASSES, SPRING_MATERIALS, SEATING, ADHESIVES } from '../lib/guides';
+import { withProps, slug } from '../lib/materials';
+import MaterialSelect from './MaterialSelect.astro';
+
+const TABS = [{ key: 'sheet', name: 'Sheet metal' }, { key: 'spring', name: 'Spring' }, { key: 'lap', name: 'Bonded lap' }];
+const ADHERENDS = withProps(['E'], ['metal', 'composite']);
+const AL = slug('Al 2024-T3');
+---
+
+<div class="calc gdcalc" data-guidescalc>
+  <div class="calc-head"><span>Design guide tools</span><span class="head-btns"><button type="button" class="chip" data-load-example>Load worked example</button><button type="button" class="chip" data-copy>Copy callout</button></span></div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    {TABS.map((t, i) => <button type="button" role="tab" class="chip" data-tab={t.key} aria-selected={i === 0 ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="sheet">
+        <div class="row2">
+          <label>Material<select name="sc">{BEND_CLASSES.map((c, i) => <option value={i}>{c.name}</option>)}</select></label>
+          <label>Thickness t (mm)<input name="st" type="number" min="0" step="any" value="1.5" /></label>
+          <label>Inside radius R (mm)<input name="sr" type="number" min="0" step="any" value="2" /></label>
+          <label>Bend angle (°)<input name="sa" type="number" min="0" max="179" step="any" value="90" /></label>
+          <label>K-factor (from your shop)<input name="sk" type="number" min="0" max="0.5" step="any" placeholder="typical 0.33–0.50" data-factor /></label>
+          <label>Legs, outside to the sharps (mm)<input name="sl" type="text" value="25, 40, 25" /></label>
+        </div>
+        <p class="hint">Legs in order, comma-separated, each measured to the virtual sharp of the outside faces. All bends equal.</p>
+      </fieldset>
+      <fieldset data-panel="spring" hidden>
+        <div class="row2">
+          <label>Material<select name="pm">{SPRING_MATERIALS.map((m) => <option value={m.key}>{m.name}</option>)}</select></label>
+          <label>Shear modulus G (MPa)<input name="pG" type="number" min="0" step="any" value="81500" /></label>
+          <label>Young's modulus E (MPa)<input name="pE" type="number" min="0" step="any" value="206000" /></label>
+          <label>Wire diameter d (mm)<input name="pd" type="number" min="0" step="any" value="1" /></label>
+          <label>Mean coil diameter D (mm)<input name="pD" type="number" min="0" step="any" value="8" /></label>
+          <label>Active coils n<input name="pn" type="number" min="0.5" step="0.25" value="8" /></label>
+          <label>Ends<select name="pe"><option value="ground">Closed and ground</option><option value="closed">Closed, not ground</option></select></label>
+          <label>Free length L0 (mm)<input name="p0" type="number" min="0" step="any" value="25" /></label>
+          <label>Installed length L1 (mm)<input name="p1" type="number" min="0" step="any" value="20" /></label>
+          <label>Shortest length L2 (mm)<input name="p2" type="number" min="0" step="any" value="15" /></label>
+          <label>End seating<select name="ps">{SEATING.map((s) => <option value={s.nu}>{s.name} (ν = {s.nu})</option>)}</select></label>
+          <label>Permissible stress τzul (MPa)<input name="pz" type="number" min="0" step="any" placeholder="from EN 13906-1" data-factor /></label>
+          <label>Tolerance grade (EN 15800)<select name="pg"><option value="1">Grade 1 (fine)</option><option value="2" selected>Grade 2 (medium)</option><option value="3">Grade 3 (coarse)</option></select></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="lap" hidden>
+        <div class="row2">
+          <label>Adherend 1<MaterialSelect name="la" list={ADHERENDS} selected={AL} /></label>
+          <label>Thickness t1 (mm)<input name="lt1" type="number" min="0" step="any" value="2" /></label>
+          <label>Adherend 2<MaterialSelect name="lb" list={ADHERENDS} selected={AL} /></label>
+          <label>Thickness t2 (mm)<input name="lt2" type="number" min="0" step="any" value="2" /></label>
+          <label>Width b (mm)<input name="lw" type="number" min="0" step="any" value="25" /></label>
+          <label>Overlap L (mm)<input name="lL" type="number" min="0" step="any" value="25" /></label>
+          <label>Adhesive<select name="lad">{ADHESIVES.map((a) => <option value={a.key}>{a.name}</option>)}</select></label>
+          <label>Adhesive shear modulus Ga (MPa)<input name="lG" type="number" min="0" step="any" value="800" /></label>
+          <label>Bondline ta (mm)<input name="lta" type="number" min="0" step="any" value="0.13" /></label>
+          <label>Adhesive shear strength τu (MPa)<input name="lu" type="number" min="0" step="any" value="35" /></label>
+          <label>Applied load P, optional (N)<input name="lP" type="number" min="0" step="any" /></label>
+        </div>
+        <p class="hint">Typical adhesive values fill in from the list: replace them with your adhesive's datasheet. Shear only: a single lap also peels.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+    <div class="gd-out">
+      <dl class="readouts" data-out></dl>
+      <figure class="hc-fig gd-fig"><svg data-chart role="img" aria-label="Chart"></svg><figcaption data-cap></figcaption></figure>
+      <pre class="gd-callout" data-callout></pre>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Sheet metal: bend allowance θ·(R + K·t), bend deduction 2·tan(θ/2)·(R + t) − BA, makeability rules of thumb from
+    shop practice. Springs: EN 13906-1 (rate, stress with the Bergsträsser factor, solid length, the minimum gaps and
+    buckling). Bonded laps: Volkersen shear lag, elastic, without the bending and peel of a single lap. The K-factor
+    and the permissible stress are not supplied: take them from your press-brake shop and from EN 13906-1 with your
+    wire's tensile strength.
+  </div>
+</div>
+
+<style is:global>
+  .gdcalc .calc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .gdcalc .calc-body > * { min-width: 0; }
+  .gd-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; }
+  .gd-out > * { margin: 0 !important; min-width: 0; }
+  .gd-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .gd-callout { white-space: pre-wrap; font: 0.78rem/1.6 var(--sl-font-mono); letter-spacing: 0.03em; padding: 0.7rem 0.9rem; border: 1.5px dashed var(--rd-accent); border-radius: 4px; background: color-mix(in srgb, var(--rd-accent) 5%, transparent); color: var(--sl-color-white); overflow-wrap: anywhere; }
+  .gd-callout:empty { display: none; }
+</style>
+
+<script>
+  import { BEND_CLASSES, SPRING_MATERIALS, ADHESIVES, bendAllowance, outsideSetback, bendDeduction, flatLength, bendChecks, springCheck, lapOmega, lapShear, lapCapacity, usefulOverlap, type Bend } from '../lib/guides';
+  import { material } from '../lib/materials';
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const ro = (cls: string, dt: string, dd: string, small: string) => `<div class="readout ${cls}"><dt>${dt}</dt><dd>${dd} <small>${small}</small></dd></div>`;
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : '—');
+  const ticks = (lo: number, hi: number, n = 4) => {
+    const span = hi - lo || 1, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((s) => span / s <= n + 0.5) ?? 10 * mag;
+    const out: number[] = []; for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(10)); return out;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-guidescalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const val = (n: string) => field(n).value;
+    const num = (n: string) => (val(n).trim() === '' ? NaN : +val(n));
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
+    let mode = 'sheet';
+    const width = () => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const out = (h: string) => ($('[data-out]').innerHTML = h);
+    const notes = (items: [string, string][]) => ($('[data-notes]').innerHTML = items.map(([c, t]) => `<li class="${c}">${t}</li>`).join(''));
+    const callout = (t: string) => ($('[data-callout]').textContent = t);
+    const draw = (W: number, H: number, body: string, cap: string) => { svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = body; $('[data-cap]').textContent = cap; };
+
+    // ---------- sheet metal ----------
+    function runSheet() {
+      const cls = BEND_CLASSES[+val('sc')], t = num('st'), R = num('sr'), angle = num('sa'), K = num('sk');
+      const legs = val('sl').split(/[,;\s]+/).map(Number).filter((x) => x > 0);
+      if (!(t > 0 && R >= 0 && angle > 0 && angle < 180 && legs.length >= 1)) { out(ro('bad', 'Part', '—', 'enter the thickness, a radius, an angle below 180° and at least one leg')); notes([]); callout(''); draw(width(), 10, '', ''); return; }
+      const hasK = K > 0 && K <= 0.5, b: Bend = { t, R, angle, K: hasK ? K : 0.4 };
+      const c = bendChecks(b, legs, cls), nb = legs.length - 1, L = flatLength(legs, b);
+      out((hasK ? ro('primary', 'Flat length', `${f(L)} mm`, `${legs.length} legs, ${nb} bend${nb === 1 ? '' : 's'} of ${angle}°`) : ro('bad', 'Flat length', '—', 'enter the K-factor from your press-brake shop'))
+        + (hasK ? ro('', 'Bend allowance', `${f(bendAllowance(b), 3)} mm`, 'neutral axis through each bend, θ·(R + K·t)') + ro('', 'Bend deduction', `${f(bendDeduction(b), 3)} mm`, `per bend: 2 × setback ${f(outsideSetback(b), 3)} − allowance`) : '')
+        + ro(c.radius, 'Inside radius', `${f(c.rt, 2)} t`, `${esc(cls.name.split(' (')[0])}: about ${cls.rMin}t at least${cls.rOk > cls.rMin ? `, ${cls.rOk}t to be safe` : ''}`)
+        + ro(c.flange, 'Shortest flange', `${f(c.shortest, 1)} mm`, `at least 4t + R = ${f(c.flangeMin, 1)} mm, or it does not clear the die`)
+        + ro('', 'Hole to bend', `≥ ${f(c.holeMin, 2)} mm`, 'from the bend tangent: 2.5t + R, or the hole distorts')
+        + ro('', 'Bend relief', `≥ ${f(c.relief, 2)} mm wide`, 'where a bend meets an edge, or it tears'));
+      notes([
+        ['', 'The K-factor sets where the neutral axis lies (0.33 to 0.42 for soft material air-bent, 0.45 to 0.5 for hard or bottomed). It depends on the tooling: use the value of the shop that bends the part.'],
+        ['', 'Keep every bend the same radius: each radius is another tool and another set-up. Bend across the rolling direction where you can.'],
+        ...(c.radius !== 'ok' ? [['warn', 'Tight radius for this material: it can crack on the outside of the bend. Increase R, bend in a softer temper, or ask the shop.'] as [string, string]] : []),
+      ]);
+      callout(`MATERIAL: ${t} THK [ALLOY AND TEMPER] SHEET TO [SPEC]\nBEND: R${R} INSIDE${hasK ? `, K-FACTOR ${K}` : ''}, ALL BENDS ${angle}° ±1° UNLESS STATED\nDIMENSIONS TO OUTSIDE FACES. FLAT PATTERN${hasK ? ` ${f(L, 1)}` : ''} FOR REFERENCE ONLY.\nNO CRACKS ON BEND OUTSIDE. GRAIN DIRECTION AS SHOWN.`);
+      // drawing: the formed part (mid-surface, true thickness) and its flat pattern with the bend zones
+      const W = width(), th = (angle * Math.PI) / 180, setback = outsideSetback(b), rm = R + t / 2;
+      // start down the first leg; each bend turns the same way, so three legs make a channel (screen y is down)
+      type Pt = [number, number]; const path: Pt[] = []; let x = 0, y = 0, dir = Math.PI / 2;
+      const push = (len: number) => { x += Math.cos(dir) * len; y += Math.sin(dir) * len; path.push([x, y]); };
+      path.push([0, 0]);
+      legs.forEach((leg, i) => {
+        const straight = leg - (i > 0 ? setback : 0) - (i < legs.length - 1 ? setback : 0);
+        push(Math.max(0, straight));
+        if (i < legs.length - 1) { // the bend: an arc of the mid-surface radius about a centre inside the turn
+          const cx = x + Math.sin(dir) * rm, cy = y - Math.cos(dir) * rm, a0 = dir + Math.PI / 2;
+          for (let k = 1; k <= 12; k++) { const a = a0 - (th * k) / 12; path.push([cx + Math.cos(a) * rm, cy + Math.sin(a) * rm]); }
+          dir -= th; x = path[path.length - 1][0]; y = path[path.length - 1][1];
+        }
+      });
+      const xs = path.map((p) => p[0]), ys = path.map((p) => p[1]);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const flatW = hasK ? L : legs.reduce((s, l) => s + l, 0);
+      const span = Math.max(x1 - x0, flatW, 1), sc = (W - 40) / span, formedH = (y1 - y0) * sc;
+      const H = Math.round(formedH + 120), ox = 20 - x0 * sc, oy = 20 - y0 * sc + t * sc;
+      const p: string[] = [];
+      p.push(`<polyline points="${path.map(([px, py]) => `${(ox + px * sc).toFixed(1)},${(oy + py * sc).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-steel, #9aa7b0)" stroke-width="${Math.max(2, t * sc).toFixed(1)}" stroke-linejoin="round"/>`);
+      p.push(`<text x="${W - 20}" y="14" text-anchor="end" font-size="10" fill="var(--rd-muted)">FORMED · R${R} · t${t}</text>`);
+      const fy = oy + formedH + 40;
+      if (hasK) {
+        const fx = 20 + ((W - 40) - L * sc) / 2;
+        p.push(`<rect x="${fx.toFixed(1)}" y="${fy}" width="${(L * sc).toFixed(1)}" height="22" fill="color-mix(in srgb, var(--rd-steel, #9aa7b0) 22%, transparent)" stroke="var(--rd-steel, #9aa7b0)"/>`);
+        let s = 0; const BA = bendAllowance(b);
+        legs.forEach((leg, i) => {
+          const straight = leg - (i > 0 ? setback : 0) - (i < legs.length - 1 ? setback : 0); s += straight;
+          if (i < legs.length - 1) {
+            p.push(`<rect x="${(fx + s * sc).toFixed(1)}" y="${fy}" width="${Math.max(1, BA * sc).toFixed(1)}" height="22" fill="var(--rd-accent)" fill-opacity="0.35"/>`);
+            p.push(`<line x1="${(fx + (s + BA / 2) * sc).toFixed(1)}" x2="${(fx + (s + BA / 2) * sc).toFixed(1)}" y1="${fy - 4}" y2="${fy + 26}" stroke="var(--rd-accent)" stroke-dasharray="3 3"/>`);
+            s += BA;
+          }
+        });
+        p.push(`<line x1="${fx.toFixed(1)}" x2="${(fx + L * sc).toFixed(1)}" y1="${fy + 40}" y2="${fy + 40}" stroke="var(--rd-ink)"/><text x="${(fx + (L * sc) / 2).toFixed(1)}" y="${fy + 54}" text-anchor="middle" font-size="11" fill="var(--rd-ink)">FLAT ${f(L, 2)} mm</text>`);
+        p.push(`<text x="20" y="${fy - 8}" font-size="10" fill="var(--rd-muted)">FLAT PATTERN · bend zones shaded</text>`);
+      } else p.push(`<text x="20" y="${fy + 14}" font-size="11" fill="var(--rd-muted)">Enter the K-factor to see the flat pattern.</text>`);
+      draw(W, H + 10, p.join(''), 'The formed part to scale, and its flat pattern with the bend zones (bend allowance) and bend lines.');
+    }
+
+    // ---------- springs ----------
+    function runSpring() {
+      const s = { d: num('pd'), D: num('pD'), n: num('pn'), L0: num('p0'), G: num('pG'), E: num('pE'), ends: val('pe') as 'ground' | 'closed' };
+      const L1 = num('p1'), L2 = num('p2'), nu = num('ps'), tz = num('pz'), name = SPRING_MATERIALS.find((m) => m.key === val('pm'))?.name ?? '';
+      if (![s.d, s.D, s.n, s.L0, s.G, s.E, L1, L2].every((v) => v > 0) || s.D <= s.d || L1 > s.L0 || L2 > L1) { out(ro('bad', 'Spring', '—', 'enter d < D, coils, moduli, and lengths with L2 ≤ L1 ≤ L0')); notes([]); callout(''); draw(width(), 10, '', ''); return; }
+      const r = springCheck(s, L1, L2, nu), util = tz > 0 ? r.tau2 / tz : NaN;
+      out(ro('primary', 'Rate', `${f(r.R, 3)} N/mm`, `G·d⁴ / (8·D³·n), index w = ${f(r.w, 1)}`)
+        + ro('', 'Forces', `${f(r.F1, 1)} / ${f(r.F2, 1)} N`, `at L1 ${L1} and L2 ${L2} mm`)
+        + ro(Number.isFinite(util) ? (util <= 1 ? 'ok' : 'bad') : '', 'Stress at L2', `${f(r.tau2, 0)} MPa`, Number.isFinite(util) ? `${f(util * 100, 0)}% of τzul ${tz} MPa (k = ${f(r.k, 3)})` : `corrected with k = ${f(r.k, 3)}; enter τzul to check it`)
+        + ro(r.clear ? 'ok' : 'bad', 'Clear of solid', `L2 ≥ ${f(r.Ln, 2)} mm`, `solid length ${f(r.Lc, 2)} + minimum gaps ${f(r.Ln - r.Lc, 2)}`)
+        + ro(r.buckles ? 'bad' : 'ok', 'Buckling', r.sK === Infinity ? 'Cannot buckle' : `at ${f(r.sK, 1)} mm deflection`, r.buckles ? 'guide it on a rod or in a bore, or shorten L0/D' : `L0/D = ${f(s.L0 / s.D, 2)}, ν = ${nu}`)
+        + ro(r.indexOk ? '' : 'warn', 'At solid', `${f(r.tauSolid, 0)} MPa`, `${f(r.solidForce, 1)} N if it is ever pressed solid`));
+      notes([
+        ['', 'Rate is what the design depends on: specify it with a tolerance, and the load at one or two stated lengths. Free length follows from them.'],
+        ['', 'Springs relax, faster when hot. Ask for the set to be removed (pre-set) when the load must hold, and use X-750, A-286 or Nimonic 90 for hot service.'],
+        ...(!r.indexOk ? [['warn', `Spring index ${f(r.w, 1)} is outside 4 to 20: hard to coil (low) or unstable and tangling (high).`] as [string, string]] : []),
+        ...(!Number.isFinite(util) ? [['', 'Permissible stress: EN 13906-1 gives it from the minimum tensile strength of the wire, which depends on its diameter. Take it from the standard and the wire certificate.'] as [string, string]] : []),
+      ]);
+      callout(`COMPRESSION SPRING TO EN 13906-1\nMATERIAL: ${name.toUpperCase()}\nWIRE Ø${s.d}, MEAN Ø${s.D} (OD ${f(s.D + s.d, 2)}), FREE LENGTH ${s.L0}\nACTIVE COILS ${s.n}, TOTAL ${r.nt}, ENDS ${s.ends === 'ground' ? 'CLOSED AND GROUND' : 'CLOSED, NOT GROUND'}, WIND [RH]\nRATE ${f(r.R, 2)} N/mm. F1 ${f(r.F1, 1)} N AT ${L1}, F2 ${f(r.F2, 1)} N AT ${L2}\nSOLID LENGTH ${f(r.Lc, 2)} MAX. SET REMOVED.\nTOLERANCES TO EN 15800 GRADE ${val('pg')}. FINISH [SPEC].`);
+      // chart: force against length, from free length to solid
+      const W = width(), H = 230, Lp = 48, Rp = 14, T = 16, B = 30;
+      const xMin = Math.min(r.Lc, L2) * 0.9, xMax = s.L0 * 1.04, yMax = Math.max(r.solidForce, r.F2) * 1.12;
+      const X = (len: number) => Lp + ((len - xMin) / (xMax - xMin)) * (W - Lp - Rp), Y = (F: number) => T + (1 - F / yMax) * (H - T - B);
+      const p: string[] = [];
+      for (const v of ticks(0, yMax)) p.push(`<line x1="${Lp}" x2="${W - Rp}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lp - 6}" y="${(Y(v) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      for (const v of ticks(xMin, xMax, 5)) p.push(`<text x="${X(v).toFixed(1)}" y="${H - 10}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      p.push(`<rect x="${X(xMin).toFixed(1)}" y="${T}" width="${(X(r.Ln) - X(xMin)).toFixed(1)}" height="${H - T - B}" fill="var(--rd-accent)" fill-opacity="0.12"/><text x="${(X(xMin) + 4).toFixed(1)}" y="${H - B - 6}" font-size="9.5" fill="var(--rd-accent)">TOO CLOSE TO SOLID</text>`);
+      if (Number.isFinite(r.sK) && s.L0 - r.sK > xMin) p.push(`<line x1="${X(s.L0 - r.sK).toFixed(1)}" x2="${X(s.L0 - r.sK).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-warn)" stroke-dasharray="5 4"/><text x="${(X(s.L0 - r.sK) + 4).toFixed(1)}" y="${T + 26}" font-size="9.5" fill="var(--rd-warn)">BUCKLES</text>`);
+      p.push(`<line x1="${X(s.L0).toFixed(1)}" y1="${Y(0).toFixed(1)}" x2="${X(r.Lc).toFixed(1)}" y2="${Y(r.solidForce).toFixed(1)}" stroke="var(--rd-accent)" stroke-width="2.2"/>`);
+      for (const [len, F, lab] of [[L1, r.F1, 'L1'], [L2, r.F2, 'L2']] as const) p.push(`<circle cx="${X(len).toFixed(1)}" cy="${Y(F).toFixed(1)}" r="4.5" fill="var(--rd-accent)"/><text x="${(X(len) + 7).toFixed(1)}" y="${(Y(F) - 7).toFixed(1)}" font-size="11" fill="var(--rd-ink)">${lab} · ${f(F, 1)} N</text>`);
+      p.push(`<text x="${X(r.Lc).toFixed(1)}" y="${(Y(r.solidForce) - 8).toFixed(1)}" font-size="9.5" fill="var(--rd-muted)" text-anchor="${X(r.Lc) < Lp + 40 ? 'start' : 'middle'}">SOLID</text><line x1="${Lp}" x2="${W - Rp}" y1="${H - B}" y2="${H - B}" stroke="var(--rd-muted)" stroke-opacity="0.6"/>`);
+      draw(W, H, p.join(''), 'Force (N) against length (mm), from the free length down to solid.');
+    }
+
+    // ---------- bonded lap ----------
+    function runLap() {
+      const m1 = material(val('la')), m2 = material(val('lb'));
+      const j = { E1: m1?.E ?? NaN, t1: num('lt1'), E2: m2?.E ?? NaN, t2: num('lt2'), b: num('lw'), L: num('lL'), Ga: num('lG'), ta: num('lta') };
+      const tu = num('lu'), P = num('lP');
+      if (![j.E1, j.t1, j.E2, j.t2, j.b, j.L, j.Ga, j.ta, tu].every((v) => v > 0)) { out(ro('bad', 'Joint', '—', 'enter the thicknesses, width, overlap and the adhesive data')); notes([]); callout(''); draw(width(), 10, '', ''); return; }
+      const c = lapCapacity(j, tu), u = usefulOverlap(j), w = lapOmega(j), at2 = lapCapacity({ ...j, L: 2 * j.L }, tu).P;
+      const sP = P > 0 ? lapShear(j, P) : null;
+      out(ro('primary', 'Elastic capacity', `${f(c.P / 1000, 2)} kN`, `peak shear reaches τu ${tu} MPa at the ends`)
+        + ro('warn', 'Average-stress estimate', `${f(c.naive / 1000, 2)} kN`, `b·L·τu: ${f(c.ratio, 2)} times too high`)
+        + ro('', 'Twice the overlap', `${f(at2 / 1000, 2)} kN`, `+${f((at2 / c.P - 1) * 100, 1)}%; twice the width gives +100%`)
+        + ro(j.L >= u ? 'ok' : '', 'Useful overlap', `${f(u, 1)} mm`, `3.66/ω (ω = ${f(w, 3)}/mm): beyond it the capacity grows less than 5%`)
+        + (sP ? ro(sP.max <= tu ? 'ok' : 'bad', `At ${P} N`, `${f(sP.max, 1)} MPa peak`, `average ${f(sP.avg, 1)} MPa; τu ${tu} MPa`) : ''));
+      notes([
+        ['', 'The adhesive carries the load near the ends of the overlap; the middle carries little. More width adds strength; more length past the useful overlap only adds a low-stress middle, which helps against creep.'],
+        ['', 'Elastic, shear only. A toughened adhesive yields at the ends and carries more; a single lap also bends and peels. Test the joint as it will be made.'],
+        ['', 'Surface preparation is the joint: degrease, abrade or etch, and bond within the stated time. Keep silicone away from the bond shop.'],
+      ]);
+      callout(`BOND: ADHESIVE [SPEC], BONDLINE ${j.ta} ±0.05, OVERLAP ${j.L} MIN\nPREP: [ABRADE / ETCH] AND DEGREASE TO [PROCESS SPEC], BOND WITHIN [4] HRS\nCURE: PER [PROCESS SPEC]. FILLET AT ENDS OF OVERLAP.\nVERIFY BOND BY [NDT METHOD] TO [ACCEPTANCE]. TRAVELLER COUPON PER BATCH.`);
+      // chart: shear along the overlap (top) and capacity against overlap (bottom)
+      const W = width(), Lp = 48, Rp = 14, H1 = 150, H2 = 170, gap = 34, H = H1 + gap + H2;
+      const p: string[] = [];
+      const s1 = lapShear(j, 1), n = 80, tmax = Math.max(s1.max, s1.avg) * 1.1;
+      const X1 = (x: number) => Lp + (x / j.L) * (W - Lp - Rp), Y1 = (v: number) => 14 + (1 - v / tmax) * (H1 - 34);
+      for (const v of ticks(0, tmax / s1.avg)) { const vv = v * s1.avg; if (vv > tmax) continue; p.push(`<line x1="${Lp}" x2="${W - Rp}" y1="${Y1(vv).toFixed(1)}" y2="${Y1(vv).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lp - 6}" y="${(Y1(vv) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}×</text>`); }
+      const pts = Array.from({ length: n + 1 }, (_, k) => { const x = (k / n) * j.L; return `${X1(x).toFixed(1)},${Y1(Math.abs(s1.tau(x))).toFixed(1)}`; }).join(' ');
+      p.push(`<polygon points="${X1(0).toFixed(1)},${Y1(0).toFixed(1)} ${pts} ${X1(j.L).toFixed(1)},${Y1(0).toFixed(1)}" fill="var(--rd-accent)" fill-opacity="0.18"/><polyline points="${pts}" fill="none" stroke="var(--rd-accent)" stroke-width="2"/>`);
+      p.push(`<line x1="${Lp}" x2="${W - Rp}" y1="${Y1(s1.avg).toFixed(1)}" y2="${Y1(s1.avg).toFixed(1)}" stroke="var(--rd-muted)" stroke-dasharray="5 4"/><text x="${W - Rp}" y="${(Y1(s1.avg) - 4).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--rd-muted)">AVERAGE</text>`);
+      p.push(`<text x="${Lp}" y="${H1 - 6}" font-size="9.5" fill="var(--rd-muted)">0</text><text x="${W - Rp}" y="${H1 - 6}" text-anchor="end" font-size="9.5" fill="var(--rd-muted)">L = ${j.L} mm</text><text x="${Lp + 4}" y="10" font-size="9.5" fill="var(--rd-ink)">SHEAR ALONG THE OVERLAP, × AVERAGE</text>`);
+      // capacity against overlap length
+      const top = H1 + gap, Lmax = Math.max(2.5 * j.L, 2 * u), cmax = Math.min(c.Pinf * 1.6, tu * j.b * Lmax) * 1.05;
+      const X2 = (Lv: number) => Lp + (Lv / Lmax) * (W - Lp - Rp), Y2 = (Pv: number) => top + 14 + (1 - Math.min(Pv, cmax) / cmax) * (H2 - 40);
+      for (const v of ticks(0, cmax / 1000)) p.push(`<line x1="${Lp}" x2="${W - Rp}" y1="${Y2(v * 1000).toFixed(1)}" y2="${Y2(v * 1000).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lp - 6}" y="${(Y2(v * 1000) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      for (const v of ticks(0, Lmax, 5)) p.push(`<text x="${X2(v).toFixed(1)}" y="${top + H2 - 10}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      const cap = Array.from({ length: 81 }, (_, k) => { const Lv = Math.max(0.01, (k / 80) * Lmax); return `${X2(Lv).toFixed(1)},${Y2(lapCapacity({ ...j, L: Lv }, tu).P).toFixed(1)}`; }).join(' ');
+      p.push(`<polyline points="${X2(0).toFixed(1)},${Y2(0).toFixed(1)} ${X2(Lmax).toFixed(1)},${Y2(tu * j.b * Lmax).toFixed(1)}" fill="none" stroke="var(--rd-warn)" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+      p.push(`<polyline points="${cap}" fill="none" stroke="var(--rd-accent)" stroke-width="2.2"/><circle cx="${X2(j.L).toFixed(1)}" cy="${Y2(c.P).toFixed(1)}" r="4.5" fill="var(--rd-accent)"/>`);
+      p.push(`<line x1="${X2(u).toFixed(1)}" x2="${X2(u).toFixed(1)}" y1="${top + 14}" y2="${top + H2 - 26}" stroke="var(--rd-ok)" stroke-dasharray="3 3"/><text x="${(X2(u) + 4).toFixed(1)}" y="${top + H2 - 30}" font-size="9.5" fill="var(--rd-ok)">USEFUL</text>`);
+      p.push(`<text x="${Lp + 4}" y="${top + 8}" font-size="9.5" fill="var(--rd-ink)">CAPACITY (kN) AGAINST OVERLAP (mm)</text><text x="${W - Rp}" y="${(Y2(Math.min(cmax, tu * j.b * Lmax * 0.98)) + 14).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--rd-warn)">b·L·τu</text>`);
+      draw(W, H, p.join(''), 'Top: shear along the overlap, as a multiple of the average; it peaks at the ends. Bottom: elastic capacity against overlap length; it levels off, while the average-stress estimate (dashed) keeps rising.');
+    }
+
+    const run = () => (mode === 'sheet' ? runSheet() : mode === 'spring' ? runSpring() : runLap());
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (key: string) => {
+      mode = key;
+      tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === key)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== key));
+      run();
+    };
+    tabs.forEach((b) => b.addEventListener('click', () => select(b.dataset.tab!)));
+    // a material or an adhesive fills its typical values; they stay editable
+    field('pm').addEventListener('change', () => { const m = SPRING_MATERIALS.find((x) => x.key === val('pm')); if (m) { field('pG').value = String(m.G); field('pE').value = String(m.E); } });
+    field('lad').addEventListener('change', () => { const a = ADHESIVES.find((x) => x.key === val('lad')); if (a) { field('lG').value = String(a.G); field('lu').value = String(a.tau); field('lta').value = String(a.ta); } });
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-copy]')!.addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement, label = btn.textContent;
+      try { await navigator.clipboard.writeText($('[data-callout]').textContent ?? ''); btn.textContent = 'Copied'; } catch { btn.textContent = 'Copy failed'; }
+      window.setTimeout(() => (btn.textContent = label), 1500);
+    });
+    // The worked example: the bracket, the latch spring and the doubler of the page. Its K-factor and permissible
+    // stress are for the example only.
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => {
+      const v: Record<string, string> = {
+        sc: '0', st: '1.5', sr: '2', sa: '90', sk: '0.38', sl: '25, 40, 25',
+        pm: 'sh', pG: '81500', pE: '206000', pd: '1', pD: '8', pn: '8', pe: 'ground', p0: '25', p1: '20', p2: '15', ps: '0.5', pz: '1000', pg: '2',
+        la: 'al-2024-t3', lt1: '2', lb: 'al-2024-t3', lt2: '2', lw: '25', lL: '25', lad: 'film', lG: '800', lta: '0.15', lu: '35', lP: '',
+      };
+      for (const [k, x] of Object.entries(v)) field(k).value = x;
+      const note = $('[data-example-note]');
+      note.textContent = 'Worked example loaded. The K-factor 0.38 and the permissible stress 1000 MPa are for this example only: use your press-brake shop\'s K-factor, and the permissible stress from EN 13906-1 with your wire\'s tensile strength.';
+      note.hidden = false;
+      run();
+    });
+    if ('ResizeObserver' in window) { let wd = 0; new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - wd) > 8) { wd = nw; run(); } }).observe(svg); }
+    run();
+  });
+</script>

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { STANDARDS, CATS, tokens, names, citedBy, accessFor, checkRefs } from '../src/lib/standards.ts';
 
 test('the register: every standard has a category and a source', () => {
-  assert.equal(STANDARDS.length, 141);
+  assert.equal(STANDARDS.length, 144);
   for (const s of STANDARDS) {
     assert.ok(CATS.some((c) => c.key === s.cat), s.ref);
     assert.ok(s.title && s.why && !/—/.test(s.title + s.why), s.ref);

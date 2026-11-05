@@ -1,0 +1,424 @@
+---
+title: Design guides
+description: "Short guides to the details that drawings most often get wrong, each with a callout to copy onto the drawing: seals, bolts, threads, fits, surface texture and treatments, edges, welds, sheet metal, castings and forgings, metal AM, inspection, temperature, stacks, bonding and springs. With tools for flat patterns, springs and bonded laps."
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import GuidesCalc from '../../../components/GuidesCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Open the guide you need: the rules that matter, then a callout to copy onto the drawing.</div>
+  <div><b>Before this</b><a href="../drawing-frame/">Drawing frame & notes</a> · <a href="../standards/">Standards</a></div>
+  <div><b>Related</b><a href="../fits-and-limits/">Fits & limits</a> · <a href="../../joints/bolted-joints/">Bolted joints</a> · <a href="../../seals/o-ring-design/">O-ring design</a></div>
+</div>
+
+## Why this matters
+
+Most rework does not come from the analysis. It comes from a detail: an O-ring groove with a sharp edge, a tapped
+hole too shallow for its drill, an anodised bore that no longer takes its pin, a bracket that cracks on the press
+brake. Each of these has a known rule. These guides put the rules in one place, and each ends with a callout in the
+form it takes on the drawing. Replace the values in square brackets with your own.
+
+Where a zone of this site covers a subject in full, the guide is a summary and links to it. Sheet metal, edges,
+castings and forgings, bonding and springs have no zone of their own, so their guides go further, and the last three
+have a tool.
+
+<Analogy title="A pre-flight checklist">
+  A pilot knows how to fly. The checklist is for the items that are easy to forget when everything else goes well. A
+  design guide is the same: not a course in the subject, but the short list that stops a known mistake from reaching
+  the shop.
+</Analogy>
+
+## Joints and hardware
+
+### O-rings and static seals
+
+- **Choose the standard first.** BS ISO 3601 for new metric designs, AS568 for US-origin equipment, BS 4518 and
+  BS 1806 on legacy UK hardware. Do not put a ring of one standard in a groove of another.
+- **Squeeze:** 15 to 30% for a static radial seal, 20 to 30% for a face seal, 10 to 20% reciprocating, 5 to 15%
+  rotary. **Groove fill** 60 to 85%, never above about 90%: rubber does not compress, and it swells.
+- **Stretch** on the inside diameter 1 to 5%. Above about 10 MPa, or with a large extrusion gap, add back-up rings.
+- **Dimension the groove, not the ring.** A 15 to 20° lead-in, and no sharp edge anywhere the ring slides. Counterface
+  Ra 1.6 for a static seal, 0.4 to 0.8 for a dynamic one.
+- **Compound with its hardness:** NBR for mineral oil and fuel; FKM for fuel and hot oil, not phosphate esters; EPDM
+  for phosphate esters, water and brake fluid, never mineral oil.
+
+The groove at its tolerance corners, the compounds and the test: [O-ring design](../../seals/o-ring-design/) and
+[Sealing strategy](../../seals/sealing-strategy/).
+
+```text wrap
+ITEM 7: O-RING, BS ISO 3601-1, [ID × CS], FKM [75] IRHD, GRADE N
+GROOVE: DIMENSIONS AND TOLERANCES AS SHOWN, Ra 0.8 ON SEALING FACES
+LEAD-IN 15° MIN. NO SHARP EDGES ON THE SEAL PATH. FIT SEAL LIGHTLY GREASED PER [ASSY SPEC].
+```
+
+### Bolts and bolted joints
+
+- **Property class:** 8.8 means Rm 800 MPa and a yield of 0.8 × 800 = 640 MPa; 10.9 is 1000 and 900; 12.9 is 1200 and
+  1080. Stainless A2-70 and A4-70: Rm 700 MPa, 0.2% proof about 450 MPa.
+- **Call standard parts by standard, size, class and finish:** ISO 4014 and 4017 hexagon bolts and screws, ISO 4762
+  socket head, ISO 4032 nuts, ISO 7089 washers. On aerospace hardware, call the part number (NAS, MS, AN or the
+  programme's) and allow no substitutes: plating changes both strength and friction.
+- **Engagement in a tapped hole:** at least 1d in steel, 1.5d in aluminium, 2d in plastics, or use an insert.
+- **Torque is a stand-in for preload.** T ≈ K·F·d is a first estimate; K changes with lubrication and plating, so
+  state every torque with its lubrication condition. Preload and torque from VDI 2230:
+  [Bolted joints](../../joints/bolted-joints/).
+- **Lock on purpose:** an all-metal prevailing-torque nut where it is hot, a nylon insert below about 120 °C, an
+  anaerobic adhesive, or a positive lock. A plain spring washer does not lock under vibration:
+  [Locking & retention](../../joints/locking-and-retention/).
+- **Edges and pitch:** hole centre at least 2d from an edge in sheet, and about 4d between fasteners.
+
+```text wrap
+BOM: BOLT, HEX HD, ISO 4014 - M8 × 45 - 10.9, [FINISH SPEC]
+WASHER ISO 7089 - 8 - 300 HV UNDER HEAD AND NUT
+NOTE: TIGHTEN M8 BOLTS TO [24] N·m ±10%, THREADS LUBRICATED WITH [SPEC]
+```
+
+### Threads and tapped holes
+
+- **Metric callout:** M8 × 1.25 - 6H, that is size, pitch and tolerance class. 6H for holes, 6g for external threads.
+  Write the pitch even when it is coarse.
+- **Blind holes:** give the full-thread depth the joint needs. The shop adds the tap run-out (2 to 3 pitches) and the
+  drill point. Where space is tight, give the thread depth and the maximum drill depth. Countersink the entry 90°.
+- **Inserts** (wire thread or key-locked) in aluminium, magnesium and plastics, and wherever a joint is often
+  reassembled. Tap the hole to the insert maker's data.
+- **Flight-critical external threads** are often MJ or UNJ, with a controlled root radius, and rolled after heat
+  treatment. Do not draw a cut thread where the stress report assumed a rolled MJ thread.
+
+Limits of size, thread classes and the stress area: [Threads](../../joints/threads/).
+
+```text wrap
+4 × M6 × 1 - 6H ↧ 12 MIN FULL THREAD, DRILL Ø5 ↧ 16 MAX
+M10 × 1.5 - 6H THRU, CSK 90° × Ø10.5 BOTH SIDES
+INSERT: [WIRE THREAD INSERT] M8 × 1.25 × 1.5D. TAP TO THE INSERT MAKER'S DATA.
+```
+
+### Limits, fits and dowels
+
+- **Hole basis:** keep the hole at H (it is drilled and reamed) and change the shaft. H7/f7 running, H7/g6 close
+  sliding, H7/h6 location, H7/k6 and H7/n6 transition, H7/p6 and H7/s6 press and shrink.
+- **Rolling bearings:** the ring that turns relative to the load takes the interference. Then use the bearing maker's
+  tables.
+- **Dowels:** two pins locate a plate. Make the first hole round and the second a slot in line with it (or use a
+  diamond pin), so the centre-distance tolerance does not lock the plate. Press each pin into one part and let it slip
+  in the other.
+- **Blind dowel holes need a vent:** trapped air stops the pin seating, and stops it ever coming out.
+
+Hole and shaft limits from ISO 286 and the fit at temperature: [Fits & limits](../fits-and-limits/).
+
+```text wrap
+Ø10 H7 REAM ↧ 20, VENT Ø2 THRU. DOWEL ISO 8734 - 10 × 24 - A - St
+SECOND POSITION: SLOT 10 H7 × 12, IN LINE WITH THE FIRST
+```
+
+## Surfaces and edges
+
+### Surface texture
+
+- **Ra by process:** sand cast 12.5 to 25; milled or turned 3.2, or 1.6 with a finishing pass; ground 0.4 to 0.8;
+  honed 0.1 to 0.4; lapped below 0.1.
+- **The cost step is below Ra 0.8:** it usually needs a second process, with its own set-up and inspection. Ask for it
+  only where a seal slides, a bearing runs or fatigue needs it.
+- **One general note,** then a local symbol only where the surface must be finer. ISO 21920 replaced ISO 1302 and
+  ISO 4287 in 2021; Ra means the same.
+
+Symbols, lay and the parameters beyond Ra: [Surface finish](../surface-finish/).
+
+```text wrap
+GENERAL: √ Ra 3.2 UNLESS OTHERWISE STATED (ISO 21920-1)
+LOCAL: √ Ra 0.4 GROUND, LAY ⊥ TO AXIS (SEAL JOURNAL)
+```
+
+### Surface treatments and plating
+
+- **Sulphuric anodise** (5 to 25 µm) for corrosion and paint key. It insulates: mask the earth points.
+- **Hard anodise** (25 to 75 µm) for wear. About half of it grows outward: say whether dimensions apply before or
+  after.
+- **Conversion coating** has almost no thickness and conducts: use it for bond, earth and EMC faces. Trivalent
+  coatings replace hexavalent chromate under REACH.
+- **On steel,** zinc-nickel replaces cadmium on new parts. **Stainless steel** is passivated after machining.
+- **Electroplated high-strength steel** (about 1000 MPa and above) is baked soon after plating to drive out hydrogen.
+  Put the bake on the drawing or in the process specification.
+- **Every finish note** names the governing specification, the masking, and when the dimensions apply.
+
+Thickness growth, selection and the galvanic pairs: [Coatings](../../materials/coatings/).
+
+```text wrap
+FINISH: SULPHURIC ACID ANODISE TO [DEF STAN 03-SERIES PART / COMPANY SPEC], SEALED
+MASK ALL TAPPED HOLES AND FACE A (BOND AREA: CONVERSION COATING ONLY)
+DIMENSIONS APPLY AFTER TREATMENT
+```
+
+### Edges and corners
+
+- **ISO 13715 makes an edge measurable.** Replace "break all sharp edges" with the edge symbol or a general note. A
+  minus value is an undercut, material removed; a plus value is a burr, material allowed to stay. "−0.1/−0.5" means
+  each external edge is removed by 0.1 to 0.5 mm, and no burr is allowed.
+- **Chamfer where people and seals touch:** a defined chamfer (C0.5) where it matters, the general edge note elsewhere.
+- **Internal corners of pockets:** the radius must be at least the cutter's. Use one value for all of them, slightly
+  larger than a standard cutter (R5.2 rather than R5, so the cutter does not dwell in the corner), and larger in deep
+  pockets: about a third of the depth keeps the cutter stiff.
+- **Fillets at changes of section** on any part that sees fatigue. A sharp internal corner is where the crack starts.
+- **Before release:** the title block gives the governing standard (BS 8888), the projection, the general tolerance,
+  the general surface texture, the edge note, material with condition, finish, and part marking. Every feature is
+  dimensioned once, from the datum that matters, and inspection can accept or reject every line on the sheet.
+
+```text wrap
+EDGES ISO 13715: −0.1/−0.5 UNLESS OTHERWISE STATED. NO BURRS.
+POCKET CORNER RADII R5.2 UNLESS OTHERWISE STATED.
+MARK PART NO. AND ISSUE PER [COMPANY SPEC], LOCATION SHOWN ⌂
+```
+
+## Making it
+
+### Welded fabrications
+
+- **ISO 2553 symbols:** the arrow points at the joint; the weld symbol on the solid reference line is the arrow side,
+  on the dashed line the other side. ASME reverses this logic, so state the system.
+- **Fillet size:** a4 is a 4 mm throat, z4 a 4 mm leg. A circle at the bend means all round; a flag means a site weld.
+- **Control what costs:** the quality level (ISO 5817 B, C or D) and the NDT extent. Machine precise faces after
+  welding. 6082 and 5083 weld (6082 loses strength in the heat-affected zone); 2024 and 7075 do not arc-weld.
+- **Keep welds out of the highest stress:** a weld is the fatigue detail of the part.
+
+Weld processes, procedures and their defects: [Welding](../../make/welding/).
+
+```text wrap
+WELD: FILLET a4 ALL ROUND, SYMBOLS TO ISO 2553. QUALITY ISO 5817 LEVEL C.
+WELD PROCEDURE QUALIFIED TO ISO 15614-[PART]. MACHINE FACE B AFTER WELDING.
+```
+
+### Sheet metal and bending
+
+When sheet bends, the outside stretches and the inside compresses. Between them is the neutral axis, which keeps its
+length: the flat pattern is measured along it.
+
+- **K-factor** is the depth of the neutral axis as a fraction of the thickness: about 0.33 to 0.42 for soft material
+  air-bent, 0.45 to 0.5 for hard or bottomed material. It depends on the tooling, so use the value of the shop that
+  bends the part.
+- **Bend allowance** BA = θ·(R + K·t), the neutral axis through the bend. **Bend deduction**
+  BD = 2·tan(θ/2)·(R + t) − BA. The flat length is the sum of the outside dimensions (to the virtual sharps) less one
+  BD for each bend.
+- **Smallest inside radius:** about 1t for soft aluminium and mild steel; 2t to 4t for 6082-T6, 6061-T6, 2024-T3
+  and 7075-T6, which crack if bent tighter. Bend across the rolling direction where you can.
+- **Shortest flange** about 4t + R, or it does not clear the die. **Holes** at least 2.5t + R from the bend, or they
+  distort. **Bend relief** at least t wide where a bend meets an edge, or it tears.
+- **One radius for every bend:** each radius is another tool and another set-up.
+- **On the drawing:** dimension to the outside faces throughout and say so; give the inside radius and the thickness;
+  give the flat pattern for reference, or the K-factor or bend deduction you used. Never dimension from a tangent
+  point: nobody can find it.
+
+The **Sheet metal** tool below draws the part and its flat pattern.
+
+```text wrap
+MATERIAL: 1.5 THK EN AW-5251-H22 SHEET TO BS EN 485-2
+BEND: R2.0 INSIDE, K-FACTOR [0.38], ALL BENDS 90° ±1° UNLESS STATED
+DIMENSIONS TO OUTSIDE FACES. FLAT PATTERN FOR REFERENCE ONLY. GRAIN DIRECTION AS SHOWN.
+```
+
+### Castings and forgings
+
+- **Draft:** 1 to 3° for sand castings, 0.5 to 2° for investment castings, more in deep pockets. Show the draft
+  direction and the parting line, or the foundry chooses them for you.
+- **Even sections:** a sudden change of thickness causes shrinkage porosity and hot tears. Blend with generous radii,
+  and taper the sections towards the feeder.
+- **Machining allowance:** typically 2 to 4 mm on sand castings, 0.5 to 1.5 mm on investment castings. Mark which
+  faces are machined.
+- **Datum targets** locate an as-cast surface: a rough face makes a poor datum feature on its own
+  ([Datums & position](../datums-and-position/)).
+- **Acceptance:** give the radiographic level (BS EN 12681-1) and the surface condition (BS EN 1370) for each zone.
+- **Forgings give grain flow,** and the grain flow is why the part is strong. Align it with the load path and enforce
+  it with a macro-etch on the first article. Properties are directional: longitudinal is best, short-transverse the
+  weakest.
+- **The short-transverse direction** is where stress-corrosion and sustained-load failures of high-strength
+  aluminium and steel start. If the part loads a forging or a thick plate through its thickness, decide it early: it
+  changes the material and the temper, not only the analysis.
+
+```text wrap
+CASTING: [ALLOY] TO [SPEC]. DRAFT 2° UNLESS STATED, PARTING LINE AS SHOWN.
+MACHINING ALLOWANCE 3 ON FACES MARKED ▽. AS-CAST SURFACES TO BS EN 1370 [CLASS].
+RADIOGRAPHY TO BS EN 12681-1, SEVERITY LEVEL [x] IN ZONES SHOWN.
+FORGING: GRAIN FLOW TO FOLLOW THE CONTOUR SHOWN. VERIFY BY MACRO-ETCH ON FIRST ARTICLE.
+```
+
+### Metal additive manufacturing
+
+- **Build orientation is a material property:** properties in the build direction are lower, most of all in fatigue.
+  Put the orientation on the drawing when it matters.
+- **Overhangs below about 45° need support,** and supports in an internal passage may be impossible to remove. Draw
+  teardrop or diamond holes instead of round ones.
+- **Stress relieve before the part leaves the build plate,** and HIP fatigue- and fracture-critical parts. Design to
+  the properties after HIP.
+- **Every internal cavity needs an exit for the powder,** and a way to prove that it is clean.
+- **As-built surfaces are about Ra 6 to 20:** call out every surface that must be machined, with stock on it.
+
+Process selection, AM qualification and the cost: [Process & AM](../../make/process-and-am/).
+
+### Choosing an NDT method
+
+- **Visual** first, always. **Penetrant** (BS EN ISO 3452) for surface-breaking flaws in any non-porous material.
+  **Magnetic particle** (BS EN ISO 9934) for surface and near-surface flaws, in ferromagnetic material only.
+- **Ultrasonic** for internal flaws, thickness and bonds; **radiography** for volume flaws such as porosity; **eddy
+  current** for surface flaws in conductors and in fastener holes; **CT** for the inside of complex and AM parts.
+- **Specify the acceptance, not only the method:** the standard, the sensitivity, the acceptance criteria and the
+  extent. "Inspect by penetrant" has no pass or fail.
+- **Design for inspection:** every method needs access. Ask how a feature will be inspected while the geometry can
+  still change.
+
+Methods, probability of detection and the flaw a life calculation assumes: [NDT](../../make/ndt/).
+
+## Analysis that reaches the drawing
+
+### Thermal expansion and fits at temperature
+
+- **Expansion coefficients, µm/m·K:** Invar 36 about 1.2; carbon/epoxy 0 to 2 along the fibre; molybdenum 5;
+  titanium 8.6; carbon steel 12; nickel superalloys 13; austenitic stainless 16; copper 17; aluminium 23;
+  magnesium 26; most polymers 50 to 100; PTFE 100 to 135.
+- **The mismatch is the problem.** An aluminium housing on a steel shaft loses about 0.11 mm of diametral
+  interference for each 100 mm of diameter and each 100 K. Check every fit between two families at both temperature
+  extremes.
+- **Shrink fits:** the diameter changes by α·D·ΔT. A 100 mm steel ring with 0.05 mm of interference needs about 40 K
+  only to close it, and more to slide on. Heat rather than freeze, and stay below the tempering temperature of a
+  heat-treated part.
+
+Fits and joints through a temperature range: [Differential expansion](../../joints/differential-expansion/); below
+about 200 K the coefficient is not constant: [Cryogenic design](../../materials/cryogenic/).
+
+```text wrap
+DIMENSIONS APPLY AT 20 °C.
+ASSEMBLY: HEAT ITEM 2 TO [120] °C MAX AND FIT TO ITEM 1.
+```
+
+### Tolerance stacks
+
+- **Worst case** adds every tolerance at its limit: every part assembles, and the tolerances are tight.
+  **Root-sum-square** is valid only for many independent, centred, roughly normal contributors, and accepts some
+  fallout. With fewer than about five contributors, or a safety-significant stack, use worst case.
+- **Draw the loop,** from one face of the gap through the parts and back. Give each contributor its sign, and turn
+  each geometric control into a ± contribution, with any bonus tolerance.
+- **Report the dominant contributor.** If the stack fails, first shorten the chain, change the datums or add an
+  adjustment. Tighter tolerances come last.
+
+The loop, the methods side by side, and Monte Carlo: [Tolerance stack](../tolerance-stack/).
+
+## Bonding and springs
+
+### Adhesive bonding
+
+- **Choose the family:** epoxy for structural strength and temperature (paste or film); structural acrylic where the
+  surface preparation is poor; polyurethane for flexibility between unlike materials; cyanoacrylate only to hold a
+  part while something else cures; anaerobic for threads and cylindrical fits; silicone to seal, not to carry load.
+- **Load the bond in shear,** never in peel or cleavage. Add a fillet at the ends of a lap, where peel starts.
+- **Make it wider, not longer.** The adhesive carries the load near the ends of the overlap and very little in the
+  middle. Past a useful overlap, about 3.7/ω, a longer lap adds almost nothing; a wider one adds in proportion. The
+  **Bonded lap** tool below shows why.
+- **Control the bondline,** typically 0.1 to 0.25 mm for a structural joint, with scrim cloth, glass beads or
+  stand-offs.
+- **Surface preparation is the joint.** Degrease, abrade or etch, degrease again, and bond within the stated time. On
+  aluminium, an etch or a conversion coating is much better than abrasion alone. Keep silicone out of the bond shop:
+  it cannot be cleaned off reliably.
+
+```text wrap
+BOND: ADHESIVE [SPEC], BONDLINE 0.15 ±0.05, OVERLAP [25] MIN
+PREP: [ABRADE / ETCH] AND DEGREASE TO [PROCESS SPEC], BOND WITHIN [4] HRS
+CURE: PER [PROCESS SPEC]. FILLET AT ENDS OF OVERLAP.
+VERIFY BOND BY [NDT METHOD] TO [ACCEPTANCE]. TRAVELLER COUPON PER BATCH.
+```
+
+### Springs and preload
+
+- **Specify the rate,** in N/mm with a tolerance, and the load at one or two stated lengths. The free length follows.
+- **It must not go solid in service:** a solid spring is a column, and something else breaks. EN 13906-1 also keeps a
+  minimum gap between the active coils at the shortest working length.
+- **Buckling:** a free length of more than about four times the mean diameter can buckle unless it is guided on a
+  rod or in a bore. How the ends are seated changes the limit.
+- **Set and relaxation:** springs lose load with time, faster when hot. Ask for the set to be removed (pre-set) when
+  the load must hold.
+- **Materials:** patented or oil-tempered spring wire (EN 10270-1 and -2) for general use; stainless steel
+  (EN 10270-3) for corrosion, with a modulus about 10 to 15% lower; X-750, A-286 or Nimonic 90 for hot springs;
+  beryllium copper for conductivity or no sparks.
+- **Specify it as a component,** not a shape: wire and mean diameter, free length, active and total coils, wind
+  direction, end type, rate, loads at lengths, the largest solid length, material, finish and the tolerance grade
+  (EN 15800).
+
+The **Spring** tool below checks a spring to EN 13906-1 and writes its specification.
+
+```text wrap
+COMPRESSION SPRING TO EN 13906-1, MATERIAL [EN 10270-1 SH]
+WIRE Ø[1.0], MEAN Ø[8.0], FREE LENGTH [25], ACTIVE COILS [8], TOTAL [10]
+ENDS CLOSED AND GROUND, WIND [RH]. RATE [2.49] N/mm. F2 [24.9] N AT [15]
+SOLID LENGTH [10.0] MAX. SET REMOVED. TOLERANCES TO EN 15800 GRADE [2].
+```
+
+## Calculator
+
+**Sheet metal** draws a bent part to scale with its flat pattern, gives the bend allowance, the bend deduction and the
+flat length, and checks the radius, the shortest flange and the hole distance. **Spring** checks a helical
+compression spring to EN 13906-1: rate, the forces and corrected stress at two lengths, the solid length with its
+minimum gaps, and buckling for the way the ends are seated. **Bonded lap** gives the shear along a bonded overlap
+under load, the elastic capacity, and how little a longer overlap adds. Each tab writes its callout; **Copy callout**
+copies it. The K-factor and the permissible spring stress start blank: they are your shop's and your programme's
+values.
+
+<GuidesCalc />
+
+## Worked example: a bracket, a spring and a doubler
+
+Three parts of an equipment rack: a sheet-metal bracket, the spring of a latch, and a bonded doubler. **Load worked
+example** sets all three tabs.
+
+1. **The bracket** is a channel in 1.5 mm 5251-H22: legs of 25, 40 and 25 mm to the outside sharps, R2 inside, two
+   90° bends. The press-brake shop gives K = 0.38 (for this example only). Bend allowance
+   (π/2)·(2 + 0.38 × 1.5) = 4.04 mm; setback (2 + 1.5) × tan 45° = 3.5 mm; bend deduction 2 × 3.5 − 4.04 = 2.96 mm.
+   Flat length 25 + 40 + 25 − 2 × 2.96 = 84.07 mm. R/t = 1.33, above 1t for this alloy; the 25 mm flanges are well
+   above 4t + R = 8 mm; holes stay at least 5.75 mm from each bend.
+2. **The latch spring** is EN 10270-1 wire, d = 1.0 mm, D = 8 mm (index 8), 8 active coils, closed and ground ends
+   (10 in total), free length 25 mm, installed at 20 mm and opened to 15 mm. Rate
+   81 500 × 1⁴ / (8 × 8³ × 8) = 2.49 N/mm, so 12.4 N installed and 24.9 N open. With k = 1.17 the stress at 15 mm is
+   594 MPa. Against a permissible stress of 1000 MPa (half of an Rm of 2000 MPa from the wire certificate, for this
+   example only) that is 59%. The solid length is 10.0 mm and the minimum gaps add 1.57 mm, so 15 mm is clear. With
+   L0/D = 3.1 and both ends seated, it cannot buckle.
+3. **The doubler** bonds two 2 mm 2024-T3 sheets with an epoxy film: 25 mm wide, 25 mm overlap, bondline 0.15 mm,
+   Ga = 800 MPa, lap-shear strength 35 MPa. The average-stress estimate b·L·τu gives 21.9 kN. The elastic shear lag
+   gives 6.46 kN: the peak at the ends is 3.4 times the average. The useful overlap is 13.5 mm, so doubling the
+   overlap to 50 mm adds 0.2%, while doubling the width to 50 mm doubles the capacity. Make the doubler wider. A
+   toughened film adhesive yields at the ends and carries more than the elastic value: test the joint as it will be
+   made.
+
+## Where this stops
+
+- **The rules of thumb are typical.** K-factors, the smallest radii, flange and hole distances depend on the press
+  brake and its tooling; the shop's values govern.
+- **The spring check is static.** Fatigue (the EN 13906-1 fatigue diagrams), surge and relaxation at temperature are
+  not included.
+- **The bonded lap is elastic and in shear only.** A single lap also bends and peels; heat and moisture weaken the
+  adhesive. Test the joint as it will be made and used.
+- **The guides are summaries.** Where a zone covers the subject, the zone governs.
+
+## On the drawing
+
+- **Complete callouts:** the standard and its issue ([Standards](../standards/)), the material with its condition, and
+  the finish with its specification.
+- **Values with their condition:** a torque with its lubrication, dimensions after treatment, dimensions at 20 °C.
+- **The acceptance, not only the method,** for welds, castings, bonds and NDT.
+- **No value that the shop must guess:** a K-factor or a flat pattern for sheet metal, a rate and loads for a spring,
+  a bondline and an overlap for a bond.
+
+## References and further reading
+
+- BS ISO 3601-1 and -2, O-rings; ISO 4014, 4017, 4032, 4762 and 7089, fasteners; ISO 965, metric threads;
+  ISO 286, limits and fits; ISO 8734, dowel pins.
+- ISO 21920, surface texture; ISO 13715, edges of undefined shape; ISO 2553 and ISO 5817, welds; BS EN 485-2,
+  aluminium sheet; BS EN 12681-1 and BS EN 1370, castings.
+- BS EN 13906-1, helical compression springs; BS EN 15800, spring tolerances; BS EN 10270-1, -2 and -3, spring wire.
+- VDI 2230, bolted joints.
+- Volkersen, O., Die Nietkraftverteilung in zugbeanspruchten Nietverbindungen mit konstanten Laschenquerschnitten,
+  Luftfahrtforschung 15, 1938.
+- Hart-Smith, L. J., Adhesive-Bonded Single-Lap Joints, NASA CR-112236, 1973.
+
+<Aside type="note">
+  Typical values and common practice, for screening and teaching. Your programme's specifications, your suppliers'
+  data and the current issue of each standard govern.
+</Aside>
