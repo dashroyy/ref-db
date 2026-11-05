@@ -1,0 +1,243 @@
+---
+title: Case closures and joints
+description: How to close a solid motor case. The end load that the closure joint carries, the choice between a bolted flange, a lock ring, radial pins and a thread, the hand checks for each shear joint at proof and burst, the joint ring, assembly after the grain is cast, and the lessons of segmented case joints, with a calculator and a worked example.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ClosureTypes from '../../../components/ClosureTypes.astro';
+import ClosureCalc from '../../../components/ClosureCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The closure joint carries the full pressure end load, many times the thrust: size it at proof and burst like the case, keep its seal closed, and put its groove, holes or thread in a thick joint ring.</div>
+  <div><b>Before this</b><a href="../case-sizing/">Case &amp; pressure vessel sizing</a></div>
+  <div><b>Leads to</b><a href="../../seals/sealing-strategy/">Sealing strategy</a>, for the seal at the joint</div>
+</div>
+
+## Why this matters
+
+A case needs at least one opening: the grain has to go in, and the nozzle has to be attached. The joint that closes
+that opening carries the pressure on the whole closure. For the 300 mm case at its MEOP of 10 MPa, this is 707 kN,
+24 times the thrust ([Load paths](../../joints/load-paths/#follow-the-pressure)). It is the most heavily loaded joint of
+the motor.
+
+The closure joint also has three other jobs. It must **seal**, and keep sealing while the case grows. It is where the
+case is **grooved, drilled or threaded**, which puts the highest stress concentration of the case in its most highly
+loaded part. And it is often **assembled after the grain is cast**, next to the loaded propellant. A strong joint can
+still fail at any of these.
+
+## The intuition: a lid on a jar
+
+<Analogy title="A lid on a jar of something that ferments">
+  The thread of the lid holds it on against the pressure of the gas inside, and it rarely strips. What fails is the
+  seal: the lid bulges, its rim lifts a little, and the gas escapes past the rubber ring. A motor closure is the same
+  problem with a thousand times the pressure. The joint must be strong enough not to let go, and stiff enough that the
+  seal does not lift.
+</Analogy>
+
+## The end load
+
+The pressure acts on everything inside the seal:
+
+$$
+F = p\,\frac{\pi d_s^2}{4}
+$$
+
+where $d_s$ is the diameter of the seal that closes the joint. A seal on a smaller diameter carries less load: this
+is one reason for flanged closures with face seals inboard, and for small polar openings. Size the joint at the
+**proof pressure** (no yield) and at the **design burst pressure** (no rupture), as for the case, with the fitting
+factor that your programme applies to joints. A pressure test has no thrust, so the closure carries the full load; in
+firing, an aft closure that holds the nozzle carries a little less.
+
+## Choosing the joint
+
+<ClosureTypes />
+
+| Joint | Carries the load by | Gives | Costs | Usual in |
+| --- | --- | --- | --- | --- |
+| Integral dome | Nothing: there is no joint | The lightest and most reliable end | The grain must go in through the other end | The forward end of most case-bonded motors |
+| Bolted flange | Preloaded bolts in tension | A seal on a smaller diameter, inboard of the bolts; easy to inspect and to take apart | Two thick flanges and many bolts; preload control | Aft closures and nozzle joints ([Bolted joints](../../joints/bolted-joints/)) |
+| Lock ring (shear ring, segmented key, inserted wire) | A ring in shear in grooves of the case and the closure | No flange: the closure fits inside the bore; quick to assemble | A groove in the case wall; no preload, so the joint has axial play | Closures of metal cases |
+| Radial pins or bolts | Pins in shear through the joint ring and a skirt of the closure | Simple machining, easy to inspect | Holes in the case wall; load sharing between pins; many parts | Small and medium motors, skirt attachments |
+| Threaded closure | The thread in shear | The fewest parts | Galling, cross-threading and thread damage on a large diameter; the flanks push the case out | Small motors and test hardware |
+| Tang and clevis with pins | Pins in double shear | Joins case segments in the field | Joint rotation that opens the seal gap | Large segmented motors |
+
+**The best joint is no joint.** Most case-bonded motors have a dome at the forward end that is part of the case, and
+one opening at the aft end. In a composite case, the openings are the polar bosses, and the joint is between the boss
+and the closure or the nozzle ([Composite cases](../composite-cases/#the-parts-that-the-sizing-leaves-out)).
+
+## Sizing the shear joints
+
+Each check is a stress, from the load $F$ at proof or burst, against an allowable of the part.
+
+**Lock ring,** in a case of bore $D$, with a ring of axial height $h$ in grooves $g_1$ deep in the case and $g_2$ in the
+closure, and a land $L$ from the groove to the end of the case:
+
+$$
+\tau_\text{ring} = \frac{F}{\pi D h}
+\qquad
+\sigma_\text{bearing} = \frac{F}{\pi g_1 (D + g_1)}
+\qquad
+\tau_\text{land} = \frac{F}{\pi (D + 2g_1) L}
+$$
+
+and the same bearing and land checks on the closure side. The groove in the softer part usually decides the capacity,
+not the ring. The ring has no preload. Thus the joint moves by its axial clearance when the pressure comes on, and the
+seal must accept the movement.
+
+**Radial pins,** $n$ pins of diameter $d$ in single shear, through a joint ring of wall $t$ with an edge distance $e$:
+
+$$
+\tau_\text{pin} = \frac{F}{n\,\pi d^2/4}
+\qquad
+\sigma_\text{bearing} = \frac{F}{n\,d\,t}
+\qquad
+\tau_\text{shear-out} = \frac{F}{2n\,(e - d/2)\,t}
+$$
+
+with the bearing allowable for the edge distance (MMPDS gives bearing values at $e/d$ = 1.5 and 2), and the same checks
+on the closure skirt. These are the lug checks of [Hand calcs](../../fundamentals/hand-calcs/#lugs-and-pins). All the
+pins share the load only if they all touch together: drill the case and the skirt together.
+
+**Threaded closure,** with the stripping areas of [Threads](../../joints/threads/#thread-stripping): the internal thread
+of the case shears on approximately $\tfrac{7}{8}\pi d L_e$ and the external thread of the closure on
+$\tfrac{3}{4}\pi D_1 L_e$. The 30° flanks also push the case outward with $F\tan 30°$. Over the engagement, this adds a
+hoop stress $F\tan 30° / (2\pi L_e t)$ in the case at the thread. For a large closure, this can be larger than the hoop
+stress from the gas.
+
+**In each case, check the net section of the case** at the groove, the holes or the thread, with the axial stress of
+the end load and the hoop stress together. A seal on the pressure side of the joint keeps the gas away from this
+section; the calculator still includes the gas pressure there, which is conservative.
+
+## The joint ring
+
+The case membrane of the 300 mm example is 1.4 mm thick. No groove, hole or thread fits in that. Thus the case gets
+thick at its end: a **joint ring**, forged and welded to the cylinder, or machined in one piece with it.
+
+- **The seal often sets its thickness, not the strength.** A bore seal in a thin wall opens as the case grows. The
+  [sealing-strategy example](../../seals/sealing-strategy/#worked-example-the-aft-closure-seal) needs a 16.5 mm joint
+  ring to keep a 5.33 mm O-ring squeezed at MEOP. The same ring then carries the lock-ring groove with a very large
+  margin.
+- **The taper from the membrane** to the joint ring is a discontinuity. It adds bending as the thin wall grows more than
+  the thick ring. Make the taper gradual, and analyse it.
+- **The groove root, the hole and the thread root** are the highest stress concentrations of the case. Give them
+  generous radii and a good surface. Check fatigue and fracture there: for a high-strength steel case, the critical
+  crack is small ([Leak before break](../../verify/leak-before-break/)), so these features need surface NDT (magnetic
+  particle or eddy current) after machining and after the proof test.
+- **Stiffness for the seal:** keep the closure stiff, so that it does not dish and pull the seal away from the case.
+
+## Assembly after casting
+
+For a case-bonded grain, the aft closure is usually installed after the grain is cast and cured. This changes the
+design:
+
+- **O-rings must go in without damage.** Use lead-in chamfers of 15° to 20° with no sharp edges, and keep the rings
+  away from threads, holes and grooves as they pass. Use a lubricant that is compatible with the O-ring and the
+  propellant ([Propellant](../propellant/#what-may-touch-it-materials-compatibility)).
+- **A lock ring must be fully seated,** and the inspector must be able to see it. A segmented ring goes in through a
+  window, and an inserted wire goes in through a tangential slot. Give a gauge or a visual check for the seating.
+- **Pins need aligned holes.** Match-drill the case and the closure skirt, and mark their position.
+- **Threads need protection** during the cast, and an anti-galling coating or a dry-film lubricant. A large thread
+  that is started at an angle can gall and seize part of the way in.
+- **Leak-check the joint** between its two seals before the motor leaves the factory
+  ([Sealing strategy](../../seals/sealing-strategy/#leak-check-ports)).
+
+## Segmented motors: the field joint
+
+Large motors are cast in segments and joined at the launch site. The segments join with a **tang and clevis**: the tang
+of one segment fits into the clevis of the next, and a ring of pins in double shear carries the end load. The joint is
+strong. Its problem is stiffness: under pressure the case wall bulges between the joints, the joint rotates, and the
+gap at the seals opens.
+
+On the Space Shuttle in January 1986, a field joint of a solid rocket booster opened in this way at ignition. The
+O-rings were cold, so they did not follow the opening gap, and hot gas went past them. The Rogers Commission found
+that the cause was the design of the joint, which was too sensitive to temperature and to other factors. The
+redesigned joint added a **capture feature** that limits the
+rotation, a **third O-ring**, and **heaters** that keep the joint warm. The general lesson applies to every closure:
+**a joint must be checked for how much it opens, not only for how much it carries.**
+
+## Calculator
+
+<ClosureCalc />
+
+The three tabs size a lock ring, radial pins or a threaded closure on the same case. The table gives each check at
+MEOP, and its margin at proof (against yield) and at design burst (against ultimate) when the factors are entered. For
+a bolted flange, use the [bolted-joint calculator](../../joints/bolted-joints/#calculator), which includes the preload
+and the joint diagram.
+
+## Worked example: a lock-ring aft closure for the 300 mm case
+
+The 300 mm D6AC case has a 16.5 mm joint ring at its aft end, from the
+[sealing-strategy example](../../seals/sealing-strategy/#worked-example-the-aft-closure-seal). The closure is a
+7075-T73 aluminium plug that seals on the 300 mm bore. It is held by a 17-4PH (H1025) lock ring, 5 mm high, in
+grooves 2.5 mm deep in the case and in the closure. The case land is 12 mm and the closure land 20 mm. MEOP is 10 MPa.
+The factors (proof 1.10, burst 1.25, fitting 1.15) are **for this example only**. Push **Load worked example**.
+
+1. **End load.** $10 \times \pi \times 150^2 = 707$ kN at MEOP. With the fitting factor, this is 894 kN at proof and
+   1016 kN at design burst.
+2. **Ring shear.** $707\,000 / (\pi \times 300 \times 5) = 150$ MPa at MEOP. At burst, 216 MPa against
+   $0.6 \times 1070 = 642$ MPa: **MS = +1.98**.
+3. **Groove bearing in the aluminium closure.** The bearing area is $\pi \times 2.5 \times 297.5 = 2337$ mm², so the
+   stress is 302 MPa at MEOP. At proof, 383 MPa against the 435 MPa yield: **MS = +0.14**. At burst, 435 MPa against
+   505 MPa: MS = +0.16. **This check governs.**
+4. **Groove bearing in the steel case:** 298 MPa at MEOP, MS = +2.55 at burst.
+5. **Lands:** 62 MPa in the case land and 38 MPa in the closure land at MEOP. Both have large margins.
+6. **Net section of the case at the groove:** 94 MPa (von Mises) at MEOP, MS = +10.2 at burst. The joint ring is
+   thick because of the seal, so its strength is far from critical.
+
+<Aside type="tip" title="What the example shows">
+  The groove in the aluminium closure governs, not the ring and not the case: as on the
+  [Retaining rings](../../joints/locking-and-retention/#retaining-rings) page, the softer part decides. Change the closure
+  to steel and the ring shear governs, at MS = +1.98. Change to the **Radial pins** tab: 24 pins of ⌀10 mm in 4340
+  through the joint ring and a 10 mm aluminium skirt give MS = +0.42 in pin shear, with the skirt bearing at +0.98. The
+  bolted flange of the [bolted-joints example](../../joints/bolted-joints/#worked-example-the-aft-closure) seals on a
+  260 mm diameter, so it carries 25% less load, but it needs 30 preloaded bolts and two flanges.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="Hand checks of the load path">
+  These checks size the parts that carry the end load. They do not show that the joint stays closed, or how long it
+  lives.
+</Aside>
+
+- **Stress concentration, fatigue and fracture** at the groove root, the holes and the thread root.
+- **Load sharing.** The first pin to touch and the first threads carry more than their share. The calculator divides
+  the load evenly.
+- **Ring rolling and pin bending.** A ring with chamfered or rounded faces rolls out of its groove at a lower load; a
+  pin with a gap between the parts bends.
+- **The closure itself.** The plate or plug of the closure bends under the pressure. Its stiffness sets how far the
+  seal opens. Analyse it as a plate, or with FEA.
+- **Joint opening.** Use [Sealing strategy](../../seals/sealing-strategy/) for the gap at the seal, and FEA for the
+  rotation of the joint.
+- **Temperature.** An aluminium closure in a steel case shrinks more when cold, which changes the fit and the seal.
+  See [Differential expansion](../../joints/differential-expansion/).
+
+## On the drawing
+
+- **The joint ring:** the material, the forging and the weld to the cylinder, the taper, and the radii at the groove
+  roots, holes and thread roots, with their surface finish.
+- **The groove, hole or thread** as critical features, with their tolerances and the inspection of each.
+- **The lock ring:** material, condition and the gap of a split ring; the seating check.
+- **Pins:** material, fit class and the match-drilling instruction.
+- **Threads:** the thread form and class, the coating or lubricant, and the assembly torque (if any).
+- **NDT of the joint ring** after machining and after proof, and the proof test that the joint sees.
+- **The seals and the leak check** of the joint ([O-ring design](../../seals/o-ring-design/)).
+
+## References and further reading
+
+- NASA SP-8025, *Solid Rocket Motor Metal Cases* (1970) (joints and closures of metal cases; free on NTRS).
+- *Report of the Presidential Commission on the Space Shuttle Challenger Accident* (the Rogers Commission), 1986.
+- E. F. Bruhn, *Analysis and Design of Flight Vehicle Structures*, Jacobs Publishing (1973) (lugs, pins and shear joints).
+- M. A. Melcon & F. M. Hoblit, "Developments in the analysis of lugs and shear pins", *Product Engineering* 24 (1953).
+- MMPDS, *Metallic Materials Properties Development and Standardization* (bearing allowables against the edge
+  distance).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme and the approval of the responsible
+  stress and safety authorities control the real closure design.
+</Aside>

@@ -1,0 +1,88 @@
+---
+// Four ways to close a motor case, in half section: a bolted flange, a lock ring, radial pins and a thread. Each shows
+// the thin case membrane, the thick joint ring, the closure, the part that carries the end load, the seal and the
+// pressure. Schematic, not to scale.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', load = 'var(--rd-warn)', seal = 'var(--rd-accent)', hot = 'var(--rd-hot)';
+const AX = 190, BORE = 70, RING = 50, MEM = 62; // local y: axis, bore, outer surface of the joint ring and of the membrane
+const panels = [
+  { x: 0, y: 0, title: 'Bolted flange', cap: 'bolts carry the load in tension' },
+  { x: 220, y: 0, title: 'Lock ring', cap: 'a ring in shear, in two grooves' },
+  { x: 0, y: 210, title: 'Radial pins', cap: 'pins in shear through the wall' },
+  { x: 220, y: 210, title: 'Threaded', cap: 'the thread carries it in shear' },
+];
+// case wall: membrane, taper, joint ring to the end of the case at x = end
+const caseWall = (end: number) => `M8,${MEM} L52,${MEM} L64,${RING} L${end},${RING} L${end},${BORE} L8,${BORE} Z`;
+const arrows = (x: number, ys: number[]) => ys.map((y) => `M${x - 26},${y} L${x - 3},${y} M${x - 9},${y - 4} L${x - 3},${y} L${x - 9},${y + 4}`).join(' ');
+const thread = Array.from({ length: 9 }, (_, k) => `${116 + k * 4},${BORE + (k % 2 ? -4 : 0)}`).join(' L');
+---
+
+<figure class="viz closure-types">
+  <p class="viz-title">Four ways to close a motor case</p>
+  <svg viewBox="0 0 440 420" role="img" aria-labelledby="ct-desc" style="max-width: 620px; margin: 0 auto;">
+    <desc id="ct-desc">
+      Four half sections of the end of a motor case. In each, the thin case wall thickens into a joint ring at the end,
+      the pressure pushes the closure out of the case, and one part carries that end load into the case. A bolted flange
+      carries it in bolts in tension, with a face seal inboard of the bolts. A lock ring sits half in a groove of the
+      case and half in a groove of the closure and carries it in shear. Radial pins go through the joint ring and a
+      skirt of the closure, in shear. A threaded closure carries it in the thread. In the last three, a radial seal on
+      the closure sits on the pressure side of the joint.
+    </desc>
+    {panels.map((pn, k) => (
+      <g transform={`translate(${pn.x},${pn.y})`}>
+        <rect x="2" y="2" width="216" height="204" rx="6" fill="none" stroke="var(--rd-line)"></rect>
+        <text x="110" y="18" text-anchor="middle" font-size="11.5" font-weight="700" fill={ink}>{pn.title}</text>
+        <line x1="8" x2="212" y1={AX} y2={AX} stroke={muted} stroke-dasharray="10 3 2 3" stroke-width="0.8"></line>
+        <text x="26" y="132" font-size="12" font-style="italic" fill={hot}>p</text>
+        {k === 0 && (
+          <g>
+            <path d={`${caseWall(150)} M140,24 L150,24 L150,${BORE} L140,${BORE} Z`} fill={steel} fill-opacity="0.85"></path>
+            <rect x="150" y="24" width="14" height={AX - 24} fill="var(--rd-blue)" fill-opacity="0.4" stroke="var(--rd-blue)"></rect>
+            <line x1="132" x2="172" y1="36" y2="36" stroke={load} stroke-width="3"></line>
+            <rect x="128" y="31" width="6" height="10" fill={load}></rect>
+            <rect x="170" y="31" width="6" height="10" fill={load}></rect>
+            <circle cx="150" cy="61" r="3" fill={seal}></circle>
+            <path d={arrows(150, [104, 136, 168])} fill="none" stroke={hot} stroke-width="1.6"></path>
+          </g>
+        )}
+        {k === 1 && (
+          <g>
+            <path d={caseWall(150)} fill={steel} fill-opacity="0.85"></path>
+            <rect x="92" y={BORE} width="80" height={AX - BORE} fill="var(--rd-blue)" fill-opacity="0.4" stroke="var(--rd-blue)"></rect>
+            <rect x="128" y={BORE - 10} width="8" height="20" fill={load}></rect>
+            <circle cx="104" cy={BORE + 3} r="3" fill={seal}></circle>
+            <path d={arrows(92, [104, 136, 168])} fill="none" stroke={hot} stroke-width="1.6"></path>
+            <line x1="100" x2="100" y1="38" y2={RING - 2} stroke={muted}></line>
+            <text x="100" y="34" font-size="10" fill={muted} text-anchor="middle">joint ring</text>
+            <line x1="30" x2="30" y1="44" y2={MEM - 2} stroke={muted}></line>
+            <text x="30" y="40" font-size="10" fill={muted} text-anchor="middle">membrane</text>
+          </g>
+        )}
+        {k === 2 && (
+          <g>
+            <path d={caseWall(150)} fill={steel} fill-opacity="0.85"></path>
+            <path d={`M62,${BORE} L172,${BORE} L172,${AX} L112,${AX} L112,${BORE + 12} L62,${BORE + 12} Z`} fill="var(--rd-blue)" fill-opacity="0.4" stroke="var(--rd-blue)"></path>
+            <rect x="84" y={RING - 6} width="7" height={BORE + 12 - RING + 6} fill={load}></rect>
+            <circle cx="70" cy={BORE + 3} r="3" fill={seal}></circle>
+            <path d={arrows(112, [110, 140, 170])} fill="none" stroke={hot} stroke-width="1.6"></path>
+          </g>
+        )}
+        {k === 3 && (
+          <g>
+            <path d={caseWall(150)} fill={steel} fill-opacity="0.85"></path>
+            <rect x="96" y={BORE} width="76" height={AX - BORE} fill="var(--rd-blue)" fill-opacity="0.4" stroke="var(--rd-blue)"></rect>
+            <path d={`M${thread}`} fill="none" stroke={load} stroke-width="2.4"></path>
+            <circle cx="104" cy={BORE + 3} r="3" fill={seal}></circle>
+            <path d={arrows(96, [104, 136, 168])} fill="none" stroke={hot} stroke-width="1.6"></path>
+          </g>
+        )}
+        <text x="110" y="202" font-size="10" fill={muted} text-anchor="middle">{pn.cap}</text>
+      </g>
+    ))}
+  </svg>
+  <figcaption>
+    The case in grey, the closure in blue, the part that carries the end load in amber, the seal in red and the chamber
+    pressure p. In each, the case gets thick at the end: the joint ring carries the groove, the holes, the thread or
+    the flange, and the seal. In the last three, the seal sits on the pressure side of the joint, so the holes and the
+    grooves are not part of the pressure boundary.
+  </figcaption>
+</figure>

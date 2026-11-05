@@ -1,0 +1,231 @@
+---
+// Closure joint sizing: lock ring, radial pins or a threaded closure, each check at MEOP and its margins at proof
+// (yield) and design burst (ultimate) with the fitting factor. Calculations live in src/lib/closures.ts (unit-tested);
+// this file is UI only.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS as D, type Material } from '../lib/materials';
+
+const FAMILIES = ['steel', 'ss', 'ti', 'al', 'ni'];
+const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Ftu! > 0 && m.Fty! > 0)
+  .sort((a, b) => b.Ftu! - a.Ftu!)
+  .map((m: Material) => ({ key: m.key, name: m.name, family: m.family, uts: m.Ftu!, yield: m.Fty! }));
+const key = (name: string, fallback: string) => metals.find((m) => m.name === name)?.key ?? fallback;
+const K = { closure: key('Al 7075-T73', D.aluminium), ring: key('17-4PH (H1025)', D.caseSteel), pin: D.boltSteel, case: D.caseSteel };
+---
+
+<div class="calc clcalc" data-clcalc data-keys={JSON.stringify(K)}>
+  <div class="calc-head">
+    <span>Closure joint: lock ring, radial pins or thread</span>
+    <span class="head-btns">
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Joint">
+    <button type="button" role="tab" class="chip" data-tab="ring" aria-selected="true">Lock ring</button>
+    <button type="button" role="tab" class="chip" data-tab="pins" aria-selected="false">Radial pins</button>
+    <button type="button" role="tab" class="chip" data-tab="thread" aria-selected="false">Threaded</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Load and case</legend>
+        <div class="row2">
+          <label>MEOP (MPa)<input name="p" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Seal diameter (mm)<input name="ds" type="number" min="1" step="any" value="300" /></label>
+          <label data-bore>Case bore at the joint (mm)<input name="D" type="number" min="1" step="any" value="300" /></label>
+          <label>Joint ring wall (mm)<input name="t" type="number" min="0.1" step="any" value="16.5" /></label>
+        </div>
+        <label>Case material<MaterialSelect name="cm" list={metals} selected={K.case} /></label>
+        <label>Closure material<MaterialSelect name="km" list={metals} selected={K.closure} /></label>
+        <p class="hint">The pressure acts inside the seal: the end load is p·πd<sub>s</sub>²/4. The joint ring is the thick part of the case that carries the groove, the holes or the thread.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Factors</legend>
+        <div class="row2">
+          <label>Proof factor<input name="pf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Burst factor<input name="bf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Fitting factor<input name="ff" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Enter your programme's factors: they come from the governing requirement, not from this site. Proof is checked against yield and design burst against ultimate, both with the fitting factor.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="ring">
+        <legend>Lock ring</legend>
+        <label>Ring material<MaterialSelect name="rm" list={metals} selected={K.ring} /></label>
+        <div class="row2">
+          <label>Ring height, axial (mm)<input name="h" type="number" min="0.1" step="any" value="5" /></label>
+          <label>Groove depth in the case (mm)<input name="g1" type="number" min="0.1" step="any" value="2.5" /></label>
+          <label>Groove depth in the closure (mm)<input name="g2" type="number" min="0.1" step="any" value="2.5" /></label>
+          <label>Case land to the end (mm)<input name="L" type="number" min="0.1" step="any" value="12" /></label>
+          <label>Closure land (mm)<input name="L2" type="number" min="0.1" step="any" value="20" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="pins" hidden>
+        <legend>Radial pins</legend>
+        <label>Pin material<MaterialSelect name="pm" list={metals} selected={K.pin} /></label>
+        <div class="row2">
+          <label>Number of pins<input name="n" type="number" min="1" step="1" value="24" /></label>
+          <label>Pin diameter (mm)<input name="d" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Edge distance, case (mm)<input name="e" type="number" min="0.1" step="any" value="20" /></label>
+          <label>Closure skirt wall (mm)<input name="t2" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Edge distance, skirt (mm)<input name="e2" type="number" min="0.1" step="any" value="20" /></label>
+        </div>
+        <p class="hint">Edge distance: from the centre of the hole to the end of the part, in the direction of the load.</p>
+      </fieldset>
+      <fieldset data-panel="thread" hidden>
+        <legend>Thread</legend>
+        <div class="row2">
+          <label>Thread major diameter (mm)<input name="dT" type="number" min="1" step="any" value="300" /></label>
+          <label>Pitch (mm)<input name="pt" type="number" min="0.1" step="any" value="2" /></label>
+          <label>Engaged length (mm)<input name="Le" type="number" min="0.1" step="any" value="20" /></label>
+        </div>
+        <p class="hint">A 60° thread at its basic size. The case has the internal thread. For a threaded closure, the joint ring wall is measured from the thread major diameter. Seal diameter: use the seal on the pressure side of the thread.</p>
+      </fieldset>
+    </form>
+
+    <div class="cl-out">
+      <dl class="readouts">
+        <div class="readout primary" data-gov><dt>Governing check</dt><dd data-r="gov">—</dd></div>
+        <div class="readout"><dt>End load at MEOP</dt><dd data-r="load">—</dd></div>
+        <div class="readout"><dt data-r="xLab">Joint</dt><dd data-r="x">—</dd></div>
+      </dl>
+      <div class="cl-scroll" data-table></div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Hand checks for early sizing. Shear allowables are 0.6·F<sub>tu</sub> and 0.577·F<sub>ty</sub>; pin bearing uses the
+    usual ratios of MMPDS bearing to tensile values for the edge distance; flat bearing of a ring uses F<sub>ty</sub> and
+    F<sub>tu</sub>. The net section takes the gas pressure at the joint, which is conservative. It does not include
+    stress concentration, fatigue, the uneven load share between pins or threads, pin bending, ring rolling, the
+    closure plate itself, or temperature. Use your programme's allowables and a detailed analysis for the design.
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(Object.fromEntries(metals.map((m) => [m.key, m])))}></script>
+</div>
+
+<style is:global>
+  .cl-out { min-width: 0; }
+  .cl-out > * { min-width: 0; }
+  .cl-scroll { overflow-x: auto; margin-top: 0.9rem !important; }
+  .clcalc table { width: 100%; display: table; margin: 0 !important; }
+  .clcalc th, .clcalc td { padding: 0.25rem 0.45rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
+  .clcalc th:first-child, .clcalc td:first-child { text-align: left; white-space: normal; }
+  .clcalc td.ok { color: var(--rd-ok); }
+  .clcalc td.warn { color: var(--rd-warn); }
+  .clcalc td.bad { color: var(--rd-accent); font-weight: 600; }
+  .clcalc tr.gov td { background: color-mix(in srgb, var(--rd-accent) 10%, transparent); }
+</style>
+
+<script>
+  import { lockRing, radialPins, threadedClosure, margins, type Check } from '../lib/closures';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  document.querySelectorAll<HTMLElement>('[data-clcalc]').forEach((root) => {
+    const mats = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const K = JSON.parse(root.dataset.keys!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => +field(n).value;
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'ring';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const mat = (n: string) => mats[field(n).value];
+    const msText = (v: number | null) => (v === null ? '—' : Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : ''}${f(v, 2)}`);
+    const msClass = (v: number | null) => (v === null ? '' : v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+
+    function run() {
+      const notes: [string, string][] = [];
+      $('[data-bore]').hidden = mode === 'thread';
+      const p = num('p'), ds = num('ds'), D = num('D'), t = num('t');
+      const base = { ds, D, t, caseMat: mat('cm'), closureMat: mat('km') };
+      const fac = { proof: readFactor(field('pf').value), burst: readFactor(field('bf').value), fitting: readFactor(field('ff').value) };
+      if (!(p > 0 && ds > 0 && t > 0 && (mode === 'thread' || D > 0))) {
+        $('[data-table]').innerHTML = ''; r('gov').textContent = '—'; r('load').textContent = '—'; r('x').textContent = '—';
+        $('[data-notes]').innerHTML = '<li class="bad">Enter the MEOP, the seal diameter and the joint ring wall.</li>';
+        return;
+      }
+      let res: { P: number; checks: Check[]; valid: boolean };
+      if (mode === 'ring') {
+        const x = lockRing({ ...base, h: num('h'), g1: num('g1'), g2: num('g2'), L: num('L'), L2: num('L2'), ringMat: mat('rm') });
+        res = x;
+        r('xLab').textContent = 'Ring';
+        r('x').innerHTML = `${f(num('h'), 1)} × ${f(num('g1') + num('g2'), 1)} mm <small>height × radial depth; ${f(num('g1'), 1)} mm in the case, ${f(num('g2'), 1)} mm in the closure</small>`;
+        if (num('g1') >= t) notes.push(['bad', 'The groove is as deep as the joint ring wall.']);
+        if (ds > D + 2 * num('g1')) notes.push(['warn', 'The seal diameter is larger than the groove: the seal should be on the pressure side of the ring, in the bore.']);
+        notes.push(['', 'The groove in the softer part usually decides the capacity, not the ring. The ring has no preload: the joint moves by its axial clearance when it takes the load, and the seal must follow it. The abutting faces must be square and the groove edges sharp, or the ring rolls out at a much lower load (see <a href="../../joints/locking-and-retention/#retaining-rings">Retaining rings</a>).']);
+      } else if (mode === 'pins') {
+        const x = radialPins({ ...base, n: Math.round(num('n')), d: num('d'), e: num('e'), t2: num('t2'), e2: num('e2'), pinMat: mat('pm') });
+        res = x;
+        r('xLab').textContent = 'Pins';
+        r('x').innerHTML = `${Math.round(num('n'))} × ⌀${f(num('d'), 1)} mm <small>${f((x.V * p) / 1000, 1)} kN each at MEOP · pitch ${f(x.pitch, 1)} mm (${f(x.pitch / num('d'), 1)} d) · e/d = ${f(num('e') / num('d'), 2)}</small>`;
+        if (x.pitch < 3 * num('d')) notes.push(['warn', `The pins are ${f(x.pitch / num('d'), 1)} diameters apart. Below about 3 d the ligaments between the holes get small and the holes interact.`]);
+        if (num('e') / num('d') < 1.5 || num('e2') / num('d') < 1.5) notes.push(['warn', 'An edge distance below 1.5 d: the bearing allowables are not valid there, and shear-out becomes likely. Aim for 2 d.']);
+        notes.push(['', 'All the pins share the load only if they all touch at once. The first pin to touch carries more: drill the case and the skirt together, and use close-fitting pins. Pin bending is not included: keep the fit tight and the gap between the parts small.']);
+      } else {
+        const x = threadedClosure({ ds, t, caseMat: base.caseMat, closureMat: base.closureMat, dT: num('dT'), pitch: num('pt'), Le: num('Le') });
+        res = x;
+        r('xLab').textContent = 'Thread';
+        r('x').innerHTML = `${f(x.threads, 1)} threads <small>engaged; ${f(num('pt'), 2)} mm pitch over ${f(num('Le'), 1)} mm. The flanks push the case out: ${f(x.sFlank * p, 0)} MPa of hoop stress at MEOP</small>`;
+        if (x.threads < 6) notes.push(['warn', `Only ${f(x.threads, 1)} threads are engaged. Short engagements are sensitive to tolerances and to damage of the first threads.`]);
+        notes.push(['', 'The first threads carry most of the load, so a long engagement adds less than it seems. The 30° flanks push the case outward, which adds hoop stress at the thread. Large threads in the same material gall: use an anti-galling coating or a dry-film lubricant compatible with the propellant, and protect the threads during the cast.']);
+      }
+      if (!res.valid) {
+        $('[data-table]').innerHTML = ''; r('gov').textContent = '—';
+        notes.unshift(['bad', 'These dimensions do not make a joint: check that the grooves are shallower than the walls, the edge distances larger than half the pin, and the holes apart.']);
+        $('[data-notes]').innerHTML = notes.map(([k, s]) => `<li class="${k}">${s}</li>`).join('');
+        return;
+      }
+      r('load').innerHTML = `${f((res.P * p) / 1000, 1)} kN <small>${f(p, 2)} MPa on a ${f(ds, 1)} mm seal${fac.proof !== null && fac.fitting !== null ? ` · ${f((res.P * p * fac.proof * fac.fitting) / 1000, 0)} kN at proof × fitting` : ''}${fac.burst !== null && fac.fitting !== null ? ` · ${f((res.P * p * fac.burst * fac.fitting) / 1000, 0)} kN at burst × fitting` : ''}</small>`;
+      const m = margins(res.checks, p, fac);
+      if (m.governing) {
+        r('gov').innerHTML = `MS ${msText(m.ms)} <small>${esc(m.governing.label)}</small>`;
+        $('[data-gov]').className = `readout primary ${msClass(m.ms)}`;
+      } else {
+        r('gov').innerHTML = '<small>needs the factors</small>';
+        $('[data-gov]').className = 'readout primary';
+        notes.unshift(['warn', `The stresses at MEOP are shown. ${awaitingMessage(['proof factor', 'burst factor', 'fitting factor'], 'the margins')}`]);
+      }
+      const mName = (part: string) => esc(part === 'case' ? mat('cm').name : part === 'closure' ? mat('km').name : part === 'ring' ? mat('rm').name : mat('pm').name);
+      $('[data-table]').innerHTML = `<table><thead><tr><th>Check</th><th>At MEOP (MPa)</th><th>Allowable, yield / ult.</th><th>MS proof</th><th>MS burst</th></tr></thead><tbody>${m.rows.map((x) =>
+        `<tr class="${m.governing && x.key === m.governing.key ? 'gov' : ''}"><td>${esc(x.label)}<br><small>${mName(x.part)}</small></td><td>${f(x.atMeop, 0)}</td><td>${f(x.allow.y, 0)} / ${f(x.allow.u, 0)}</td><td class="${msClass(x.msProof)}">${msText(x.msProof)}</td><td class="${msClass(x.msBurst)}">${msText(x.msBurst)}</td></tr>`).join('')}</tbody></table>`;
+      notes.push(['', 'The groove root, the hole or the thread root is the highest stress concentration in the case. Give it a generous radius, check fatigue and fracture there (<a href="../../verify/leak-before-break/">Leak before break</a>), and inspect it. Put the seal in the joint ring, on the pressure side of the joint (<a href="../../seals/sealing-strategy/#keeping-the-gland-closed">Sealing strategy</a>).']);
+      $('[data-notes]').innerHTML = notes.map(([k, s]) => `<li class="${k}">${s}</li>`).join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['pf', 'bf', 'ff'],
+      note: 'Worked-example factors loaded: proof 1.10, burst 1.25, fitting 1.15',
+      values: {
+        p: '10', ds: '300', D: '300', t: '16.5', cm: K.case, km: K.closure, pf: '1.10', bf: '1.25', ff: '1.15',
+        rm: K.ring, h: '5', g1: '2.5', g2: '2.5', L: '12', L2: '20',
+        pm: K.pin, n: '24', d: '10', e: '20', t2: '10', e2: '20', dT: '300', pt: '2', Le: '20',
+      },
+    });
+    run();
+  });
+</script>
