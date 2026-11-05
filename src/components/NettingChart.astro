@@ -1,0 +1,57 @@
+---
+// Netting analysis of a wound cylinder: the fibre that the helical and hoop layers need at each wind angle, in units
+// of p·R/σ, against the wall of an isotropic metal. From netting() in src/lib/composite.ts.
+import { netting } from '../lib/composite';
+
+const W = 440, H = 286, L = 46, R = 14, T = 38, B = 44, aMax = 70, vMax = 2.5;
+const X = (a: number) => L + (a / aMax) * (W - L - R), Y = (v: number) => T + (H - T - B) * (1 - Math.min(v, vMax) / vMax);
+const magic = (Math.atan(Math.SQRT2) * 180) / Math.PI;
+const angles = Array.from({ length: 141 }, (_, k) => (k / 140) * aMax);
+const at = angles.map((a) => ({ a, ...netting(1, 1, a, 1) })); // units of pR/σ
+const helTop = at.map((p) => `${X(p.a).toFixed(1)},${Y(p.helical).toFixed(1)}`);
+const totTop = at.map((p) => `${X(p.a).toFixed(1)},${Y(p.total).toFixed(1)}`);
+const helArea = `M${X(0)},${Y(0)} L${helTop.join(' L')} L${X(aMax)},${Y(0)} Z`;
+const hoopArea = `M${totTop.join(' L')} L${helTop.slice().reverse().join(' L')} Z`;
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)';
+---
+
+<figure class="viz netting">
+  <p class="viz-title">How much fibre the cylinder needs</p>
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="net-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="net-desc">
+      A chart of the fibre needed against the helical wind angle, in units of p R over sigma. The helical layer needs
+      one half divided by cosine squared alpha, rising with the angle. The hoop layer makes up the rest of the hoop
+      load and falls to zero at 54.7 degrees. Their sum is 1.5 at any angle up to 54.7 degrees. An isotropic metal wall
+      needs 1.0, because its spare axial strength is free. Typical motor cases wind their helicals at 10 to 30 degrees.
+    </desc>
+    <rect x={X(10)} y={T} width={X(30) - X(10)} height={H - T - B} fill="var(--rd-ink)" fill-opacity="0.05"></rect>
+    <text x={(X(10) + X(30)) / 2} y={T - 8} font-size="10" fill={muted} text-anchor="middle">typical motor cases</text>
+    {[0, 0.5, 1, 1.5, 2, 2.5].map((v) => (
+      <g>
+        <line x1={L} x2={W - R} y1={Y(v)} y2={Y(v)} stroke="var(--rd-line)"></line>
+        <text x={L - 6} y={Y(v) + 3.5} font-size="10" fill={muted} text-anchor="end">{v}</text>
+      </g>
+    ))}
+    {[0, 10, 20, 30, 40, 50, 60, 70].map((a) => <text x={X(a)} y={H - B + 15} font-size="10" fill={muted} text-anchor="middle">{a}°</text>)}
+    <path d={helArea} fill="var(--rd-blue)" fill-opacity="0.45"></path>
+    <path d={hoopArea} fill="var(--rd-warn)" fill-opacity="0.45"></path>
+    <path d={`M${totTop.join(' L')}`} fill="none" stroke={ink} stroke-width="2"></path>
+    <line x1={L} x2={W - R} y1={Y(1)} y2={Y(1)} stroke="var(--rd-steel)" stroke-width="1.6" stroke-dasharray="6 4"></line>
+    <line x1={X(magic)} x2={X(magic)} y1={T} y2={H - B} stroke="var(--rd-accent)" stroke-width="1.2" stroke-dasharray="3 3"></line>
+    <text x={X(magic) - 5} y={Y(2.32)} font-size="10" fill="var(--rd-accent)" text-anchor="end">54.7°: helicals alone</text>
+    <text x={X(magic) - 5} y={Y(2.32) + 14} font-size="10" fill="var(--rd-accent)" text-anchor="end">(hoses, braids)</text>
+    <text x={X(3)} y={Y(1.5) - 6} font-size="10.5" fill={ink}>total 1.5 pR/σ at any angle</text>
+    <text x={X(3)} y={Y(1.17)} font-size="10.5" fill={ink}>hoop layer</text>
+    <text x={X(3)} y={Y(0.24)} font-size="10.5" fill={ink}>helical layer ±α</text>
+    <text x={X(36)} y={Y(1) + 13} font-size="10" fill="var(--rd-steel)">isotropic metal: pR/σ</text>
+    <text x={(L + W - R) / 2} y={H - 8} font-size="10.5" fill={ink} text-anchor="middle">helical wind angle α, degrees from the axis</text>
+    <text x="6" y="14" font-size="10.5" fill={ink}>fibre × pR/σ</text>
+  </svg>
+  <figcaption>
+    The helicals carry the axial load, so they need ½ pR/σ ÷ cos²α. They also carry part of the hoop load, and the
+    hoops carry the rest. The sum is always 1.5 pR/σ, so the wind angle moves fibre between the layers but does not
+    change the total. A metal wall needs only 1.0 pR/σ: it is sized by the hoop stress, and its spare axial strength
+    costs nothing. A fibre is strong in one direction only, so the net has no spare. It wins because the fibre is
+    several times stronger for its weight.
+  </figcaption>
+</figure>

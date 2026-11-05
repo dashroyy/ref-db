@@ -1,0 +1,359 @@
+---
+title: Composite (filament-wound) cases
+description: How to size a filament-wound motor case by netting analysis, why the boss sets the wind angle and the domes are isotensoids, how far the case grows under pressure and what that does to the grain, with a calculator, a worked example and the limits of the method.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import NettingChart from '../../../components/NettingChart.astro';
+import WindingFigure from '../../../components/WindingFigure.astro';
+import CaseEndAnatomy from '../../../components/CaseEndAnatomy.astro';
+import CompositeCaseCalc from '../../../components/CompositeCaseCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>Wind the fibre so that every strand carries the same stress: helicals at the angle that the boss sets, hoops for the rest of the hoop load, and isotensoid domes.</div>
+  <div><b>Before this</b><a href="../case-sizing/">Case &amp; pressure vessel sizing</a></div>
+  <div><b>Leads to</b><a href="../propellant-grain/#ignition-the-case-stretches-the-bore-stretches-more">What the case growth does to the grain</a></div>
+</div>
+
+## Why this matters
+
+A case wound from carbon fibre and epoxy can have less than one fifth of the mass of a steel case for the same burst
+pressure.
+In the worked example below, the wound wall is 2.0 kg and the D6AC case of the same duty is 11.8 kg. On the
+[hardware page](../hardware/#worked-example-the-300-mm-motor-from-the-other-pages), each inert kilogram of that motor
+costs 17.9 m/s. Thus most high-performance motors have wound cases.
+
+A wound case is not a light steel case. It is sized by a different method. It stretches three times as much around
+its circumference, and more than ten times as much along its length. It can lose strength from damage that you cannot
+see. Its resin softens at temperatures that steel does not notice. Each of these changes the grain, the insulation, the
+joints and the test plan.
+
+## The intuition: a net, not a skin
+
+<Analogy title="A braided hose">
+  A hydraulic hose has a braid of steel wire in its rubber, laid at approximately 55° to the axis of the hose. At that
+  angle, the hose does not get longer or shorter when you pressurise it. If the wires were closer to the axis, the
+  pressure would make the hose shorter and fatter. If they were further from the axis, the hose would get longer and
+  thinner. At 55°, the wires carry the hoop load and the end load in the correct ratio. A wound case is a braid that is
+  designed for a different balance: helicals at a small angle for the end load, and hoops for the rest of the hoop load.
+</Analogy>
+
+## Netting analysis: the fibres carry all the load
+
+**Netting analysis** assumes that the fibres carry all of the load and that the resin carries none. The resin only
+holds the fibres in position. A fibre carries tension along its length only. A fibre at an angle α to the axis
+resists the axial load with $\cos^2\alpha$ of its strength, and the hoop load with $\sin^2\alpha$.
+
+For the cylinder, at a pressure $p$, a radius $R$ and a fibre stress $\sigma$:
+
+$$
+t_{\text{hel}} = \frac{pR}{2\sigma\cos^2\alpha}
+\qquad
+t_{\text{hoop}} = \frac{pR}{2\sigma}\left(2 - \tan^2\alpha\right)
+\qquad
+t_{\text{hel}} + t_{\text{hoop}} = \frac{3pR}{2\sigma}
+$$
+
+These are thicknesses of fibre alone. The wound wall is thicker, by the fibre volume fraction: $t = t_{\text{fibre}}/V_f$.
+
+- **The axial load sets the helicals.** Only the helicals go across the ends of the cylinder, so they carry all of
+  the axial load, $pR/2$.
+- **The hoops carry the remainder of the hoop load.** The helicals already carry part of it.
+- **The total does not change with the angle.** It is $1.5\,pR/\sigma$ at all angles up to 54.7°. At that angle,
+  $\tan^2\alpha = 2$ and the helicals carry the full hoop load: the hose angle.
+
+<NettingChart />
+
+A metal wall needs only $pR/\sigma$. A net of fibres needs 1.5 times that amount, relative to its strength, because a
+fibre is strong in one direction only. The net is still much lighter, because the fibre is much stronger for its
+weight. T700 carbon delivers approximately 3900 MPa in a wound vessel at 1.80 g/cm³. D6AC steel gives 1520 MPa at
+7.85 g/cm³.
+
+### The case efficiency of a net
+
+For a first estimate, one result is very useful. Any vessel in which all of the fibres carry the same stress
+$\sigma$, of any shape and size, has the mass
+
+$$
+W = \frac{3\,p\,V\rho_c}{\sigma V_f}
+\qquad\Longrightarrow\qquad
+\frac{p\,V}{W\,g} = \frac{\sigma V_f}{3\,\rho_c\,g}
+$$
+
+where $\rho_c$ is the density of the composite. Thus the case efficiency $p_bV/W$ of an ideal wound case is a
+property of the material only. For T700 at a delivered strength ratio of 0.80 and $V_f = 0.60$, it is 51 km
+($2.0 \times 10^6$ in). The D6AC case of the [case-sizing example](../case-sizing/#worked-example) gets 9.2 km. A real
+wound case gets less than the ideal, because its bosses, skirts and build-up add mass that carries no pressure load.
+
+## The boss sets the wind angle
+
+A fibre on a curved surface stays where the machine puts it only if it follows a **geodesic**: the shortest path on
+the surface. If it does not, it slips sideways during winding. On a surface of revolution, a geodesic obeys
+Clairaut's relation:
+
+$$
+r \sin\alpha = \text{constant}
+$$
+
+The fibre turns at the polar opening, where it runs around the boss at α = 90°. Thus the constant is the radius of
+the opening, $r_0$, and on the cylinder:
+
+$$
+\sin\alpha = \frac{r_0}{R}
+$$
+
+Thus the designer does not choose the helical angle. The boss opening sets it, and the opening must pass the nozzle,
+the igniter and the winding shaft. A small opening gives a small angle and more axial strength from each helical, so
+the hoop layer is thicker. Friction lets a fibre move a little away from the geodesic (**non-geodesic winding**). This
+gives some freedom, but the limit of slip on the mandrel controls how much.
+
+<WindingFigure />
+
+## The dome: an isotensoid
+
+On the dome, the helicals are the only fibres. Their angle increases from α at the cylinder to 90° at the opening,
+and the same fibres go across smaller and smaller circles. Thus the layer gets thicker toward the opening:
+
+$$
+\frac{t}{t_R} = \frac{\cos\alpha_R}{\rho\cos\alpha} = \sqrt{\frac{1 - \rho_0^2}{\rho^2 - \rho_0^2}}
+\qquad \rho = \frac{r}{R},\quad \rho_0 = \frac{r_0}{R}
+$$
+
+Only one dome shape has the same stress in every fibre: the **isotensoid**. The equilibrium of the membrane, with
+the netting condition, gives its meridian:
+
+$$
+\frac{dz}{d\rho} = \frac{\rho^3\sqrt{1-\rho_0^2}}{\sqrt{\rho^2 - \rho_0^2 - \rho^6\left(1-\rho_0^2\right)}}
+$$
+
+The dome leaves the cylinder smoothly. Just outside the opening, it becomes parallel to the axis again, and the boss
+goes there. For a small opening, the dome is approximately 0.6 R high: between a 2:1 ellipse (0.5 R) and a hemisphere
+(1.0 R). Thus a wound case is shorter than a metal case with hemispherical domes, and it holds a little less. The
+second tab of the calculator draws the dome for any opening.
+
+Near the opening, real domes are different from the ideal. The band of fibre has a width, so the build-up stops at a
+finite thickness. The boss flange, local reinforcement plies (doilies) and resin fill the region where the theory
+gives an infinite thickness. This region needs its own analysis and its own tests.
+
+## What the netting number leaves out
+
+### Delivered strength
+
+The strength on a fibre data sheet comes from a test of one impregnated strand. A wound vessel bursts at a lower
+fibre stress. The causes are fibre misalignment and waviness, fibre damage during winding, layers at different
+strains, the stress concentrations at the dome and the boss, and the larger volume of fibre (a large vessel contains
+more weak points). The ratio of the two is the **delivered strength ratio** η (also called the translation or the
+strength conversion efficiency). Measure it on development vessels of your own design, made with your own process,
+and use that value. For carbon fibre it is often 0.7 to 0.85. The calculator starts at 0.80.
+
+### The case grows, and the grain follows
+
+In netting, every fibre has the same stress, and thus the same strain. The hoop fibres give the hoop strain of the
+case. The helical fibres then make the axial strain the same. Thus the cylinder grows by the fibre strain in both
+directions:
+
+$$
+\varepsilon_h = \varepsilon_a = \frac{\eta\,\sigma_{\text{fibre}}}{BF \cdot E_f} = \frac{\eta\,\varepsilon_{\text{fail}}}{BF}
+$$
+
+Here BF is the burst factor, $E_f$ is the fibre modulus and $\varepsilon_{\text{fail}}$ is the strain to failure of
+the fibre. For T700 at η = 0.80 and a burst factor of 1.25, the strain is 1.36% at MEOP. A steel case of the same
+duty strains 0.45% around its circumference and 0.11% along its length, because the Poisson contraction cancels most
+of its axial strain. A laminate analysis that includes the resin gives a little less than netting: approximately 1.28%
+around and 1.11% along for the worked example. Thus netting is a slightly conservative screen for growth.
+
+The growth is set by the strain to failure of the fibre, not by its modulus. All carbon fibres for cases fail at
+approximately 2% strain, so all carbon cases sized by netting grow by approximately the same amount. To decrease the
+growth, add hoop fibre above the netting minimum (the case is then sized for stiffness), or use a fibre with a
+higher modulus and a lower strain to failure.
+
+The growth goes into all the parts that are bonded or attached to the case:
+
+- **The grain.** A case-bonded grain must follow the case, and its bore strain at ignition is several times the case
+  strain (see [the grain page](../propellant-grain/#ignition-the-case-stretches-the-bore-stretches-more)). In the
+  worked example, it goes from 5.7% in the steel case to 18.9% in the carbon case.
+- **The insulation and the bond lines.** They must take the same strain at the case wall, when they are cold.
+- **The skirts and joints.** The case grows 13.6 mm on a 1 m cylinder and 2 mm on the radius. A skirt that is bonded
+  rigidly to the case would peel off. A thin rubber shear ply between the case and the skirt takes the movement.
+- **The nozzle.** The aft dome and the boss move and rotate under pressure. The nozzle alignment and the seals at the
+  boss must allow for this.
+
+### Impact damage
+
+A wound case can lose a large part of its burst strength from an impact that leaves no visible mark. A dropped tool or
+a knock during handling can break fibres and cause delaminations below an undamaged surface. Thus a composite case
+programme usually has:
+
+- **damage-tolerance tests:** impact test articles at defined energies, then burst them;
+- **impact protection** for handling and transport;
+- **handling and inspection rules,** with a record of each event.
+
+AIAA S-081 and NASA-STD-5019 have damage-control requirements for composite pressure hardware.
+
+### Temperature, moisture and the resin
+
+The fibres carry the burst load, but the resin carries everything else: the shear between the layers, the
+compression, and the loads at the bosses and skirt joints. Resin properties decrease as the resin gets near its glass
+transition temperature, and absorbed moisture decreases that temperature. Thus:
+
+- use the resin allowables at the hottest case temperature, wet. The internal insulation must keep the case below that
+  temperature during the burn and the heat soak that follows (see [Insulation](../insulation/));
+- specify a minimum glass transition temperature for the cured case, with its test method, and a margin above the
+  maximum service temperature.
+
+The low softening temperature is also an advantage. In a fire, a wound case loses strength early and vents before the
+propellant reacts violently. See [Designing the case to fail gently](../hardware/#designing-the-case-to-fail-gently).
+
+### Stress rupture
+
+Under a sustained load, a fibre can break after some time at a stress below its short-term strength. Glass and aramid
+are much more sensitive to this than carbon. A motor case carries pressure only during the burn and the proof test,
+so stress rupture is rarely the design driver for the case. It is a reason to keep the proof hold short. It controls
+the design of composite vessels that hold gas for years (COPVs).
+
+### Galvanic corrosion
+
+Carbon fibre conducts electricity and is noble. When it touches aluminium in the presence of moisture, the aluminium
+corrodes. Isolate an aluminium boss or skirt ring from the carbon with a glass ply, a sealant or a barrier film, or use
+titanium. See [Galvanic](../../materials/galvanic/).
+
+## The parts that the sizing leaves out
+
+<CaseEndAnatomy />
+
+- **Polar bosses.** These are usually aluminium, titanium or steel. They carry the pressure on the opening and the
+  nozzle or closure loads, and they seal. The flange is held between the insulation and the helicals. Its shape must
+  agree with the build-up of the dome, and it must not peel away from the composite when the dome grows.
+- **Skirts.** These carry the vehicle loads: thrust, bending and the interstage loads. They are wound or laid up with
+  the case, or bonded to it, with a rubber **shear ply** between them. The shear ply lets the case grow under the skirt
+  and spreads the load along a long joint.
+- **Insulation and liner.** In a typical process, the insulation is laid up on the mandrel first and the fibre is
+  wound over it. Then the two are cured together. Thus the insulation is also the gas-tight liner of the case. Its
+  bond to the composite and the possible leak paths at the bosses need their own checks.
+- **Minimum gauge.** A netting wall can be thinner than a practical number of layers, or too thin to resist handling.
+  Then a minimum ply count or an impact layer sets the wall, not the burst pressure.
+
+## Calculator
+
+<CompositeCaseCalc />
+
+When the burst factor is entered, the table under the calculator sizes the same case in each fibre, with the same η
+and fibre volume fraction, and the metal case for reference. In practice η is different for each fibre and process:
+compare your own burst data. The **Dome shape** tab draws the isotensoid for any polar opening and shows how the
+helical layer builds up toward the boss.
+
+## Worked example
+
+This is the 300 mm motor of the [case-sizing example](../case-sizing/#worked-example): an internal diameter of 300 mm,
+a cylinder length of 1000 mm and a MEOP of 10 MPa. The case is wound from T700-class carbon (4900 MPa, 230 GPa,
+1.80 g/cm³) in epoxy (1.20 g/cm³) at $V_f = 0.60$, with a delivered strength ratio η = 0.80. The polar openings have a
+radius of 50 mm. The burst factor of 1.25 is for this example only. Push **Load worked example** in the calculator to
+load these inputs.
+
+1. **Design burst and fibre stress.** $p_b = 1.25 \times 10 = 12.5$ MPa and $\sigma = 0.80 \times 4900 = 3920$ MPa.
+2. **Wind angle.** $\sin\alpha = 50/150$, so $\alpha = 19.47°$ and $\tan^2\alpha = 0.125$.
+3. **Fibre thicknesses.** $pR/2\sigma = 12.5 \times 150 / (2 \times 3920) = 0.2392$ mm. The helicals need
+   $0.2392 / \cos^2\alpha = 0.2392 / 0.8889 = 0.2691$ mm. The hoops need $0.2392 \times (2 - 0.125) = 0.4484$ mm. The
+   total is 0.7175 mm, which is $3pR/2\sigma$.
+4. **Wound wall.** Divide by $V_f$: 0.448 mm of helicals and 0.747 mm of hoops, which is **1.196 mm**. The D6AC wall
+   for the same duty is 1.377 mm. The two walls are almost the same thickness.
+5. **Mass.** The composite density is $0.6 \times 1.80 + 0.4 \times 1.20 = 1.56$ g/cm³. The cylinder is
+   $1.56 \times 2\pi \times 150.6 \times 1000 \times 1.196 \times 10^{-6} = 1.77$ kg. Each isotensoid dome
+   ($\rho_0 = 1/3$, 97 mm high) has 0.12 kg of helicals. The total is **2.01 kg**. The D6AC case is 11.77 kg.
+6. **Volume and case efficiency.** The case holds 80.5 L. The D6AC case with hemispherical domes holds 84.8 L and is
+   105 mm longer. $p_bV/W = 12.5 \times 10^6 \times 0.0805 / (2.01 \times 9.807) = 51$ km, against 9.2 km for the steel
+   case.
+7. **Growth at MEOP.** $\varepsilon = 3920 / (1.25 \times 230{,}000) = 1.36\%$. This is 2.0 mm on the radius and
+   13.6 mm along the cylinder. The steel case strains 0.45% around and 0.11% along.
+8. **The grain.** With a 100 mm bore ($m = 3$) and a bulk modulus of 3500 MPa, the bore strain from pressure is
+   $9 \times 1.36\% + 4 \times (1.36\% + 10/3500) = 18.9\%$. In the steel case it is 5.7%.
+
+<Aside type="caution" title="What the example shows">
+  The mass saving is real: the wound wall has one sixth of the mass of the steel wall. The hardware page assumed that a
+  composite case could save 6 kg. The netting shell saves 9.8 kg, which leaves 3.8 kg for the bosses, skirts, shear
+  plies and extra plies of a real case. **But the grain pays for it.** The [grain worked
+  example](../propellant-grain/#worked-example-htpb-grain-in-the-d6ac-case) found a cold-ignition strain of 16.1% in
+  the steel case: 10.4% from cool-down and 5.7% from pressure. In the carbon case, the cool-down strain increases to
+  11.7%, because the case has almost no thermal expansion, and the pressure strain increases to 18.9%. The total is
+  30.6%. With the same illustrative capability of 39.6% and the example safety factor of 1.5, the margin goes from
+  +0.64 to −0.14. **The grain that passes in the steel case fails in the carbon case.** Thus a change to a composite
+  case is also a change to the grain: a larger bore, a propellant with more strain capability, a higher minimum firing
+  temperature, or more hoop fibre to make the case stiffer.
+</Aside>
+
+## Proof, acoustic emission and inspection
+
+A metal case is proof tested to screen cracks (see [Proof testing](../../verify/proof-testing/)). A wound case does
+not have one critical crack to screen. Its proof test shows the workmanship: the case holds the proof pressure without
+a leak, the strain gauges follow the predicted growth, and the case makes little noise.
+
+**Acoustic emission (AE).** Fibre breaks, matrix cracks and delaminations release energy as sound. Sensors on the case
+record it during the pressure test. Two effects are used:
+
+- **The Kaiser effect.** An undamaged composite stays quiet, when you load it again, until the load gets to the
+  previous maximum.
+- **The Felicity effect.** A damaged composite starts to make noise below the previous maximum. The **Felicity ratio**
+  is the load at which the emission starts, divided by the previous maximum load. A ratio well below 1 shows damage.
+
+The acceptance criteria come from the programme and its AE procedure, and the procedure must be qualified on the
+same design.
+
+**Other NDT.** Ultrasonics find delaminations and voids, mostly in the thicker regions. Radiography and computed
+tomography find voids and wrinkles, and show the boss region. Shearography and thermography find disbonds near the
+surface. See [NDT](../../make/ndt/).
+
+## Where this tool stops
+
+<Aside type="caution" title="Netting sizes a membrane, not a case">
+  The calculator sizes an ideal net. Real wound cases fail in the regions that it does not model.
+</Aside>
+
+- **The region between the dome and the boss.** The build-up, the boss flange and the ends of the fibres. Use a
+  laminate model with the real thickness distribution, and FEA.
+- **Skirt joints and shear plies.** The shear stress in the shear ply, and the peel stress at its ends.
+- **The laminate.** Netting ignores the resin. A laminate analysis, with failure criteria for the fibre and the
+  matrix, gives the strains and the matrix stresses. See [FEA cards](../../verify/fea-cards/#composites).
+- **Delivered strength, temperature, moisture, impact and stress rupture.** All of these come from tests of your own
+  material and process.
+- **Buckling and external loads.** A thin wound case without pressure can buckle under axial or bending loads, or under
+  external pressure. See [Shell buckling](../../verify/shell-buckling/).
+- **Patterns.** The tool winds one helical angle on geodesic paths, with hoops on the cylinder. Non-geodesic,
+  multi-angle and dome-reinforced patterns need a winding analysis.
+
+## On the drawing
+
+The process defines a wound case as much as the geometry does. The drawing and the documents that it calls up give:
+
+- **The materials:** the fibre (type and specification), the resin system, and the prepreg or wet-winding specification.
+- **The winding pattern:** the angle and the number of layers of each type, their order, the band width, the fibre
+  tension and the coverage. Usually a winding specification that the drawing calls up gives these.
+- **The laminate quality:** the fibre volume fraction or the resin content, the void content, and the glass transition
+  temperature of the cured case, each with its test method and limits.
+- **The cure cycle,** with its temperature tolerances and records, as for any special process.
+- **The proof test,** with the pressure, the hold time, the medium, the limits for strain and growth, and the AE
+  acceptance criteria.
+- **NDT** methods and acceptance criteria for each zone: the cylinder, the domes, the boss regions and the skirt
+  joints.
+- **Handling, impact protection and storage,** with the humidity limits.
+
+## References and further reading
+
+- V. V. Vasiliev, *Composite Pressure Vessels: Analysis, Design, and Manufacturing*, Bull Ridge Publishing (2009)
+  (netting analysis, isotensoid domes and winding patterns, in full).
+- V. V. Vasiliev & E. V. Morozov, *Advanced Mechanics of Composite Materials and Structures*, 4th ed., Elsevier (2018).
+- S. T. Peters (ed.), *Composite Filament Winding*, ASM International (2011).
+- R. M. Jones, *Mechanics of Composite Materials*, 2nd ed., Taylor & Francis (1999) (laminate analysis).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993) (case and insulation design).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017).
+- AIAA S-081 (composite overwrapped pressure vessels) and NASA-STD-5019 (fracture control, with damage control for
+  composite hardware).
+- Fibre data sheets: Toray (T700S, T800S, T1000G), Hexcel (IM7), AGY (S-2 glass). Use the values for your own fibre
+  lot and resin.
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme and the approval of the responsible
+  stress and safety authorities control the real case design.
+</Aside>

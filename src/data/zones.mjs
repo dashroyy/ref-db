@@ -124,6 +124,7 @@ export const REBUILT = {
 /** Primers: v2-only learning pages that sit in a phase without taking a zone number. */
 export const PRIMERS = [
   { key: 'primer-srm', phase: 'orient', after: 'home', slug: 'fundamentals/how-a-solid-motor-works', label: 'HOW A SOLID MOTOR WORKS', ico: '✦' },
+  { key: 'primer-composite', phase: 'size', after: 'pv', slug: 'motor/composite-cases', label: 'COMPOSITE CASES', ico: '✦' },
 ];
 
 /** Briefing pages outside the route. */
@@ -137,15 +138,16 @@ export const BRIEFING = [
  *   slug: string | null, primer: boolean }} RouteItem
  */
 
-/** The full route in order: every zone (numbered as v1) with primers slotted in after their anchor. */
+/** The full route in order: every zone (numbered as v1) with primers slotted in after their anchor, numbered P1, P2… in route order. */
 export function route() {
   /** @type {RouteItem[]} */
   const out = [];
+  let primers = 0;
   ZONE_PLAN.forEach(([phase, key, label, ico], i) => {
     const slug = key in REBUILT ? REBUILT[/** @type {keyof typeof REBUILT} */ (key)] : null;
     out.push({ key, phase, label, ico, num: i + 1, tag: `Z${i + 1}`, slug, primer: false });
-    PRIMERS.filter((p) => p.after === key).forEach((p, j) => {
-      out.push({ key: p.key, phase: p.phase, label: p.label, ico: p.ico, num: null, tag: `P${j + 1}`, slug: p.slug, primer: true });
+    PRIMERS.filter((p) => p.after === key).forEach((p) => {
+      out.push({ key: p.key, phase: p.phase, label: p.label, ico: p.ico, num: null, tag: `P${++primers}`, slug: p.slug, primer: true });
     });
   });
   return out;

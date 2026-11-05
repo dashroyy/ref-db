@@ -1,0 +1,103 @@
+---
+// A filament-wound case in side view, with real geodesic fibre paths: helicals at ±α over the cylinder and the
+// isotensoid domes, turning at the polar bosses, and the hoop layer over the cylinder, cut back on the right to show
+// the helicals under it. Paths from src/lib/composite.ts (Clairaut: R sin α = r0).
+import { domeGeodesic, isotensoid } from '../lib/composite';
+
+const R = 66, cy = 124, L = 196, x0 = 122, x1 = x0 + L, xm = x0 + 92; // hoops from x0 to xm
+const rho0 = 1 / 3, alpha = Math.asin(rho0), tanA = Math.tan(alpha);
+const g = domeGeodesic(rho0, 60);
+const d = isotensoid(rho0);
+const h = d.height * R, rc = d.rhoC * R;
+
+type Pt = { x: number; y: number; front: boolean; cyl: boolean };
+function circuit(phi0: number): Pt[] {
+  const pts: Pt[] = [];
+  let phi = phi0;
+  const push = (x: number, rho: number, ph: number, cyl: boolean) =>
+    pts.push({ x, y: cy - rho * R * Math.cos(ph), front: Math.sin(ph) > 0.02, cyl });
+  const run = (from: number, to: number) => {
+    for (let k = 0; k <= 48; k++) { const x = from + ((to - from) * k) / 48; push(x, 1, phi + (Math.abs(x - from) * tanA) / R, true); }
+    phi += (L * tanA) / R;
+  };
+  const dome = (xe: number, dir: number) => {
+    for (const p of g.pts) push(xe + dir * p.z * R, p.rho, phi + p.phi, false);
+    phi += g.turn + 0.35; // and around the boss
+    for (const p of [...g.pts].reverse()) push(xe + dir * p.z * R, p.rho, phi + (g.turn - p.phi), false);
+    phi += g.turn;
+  };
+  run(x0, x1); dome(x1, 1); run(x1, x0); dome(x0, -1);
+  return pts;
+}
+// the visible (front) runs of each path, without the helicals that the hoop layer covers
+const paths: string[] = [];
+for (let c = 0; c < 9; c++) {
+  let cur: string[] = [];
+  const flush = () => { if (cur.length > 1) paths.push('M' + cur.join(' L')); cur = []; };
+  for (const p of circuit((c * 2 * Math.PI) / 9)) {
+    const show = p.front && !(p.cyl && p.x < xm);
+    if (show) cur.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`); else flush();
+  }
+  flush();
+}
+// silhouette: domes from the profile, top and bottom
+const domePts = (xe: number, dir: number, sgn: number) => d.profile.map((p) => `${(xe + dir * p.z * R).toFixed(1)},${(cy - sgn * p.rho * R).toFixed(1)}`);
+const outline = `M${domePts(x0, -1, 1).reverse().join(' L')} L${x1},${cy - R} L${domePts(x1, 1, 1).slice(1).join(' L')}`
+  + ` M${domePts(x0, -1, -1).reverse().join(' L')} L${x1},${cy + R} L${domePts(x1, 1, -1).slice(1).join(' L')}`;
+const hoops = Array.from({ length: Math.floor((xm - x0) / 4.5) }, (_, k) => x0 + 2 + k * 4.5);
+const xa = x1 - 64, la = 46; // the α annotation, at the front of the cylinder where the projection shows the true angle
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)';
+---
+
+<figure class="viz winding">
+  <p class="viz-title">A filament-wound case: helicals, hoops and bosses</p>
+  <svg viewBox="0 0 440 262" role="img" aria-labelledby="wind-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="wind-desc">
+      A wound case in side view. Helical fibres cross the cylinder at a small angle alpha to the axis, in two directions,
+      making a diamond pattern. They run over the domes and turn around a metal boss at each end. On the left part of the
+      cylinder the hoop layer, wound at ninety degrees, covers the helicals. The angle alpha at the cylinder is set by the
+      radius of the boss opening: R times sine alpha equals r zero.
+    </desc>
+    <line x1="40" x2="400" y1={cy} y2={cy} stroke={muted} stroke-dasharray="12 3 2 3" stroke-width="0.8"></line>
+    <path d={outline} fill="var(--rd-panel2)" fill-opacity="0.6" stroke="none"></path>
+    <path d={`M${x0},${cy - R} L${x1},${cy - R} L${x1},${cy + R} L${x0},${cy + R} Z`} fill="var(--rd-panel2)" fill-opacity="0.6"></path>
+    {paths.map((p) => <path d={p} fill="none" stroke="var(--rd-blue)" stroke-width="1.1" stroke-opacity="0.85"></path>)}
+    {hoops.map((x) => <line x1={x} x2={x} y1={cy - R} y2={cy + R} stroke="var(--rd-warn)" stroke-width="2.2" stroke-opacity="0.75"></line>)}
+    <line x1={xm} x2={xm} y1={cy - R - 3} y2={cy + R + 3} stroke="var(--rd-warn)" stroke-width="1" stroke-dasharray="3 2"></line>
+    <path d={outline} fill="none" stroke={ink} stroke-width="1.4"></path>
+    <line x1={x0} x2={x1} y1={cy - R} y2={cy - R} stroke={ink} stroke-width="1.4"></line>
+    <line x1={x0} x2={x1} y1={cy + R} y2={cy + R} stroke={ink} stroke-width="1.4"></line>
+    {[x0 - h, x1 + h].map((xe, k) => (
+      <rect x={k ? xe - 3 : xe - 13} y={cy - rc - 2} width="16" height={2 * rc + 4} rx="2" fill="var(--rd-steel)" stroke={ink} stroke-width="0.8"></rect>
+    ))}
+    <!-- α at the front of the cylinder -->
+    <line x1={xa} x2={xa + la + 8} y1={cy} y2={cy} stroke={ink} stroke-width="1" stroke-dasharray="3 2"></line>
+    <line x1={xa} x2={xa + la * Math.cos(alpha)} y1={cy} y2={cy - la * Math.sin(alpha)} stroke="var(--rd-accent)" stroke-width="2.2"></line>
+    <path d={`M${xa + 30},${cy} A30,30 0 0 0 ${(xa + 30 * Math.cos(alpha)).toFixed(1)},${(cy - 30 * Math.sin(alpha)).toFixed(1)}`} fill="none" stroke="var(--rd-accent)" stroke-width="1.2"></path>
+    <text x={xa + 34} y={cy - 4} font-size="12" fill="var(--rd-accent)" font-weight="700">α</text>
+    <!-- R and r0 -->
+    <line x1={x1 - 10} x2={x1 - 10} y1={cy} y2={cy - R + 2} stroke={ink} stroke-width="1"></line>
+    <path d={`M${x1 - 13},${cy - R + 8} L${x1 - 10},${cy - R + 2} L${x1 - 7},${cy - R + 8}`} fill="none" stroke={ink} stroke-width="1"></path>
+    <text x={x1 - 14} y={cy - R / 2 + 4} font-size="11.5" fill={ink} text-anchor="end">R</text>
+    <line x1={x1 + h + 22} x2={x1 + h + 22} y1={cy} y2={cy - rho0 * R} stroke={ink} stroke-width="1"></line>
+    <path d={`M${x1 + h + 19},${cy - rho0 * R + 6} L${x1 + h + 22},${cy - rho0 * R} L${x1 + h + 25},${cy - rho0 * R + 6}`} fill="none" stroke={ink} stroke-width="1"></path>
+    <text x={x1 + h + 26} y={cy - rho0 * R / 2 + 4} font-size="11.5" fill={ink}>r₀</text>
+    <!-- labels -->
+    <line x1={x0 + 46} x2={x0 + 46} y1={cy - R - 18} y2={cy - R - 2} stroke={muted}></line>
+    <text x={x0 + 46} y={cy - R - 34} font-size="10.5" fill={ink} text-anchor="middle">hoop layer, 90°</text>
+    <text x={x0 + 46} y={cy - R - 20} font-size="10" fill={muted} text-anchor="middle">cylinder only</text>
+    <line x1={x1 - 46} x2={x1 - 46} y1={cy - R - 18} y2={cy - R - 2} stroke={muted}></line>
+    <text x={x1 - 46} y={cy - R - 34} font-size="10.5" fill={ink} text-anchor="middle">helical layer, ±α</text>
+    <text x={x1 - 46} y={cy - R - 20} font-size="10" fill={muted} text-anchor="middle">cylinder and domes</text>
+    <line x1={x1 + h + 5} x2={x1 + h + 5} y1={cy + rc + 4} y2={cy + R + 6} stroke={muted}></line>
+    <text x={x1 + h + 5} y={cy + R + 18} font-size="10.5" fill={ink} text-anchor="middle">polar boss</text>
+    <text x={x0 - h - 4} y={cy + R + 18} font-size="10" fill={muted} text-anchor="middle">isotensoid dome</text>
+    <text x="220" y="254" font-size="11.5" fill={ink} text-anchor="middle">R sin α = r₀: the boss opening sets the wind angle</text>
+  </svg>
+  <figcaption>
+    Real geodesic paths for an opening of one third of the radius (α = 19.5°). The helicals run at ±α along the
+    cylinder, over the domes and around the bosses; they carry all of the axial load and part of the hoop load. The
+    hoops (cut back on the right to show the helicals) carry the rest of the hoop load and stop at the ends of the
+    cylinder. Only the front of each path is drawn.
+  </figcaption>
+</figure>

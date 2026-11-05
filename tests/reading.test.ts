@@ -50,7 +50,7 @@ test('citations are found in the text of the pages that cite them', () => {
 });
 
 test('the numbers that the page states', () => {
-  assert.equal(SOURCES.length, 73, 'the page says 73 sources');
+  assert.equal(SOURCES.length, 75, 'the page says 75 sources');
   assert.equal(CATS.length, 10, 'in ten subjects');
   assert.equal(SOURCES.filter((s) => s.start && s.free).length, 2, 'two of the start set are free');
   const casePath = PATHS.find((p) => p.key === 'case')!;

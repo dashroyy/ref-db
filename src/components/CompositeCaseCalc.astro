@@ -1,0 +1,519 @@
+---
+// Filament-wound motor case: netting sizing with geodesic isotensoid domes, the same duty in metal, every fibre at
+// this duty, and the dome shape for any polar opening. Calculations live in src/lib/composite.ts (unit-tested);
+// this file is UI only.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS as D, type Material } from '../lib/materials';
+import { FIBRES } from '../lib/composite';
+
+// Metals for the comparison: the case families of the material library with strength, density, modulus and ν.
+const FAMILIES = ['steel', 'ss', 'ti', 'al', 'ni'];
+const raw = (m: Material) => ({ key: m.key, name: m.name, family: m.family, uts: m.Ftu!, yield: m.Fty!, density: m.rho! / 1000, E: m.E!, nu: m.nu!, kic: m.kic, weldable: m.weldable });
+const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Ftu! > 0 && m.Fty! > 0 && m.rho && m.E && m.nu)
+  .sort((a, b) => b.Ftu! / b.rho! - a.Ftu! / a.rho!).map(raw);
+const t700 = FIBRES[0];
+---
+
+<div class="calc cccalc" data-cccalc>
+  <div class="calc-head">
+    <span>Filament-wound case: netting sizing</span>
+    <span class="head-btns">
+      <span>netting · geodesic isotensoid domes</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="size" aria-selected="true">Size the case</button>
+    <button type="button" role="tab" class="chip" data-tab="dome" aria-selected="false">Dome shape</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="size">
+        <legend>Fibre and laminate</legend>
+        <label>Fibre
+          <select name="fib">{FIBRES.map((f) => <option value={f.key}>{f.name}</option>)}</select>
+        </label>
+        <p class="hint" data-fibinfo></p>
+        <div class="row2">
+          <label>Fibre strength (MPa)<input name="fs" type="number" min="1" step="any" value={t700.strength} /></label>
+          <label>Fibre modulus (GPa)<input name="fe" type="number" min="1" step="any" value={t700.E} /></label>
+          <label>Delivered strength ratio η<input name="eta" type="number" min="0.3" max="1" step="0.01" value="0.80" /></label>
+          <label>Fibre volume fraction<input name="vf" type="number" min="0.3" max="0.8" step="0.01" value="0.60" /></label>
+        </div>
+        <p class="hint">η is the fibre stress at burst in a real vessel divided by the published strength. Get it from burst tests of your own development vessels. Replace the strength with your own strand data when you have it.</p>
+      </fieldset>
+      <fieldset data-panel="size">
+        <legend>Geometry</legend>
+        <div class="row2">
+          <label>Internal diameter (mm)<input name="id" type="number" min="1" step="any" value="300" /></label>
+          <label>Cylinder length (mm)<input name="L" type="number" min="0" step="any" value="1000" /></label>
+          <label>Polar opening radius r<sub>0</sub> (mm)<input name="r0" type="number" min="1" step="any" value="50" /></label>
+        </div>
+        <p class="hint">The boss opening sets the wind angle: a geodesic fibre that turns at r<sub>0</sub> crosses the cylinder at sin α = r<sub>0</sub>/R.</p>
+      </fieldset>
+      <fieldset data-panel="size">
+        <legend>Design basis</legend>
+        <div class="row2">
+          <label>MEOP (MPa)<input name="p" type="number" min="0" step="any" value="10" /></label>
+          <label>Burst factor<input name="bf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Enter your programme's burst factor: it comes from the governing requirement, not from this site. The case is sized so that the fibres reach the delivered strength at MEOP × burst factor.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="size">
+        <legend>Compare with</legend>
+        <label>Metal case (same duty, hemispherical domes)
+          <MaterialSelect name="m" list={metals} selected={D.caseSteel} />
+        </label>
+        <label>Weld efficiency of the metal case
+          <select name="e">
+            <option value="1">1.00: seamless</option>
+            <option value="0.9" selected>0.90: full-penetration weld, fully radiographed</option>
+            <option value="0.85">0.85: full-penetration weld, spot radiographed</option>
+          </select>
+        </label>
+        <div class="row2">
+          <label>Grain bore ⌀ (mm)<input name="bore" type="number" min="0" step="any" value="100" /></label>
+          <label>Propellant bulk modulus (MPa)<input name="K" type="number" min="1" step="any" value="3500" /></label>
+        </div>
+        <p class="hint">A case-bonded grain with a circular bore: its bore strain from pressurisation, for each case. Blank bore = no grain.</p>
+      </fieldset>
+      <fieldset data-panel="dome" hidden>
+        <legend>Polar opening</legend>
+        <label>Opening ratio r<sub>0</sub>/R: <output data-rho0out>0.33</output>
+          <input name="rho0" type="range" min="0.05" max="0.7" step="0.01" value="0.33" />
+        </label>
+        <p class="hint">Moves the polar opening of the case on the first tab. The dome is the geodesic isotensoid: the shape in which every helical fibre carries the same stress.</p>
+      </fieldset>
+    </form>
+
+    <div class="cc-out">
+      <div data-out="size">
+        <dl class="readouts">
+          <div class="readout primary"><dt>Composite wall, cylinder</dt><dd data-r="wall">—</dd></div>
+          <div class="readout"><dt>Wind angle at the cylinder</dt><dd data-r="alpha">—</dd></div>
+          <div class="readout"><dt>Fibre stress</dt><dd data-r="sig">—</dd></div>
+          <div class="readout"><dt>Case mass (netting)</dt><dd data-r="mass">—</dd></div>
+          <div class="readout"><dt>Volume and length</dt><dd data-r="vol">—</dd></div>
+          <div class="readout"><dt>p<sub>b</sub>V/W</dt><dd data-r="pvw">—</dd></div>
+          <div class="readout" data-grow><dt>Growth at MEOP</dt><dd data-r="grow">—</dd></div>
+          <div class="readout" data-bs><dt>Grain bore strain from pressure</dt><dd data-r="bore">—</dd></div>
+        </dl>
+        <figure class="cc-fig">
+          <svg data-case role="img" aria-label="Half section of the case drawn to scale, with the wall magnified"></svg>
+          <figcaption data-casecap></figcaption>
+        </figure>
+        <div class="cc-scroll" data-vs></div>
+        <ul class="pv-notes" data-notes></ul>
+      </div>
+      <div data-out="dome" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>Dome height</dt><dd data-r="dh">—</dd></div>
+          <div class="readout"><dt>Wind angle at the cylinder</dt><dd data-r="da">—</dd></div>
+          <div class="readout"><dt>Where the dome turns axial</dt><dd data-r="drc">—</dd></div>
+          <div class="readout"><dt>Volume of one dome</dt><dd data-r="dv">—</dd></div>
+        </dl>
+        <figure class="cc-fig">
+          <svg data-profiles role="img" aria-label="Isotensoid dome profiles for several polar openings, with a hemisphere and a 2:1 ellipse"></svg>
+          <figcaption>Dome meridians drawn to the same scale, from the cylinder (left edge) to the polar opening. Thin lines: isotensoids for openings of 0.1, 0.3 and 0.5 R. Dashed: a hemisphere. Dotted: a 2:1 ellipse.</figcaption>
+        </figure>
+        <figure class="cc-fig">
+          <svg data-buildup role="img" aria-label="Helical layer thickness and fibre angle against radius on the dome"></svg>
+          <figcaption>The helical layer on the dome, as a multiple of its thickness on the cylinder. The same fibres cross a smaller circle at a steeper angle, so the layer gets thicker toward the opening. The dots give the fibre angle.</figcaption>
+        </figure>
+        <ul class="pv-notes" data-dnotes></ul>
+      </div>
+    </div>
+  </div>
+  <div class="cc-cmp" data-cmp></div>
+  <div class="calc-foot">
+    Netting analysis: the fibres carry all the load at one delivered stress, and the resin carries none. Geodesic
+    helicals on isotensoid domes, hoops on the cylinder only. The mass is the wound wall alone: no boss, skirt, shear
+    ply, liner, insulation or minimum-gauge plies. It does not check the dome-to-boss region, the skirt joints, impact
+    damage, temperature, moisture or stress rupture. Screening for early sizing; the design needs a laminate analysis,
+    a finite-element model of the ends and burst tests.
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(Object.fromEntries(metals.map((m) => [m.key, m])))}></script>
+</div>
+
+<style is:global>
+  .cccalc .pv-sub, .cc-cmp .pv-sub {
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rd-muted);
+    margin: 1rem 0 0.4rem !important;
+  }
+  .cc-out { min-width: 0; }
+  .cc-out > div > * { min-width: 0; }
+  .cc-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .cccalc output { font-family: var(--sl-font-mono); color: var(--rd-ink); }
+  .cccalc input[type='range'] { width: 100%; accent-color: var(--rd-accent); }
+  .cc-scroll { overflow-x: auto; margin-top: 0.9rem !important; }
+  .cc-scroll:empty, .cc-cmp:empty { display: none; }
+  .cc-cmp { padding: 0 1rem 1rem; }
+  .cc-cmp .wrap { overflow-x: auto; }
+  .cccalc table, .cc-cmp table { width: 100%; display: table; margin: 0 !important; }
+  .cccalc th, .cccalc td, .cc-cmp th, .cc-cmp td { padding: 0.25rem 0.45rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
+  .cccalc th:first-child, .cccalc td:first-child, .cc-cmp th:first-child, .cc-cmp td:first-child { text-align: left; white-space: normal; }
+  .cccalc tr.sel td, .cc-cmp tr.sel td { background: color-mix(in srgb, var(--rd-accent) 14%, transparent); font-weight: 600; }
+  .cccalc tr.metal td, .cc-cmp tr.metal td { color: var(--rd-muted); font-style: italic; }
+  .cc-cmp .bar { display: inline-block; height: 0.55rem; background: var(--rd-blue); opacity: 0.7; border-radius: 2px; vertical-align: middle; margin-right: 0.35rem; }
+  .cc-cmp p.hint { margin: 0.4rem 0 0 !important; }
+</style>
+
+<script>
+  import { FIBRES, compositeCase, metalCase, isotensoid, angleAt, idealPvw, RESIN_RHO } from '../lib/composite';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+  import { DEFAULTS } from '../lib/materials';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  document.querySelectorAll<HTMLElement>('[data-cccalc]').forEach((root) => {
+    const mats = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => +field(n).value;
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'size';
+
+    // Restore inputs from the URL so a link reproduces the calculation.
+    try {
+      for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; }
+    } catch {}
+
+    const fibre = () => FIBRES.find((x) => x.key === field('fib').value) ?? FIBRES[0];
+    const applyFibre = () => { const x = fibre(); field('fs').value = String(x.strength); field('fe').value = String(x.E); };
+    const fibInfo = () => {
+      const x = fibre();
+      $('[data-fibinfo]').textContent = `${x.strength} MPa (${x.basis}) · ${x.E} GPa · ${x.rho} g/cm³ · strain to failure ${f((x.strength / (x.E * 1000)) * 100, 1)}%. ${x.note}`;
+    };
+
+    function inputs() {
+      const id = num('id'), R = id / 2, r0 = num('r0');
+      const ok = id > 0 && num('L') >= 0 && r0 > 0 && r0 / R <= 0.7 && num('eta') >= 0.3 && num('eta') <= 1 && num('vf') >= 0.3 && num('vf') <= 0.8 && num('p') > 0 && num('fs') > 0 && num('fe') > 0;
+      return { ok, id, R, r0, L: num('L'), p: num('p'), bore: num('bore') > 0 && num('bore') < id ? num('bore') : 0, K: num('K') > 0 ? num('K') : Infinity };
+    }
+
+    function caseFor(fib: { strength: number; E: number; rho: number }, bf: number) {
+      const i = inputs();
+      return compositeCase({ idMm: i.id, lengthMm: i.L, meop: i.p, burstFactor: bf, r0Mm: i.r0, fibre: fib, efficiency: num('eta'), vf: num('vf'), boreMm: i.bore || undefined, bulkK: i.K });
+    }
+
+    function run() {
+      fibInfo();
+      const i = inputs();
+      // keep the dome slider on the same opening as the case
+      if (i.R > 0 && i.r0 > 0) { const q = Math.min(0.7, Math.max(0.05, i.r0 / i.R)); (field('rho0') as HTMLInputElement).value = q.toFixed(2); }
+      if (mode === 'dome') return runDome();
+      runSize(i);
+    }
+
+    function runSize(i: ReturnType<typeof inputs>) {
+      const notes: [string, string][] = [];
+      const clear = () => {
+        root.querySelectorAll<HTMLElement>('[data-out="size"] [data-r]').forEach((el) => (el.textContent = '—'));
+        root.querySelectorAll('[data-grow], [data-bs]').forEach((el) => (el.className = 'readout'));
+        $('[data-vs]').innerHTML = '';
+        $('[data-cmp]').innerHTML = '';
+      };
+      if (!i.ok) {
+        clear();
+        root.querySelector<SVGSVGElement>('[data-case]')!.innerHTML = '';
+        $('[data-casecap]').textContent = '';
+        const why = !(i.id > 0) ? 'Enter an internal diameter.' : i.r0 / i.R > 0.7 ? `The polar opening is ${f(i.r0 / i.R, 2)} of the radius. This tool takes openings up to 0.7 R: above that the helicals are steeper than 44°, the dome is nearly a cylinder, and the case is better closed in another way.`
+          : 'Check the inputs: η and the fibre volume fraction must be between 0.3 and 1, and the strength, modulus and MEOP above zero.';
+        $('[data-notes]').innerHTML = `<li class="bad">${why}</li>`;
+        return;
+      }
+      const fib = { strength: num('fs'), E: num('fe'), rho: fibre().rho };
+      const bf = readFactor(field('bf').value);
+      const rhoC = num('vf') * fib.rho + (1 - num('vf')) * RESIN_RHO;
+      const sigma = num('eta') * fib.strength;
+      const dome = isotensoid(i.r0 / i.R);
+      const alpha = Math.asin(i.r0 / i.R) * 180 / Math.PI;
+      r('alpha').innerHTML = `${f(alpha, 1)}° <small>sin α = r₀/R = ${f(i.r0 / i.R, 3)}</small>`;
+      r('vol').innerHTML = `${f((Math.PI * i.R * i.R * i.L + 2 * Math.PI * i.R ** 3 * dome.volume) / 1e6, 1)} <small>L · overall ${f(i.L + 2 * dome.height * i.R, 0)} mm (domes ${f(dome.height * i.R, 1)} mm high)</small>`;
+      const m = mats[field('m').value];
+
+      if (bf === null) {
+        clear();
+        r('alpha').innerHTML = `${f(alpha, 1)}° <small>sin α = r₀/R = ${f(i.r0 / i.R, 3)}</small>`;
+        r('vol').innerHTML = `${f((Math.PI * i.R * i.R * i.L + 2 * Math.PI * i.R ** 3 * dome.volume) / 1e6, 1)} <small>L · overall ${f(i.L + 2 * dome.height * i.R, 0)} mm</small>`;
+        r('sig').innerHTML = `${f(sigma, 0)} MPa <small>delivered at burst: η × strength</small>`;
+        r('pvw').innerHTML = `${f(idealPvw(sigma, num('vf'), rhoC) / 1000, 1)} <small>km, netting ideal σV<sub>f</sub>/3ρg: the same for any size, shape or burst factor</small>`;
+        const need = '<small>needs the burst factor</small>';
+        for (const k of ['wall', 'mass', 'grow', 'bore']) r(k).innerHTML = need;
+        drawCase(i, null, null, dome);
+        $('[data-notes]').innerHTML = `<li class="warn">${awaitingMessage(['burst factor'], 'the walls, the mass, the growth and the comparison')}</li>` +
+          '<li>Without it, the tool still shows what the burst factor does not change: the wind angle, the dome, the volume and the ideal p<sub>b</sub>V/W of the fibre.</li>';
+        return;
+      }
+
+      const c = caseFor(fib, bf);
+      const s = m ? metalCase({ idMm: i.id, lengthMm: i.L, meop: i.p, burstFactor: bf, weldEff: num('e'), boreMm: i.bore || undefined, bulkK: i.K }, m) : null;
+      r('wall').innerHTML = `${f(c.wall, 3)} <small>mm: helical ±${f(c.alpha, 1)}° ${f(c.helical, 3)} + hoop ${f(c.hoop, 3)} (fibre ${f(c.net.total, 3)} mm at V<sub>f</sub> ${f(num('vf'), 2)})</small>`;
+      r('sig').innerHTML = `${f(c.sigma, 0)} MPa <small>at design burst ${f(c.pB, 2)} MPa; ${f(c.sigmaMeop, 0)} MPa at MEOP</small>`;
+      r('mass').innerHTML = `${f(c.mass, 2)} kg <small>cylinder ${f(c.cylMass, 2)} + domes 2 × ${f(c.domeMass, 3)}${s && Number.isFinite(s.mass) ? ` · ${m.name.split(' (')[0]}: ${f(s.mass, 2)} kg` : ''}</small>`;
+      r('vol').innerHTML = `${f(c.volume / 1e6, 1)} L <small>overall ${f(c.overall, 0)} mm (domes ${f(c.domeHeight, 1)} mm high)</small>`;
+      r('pvw').innerHTML = `${f(c.pvw / 1000, 1)} km <small>${f(c.pvw / 0.0254 / 1e6, 2)}×10⁶ in · ideal ${f(c.pvwIdeal / 1000, 1)} km${s && Number.isFinite(s.pvw) ? ` · metal ${f(s.pvw / 1000, 1)} km` : ''}</small>`;
+      r('grow').innerHTML = `${f(c.strain * 100, 2)} % <small>both directions: +${f(c.growthRadial, 2)} mm on the radius, +${f(c.growthAxial, 1)} mm along the cylinder${s ? ` · metal ${f(s.hoopStrain * 100, 2)}% hoop, ${f(s.axialStrain * 100, 2)}% axial` : ''}</small>`;
+      root.querySelector('[data-grow]')!.className = `readout ${c.strain > 0.015 ? 'warn' : ''}`;
+      if (i.bore) {
+        r('bore').innerHTML = `${f(c.boreStrain * 100, 1)} % <small>${f(i.bore, 0)} mm bore, m = ${f(i.id / i.bore, 2)}${s ? ` · in the metal case ${f(s.boreStrain * 100, 1)}%` : ''}. Add the cool-down strain.</small>`;
+        root.querySelector('[data-bs]')!.className = `readout ${s && c.boreStrain > 2 * s.boreStrain ? 'warn' : ''}`;
+      } else {
+        r('bore').innerHTML = '<small>no grain bore entered</small>';
+        root.querySelector('[data-bs]')!.className = 'readout';
+      }
+      drawCase(i, c, s, dome);
+      versus(c, s, m);
+      fibreTable(bf, s, m);
+
+      notes.push(['', 'Netting ideal: fibre and resin only. Bosses, skirts, shear plies, the liner, the insulation and any minimum-gauge or impact plies come on top, so a real case is heavier and its p<sub>b</sub>V/W lower.']);
+      if (i.bore && s) notes.push([c.boreStrain > 2 * s.boreStrain ? 'warn' : '', `The case grows ${f(c.strain * 100, 2)}% at MEOP, along the case as much as around it. A grain bonded inside it takes ${f(c.boreStrain * 100, 1)}% at a ${f(i.bore, 0)} mm bore from pressure alone, ${f(c.boreStrain / s.boreStrain, 1)} times the ${f(s.boreStrain * 100, 1)}% in the metal case. Check the cold-ignition total in the <a href="../propellant-grain/#calculator">grain screen</a>.`]);
+      const q = i.r0 / i.R;
+      if (q > 0.5) notes.push(['warn', `Large polar opening (${f(q, 2)} R): the helicals cross the cylinder at ${f(c.alpha, 1)}°, the domes are tall and the boss is large. Check that the opening really needs to be this big.`]);
+      if (q < 0.1) notes.push(['warn', `Small polar opening (${f(q, 2)} R): the helical layer builds up steeply at the boss, and the opening must still pass the nozzle, the igniter and the winding shaft.`]);
+      if (num('eta') > 0.9) notes.push(['warn', `η = ${f(num('eta'), 2)} is above what most wound vessels deliver. Use it only with burst-test evidence for your process.`]);
+      if (fibre().key === 'aramid') notes.push(['warn', 'Aramid: weak in compression and across the fibre, so skirt joints and bosses need care. It absorbs moisture, degrades in sunlight (UV) and creeps under a sustained load: protect the case and check stress rupture if it carries load in storage.']);
+      if (fibre().key === 's2') notes.push(['warn', `S-2 glass: the case is ${f(c.mass / caseFor({ ...FIBRES[0] }, bf).mass, 1)} times the mass of a T700 case here and grows ${f(c.strain * 100, 1)}% at MEOP. The grain, the insulation and the joints must all take that.`]);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    // The case and the same duty in metal, side by side.
+    function versus(c: ReturnType<typeof compositeCase>, s: ReturnType<typeof metalCase> | null, m: any) {
+      if (!s) { $('[data-vs]').innerHTML = ''; return; }
+      const fin = (v: number, d: number) => (Number.isFinite(v) ? f(v, d) : '—');
+      const rows: [string, string, string][] = [
+        ['Wall (mm)', f(c.wall, 3), fin(s.wall, 3)],
+        ['Case mass (kg)', f(c.mass, 2), fin(s.mass, 2)],
+        ['Overall length (mm)', f(c.overall, 0), f(s.overall, 0)],
+        ['Volume (L)', f(c.volume / 1e6, 1), f(s.volume / 1e6, 1)],
+        ['p<sub>b</sub>V/W (km)', f(c.pvw / 1000, 1), fin(s.pvw / 1000, 1)],
+        ['Hoop strain at MEOP (%)', f(c.strain * 100, 2), fin(s.hoopStrain * 100, 2)],
+        ['Axial strain at MEOP (%)', f(c.strain * 100, 2), fin(s.axialStrain * 100, 2)],
+      ];
+      if (inputs().bore) rows.push(['Bore strain from pressure (%)', f(c.boreStrain * 100, 1), fin(s.boreStrain * 100, 1)]);
+      $('[data-vs]').innerHTML = `<table><thead><tr><th>Same duty</th><th>${esc(fibre().name)}</th><th>${esc(m.name)}</th></tr></thead><tbody>${rows.map(([a, b, d]) => `<tr><td>${a}</td><td>${b}</td><td>${d}</td></tr>`).join('')}</tbody></table>`;
+    }
+
+    // Every fibre at this duty, lightest first, with the metal case for reference.
+    function fibreTable(bf: number, s: ReturnType<typeof metalCase> | null, m: any) {
+      const sel = field('fib').value;
+      const all = FIBRES.map((x) => {
+        const own = x.key === sel ? { strength: num('fs'), E: num('fe'), rho: x.rho } : x;
+        return { x, c: caseFor(own, bf) };
+      }).sort((a, b) => a.c.mass - b.c.mass);
+      const max = Math.max(...all.map((a) => a.c.mass), s && Number.isFinite(s.mass) ? s.mass : 0);
+      const bar = (v: number) => `<span class="bar" style="width:${((3 * v) / max).toFixed(2)}rem"></span>`;
+      const bore = !!inputs().bore;
+      $('[data-cmp]').innerHTML = `<p class="pv-sub">Every fibre at this duty</p><div class="wrap"><table><thead><tr><th>Fibre</th><th>Wall (mm)</th><th>Case mass (kg)</th><th>p<sub>b</sub>V/W (km)</th><th>Strain at MEOP (%)</th>${bore ? '<th>Bore strain (%)</th>' : ''}</tr></thead><tbody>${all.map(({ x, c }) =>
+        `<tr class="${x.key === sel ? 'sel' : ''}"><td>${esc(x.name)}</td><td>${f(c.wall, 3)}</td><td>${bar(c.mass)}${f(c.mass, 2)}</td><td>${f(c.pvw / 1000, 1)}</td><td>${f(c.strain * 100, 2)}</td>${bore ? `<td>${f(c.boreStrain * 100, 1)}</td>` : ''}</tr>`).join('')}${s && Number.isFinite(s.mass) ? `<tr class="metal"><td>${esc(m.name)} (metal, for reference)</td><td>${f(s.wall, 3)}</td><td>${bar(s.mass)}${f(s.mass, 2)}</td><td>${f(s.pvw / 1000, 1)}</td><td>${f(s.hoopStrain * 100, 2)}</td>${bore ? `<td>${f(s.boreStrain * 100, 1)}</td>` : ''}</tr>` : ''}</tbody></table></div><p class="hint">The same η and fibre volume fraction for every fibre, with the published strengths (your own values for the selected fibre). In practice η differs between fibres and processes, so compare your own burst data. Mass is one criterion: stiffness (the strain columns), toughness, moisture, cost and supply also decide.</p>`;
+    }
+
+    // Half section of the case, to scale, with the wall magnified: helical layer over the whole case, hoops on the
+    // cylinder, the polar bosses, and the metal case's hemispherical domes dashed.
+    function drawCase(i: ReturnType<typeof inputs>, c: ReturnType<typeof compositeCase> | null, s: ReturnType<typeof metalCase> | null, dome: ReturnType<typeof isotensoid>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-case]')!;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+      const R = i.R, L = i.L, h = dome.height * R;
+      const total = Math.max(L + 2 * h, s ? L + 2 * R : 0);
+      const sc = (W - 24) / total;
+      const wallPx = 7, wsc = c ? wallPx / c.wall : 0; // px per mm of wall
+      const top = 26 + wallPx + 6, cy = top + R * sc, H = Math.round(cy + 30);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const xc = W / 2, x0 = xc - (L / 2) * sc, x1 = xc + (L / 2) * sc;
+      const P = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
+      // inner surface, left opening → right opening
+      const prof = dome.profile; // equator → opening
+      const left = prof.slice().reverse().map((p) => ({ x: x0 - p.z * R * sc, y: cy - p.rho * R * sc, rho: p.rho }));
+      const right = prof.map((p) => ({ x: x1 + p.z * R * sc, y: cy - p.rho * R * sc, rho: p.rho }));
+      const inner = [...left, ...right];
+      const out: string[] = [];
+      // centre line
+      out.push(`<line x1="4" x2="${W - 4}" y1="${cy}" y2="${cy}" stroke="var(--rd-muted)" stroke-dasharray="10 3 2 3" stroke-width="1"/>`);
+      // metal case: hemispherical domes, dashed
+      if (s && Number.isFinite(s.mass)) {
+        const rr = R * sc;
+        out.push(`<path d="M${P(x0, cy - rr)} A${rr},${rr} 0 0 0 ${P(x0 - rr, cy)} M${P(x1, cy - rr)} A${rr},${rr} 0 0 1 ${P(x1 + rr, cy)}" fill="none" stroke="var(--rd-steel)" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+      }
+      // polar bosses: a metal ring in the neck of each dome, from the opening radius out to the dome surface, with a
+      // short neck outside; drawn first so that the helicals wrap over it
+      const rO = i.r0 * sc, rcPx = dome.rhoC * R * sc, neck = Math.max(4, 0.08 * R * sc);
+      const bossRho = Math.min(0.95, Math.max(dome.rhoC + 0.1, Math.min(0.62, dome.rhoC + 0.25)));
+      for (const [surf, dir] of [[left, -1], [right.slice().reverse(), 1]] as const) {
+        const s0 = surf.filter((pt) => pt.rho <= bossRho);
+        if (s0.length < 2) continue;
+        const xe = s0[0].x, xl = s0[s0.length - 1].x;
+        out.push(`<path d="M${s0.map((pt) => P(pt.x, pt.y)).join(' L')} L${P(xl, cy - rO)} L${P(xe + dir * neck, cy - rO)} L${P(xe + dir * neck, cy - rcPx - 0.04 * R * sc)} L${P(xe, cy - rcPx - 0.04 * R * sc)} Z" fill="var(--rd-steel)" fill-opacity="0.85" stroke="var(--rd-steel)" stroke-width="0.8"/>`);
+      }
+      if (c) {
+        // outward normal at each point of the inner polyline (up and away from the axis)
+        const cap = 3; // the ideal build-up rises without limit at the opening: draw it capped
+        const outer = inner.map((p, k) => {
+          const a = inner[Math.max(0, k - 1)], b = inner[Math.min(inner.length - 1, k + 1)];
+          let nx = b.y - a.y, ny = -(b.x - a.x);
+          const len = Math.hypot(nx, ny) || 1;
+          nx /= len; ny /= len;
+          if (ny > 0) { nx = -nx; ny = -ny; }
+          const t = c.helical * Math.min(cap, dome.buildUp(p.rho)) * wsc;
+          return { x: p.x + nx * t, y: p.y + ny * t };
+        });
+        out.push(`<path d="M${inner.map((p) => P(p.x, p.y)).join(' L')} L${outer.slice().reverse().map((p) => P(p.x, p.y)).join(' L')} Z" fill="var(--rd-blue)" fill-opacity="0.55" stroke="var(--rd-blue)" stroke-width="0.8"/>`);
+        // hoops: on the cylinder over the helicals, tapered off before the tangent lines
+        const yh = cy - R * sc - c.helical * wsc, th = c.hoop * wsc, tp = Math.min(14, (x1 - x0) / 6);
+        if (th > 0.2 && x1 - x0 > 4) out.push(`<path d="M${P(x0, yh)} L${P(x0 + tp, yh - th)} L${P(x1 - tp, yh - th)} L${P(x1, yh)} Z" fill="var(--rd-warn)" fill-opacity="0.6" stroke="var(--rd-warn)" stroke-width="0.8"/>`);
+      } else {
+        out.push(`<path d="M${inner.map((p) => P(p.x, p.y)).join(' L')}" fill="none" stroke="var(--rd-blue)" stroke-width="2"/>`);
+      }
+      // labels
+      const lab = (x: number, y: number, t: string, col = 'var(--rd-muted)', anchor = 'start') => out.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="10" fill="${col}" text-anchor="${anchor}">${t}</text>`);
+      if (c) {
+        let lx = 8;
+        for (const [t, col] of [['helical ±α', 'var(--rd-blue)'], ['hoop', 'var(--rd-warn)'], ['boss', 'var(--rd-steel)']] as const) {
+          out.push(`<rect x="${lx}" y="5" width="9" height="9" fill="${col}" fill-opacity="0.7"/>`);
+          lab(lx + 13, 13, t);
+          lx += 13 + t.length * 6.2 + 12;
+        }
+        if (s && Number.isFinite(s.mass) && W >= 400) { out.push(`<line x1="${lx}" x2="${lx + 16}" y1="10" y2="10" stroke="var(--rd-steel)" stroke-width="1.5" stroke-dasharray="5 4"/>`); lab(lx + 20, 13, 'metal case domes'); }
+      }
+      lab(xc, H - 8, `${f(c ? c.overall : L + 2 * h, 0)} mm overall${s && Number.isFinite(s.mass) ? ` · metal ${f(s.overall, 0)} mm` : ''}`, 'var(--rd-ink)', 'middle');
+      svg.innerHTML = out.join('');
+      $('[data-casecap]').innerHTML = c
+        ? `Half section, to scale, with the wall drawn ${f(wsc / sc, 0)} times thicker so that you can see it. The helical layer is drawn up to 3 times its cylinder thickness near the bosses; in theory it builds up without limit at the opening.`
+        : 'Half section, to scale. The wall needs the burst factor.';
+    }
+
+    function runDome() {
+      // the opening of the case is the source; the slider moves it (and shows it rounded)
+      const R = num('id') / 2, q = R > 0 && num('r0') > 0 ? Math.min(0.7, Math.max(0.05, num('r0') / R)) : num('rho0');
+      $('[data-rho0out]').textContent = f(q, 2);
+      const d = isotensoid(q);
+      r('dh').innerHTML = `${f(d.height, 3)} R <small>${R > 0 ? `${f(d.height * R, 1)} mm for this case` : ''} · a hemisphere is 1 R, a 2:1 ellipse 0.5 R</small>`;
+      r('da').innerHTML = `${f(d.alphaCyl, 1)}° <small>rising to 90° at the opening</small>`;
+      r('drc').innerHTML = `${f(d.rhoC, 3)} R <small>just outside the opening at ${f(q, 2)} R: the boss sits here</small>`;
+      r('dv').innerHTML = `${f(d.volume, 3)} πR³ <small>${R > 0 ? `${f((Math.PI * R ** 3 * d.volume) / 1e6, 2)} L for this case · ` : ''}a hemisphere is 0.667 πR³</small>`;
+      drawProfiles(q, d);
+      drawBuildUp(q, d);
+      $('[data-dnotes]').innerHTML = [
+        `<li>Every isotensoid leaves the cylinder smoothly and turns parallel to the axis again just outside the opening. A larger opening gives a taller dome and a steeper wind angle.</li>`,
+        `<li>The helical layer is ${f(d.buildUp(Math.min(1, 2 * q)), 2)} times its cylinder thickness at ${f(Math.min(1, 2 * q), 2)} R and keeps rising toward the opening. The width of the fibre band and the boss limit it in practice: the boss region needs its own analysis.</li>`,
+        q < 0.15 ? '<li class="warn">A small opening gives the lowest dome and the shallowest angle, but the band piles up at the pole and the boss must still pass the nozzle, the igniter and the winding shaft.</li>' : '',
+      ].join('');
+    }
+
+    function chartSize(svg: SVGSVGElement) { return Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))); }
+
+    function drawProfiles(q: number, d: ReturnType<typeof isotensoid>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-profiles]')!;
+      const W = chartSize(svg), L = 40, T = 24;
+      const side = W >= 460;
+      const S = Math.min(250, W - L - (side ? 230 : 16)), H = T + S + 34 + (side ? 0 : 74);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const X = (z: number) => L + z * S, Y = (rho: number) => T + S - rho * S;
+      const p: string[] = [];
+      for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+        p.push(`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${T + S}" stroke="var(--rd-line)"/><line x1="${L}" x2="${L + S}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/>`);
+        p.push(`<text x="${X(v)}" y="${T + S + 14}" text-anchor="${v === 0 ? 'start' : v === 1 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-muted)">${v}</text><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      }
+      p.push(`<text x="${L + S / 2}" y="${T + S + 28}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">height from the cylinder, z / R</text>`);
+      p.push(`<text x="4" y="${T - 12}" font-size="10" fill="var(--rd-ink)">r / R</text>`);
+      const path = (pts: { rho: number; z: number }[]) => pts.map((pt, k) => `${k ? 'L' : 'M'}${X(pt.z).toFixed(1)},${Y(pt.rho).toFixed(1)}`).join('');
+      const hemi = Array.from({ length: 61 }, (_, k) => { const t = (k / 60) * Math.PI / 2; return { z: Math.sin(t), rho: Math.cos(t) }; });
+      const ell = Array.from({ length: 61 }, (_, k) => { const t = (k / 60) * Math.PI / 2; return { z: 0.5 * Math.sin(t), rho: Math.cos(t) }; });
+      p.push(`<path d="${path(hemi)}" fill="none" stroke="var(--rd-steel)" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+      p.push(`<path d="${path(ell)}" fill="none" stroke="var(--rd-steel)" stroke-width="1.5" stroke-dasharray="1.5 3"/>`);
+      for (const q2 of [0.1, 0.3, 0.5]) p.push(`<path d="${path(isotensoid(q2, 200).profile)}" fill="none" stroke="var(--rd-blue)" stroke-width="1.2" stroke-opacity="0.6"/>`);
+      p.push(`<path d="${path(d.profile)}" fill="none" stroke="var(--rd-accent)" stroke-width="2.6"/>`);
+      // the polar opening of the selected dome
+      p.push(`<line x1="${X(d.height) - 18}" x2="${X(d.height) + 6}" y1="${Y(q)}" y2="${Y(q)}" stroke="var(--rd-accent)" stroke-width="1.2"/><circle cx="${X(d.height)}" cy="${Y(d.rhoC)}" r="3.5" fill="var(--rd-accent)"/>`);
+      // legend
+      const items: [string, string, string][] = [
+        [`isotensoid, r₀ = ${f(q, 2)} R`, 'var(--rd-accent)', ''], ['isotensoids, 0.1 / 0.3 / 0.5 R', 'var(--rd-blue)', ''],
+        ['hemisphere', 'var(--rd-steel)', '5 4'], ['2:1 ellipse', 'var(--rd-steel)', '1.5 3'],
+      ];
+      items.forEach(([t, col, dash], k) => {
+        const lx = side ? L + S + 18 : L, ly = side ? T + 12 + k * 18 : T + S + 50 + k * 17;
+        p.push(`<line x1="${lx}" x2="${lx + 18}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="${k === 0 ? 2.6 : 1.5}" ${dash ? `stroke-dasharray="${dash}"` : ''}/><text x="${lx + 24}" y="${ly}" font-size="10" fill="var(--rd-muted)">${t}</text>`);
+      });
+      svg.innerHTML = p.join('');
+    }
+
+    function drawBuildUp(q: number, d: ReturnType<typeof isotensoid>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-buildup]')!;
+      const W = chartSize(svg), H = 200, L = 40, R = 12, T = 16, B = 34, yMax = 5;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const X = (rho: number) => L + rho * (W - L - R), Y = (v: number) => T + (H - T - B) * (1 - Math.min(v, yMax) / yMax);
+      const p: string[] = [];
+      for (let v = 0; v <= yMax; v++) p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}×</text>`);
+      for (const v of [0, 0.25, 0.5, 0.75, 1]) p.push(`<text x="${X(v)}" y="${H - B + 14}" text-anchor="${v === 0 ? 'start' : v === 1 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      p.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">radius on the dome, r / R</text>`);
+      p.push(`<line x1="${X(q)}" x2="${X(q)}" y1="${T}" y2="${H - B}" stroke="var(--rd-accent)" stroke-dasharray="4 3"/><text x="${X(q) + 4}" y="${T + 8}" font-size="10" fill="var(--rd-accent)">opening</text>`);
+      // the curve from where it enters the chart; it rises without limit toward the opening
+      const pts: string[] = [];
+      let first: { x: number; y: number } | null = null;
+      for (let k = 0; k <= 240; k++) {
+        const rho = d.rhoC + ((1 - d.rhoC) * k) / 240, v = d.buildUp(rho);
+        if (v > yMax) continue;
+        const pt = { x: X(rho), y: Y(v) };
+        if (!first) first = pt;
+        pts.push(`${pts.length ? 'L' : 'M'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`);
+      }
+      p.push(`<path d="${pts.join('')}" fill="none" stroke="var(--rd-blue)" stroke-width="2.4"/>`);
+      if (first) p.push(`<path d="M${(first.x - 4).toFixed(1)},${(first.y + 2).toFixed(1)} L${first.x.toFixed(1)},${(first.y - 5).toFixed(1)} L${(first.x + 4).toFixed(1)},${(first.y + 2).toFixed(1)}" fill="none" stroke="var(--rd-blue)" stroke-width="2"/>`);
+      // fibre angle at a few radii, each labelled (a mark too close to the last one is left out)
+      const marks = [1, 2 * q, Math.SQRT2 * q].filter((x) => x > d.rhoC && x <= 1 && d.buildUp(x) < yMax - 0.6);
+      let lastX = Infinity;
+      for (const rho of marks.sort((a, b) => b - a)) {
+        const x = X(rho), y = Y(d.buildUp(rho));
+        if (lastX - x < 40) continue;
+        p.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="var(--rd-ink)"/><text x="${(x - 4).toFixed(1)}" y="${(y - 8).toFixed(1)}" text-anchor="${rho === 1 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-ink)">${f(angleAt(rho, q), 0)}°</text>`);
+        lastX = x;
+      }
+      svg.innerHTML = p.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      $('[data-cmp]').hidden = mode !== 'size';
+      run();
+    }));
+    // the dome slider moves the polar opening of the case
+    field('rho0').addEventListener('input', () => {
+      const R = num('id') / 2;
+      if (R > 0) field('r0').value = String(Math.round(num('rho0') * R * 10) / 10);
+      runDome();
+    });
+    field('fib').addEventListener('change', () => { applyFibre(); run(); });
+    form.addEventListener('input', (e) => { if ((e.target as HTMLElement).getAttribute('name') !== 'rho0') run(); });
+    form.addEventListener('change', (e) => { if ((e.target as HTMLElement).getAttribute('name') !== 'rho0') run(); });
+    root.querySelector('[data-share]')!.addEventListener('click', async (e) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value && el.name !== 'rho0') q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = e.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['bf'],
+      note: 'Worked-example burst factor loaded: 1.25',
+      values: { fib: 't700', fs: '4900', fe: '230', eta: '0.80', vf: '0.60', id: '300', L: '1000', r0: '50', p: '10', bf: '1.25', m: DEFAULTS.caseSteel, e: '0.9', bore: '100', K: '3500' },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.cc-out')!);
+    }
+    run();
+  });
+</script>

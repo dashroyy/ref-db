@@ -478,11 +478,14 @@ export function caseStrains(i: GrainStructInputs) {
   return { hoop: s * (1 - i.caseNu / 2), axial: s * (0.5 - i.caseNu) };
 }
 
-/** Bore hoop strain from pressurisation: the case dilation, amplified by m². */
+/** Bore hoop strain from pressurisation for given case strains at the bond: the case dilation, amplified by m². */
+export const boreStrainFromCase = (m2: number, hoop: number, axial: number, pressure: number, bulkK: number) =>
+  m2 * hoop + ((m2 - 1) / 2) * (axial + pressure / bulkK);
+
+/** Bore hoop strain from pressurisation, with the case strains of a thin isotropic case. */
 export function pressureBoreStrain(i: GrainStructInputs) {
-  const m2 = (i.od / i.boreD) ** 2;
   const c = caseStrains(i);
-  return m2 * c.hoop + ((m2 - 1) / 2) * (c.axial + i.pressure / i.bulkK);
+  return boreStrainFromCase((i.od / i.boreD) ** 2, c.hoop, c.axial, i.pressure, i.bulkK);
 }
 
 /** Radial tensile stress at the case bond from cooling, MPa. */

@@ -1,0 +1,101 @@
+---
+// The aft end of a case-bonded motor with a wound case, in half section: the parts that the netting sizing leaves
+// out. Schematic, with the layer thicknesses exaggerated; the dome is the isotensoid of src/lib/composite.ts.
+import { isotensoid } from '../lib/composite';
+
+const yAx = 262, R = 150, xT = 186; // axis, inner radius of the insulation (px), tangent line
+const rho0 = 0.33, d = isotensoid(rho0, 200);
+const apex = xT + d.height * R;
+// the inner surface: the cylinder from x = 8, then the dome to the opening
+const cyl = Array.from({ length: 18 }, (_, k) => ({ x: 8 + ((xT - 8) * k) / 18, y: yAx - R, rho: 1 }));
+const inner = [...cyl, ...d.profile.map((p) => ({ x: xT + p.z * R, y: yAx - p.rho * R, rho: p.rho }))];
+const normals = inner.map((p, k) => {
+  const a = inner[Math.max(0, k - 1)], b = inner[Math.min(inner.length - 1, k + 1)];
+  let nx = b.y - a.y, ny = -(b.x - a.x);
+  const len = Math.hypot(nx, ny) || 1;
+  nx /= len; ny /= len;
+  if (ny > 0) { nx = -nx; ny = -ny; }
+  return { nx, ny };
+});
+const onDome = (p: { x: number }) => p.x > xT + 0.5;
+const tIns = (p: { x: number; rho: number }) => (onDome(p) ? 4 + (9 * (1 - p.rho)) / (1 - d.rhoC) : 4);
+const tBoss = (p: { rho: number }) => (p.rho < 0.6 ? Math.min(6, (0.6 - p.rho) * 60) : 0);
+const tHel = (p: { x: number; rho: number }) => 4 * (onDome(p) ? Math.min(2.6, d.buildUp(p.rho)) : 1);
+const tHoop = (p: { x: number }) => (p.x < xT - 6 ? 6 : p.x < xT ? (xT - p.x) : 0);
+const off = (k: number, t: number) => ({ x: inner[k].x + normals[k].nx * t, y: inner[k].y + normals[k].ny * t });
+const band = (a: (k: number) => number, b: (k: number) => number, keep = (_k: number) => true) => {
+  const idx = inner.map((_, k) => k).filter(keep);
+  const lo = idx.map((k) => off(k, a(k))), hi = idx.map((k) => off(k, b(k))).reverse();
+  return `M${[...lo, ...hi].map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')} Z`;
+};
+const s1 = (k: number) => tIns(inner[k]);
+const s2 = (k: number) => s1(k) + tBoss(inner[k]);
+const s3 = (k: number) => s2(k) + tHel(inner[k]);
+const s4 = (k: number) => s3(k) + tHoop(inner[k]);
+const insulation = band(() => 0, s1);
+const boss = band(s1, s2, (k) => inner[k].rho < 0.6);
+const helical = band(s2, s3);
+const hoop = band(s3, s4, (k) => inner[k].x <= xT);
+const yCase = yAx - R - 4 - 4 - 6; // outer surface of the case on the cylinder
+const bore = yAx - 0.36 * R, ra = yAx - rho0 * R;
+const grain = `M8,${yAx - R} L${xT - 10},${yAx - R} C${xT + 2},${yAx - R + 30} ${xT + 22},${bore - 40} ${xT + 16},${bore} L8,${bore} Z`;
+const flap = `M${xT - 22},${yAx - R + 1} C${xT - 4},${yAx - R + 8} ${xT + 10},${yAx - R + 30} ${xT + 16},${yAx - R + 58}`;
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)';
+const at = (rho: number) => { const k = inner.findIndex((p) => p.x > xT && p.rho <= rho); return k < 0 ? inner.length - 1 : k; };
+const kHel = at(0.78), kIns = at(0.55);
+const pHel = off(kHel, (s2(kHel) + s3(kHel)) / 2), pIns = off(kIns, s1(kIns) / 2);
+---
+
+<figure class="viz case-end">
+  <p class="viz-title">The aft end of a wound case, in half section</p>
+  <svg viewBox="0 0 440 282" role="img" aria-labelledby="ce-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="ce-desc">
+      A half section of the aft end of a case-bonded motor with a wound case. From the inside: the propellant grain
+      with its bore; the rubber insulation, thin on the cylinder and thicker on the aft dome; a stress-relief flap at the
+      end of the grain; the metal polar boss, whose flange sits between the insulation and the composite; the helical
+      layers over the cylinder and the dome, building up toward the boss; the hoop layers on the cylinder only. An aft
+      skirt is joined to the case cylinder by a thin rubber shear ply, and the nozzle bolts to the boss.
+    </desc>
+    <line x1="4" x2="436" y1={yAx} y2={yAx} stroke={muted} stroke-dasharray="12 3 2 3" stroke-width="0.8"></line>
+    <path d={grain} fill="var(--rd-propellant)" fill-opacity="0.55" stroke="var(--rd-propellant)" stroke-width="1"></path>
+    <path d={insulation} fill="var(--rd-insul)" fill-opacity="0.85"></path>
+    <path d={flap} fill="none" stroke="var(--rd-insul)" stroke-width="3"></path>
+    <path d={boss} fill="var(--rd-steel)"></path>
+    <path d={helical} fill="var(--rd-blue)" fill-opacity="0.75"></path>
+    <path d={hoop} fill="var(--rd-warn)" fill-opacity="0.75"></path>
+    <!-- boss neck and nozzle -->
+    <path d={`M${apex - 34},${ra} L${apex + 30},${ra} L${apex + 30},${ra - 22} L${apex - 2},${ra - 22} L${apex - 2},${ra - 8} L${apex - 34},${ra - 6} Z`} fill="var(--rd-steel)" stroke={ink} stroke-width="0.7"></path>
+    <path d={`M${apex + 31},${ra - 20} L${apex + 46},${ra - 20} L${apex + 46},${ra + 2} L${apex + 31},${ra + 2} M${apex + 46},${ra - 12} C${apex + 80},${ra - 10} ${apex + 100},${ra - 30} ${apex + 128},${ra - 46}`} fill="none" stroke={muted} stroke-width="1.2" stroke-dasharray="4 3"></path>
+    <!-- skirt and shear ply -->
+    <rect x="112" y={yCase - 3} width={xT - 112} height="3" fill="var(--rd-insul)"></rect>
+    <path d={`M112,${yCase - 3} L338,${yCase - 3} L338,${yCase - 11} L112,${yCase - 11} Z`} fill="var(--rd-blue)" fill-opacity="0.4" stroke="var(--rd-blue)" stroke-width="0.8"></path>
+    <rect x="330" y={yCase - 14} width="12" height="14" fill="var(--rd-steel)" stroke={ink} stroke-width="0.7"></rect>
+    <!-- labels -->
+    <text x="60" y={(yAx - R + bore) / 2 + 26} font-size="10.5" fill={ink}>propellant</text>
+    <text x="60" y={(bore + yAx) / 2 + 4} font-size="10" fill={muted}>bore (hot gas)</text>
+    <line x1="60" x2="60" y1="46" y2={yCase + 1} stroke={muted}></line>
+    <text x="60" y="40" font-size="10.5" fill={ink} text-anchor="middle">hoop layers</text>
+    <line x1="150" x2="150" y1="28" y2={yCase - 2} stroke={muted}></line>
+    <text x="150" y="22" font-size="10.5" fill={ink} text-anchor="middle">shear ply (rubber)</text>
+    <line x1="270" x2="270" y1="46" y2={yCase - 10} stroke={muted}></line>
+    <text x="270" y="40" font-size="10.5" fill={ink} text-anchor="middle">aft skirt</text>
+    <line x1={pHel.x} x2="346" y1={pHel.y} y2="112" stroke={muted}></line>
+    <text x="348" y="115" font-size="10.5" fill={ink}>helical layers</text>
+    <line x1={pIns.x} x2="346" y1={pIns.y} y2="146" stroke={muted}></line>
+    <text x="348" y="149" font-size="10.5" fill={ink}>insulation</text>
+    <line x1="166" x2={xT + 1} y1={yAx - R + 33} y2={yAx - R + 26} stroke={ink} stroke-width="0.8"></line>
+    <text x="163" y={yAx - R + 37} font-size="10.5" fill={ink} text-anchor="end">stress-relief flap</text>
+    <line x1={apex - 4} x2={apex - 4} y1={ra + 1} y2="231" stroke={muted}></line>
+    <text x={apex - 4} y="242" font-size="10.5" fill={ink} text-anchor="middle">polar boss</text>
+    <text x={apex + 58} y={ra + 16} font-size="10" fill={muted}>nozzle</text>
+    <text x={xT} y="278" font-size="10" fill={muted} text-anchor="middle">tangent line</text>
+    <line x1={xT} x2={xT} y1={yAx - 6} y2="268" stroke={muted}></line>
+  </svg>
+  <figcaption>
+    What the netting sizing leaves out, drawn with the layers exaggerated. The <b>boss</b> carries the load on the
+    opening and the nozzle; its flange is trapped between the insulation and the helicals, which build up toward it. The
+    <b>skirt</b> carries the vehicle loads; the rubber <b>shear ply</b> lets the case grow under it without peeling it
+    off. The <b>insulation</b> is thickest where the gas turns into the nozzle, and the <b>flap</b> lets the end of the
+    grain move away from the dome as it shrinks.
+  </figcaption>
+</figure>
