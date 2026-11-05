@@ -9,7 +9,7 @@ const curves = [
   { key: 'pt', label: 'prevailing torque', color: '#c79bff', f: (x: number) => 0.14 + 0.86 * Math.exp(-x / 0.1), dash: '' },
   { key: 'none', label: 'none, or split washer', color: 'var(--rd-accent)', f: (x: number) => Math.exp(-x / 0.06), dash: '6 4' },
 ];
-const W = 340, H = 250, L = 44, R = 10, T = 14, B = 36;
+const W = 340, H = 256, L = 44, R = 10, T = 24, B = 36;
 const X = (x: number) => L + x * (W - L - R), Y = (y: number) => T + (1 - y) * (H - T - B);
 const path = (f: (x: number) => number) => Array.from({ length: 121 }, (_, i) => i / 120).map((x, i) => `${i ? 'L' : 'M'}${X(x).toFixed(1)},${Y(f(x)).toFixed(1)}`).join('');
 // label positions: at the right end, except the top line, which is labelled at the left

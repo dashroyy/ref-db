@@ -167,11 +167,21 @@ const PRICE = Object.fromEntries(PRICED.map((m) => [m.key, m.price]));
           el('rect', { x: X(p.tol[0]), y: Y(p.ra[2]), width: Math.max(2, X(p.tol[1]) - X(p.tol[0])), height: Math.max(2, Y(p.ra[0]) - Y(p.ra[2])), rx: 3,
             fill: FAMC[p.family], 'fill-opacity': good ? 0.35 : 0.08, stroke: FAMC[p.family], 'stroke-opacity': good ? 1 : 0.35, 'stroke-width': good ? 1.6 : 1 });
         }
-        for (const x of order) if (x.ok && x.asMade !== 'no') txt(X(Math.sqrt(x.p.tol[0] * x.p.tol[1])), Y(Math.sqrt(x.p.ra[0] * x.p.ra[2])) + 4, x.p.name.split(/[ ,(]/)[0], 'var(--rd-ink)', 'middle', 10);
         el('line', { x1: X(r.tol), x2: X(r.tol), y1: T, y2: H - B, stroke: 'var(--rd-ink)', 'stroke-dasharray': '4 3' });
         el('line', { x1: L, x2: W - R, y1: Y(r.ra), y2: Y(r.ra), stroke: 'var(--rd-ink)', 'stroke-dasharray': '4 3' });
         el('circle', { cx: X(r.tol), cy: Y(r.ra), r: 5, fill: 'var(--rd-accent)', stroke: 'var(--rd-panel)', 'stroke-width': 1.5 });
-        txt(Math.min(X(r.tol) + 7, W - R - 80), Y(r.ra) - 8, 'your feature', 'var(--rd-accent)', 'start', 11);
+        // labels that do not cover each other: your feature first, then the process names where they fit
+        const placed: [number, number, number, number][] = [];
+        const tryLabel = (x: number, y: number, s: string, c: string, anchor: 'start' | 'middle' | 'end', fs: number) => {
+          const w = s.length * fs * 0.6, x0 = anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x, y0 = y - fs * 0.85;
+          if (x0 < L + 1 || x0 + w > W - R - 1 || y0 < T || y > H - B - 1) return false;
+          if (placed.some(([a, b, cw, ch]) => x0 < a + cw + 2 && a < x0 + w + 2 && y0 < b + ch + 1 && b < y0 + fs + 1)) return false;
+          placed.push([x0, y0, w, fs]); txt(x, y, s, c, anchor, fs); return true;
+        };
+        const fx = X(r.tol), fy = Y(r.ra);
+        [[fx + 8, fy - 8, 'start'], [fx + 8, fy + 16, 'start'], [fx - 8, fy - 8, 'end'], [fx - 8, fy + 16, 'end']]
+          .some(([x, y, a]) => tryLabel(x as number, y as number, 'your feature', 'var(--rd-accent)', a as 'start' | 'end', 11));
+        for (const x of order) if (x.ok && x.asMade !== 'no') tryLabel(X(Math.sqrt(x.p.tol[0] * x.p.tol[1])), Y(Math.sqrt(x.p.ra[0] * x.p.ra[2])) + 4, x.p.name.split(/[ ,(]/)[0], 'var(--rd-ink)', 'middle', 10);
         el('text', { x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'tolerance ± (mm), log');
         el('text', { x: 11, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 11 ${(T + H - B) / 2})` }, 'Ra (µm), log');
       };

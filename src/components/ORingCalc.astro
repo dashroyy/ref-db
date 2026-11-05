@@ -427,7 +427,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
         for (const [v, c] of [[g.sqMinCold, 'var(--rd-blue)'], [g.sqMinEol, 'var(--rd-warn)'], [g.sqMax, 'var(--rd-accent)']] as const) el(svg, 'circle', { cx: X(v), cy: 48, r: 5, fill: c });
         if (g.sqMinPressurised < g.sqMinEol - 1e-6) el(svg, 'circle', { cx: X(g.sqMinPressurised), cy: 48, r: 5, fill: 'var(--rd-accent)', stroke: 'var(--rd-panel)', 'stroke-width': 1.5 });
         el(svg, 'rect', { x: X(g.sqNom) - 2, y: 36, width: 4, height: 24, fill: 'var(--rd-ink)' });
-        el(svg, 'text', { x: 20, y: 16, 'font-size': 11, fill: 'var(--rd-muted)' }, 'worst-case squeeze · bar = nominal · light green = limits, dark = target');
+        el(svg, 'text', { x: 20, y: 16, 'font-size': 11, fill: 'var(--rd-muted)' }, W < 520 ? 'squeeze · bar = nominal · green = band' : 'worst-case squeeze · bar = nominal · light green = limits, dark = target');
         el(svg, 'text', { x: 20, y: 104, 'font-size': 11, fill: 'var(--rd-blue)' }, '● cold'); el(svg, 'text', { x: 80, y: 104, 'font-size': 11, fill: 'var(--rd-warn)' }, '● after set'); el(svg, 'text', { x: 170, y: 104, 'font-size': 11, fill: 'var(--rd-accent)' }, '● most / opened');
         cap.textContent = 'From the least squeeze (smallest ring, deepest gland, cold, after compression set) to the most (largest ring, tightest gland, hot, swollen).';
       } else if (view === 'temp') {

@@ -86,7 +86,7 @@ const DATA = METAL_FAMILIES.map((f) => ({
 
     function chart(list: Mem[]) {
       const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
-      const W = Math.round(Math.min(680, Math.max(280, svg.clientWidth || 600))), H = 260, L = 48, R = 12, T = 14, B = 34;
+      const W = Math.round(Math.min(680, Math.max(280, svg.clientWidth || 600))), H = 268, L = 48, R = 12, T = 24, B = 34;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
       const pts = list.filter((m) => m.Fty && m.maxT);
       const xmax = Math.max(200, ...pts.map((m) => m.maxT!)) * 1.08, ymax = Math.max(100, ...pts.map((m) => m.Fty!)) * 1.1;
@@ -95,7 +95,7 @@ const DATA = METAL_FAMILIES.map((f) => ({
       const ys = ymax > 1200 ? 400 : ymax > 600 ? 200 : 100, xs = xmax > 800 ? 200 : 100;
       for (let v = 0; v <= ymax; v += ys) p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
       for (let v = 0; v <= xmax; v += xs) p.push(`<text x="${X(v)}" y="${H - 16}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
-      p.push(`<text x="${W - R}" y="${H - 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">max service temperature, °C</text><text x="4" y="${T}" font-size="10" fill="var(--rd-muted)">yield, MPa</text>`);
+      p.push(`<text x="${W - R}" y="${H - 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">max service temperature, °C</text><text x="4" y="11" font-size="10" fill="var(--rd-muted)">yield, MPa</text>`);
       for (const m of pts) {
         const sel = m.key === picked;
         p.push(`<g data-key="${esc(m.key)}"><title>${esc(m.name)}: ${m.Fty} MPa, ${m.maxT} °C</title><circle cx="${X(m.maxT!).toFixed(1)}" cy="${Y(m.Fty!).toFixed(1)}" r="${sel ? 7 : 5}" fill="${colour(m.cls)}" fill-opacity="${sel ? 1 : 0.8}" stroke="${sel ? 'var(--rd-ink)' : 'var(--rd-panel)'}" stroke-width="${sel ? 2 : 1}"/></g>`);

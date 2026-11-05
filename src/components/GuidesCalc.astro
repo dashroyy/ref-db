@@ -174,7 +174,7 @@ const AL = slug('Al 2024-T3');
         });
         p.push(`<line x1="${fx.toFixed(1)}" x2="${(fx + L * sc).toFixed(1)}" y1="${fy + 40}" y2="${fy + 40}" stroke="var(--rd-ink)"/><text x="${(fx + (L * sc) / 2).toFixed(1)}" y="${fy + 54}" text-anchor="middle" font-size="11" fill="var(--rd-ink)">FLAT ${f(L, 2)} mm</text>`);
         p.push(`<text x="20" y="${fy - 8}" font-size="10" fill="var(--rd-muted)">FLAT PATTERN · bend zones shaded</text>`);
-      } else p.push(`<text x="20" y="${fy + 14}" font-size="11" fill="var(--rd-muted)">Enter the K-factor to see the flat pattern.</text>`);
+      } else p.push(`<text x="20" y="${fy + 14}" font-size="11" fill="var(--rd-muted)">${W < 420 ? 'Enter the K-factor' : 'Enter the K-factor to see the flat pattern.'}</text>${W < 420 ? `<text x="20" y="${fy + 30}" font-size="11" fill="var(--rd-muted)">to see the flat pattern.</text>` : ''}`);
       draw(W, H + 10, p.join(''), 'The formed part to scale, and its flat pattern with the bend zones (bend allowance) and bend lines.');
     }
 

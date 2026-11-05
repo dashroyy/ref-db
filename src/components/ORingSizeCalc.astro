@@ -87,14 +87,14 @@ import { SERIES } from '../lib/oringdb';
 
     function chart(sel: Ring | undefined) {
       const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
-      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 200, L = 40, R = 12, T = 12, B = 30;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 206, L = 40, R = 12, T = 12, B = 36;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
       const pts = AS568.filter((r) => +r.dash.slice(1) < 900), xmax = 700, ymax = 3.2;
       const X = (v: number) => L + (Math.sqrt(v) / Math.sqrt(xmax)) * (W - L - R), Y = (v: number) => H - B - (v / ymax) * (H - T - B);
       const p: string[] = [];
       for (const v of [0, 1, 2, 3]) p.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
-      for (const v of [10, 50, 100, 200, 400, 650]) p.push(`<text x="${X(v)}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
-      p.push(`<text x="${W - R}" y="${H - 1}" text-anchor="end" font-size="10" fill="var(--rd-muted)">ID, mm (square-root scale)</text><text x="4" y="${T + 2}" font-size="10" fill="var(--rd-muted)">±mm</text>`);
+      for (const v of [10, 50, 100, 200, 400, 650]) p.push(`<text x="${X(v)}" y="${H - 20}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      p.push(`<text x="${W - R}" y="${H - 4}" text-anchor="end" font-size="10" fill="var(--rd-muted)">ID, mm (square-root scale)</text><text x="4" y="${T + 2}" font-size="10" fill="var(--rd-muted)">±mm</text>`);
       for (const r of pts) p.push(`<circle cx="${X(r.id).toFixed(1)}" cy="${Y(r.idTol).toFixed(1)}" r="2.2" fill="${COL[r.cs.toFixed(2)] ?? 'var(--rd-muted)'}" fill-opacity="0.75"/>`);
       // BS 4518: hollow squares; its ID tolerance steps with the ISO 286 size ranges
       for (const r of BS4518) p.push(`<rect x="${(X(r.id) - 2.2).toFixed(1)}" y="${(Y(r.idTol) - 2.2).toFixed(1)}" width="4.4" height="4.4" fill="none" stroke="var(--rd-muted)" stroke-width="1"/>`);

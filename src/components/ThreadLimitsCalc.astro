@@ -73,7 +73,7 @@ import ThreadSelect from './ThreadSelect.astro';
 
     function chart(s: NonNullable<ReturnType<typeof threadSpec>>, e: ExtLimits, i: IntLimits) {
       const svg = root.querySelector<SVGSVGElement>('[data-chart]')!;
-      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 190, L = 78, R = 12, T = 16, B = 30;
+      const W = Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560))), H = 194, L = 78, R = 12, T = 20, B = 30;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
       const basic = { major: s.d, pitch: s.d2, minor: s.d - 1.082532 * s.P };
       const rows = [

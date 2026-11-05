@@ -189,9 +189,8 @@ const FAMS: [string, string][] = [['al', 'Aluminium alloy'], ['ti', 'Titanium al
         svg.append(el('line', { x1: X(v), x2: X(v), y1: T + 10, y2: yBase + 30, stroke: col, 'stroke-width': lab === 'mean' ? 1.2 : 2, 'stroke-dasharray': lab === 'mean' ? '4 3' : '' }));
         svg.append(el('text', { x: X(v), y: T + 6 + (k % 2) * 0, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: col }, lab));
       });
-      for (const v of [Math.ceil(lo / 10) * 10, Math.round(b.mean / 10) * 10, Math.floor(hi / 10) * 10])
-        svg.append(el('text', { x: X(v), y: H - 6, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, String(v)));
-      svg.append(el('text', { x: W - R, y: H - 6, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, 'MPa'));
+      const tk = [Math.ceil(lo / 10) * 10, Math.round(b.mean / 10) * 10, Math.floor(hi / 10) * 10];
+      tk.forEach((v, k) => svg.append(el('text', { x: X(v), y: H - 6, 'text-anchor': k === 0 ? 'start' : k === 2 ? 'end' : 'middle', 'font-size': 10, fill: 'var(--rd-muted)' }, k === 1 ? `${v} MPa` : String(v))));
     }
 
     function kChart(n: number) {

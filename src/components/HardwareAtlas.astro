@@ -352,7 +352,7 @@ const BADGES: Record<string, [number, number, number, number]> = {
   .ha-card h4 { margin: 0 !important; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; }
   .ha-card h4 span { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--pc, var(--sl-color-accent)); color: var(--sl-color-black); font-family: var(--sl-font-mono); font-size: 0.8rem; }
   .ha-card .ha-job { margin: 0.5rem 0 0 !important; font-size: var(--sl-text-sm); }
-  .ha-card dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.6rem 1rem; margin: 0.75rem 0 0 !important; }
+  .ha-card dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); gap: 0.6rem 1rem; margin: 0.75rem 0 0 !important; }
   .ha-card dl > div { margin: 0 !important; }
   .ha-card dl .wide { grid-column: 1 / -1; }
   .ha-card dt { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); }

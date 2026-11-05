@@ -57,7 +57,8 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
 <style is:global>
   .dscalc .ds-body { grid-template-columns: minmax(0, 1fr) !important; }
   .dscalc .ds-body > * { min-width: 0; }
-  .dscalc .ds-out { display: grid; gap: 0.9rem; }
+  .dscalc .ds-out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+  .dscalc .ds-out > * { min-width: 0; }
   .dscalc .ds-out > * { margin: 0 !important; }
   .ds-id { border: 1px solid var(--rd-line); border-left: 4px solid var(--rd-accent); border-radius: 6px; padding: 0.7rem 0.85rem; background: var(--rd-panel2); display: grid; gap: 0.35rem; }
   .ds-id > * { margin: 0 !important; }
@@ -197,21 +198,23 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
 
       // profile chart: where the material sits among the library materials that have each property
       svg.replaceChildren();
-      const W = Math.round(Math.min(620, Math.max(320, svg.clientWidth || 520))), L = Math.min(150, W * 0.34), R = 16, T0 = 30, rowH = 26, items = PROFILE.filter(([k, , s]) => val(a, k, s) !== undefined || (b && val(b, k, s) !== undefined));
+      const W = Math.round(Math.min(620, Math.max(280, svg.clientWidth || 520))), narrow = W < 420, L = narrow ? 8 : Math.min(150, W * 0.34), R = 16, T0 = narrow ? 40 : 30, rowH = narrow ? 34 : 26, items = PROFILE.filter(([k, , s]) => val(a, k, s) !== undefined || (b && val(b, k, s) !== undefined));
       const H = T0 + items.length * rowH + 48;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
       const X = (u: number) => L + u * (W - L - R);
       for (const u of [0, 0.25, 0.5, 0.75, 1]) { el('line', { x1: X(u), x2: X(u), y1: T0 - 4, y2: H - 40, stroke: 'var(--rd-line)' }); el('text', { x: X(u), y: H - 26, 'text-anchor': u === 0 ? 'start' : u === 1 ? 'end' : 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, u === 0 ? 'lowest' : u === 1 ? 'highest' : `${u * 100}%`); }
       items.forEach(([k, label, s], i) => {
-        const y = T0 + i * rowH + rowH / 2, ra = rank(k, s, val(a, k, s)), rb = b ? rank(k, s, val(b, k, s)) : undefined;
-        el('text', { x: L - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--rd-ink)' }, label);
+        const y = T0 + i * rowH + rowH / 2 + (narrow ? 6 : 0), ra = rank(k, s, val(a, k, s)), rb = b ? rank(k, s, val(b, k, s)) : undefined;
+        // on a phone the labels go above their bars, so the bars keep the full width
+        if (narrow) el('text', { x: L, y: y - 9, 'font-size': 11, fill: 'var(--rd-ink)' }, label);
+        else el('text', { x: L - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--rd-ink)' }, label);
         el('line', { x1: X(0), x2: X(1), y1: y, y2: y, stroke: 'var(--rd-line)', 'stroke-width': 6, 'stroke-linecap': 'round' });
         if (ra !== undefined) { el('line', { x1: X(0), x2: X(ra), y1: y, y2: y, stroke: 'var(--rd-accent)', 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-opacity': 0.8 }); el('circle', { cx: X(ra), cy: y, r: 6, fill: 'var(--rd-accent)', stroke: 'var(--rd-panel)', 'stroke-width': 2 }); }
         if (rb !== undefined) el('circle', { cx: X(rb), cy: y, r: 6, fill: 'var(--rd-blue)', stroke: 'var(--rd-panel)', 'stroke-width': 2 });
       });
       el('circle', { cx: 12, cy: 12, r: 5, fill: 'var(--rd-accent)' }); el('text', { x: 22, y: 16, 'font-size': 11, fill: 'var(--rd-ink)' }, a.name.length > 28 ? `${a.name.slice(0, 27)}…` : a.name);
       if (b) { const x0 = Math.min(W / 2, 22 + Math.min(28, a.name.length) * 6.6 + 18); el('circle', { cx: x0, cy: 12, r: 5, fill: 'var(--rd-blue)' }); el('text', { x: x0 + 10, y: 16, 'font-size': 11, fill: 'var(--rd-ink)' }, b.name.length > 28 ? `${b.name.slice(0, 27)}…` : b.name); }
-      el('text', { x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, 'rank among the library materials that have the property');
+      el('text', { x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, narrow ? 'rank among the library materials' : 'rank among the library materials that have the property');
       root.querySelector('[data-cap]')!.textContent = `Where ${a.name}${b ? ` and ${b.name}` : ''} sit among the ${all.length} library materials, property by property. Further right is a higher value: for price, that is more expensive.`;
       try { const u = new URL(location.href); u.searchParams.set('m', aKey); history.replaceState(null, '', u); } catch { /* opaque origin */ }
     }

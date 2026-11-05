@@ -149,7 +149,9 @@ const PRESETS = [
       svg.append(el('text', { x: 12, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, 'E, MPa'));
       const pts = Array.from({ length: 221 }, (_, i) => x1 + (i / 220) * (x2 - x1));
       svg.append(el('path', { d: pts.map((lx, i) => `${i ? 'L' : 'M'}${X(lx).toFixed(1)},${Y(Math.log10(relaxModulus(10 ** lx, curve))).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--rd-ok)', 'stroke-width': 2.5 }));
-      svg.append(el('text', { x: X(x2) - 4, y: Y(Math.log10(curve.eEq)) - 6, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, 'rubbery, fully relaxed'));
+      // below the plateau when there is room, so the load-case tags above the curve stay clear
+      const yEq = Y(Math.log10(curve.eEq)), below = yEq + 15 < H - B - 2;
+      svg.append(el('text', { x: X(x2) - 4, y: below ? yEq + 15 : yEq - 6, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--rd-muted)' }, 'rubbery, fully relaxed'));
       svg.append(el('text', { x: X(x1) + 4, y: Y(Math.log10(curve.eGlass)) + 14, 'font-size': 10, fill: 'var(--rd-muted)' }, 'glassy'));
       // Load cases: a dot on the curve and a numbered tag above it, nudged up where tags would collide.
       const placed: { x: number; y: number }[] = [];

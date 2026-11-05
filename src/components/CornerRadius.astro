@@ -2,7 +2,7 @@
 // Design for machining: the internal corner radius of a pocket sets the cutter, and the cutter sets the time.
 const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', bad = 'var(--rd-accent)', warn = 'var(--rd-warn)', ok = 'var(--rd-ok)';
 const cases = [
-  { x: 10, r: 0, cut: 0, c: bad, t1: 'sharp corner', t2: 'cannot be milled: EDM' },
+  { x: 10, r: 0, cut: 0, c: bad, t1: 'sharp corner', t2: 'needs EDM' },
   { x: 130, r: 4, cut: 8, c: warn, t1: 'small radius', t2: 'small cutter, slow' },
   { x: 250, r: 14, cut: 26, c: ok, t1: 'R ≥ depth ÷ 3', t2: 'stock cutter, fast' },
 ];

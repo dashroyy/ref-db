@@ -179,7 +179,7 @@ import { GRADES } from '../lib/bolts';
       const halo = { stroke: 'var(--rd-panel)', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' };
       for (let k = 0; k <= 2.5 + 1e-9; k += 0.5) {
         svg.append(el('line', { x1: X(k * d), x2: X(k * d), y1: T, y2: H - B, stroke: 'var(--rd-line)' }));
-        svg.append(el('text', { x: X(k * d), y: H - B + 15, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--rd-muted)' }, `${k}d`));
+        if (k > 0) svg.append(el('text', { x: X(k * d), y: H - B + 15, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--rd-muted)' }, `${k}d`)); // the corner keeps the y-axis 0
       }
       const step = ymax > 40000 ? 20000 : ymax > 20000 ? 10000 : ymax > 8000 ? 4000 : 2000;
       for (let v = 0; v <= ymax; v += step) svg.append(el('text', { x: L - 6, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--rd-muted)' }, f(v / 1000, 0)));

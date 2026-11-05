@@ -96,7 +96,7 @@ const BAD = `1. Break all sharp edges.
   /* the title block, drawn as on a drawing sheet */
   .dn-tb { border: 2px solid var(--rd-ink); font-family: var(--sl-font-mono); background: var(--rd-panel); display: grid; grid-template-columns: minmax(0, 1fr) 7.5rem; }
   .dn-tb > * { margin: 0 !important; }
-  .dn-tb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .dn-tb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
   .dn-tb-grid > * { margin: 0 !important; }
   .dn-tb-cell { border-right: 1px solid var(--rd-line); border-bottom: 1px solid var(--rd-line); padding: 0.3rem 0.45rem 0.35rem; min-width: 0; }
   .dn-tb-cell > * { margin: 0 !important; }
