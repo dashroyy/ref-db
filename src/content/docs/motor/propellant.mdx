@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import MeopBuildUp from '../../../components/MeopBuildUp.astro';
 import MasterCurve from '../../../components/MasterCurve.astro';
+import DbFamily from '../../../components/DbFamily.astro';
 
 <div class="glance">
   <div><b>In one line</b>You do not select the propellant, but you must use its numbers. All of these numbers change with temperature.</div>
@@ -216,6 +217,80 @@ different between families.
 | AP composite | Highly filled rubber, viscoelastic | Wide | High $I_{sp}$; visible exhaust when metallised | Binder hardening; migration; bondline ageing; moisture | Bondline integrity; humidity control |
 | AN composite | Filled rubber | Limited by oxidiser phase changes during cycling | Lower $I_{sp}$; low signature, no chlorine | Moisture; phase changes | Moisture ingress and corrosion |
 
+## Double-base propellants: forms and properties
+
+Double-base propellant is nitrocellulose that is gelatinised by a liquid nitrate-ester plasticiser. Each of the two
+components carries fuel and oxidiser in its own molecules, so the propellant is one homogeneous phase, with no crystals
+and no separate binder. This gives it a low-smoke exhaust, a smooth burning surface, and the mechanical behaviour of a
+glassy polymer. It also gives it the two problems of the family: it is brittle when cold, and its nitrate esters
+migrate and decompose.
+
+<DbFamily />
+
+### The forms you receive
+
+| Form | What you receive | Grain size | In the case | Typical use |
+| --- | --- | --- | --- | --- |
+| Extruded double-base (EDB) | Solid or tubular sticks, cut to length | Small and medium: the extrusion press sets the limit | Free-standing (cartridge-loaded) | Small rockets, tactical motors, gas generators |
+| Cast double-base (CDB) | A grain cast in a mould or in the case | Larger, and in more complex shapes | Free-standing, or bonded to the case through a liner | Larger tactical motors and sustainers |
+| Composite-modified double-base (CMDB) | Usually a cast grain: a double-base matrix filled with oxidiser crystals and often aluminium | As CDB | As CDB | More energy, where smoke is acceptable |
+| Elastomer-modified cast double-base (EMCDB) | A cast grain with a crosslinked polymer in the double-base matrix | As CDB | Bonded to the case | Low-smoke motors that are case-bonded and fire over a wide temperature range |
+| Crosslinked nitrate-ester propellants (XLDB, NEPE) | A cast grain: a crosslinked binder plasticised with nitrate esters and filled with oxidiser | Large | Bonded to the case | Large motors that need the most energy |
+
+### The properties that matter for the hardware
+
+These are indicative comparisons from open textbooks. Use the data of your propellant.
+
+| Property | EDB and CDB | CMDB | EMCDB | What it does to the hardware |
+| --- | --- | --- | --- | --- |
+| Density | About 1.6 g/cm³ | About 1.8 g/cm³ | 1.6 or more, with the filler | The propellant mass that a given case holds |
+| Exhaust | Low smoke; no chlorine | Smoky when it has aluminium; HCl when it has ammonium perchlorate | Low smoke unless it has aluminium | The signature; deposits on the nozzle exit and on optics |
+| Stiffness | High: a stiff, glassy grain | Higher, from the filler | Lower: closer to a rubber | The load on the supports and on the bond |
+| Strain capability when cold | A few per cent | A few per cent | Several times that of CDB | Cold cracking of the grain |
+| Glass transition | Higher than that of a composite propellant | As double-base | Lower than double-base | The coldest temperature at which the grain takes strain |
+| Burn rate against pressure | Some show a plateau or a mesa | Depends on the type | Depends on the type | The spread of the pressure, and so MEOP |
+| Ages by | Stabiliser depletion; plasticiser migration | Both, and dewetting of the filler | As double-base, and changes in the polymer | The safe life; the inhibitor and the bond |
+| Copper and lead nearby | Excluded (the copper rule) | Excluded | Excluded | No copper alloys or leaded brass in the motor, its tooling or its store |
+
+### A plateau in the burn rate
+
+Some double-base propellants have a **plateau**. Over a band of pressure, the burn rate hardly changes, so the pressure
+exponent $n$ is close to zero. In a **mesa**, the burn rate falls as the pressure increases ($n$ below zero). In that
+band, the chamber pressure changes much less with the grain temperature and with small changes of burning area or
+throat area, because the amplification $1/(1-n)$ is close to 1. Try it in the [MEOP calculator](#calculator): with
+$n = 0.05$, a 1% change of burning area gives about 1.05% of pressure, and with $n = 0.35$ it gives 1.54%.
+
+Ask for the burn-rate law over the full range of pressure. Outside the plateau, the exponent can be high, and a motor
+that runs at the edge of its plateau can move off it on a hot day.
+
+### Free-standing or bonded to the case
+
+- **A free-standing grain** (extruded, and often cast) is not bonded to the case. Supports hold it against
+  acceleration and vibration, and a trap at the aft end keeps it in place. It needs clearance for its expansion,
+  because double-base propellant expands several times as much as steel. With the illustrative 80 µm/m·K of the grain
+  screen against 12.3 µm/m·K for steel, the length of a 1 m grain changes 6.8 mm more than its case over 100 K.
+- **An inhibitor covers the surfaces that must not burn.** It must stay bonded to the grain, and it must stop the
+  nitrate ester that migrates into it. If the inhibitor debonds, the flame gets to a surface that was not designed to
+  burn, and the pressure increases.
+- **A grain bonded to the case** takes the strain of the cool-down and of ignition, and plain double-base has little
+  strain capability when cold. In the [Propellant grain](../propellant-grain/#calculator) calculator, select the
+  double-base class at −40 °C: the 300 mm example grain has about 8% of cool-down strain against an illustrative
+  capability of about 2.5%. For this reason many double-base grains are free-standing, and EMCDB was developed.
+
+### Ageing and the safe life
+
+- **Chemical life.** The nitrate esters decompose slowly in storage, and a stabiliser in the propellant takes up the
+  products. When the stabiliser is used up, the decomposition accelerates. Surveillance measures the stabiliser that
+  remains, and this sets a chemical safe life that is separate from the mechanical life.
+- **Migration.** The nitrate-ester plasticiser moves into the inhibitors, liners, insulation and adhesives that touch
+  the grain. The surface of the grain becomes harder, and the material that takes up the plasticiser can swell, soften
+  or debond. Specify barrier layers and compatible materials, and test them together (below).
+- **Mechanical ageing.** The grain becomes stiffer and less extensible with age. Check the grain and the bond with aged
+  properties ([Storage & ageing](../../verify/storage-ageing/)).
+
+The compositions, the manufacture, the burn-rate tailoring and the hazard classification of these propellants are the
+responsibility of your energetics specialists and their safety authority.
+
 ## What may touch it: materials compatibility
 
 A material is not "compatible with propellant" in general. Nitrate-ester propellants and composite propellants degrade
@@ -307,7 +382,10 @@ the approved list of your programme applies.
   polymers and other glass-forming liquids", *J. Am. Chem. Soc.* 77 (1955) 3701–3707.
 - T. L. Smith, "Ultimate tensile properties of elastomers. I. Characterization by a time and temperature independent
   failure envelope", *J. Polymer Science A* 1 (1963) 3597–3615.
-- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993) (the double-base family, its forms and its
+  mechanical behaviour).
+- N. Kubota, *Propellants and Explosives: Thermochemical Aspects of Combustion*, 3rd ed., Wiley-VCH (2015) (plateau
+  and mesa burning).
 - NATO STANAG 4147 (chemical compatibility of ammunition components with explosives and propellants).
 
 <Aside type="note">

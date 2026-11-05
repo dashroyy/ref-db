@@ -622,6 +622,86 @@
       "note": "The free-machining brass."
     },
     {
+      "name": "Brass CZ106",
+      "family": "cu",
+      "en": "CuZn30 (EN 1652)",
+      "enNo": "CW505L",
+      "legacyBs": "BS 2870 CZ106",
+      "uns": "C26000",
+      "aero": "EN 1652",
+      "note": "Cartridge brass 70/30: deep drawing."
+    },
+    {
+      "name": "Brass CZ108",
+      "family": "cu",
+      "en": "CuZn37 (EN 1652)",
+      "enNo": "CW508L",
+      "legacyBs": "BS 2870 CZ108",
+      "uns": "C27200",
+      "aero": "EN 1652",
+      "note": "Common brass 63/37: pressings and spinnings."
+    },
+    {
+      "name": "Brass CZ109",
+      "family": "cu",
+      "en": "CuZn40 (EN 12163)",
+      "enNo": "CW509L",
+      "legacyBs": "BS 2870 CZ109",
+      "uns": "C28000",
+      "aero": "EN 12163",
+      "note": "Muntz metal 60/40: hot worked."
+    },
+    {
+      "name": "Brass CZ112",
+      "family": "cu",
+      "en": "CuZn36Sn1Pb (EN 12164)",
+      "enNo": "CW712R",
+      "legacyBs": "BS 2874 CZ112",
+      "uns": "C46400 (similar)",
+      "aero": "EN 12164",
+      "note": "Naval brass: seawater."
+    },
+    {
+      "name": "Brass CZ114",
+      "family": "cu",
+      "en": "CuZn40Mn1Pb1AlFeNi (EN 12164)",
+      "enNo": "CW721R",
+      "legacyBs": "BS 2874 CZ114",
+      "uns": "C67500 (similar)",
+      "aero": "EN 12164",
+      "note": "High tensile brass."
+    },
+    {
+      "name": "Brass CZ122",
+      "family": "cu",
+      "en": "CuZn40Pb2 (EN 12165)",
+      "enNo": "CW617N",
+      "legacyBs": "BS 2872 CZ122",
+      "uns": "C37700 (similar)",
+      "aero": "EN 12165",
+      "note": "Hot-stamping (forging) brass."
+    },
+    {
+      "name": "Brass CZ132",
+      "family": "cu",
+      "en": "CuZn36Pb2As (EN 12164)",
+      "enNo": "CW602N",
+      "legacyBs": "BS 2874 CZ132",
+      "uns": "—",
+      "aero": "EN 12164",
+      "note": "Dezincification-resistant (DZR) brass."
+    },
+    {
+      "name": "Brass CZ110",
+      "family": "cu",
+      "en": "CuZn20Al2As (EN 12449)",
+      "enNo": "CW702R",
+      "legacyBs": "BS 2871 CZ110",
+      "uns": "C68700",
+      "aero": "EN 12449",
+      "note": "Aluminium brass: seawater tube."
+    },
+    {
       "name": "Beryllium copper",
       "family": "cu",
       "en": "CuBe2 (EN 12163)",
