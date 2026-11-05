@@ -4,6 +4,7 @@
 // zone centred on load. Rebuilt zones open their v2 page; the rest open the
 // v1 archive at that zone. Everything derives from src/data/zones.mjs.
 import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
+import StarMapButton from '../hud/StarMapButton.astro';
 import { PHASES, BRIEFING, route, hrefOf, toSlug } from '../../data/zones.mjs';
 
 const base = import.meta.env.BASE_URL;
@@ -24,6 +25,9 @@ const planets = PHASES.map((p, i) => {
 const herePhaseIdx = here ? PHASES.findIndex((p) => p.k === here.phase) : -1;
 const v2Count = items.filter((z) => !z.primer && z.slug !== null).length;
 ---
+
+<!-- on a phone the map button also heads the menu, where it is found without scrolling the whole rail -->
+<div class="md:sl-hidden rail-map"><StarMapButton /></div>
 
 <div class="rail">
   <div class="rail-brief">
@@ -102,6 +106,12 @@ const v2Count = items.filter((z) => !z.primer && z.slug !== null).length;
 <div class="md:sl-hidden">
   <MobileMenuFooter />
 </div>
+
+<style>
+  /* stays in view: the rail scrolls itself to the current zone */
+  .rail-map { position: sticky; top: 0; z-index: 2; margin: 0 0 0.8rem; padding: 0.4rem 0; background: var(--sl-color-bg-sidebar, var(--sl-color-black)); }
+  .rail-map :global(.map-switch) { width: 100%; justify-content: center; }
+</style>
 
 <script>
   // Centre the current zone in the rail, and let orbit planets scroll the rail to their phase.

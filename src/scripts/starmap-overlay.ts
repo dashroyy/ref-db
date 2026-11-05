@@ -136,6 +136,8 @@ export async function toggleStarMap(button?: HTMLElement | null, fromLink = fals
   opener = button ?? null;
   savedHash = fromLink ? '' : location.hash;
   // on a phone the button is in the site menu: close the menu first
+  const menu = document.getElementById('starlight__sidebar');
+  try { if (menu?.matches(':popover-open')) menu.hidePopover(); } catch { /* no popover support: the menu is not open */ }
   if (document.body.hasAttribute('data-mobile-menu-expanded')) document.querySelector<HTMLButtonElement>('starlight-menu-button button')?.click();
   document.documentElement.classList.add('sm-loading');
   try { root ??= await (building ??= build()); } catch (e) { document.documentElement.classList.remove('sm-open'); throw e; } finally { document.documentElement.classList.remove('sm-loading'); }
