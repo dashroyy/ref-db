@@ -1,0 +1,225 @@
+---
+title: Static test firing
+description: What a static firing of a solid motor measures and how to read it. The test stand and its calibration, the definitions of action time and burn time, the reduction of the pressure and thrust traces to burn rate, c*, C_F and specific impulse, the dynamics of the stand and the uncertainty budget, with a calculator that reduces pasted data and a worked example.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import TestStandFigure from '../../../components/TestStandFigure.astro';
+import FiringCalc from '../../../components/FiringCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A static firing records pressure and thrust against time; the data reduction turns the two traces into the burn rate, c*, C<sub>F</sub> and specific impulse that the predictions must match.</div>
+  <div><b>Before this</b><a href="../../motor/nozzle/">Nozzle design</a> and <a href="../proof-testing/">Proof testing</a></div>
+  <div><b>Leads to</b><a href="../test-correlation/">Test correlation</a></div>
+</div>
+
+## Why this matters
+
+A static firing is the only test that loads every part of the motor together, at the real pressure and temperature,
+for the real time. The proof test checks the case; the firing checks the case, the grain, the insulation, the nozzle,
+the joints and the seals as one system. It also calibrates the predictions. The burn rate, the efficiencies of the
+nozzle and the combustion, and the scatter between motors all come from firings, and they decide MEOP
+([Propellant](../../motor/propellant/#building-meop)) and the performance that the vehicle can rely on.
+
+A firing is expensive, and each motor fires once. Thus the instrumentation, the stand and the data reduction must be
+right the first time. Most of what goes wrong is in the measurement, not in the motor.
+
+## The intuition: a dynamometer for a rocket
+
+<Analogy title="An engine on a dynamometer">
+  To measure an engine, you do not drive the car. You fix the engine to a dynamometer, measure the torque and the fuel
+  that it uses, and calculate its power and efficiency. A thrust stand is a dynamometer for a rocket motor. The motor
+  stays still and pushes on a load cell. From the force, the chamber pressure and the propellant mass, you calculate how
+  well each part of the motor did its job.
+</Analogy>
+
+## What a firing measures
+
+- **Chamber pressure,** with two or more transducers at the forward closure. The transducer connects to the chamber
+  through a short passage, usually filled with grease, so that hot gas does not get to it. The length and volume of the
+  passage limit how fast a change it can follow.
+- **Thrust,** with a load cell in the thrust path.
+- **Temperatures,** with thermocouples on the case, the nozzle housing and the joints. Keep recording after burnout:
+  the heat soaks back for minutes ([Insulation](../../motor/insulation/#after-burnout-soak-back)).
+- **Strains,** with gauges on the case, to compare its growth with the prediction
+  ([Test correlation](../test-correlation/#static-correlation-strain-gauges)).
+- **Before and after:** the mass of the motor, the throat diameter, and the dimensions of the nozzle and the insulation.
+  The motor is also conditioned at its test temperature first, for long enough that the grain is at that temperature
+  through its web ([Transient thermal](../../motor/transient-thermal/#2-conditioning-a-grain)).
+
+The igniter, its firing circuit, arming and the safety rules of the test site are outside the scope of this site.
+Follow the approved procedures of your test site.
+
+## Reading the traces
+
+The traces have three parts: the ignition rise, the main burn, and the tail-off after the flame gets to the case. The
+standard definitions (NASA SP-8039; Sutton) are:
+
+- **Action time,** between the first and the last points at 10% of the maximum (pressure or thrust: state which).
+- **Web burnout,** at the knee of the trace, by the **aft tangent-bisector method**. Draw a tangent to the end of the
+  main burn and another to the steepest part of the tail-off. The bisector of the angle between them meets the trace at
+  web burnout.
+- **Burn time,** from the first 10% point to web burnout. The propellant after web burnout is the sliver.
+- **Total impulse,** the integral of the thrust over the whole trace: $I_t = \int F\,dt$.
+
+The tangent-bisector point depends on how the trace is drawn. The calculator builds it with time scaled by the action
+time and pressure by its maximum, so that the result does not depend on the units. Whatever method you use, state it,
+and use the same one for every firing.
+
+## From traces to performance
+
+With the propellant mass $m_p$ that burned and the throat area $A_t$:
+
+$$
+I_{sp} = \frac{I_t}{m_p\,g_0}
+\qquad
+c^* = \frac{\int p\,A_t\,dt}{m_p}
+\qquad
+C_F = \frac{I_t}{\int p\,A_t\,dt}
+\qquad
+\bar r = \frac{w}{t_b}
+$$
+
+- **The specific impulse needs no throat.** It is the most accurate result of a firing.
+- **c\* and C<sub>F</sub> need the throat area during the burn.** The throat erodes, so measure it before and after.
+  A good estimate of the history puts the area between the two in proportion to $\int p^{0.8}\,dt$, because the erosion
+  follows the heat transfer ([Nozzle design](../../motor/nozzle/#throat-erosion)). The plain mean of the two areas is a
+  check.
+- **Their product is the specific impulse:** $C_F\,c^* = I_{sp}\,g_0$. This is a check of the arithmetic, because the
+  three come from the same two integrals.
+- **Efficiencies** compare the results with the ideal values: $\eta_{c^*}$ against the thermochemical $c^*$ of the
+  propellant, and $\eta_{C_F}$ against the ideal nozzle ([Nozzle design](../../motor/nozzle/#the-exit-cone-from-pressure-to-speed)).
+- **The burn rate** is the web divided by the burn time, at the mean pressure of the burn time. One firing gives one
+  point of $r = a\,p^n$. Firings at two or more pressures (with different throats) give $a$ and $n$, and firings at the
+  hot and the cold conditioning temperatures give the temperature sensitivity.
+
+## The thrust stand
+
+<TestStandFigure />
+
+- **The thrust path is the measurement.** Everything between the motor and the load cell shares the force: the
+  flexures, the cables, the pipes of a deluge system. Thus **calibrate in place**: a hydraulic actuator and a reference
+  load cell push on the motor mount through the same path, before and after the firing.
+- **Flexures, not slides.** The motor must move freely along its axis onto the load cell, with no friction. Thin
+  flexures are stiff sideways and soft along the axis. Their small axial stiffness is in the calibration.
+- **The stand rings.** The motor and its mount are a mass on a spring (the load cell and the structure). Its natural
+  frequency is $f_n = \frac{1}{2\pi}\sqrt{k/m}$, and it rises as the propellant burns. A thrust rise that is fast
+  compared with the period makes the stand ring, and the load cell then reads the thrust plus an inertia force. After a
+  linear rise of duration $t_r$, the ringing is $|\sin(\pi f_n t_r)|/(\pi f_n t_r)$ of the step.
+- **Vertical stands** read the thrust plus or minus the weight, and the weight falls as the propellant burns. Correct
+  for the mass history.
+- **The case grows** under pressure: 1 mm along a 1 m steel case, and 14 mm along a carbon case
+  ([Composite cases](../../motor/composite-cases/#the-case-grows-and-the-grain-follows)). The aft cradle must slide, and
+  the thrust adapter must not hold the dome.
+- **The structure** carries the full thrust, the side loads of separation at ignition and tail-off
+  ([Nozzle design](../../motor/nozzle/#flow-separation)), and the loads of an abnormal firing. The thrust rod and its
+  clevis are sized on [Hand calcs](../../fundamentals/hand-calcs/#worked-example-hand-checks-for-the-300-mm-motors-test-campaign).
+- **Sample fast and filter late.** Record the pressure and the thrust fast enough to see the ignition transient and the
+  ringing of the stand: kilohertz, with an anti-aliasing filter below half the sample rate. Filter only copies of the
+  data for averages, and keep the raw records.
+
+## Uncertainty
+
+Each result has an uncertainty from the measurements that it uses. For independent terms, the relative uncertainties
+add as a root-sum-square:
+
+$$
+\frac{u(I_{sp})}{I_{sp}} = \sqrt{u_F^2 + u_m^2}
+\qquad
+\frac{u(c^*)}{c^*} = \sqrt{u_p^2 + u_A^2 + u_{\text{erosion}}^2 + u_m^2}
+$$
+
+- **Thrust and pressure** come from the calibration: a few tenths of a per cent for a good, calibrated system.
+- **The throat area** has twice the relative uncertainty of the diameter, and the erosion history usually dominates.
+  If nothing is known about the history, the area could be anywhere between the two measurements.
+- **Measurement uncertainty is not scatter.** Motors from the same lot differ by more than the measurement
+  uncertainty. Fire enough motors to see the scatter, and keep the two separate in the report. Use a recognised method
+  for the budget (ASME PTC 19.1, or the GUM).
+
+## Calculator
+
+<FiringCalc />
+
+The **Reduce a firing** tab reads three columns (time in s, pressure in MPa, thrust in kN), from your own firing or
+from the synthetic firing that the tool makes. Paste the data from a spreadsheet: commas, tabs and spaces all work.
+The **Thrust stand** tab gives the natural frequency, the ringing and the weight correction. The **Uncertainty** tab
+combines the measurement uncertainties for the results of the first tab.
+
+## Worked example: a synthetic firing of the 300 mm motor
+
+The tool makes a firing from the models of this site. **It is synthetic, not test data.** The grain is neutral, with
+a 100 mm web and the burn-rate law of the grain page ($r = 4.05\,p^{0.35}$). The throat starts at 45.65 mm and erodes at
+0.10 mm/s at 8.8 MPa. The delivered c\* is 1494 m/s (97% of 1540) and the nozzle delivers 93.5% of its ideal
+$C_F$ (ε = 8, a 15° cone, sea level). The data have 0.3% noise and 100 samples per second. Push
+**Load the synthetic firing**.
+
+1. **The motor.** It burns 115.2 kg: 111.2 kg in the web, and the rest in the ignition transient and the sliver. The
+   throat grows from 45.65 to 47.88 mm.
+2. **Times.** The 10% points are at 0.02 and 12.60 s, so the action time is **12.58 s**. The tangent-bisector puts web
+   burnout at 11.99 s: the burn time is **11.96 s**.
+3. **Impulse.** $I_t = 254.4$ kN·s, so $I_{sp} = 254\,364 / (115.2 \times 9.807) = $ **225.2 s**.
+4. **c\* and C<sub>F</sub>.** With the area history, c\* = **1493 m/s** and $C_F$ = **1.479**. The firing was made with
+   1494 m/s: the reduction gets it back within 0.1%. The ideal $C_F$ at the mean pressure of 7.95 MPa and the mean area
+   ratio of 7.62 is 1.583, so the nozzle efficiency is **93.5%**, as it was made.
+5. **Burn rate.** $100 / 11.96 = 8.36$ mm/s at the burn-time mean of 8.15 MPa. The law gives 8.44 mm/s at that pressure.
+   The reduction is 1% low, because the knee of the trace is rounded and the tangent-bisector point is a definition, not
+   the instant that the flame reaches the case.
+6. **The stand.** A 500 kN/mm load cell and a 300 kN/mm structure in series give 187.5 kN/mm. With 141.8 kg of motor and
+   a 20 kg mount, $f_n = 171$ Hz at ignition and 319 Hz at burnout. The 120 ms ignition rise is twenty periods long, so
+   the ringing is 1.5% of the step. On a vertical stand, the weight would change by 1.13 kN, which is 5.1% of the peak
+   thrust.
+7. **Uncertainty.** With 0.5% on thrust and pressure, 0.1 kg on the mass, 0.02 mm on the throat and 10% of the area
+   change on the erosion history: $I_{sp}$ ±1.0%, c\* ±2.2% and $C_F$ ±2.4% (k = 2). The erosion history is the
+   largest term.
+
+<Aside type="tip" title="What the example shows">
+  The specific impulse is the most accurate result, because it does not need the throat. c\* and C<sub>F</sub> are as
+  good as the throat area history, and the burn rate is as good as the definition of burn time. A reduction that gets
+  back the values that made a synthetic firing is a good test of a data-reduction program before it meets real data.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="Quasi-steady reduction">
+  The reduction treats each sample as a steady state. It does not resolve the ignition transient, combustion
+  instability or the dynamics of the stand.
+</Aside>
+
+- **Transients.** The ignition spike, pressure oscillations and the ringing of the stand need fast data, dynamic
+  calibration and their own analysis.
+- **The erosion history.** The $\int p^{0.8}\,dt$ history assumes gradual erosion. A throat insert that cracks or loses
+  a piece changes the area in a step.
+- **Expended mass.** The mass change of the motor includes the insulation and the nozzle material that left with the
+  gas. Use the propellant mass for $I_{sp}$, and record the inert loss separately.
+- **The burn rate.** Burn time by tangent-bisector is a definition. Ballistic test motors and other methods (for
+  example, measuring the time for the flame to pass sensors in the web) give the burn rate more directly.
+- **The test site.** Safety, the firing circuit and the igniter are outside the scope of this site.
+
+## In the test documents
+
+- **The test plan:** the objectives, the conditioning temperature and time, the instrumentation list with the range,
+  the calibration and the sample rate of each channel, and the success criteria.
+- **The data-reduction method,** written before the firing: the definitions (10% points of pressure or thrust,
+  tangent-bisector), the throat area history, and how the propellant mass is found.
+- **Pre-test and post-test measurements:** the mass, the throat and nozzle dimensions, and the insulation thickness at
+  defined stations.
+- **The uncertainty budget** for each result, and the scatter between motors kept separate from it.
+- **The raw data,** kept with the calibration records, so that the firing can be reduced again later.
+
+## References and further reading
+
+- NASA SP-8039, *Solid Rocket Motor Performance Analysis and Prediction* (1971) (definitions, data reduction and the
+  scatter of real motors; free on NTRS).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017) (performance parameters, burn time
+  and action time, testing).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+- ASME PTC 19.1, *Test Uncertainty*.
+- JCGM 100:2008, *Evaluation of measurement data: Guide to the expression of uncertainty in measurement* (the GUM).
+
+<Aside type="note">
+  These are methods for early development and for learning. Your programme's test requirements, the approved
+  procedures of the test site and the responsible authorities control the real tests.
+</Aside>

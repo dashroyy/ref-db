@@ -46,6 +46,7 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r[r.findIndex((x) => x.key === 'pv') + 1].key, 'primer-composite', 'the composite primer follows case sizing');
   assert.equal(r[r.findIndex((x) => x.key === 'pv') + 2].key, 'primer-closures', 'then the closures primer');
   assert.equal(r[r.findIndex((x) => x.key === 'ablative') + 1].key, 'primer-nozzle', 'the nozzle primer follows the ablative liners');
+  assert.equal(r[r.findIndex((x) => x.key === 'proof') + 1].key, 'primer-firing', 'the static-firing primer follows proof testing');
   assert.equal(r.filter((x) => x.slug === null).length, 0, 'every zone is rebuilt');
   assert.equal(hrefOf({ ...r.find((x) => x.key === 'read')!, slug: null }, '/'), '/legacy/?z=read', 'a zone without a page opens the v1 archive');
   assert.equal(hrefOf(r.find((x) => x.key === 'pv')!, '/ref-db/'), '/ref-db/motor/case-sizing/');

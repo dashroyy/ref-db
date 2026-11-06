@@ -1,0 +1,71 @@
+---
+// A horizontal static-firing stand, schematic: the thrust path from the motor through the load cell to the thrust
+// block, the flexures that let the motor move along its axis, the in-place calibration, and the main measurements.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', steel = 'var(--rd-steel)', blue = 'var(--rd-blue)', hot = 'var(--rd-hot)';
+const cy = 114, r = 30; // motor axis and radius
+---
+
+<figure class="viz test-stand">
+  <p class="viz-title">A horizontal thrust stand</p>
+  <svg viewBox="0 0 440 240" role="img" aria-labelledby="ts-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="ts-desc">
+      A motor lies horizontally in cradles on a mount. Thin vertical flexures hold the mount to the ground: they are
+      stiff sideways and soft along the axis, so the motor can push forward. The thrust goes from the forward end of the
+      motor through a thrust adapter and a load cell into a thrust block. Below the load cell, a hydraulic actuator and
+      a reference load cell can push on the mount to calibrate the whole thrust path in place. Pressure transducers are
+      at the forward closure, and thermocouples and strain gauges are on the case. The aft cradle lets the case grow
+      along its length.
+    </desc>
+    <defs>
+      <pattern id="ts-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="var(--rd-line)" stroke-width="2"></line>
+      </pattern>
+    </defs>
+    <!-- ground and thrust block -->
+    <rect x="8" y="200" width="424" height="8" fill="url(#ts-hatch)"></rect>
+    <line x1="8" x2="432" y1="200" y2="200" stroke={muted}></line>
+    <rect x="14" y="70" width="40" height="130" fill={muted} fill-opacity="0.35" stroke={muted}></rect>
+    <!-- load cell and thrust adapter -->
+    <rect x="54" y={cy - 9} width="20" height="18" rx="3" fill={steel} stroke={ink} stroke-width="0.8"></rect>
+    <rect x="74" y={cy - 24} width="10" height="48" fill={steel}></rect>
+    <!-- motor -->
+    <rect x="84" y={cy - r} width="246" height={2 * r} rx="22" fill={blue} fill-opacity="0.35" stroke={blue}></rect>
+    <path d={`M330,${cy - 10} L372,${cy - 26} L372,${cy + 26} L330,${cy + 10} Z`} fill={steel} stroke={ink} stroke-width="0.8"></path>
+    <path d={`M372,${cy - 24} Q404,${cy - 18} 430,${cy} Q404,${cy + 18} 372,${cy + 24} Z`} fill={hot} fill-opacity="0.45"></path>
+    <!-- mount, cradles and flexures -->
+    <rect x="110" y="150" width="200" height="10" fill={steel}></rect>
+    <path d={`M136,150 L136,${cy + r - 2} Q150,${cy + r + 6} 164,${cy + r - 2} L164,150 Z M262,150 L262,${cy + r - 2} Q276,${cy + r + 6} 290,${cy + r - 2} L290,150 Z`} fill={steel}></path>
+    <rect x="126" y="160" width="4" height="40" fill={ink}></rect>
+    <rect x="290" y="160" width="4" height="40" fill={ink}></rect>
+    <!-- calibration: actuator and reference load cell, pushing on the mount -->
+    <rect x="54" y="168" width="30" height="12" fill={muted} fill-opacity="0.8"></rect>
+    <rect x="84" y="170" width="12" height="8" rx="2" fill={steel} stroke={ink} stroke-width="0.6"></rect>
+    <line x1="96" x2="110" y1="174" y2="158" stroke={ink} stroke-width="2"></line>
+    <!-- instrumentation -->
+    <circle cx="96" cy={cy - 16} r="3.5" fill="var(--rd-accent)"></circle>
+    {[150, 210, 250].map((x) => <circle cx={x} cy={cy - r} r="2.6" fill={ink}></circle>)}
+    <!-- the thrust arrow -->
+    <path d={`M200,${cy} L120,${cy} M128,${cy - 5} L120,${cy} L128,${cy + 5}`} fill="none" stroke={ink} stroke-width="1.6"></path>
+    <text x="210" y={cy + 4} font-size="10.5" fill={ink}>thrust</text>
+    <!-- labels -->
+    <text transform="translate(38,136) rotate(-90)" font-size="10" fill={ink} text-anchor="middle">thrust block</text>
+    <line x1="64" x2="64" y1="40" y2={cy - 10} stroke={muted}></line>
+    <text x="64" y="34" font-size="10.5" fill={ink} text-anchor="middle">load cell</text>
+    <line x1="97" x2="140" y1={cy - 20} y2="50" stroke={muted}></line>
+    <text x="142" y="48" font-size="10.5" fill={ink}>pressure transducers</text>
+    <line x1="210" x2="236" y1={cy - r - 3} y2="72" stroke={muted}></line>
+    <text x="238" y="70" font-size="10.5" fill={ink}>thermocouples, strain gauges</text>
+    <line x1="290" x2="324" y1={cy + r + 4} y2="170" stroke={muted}></line>
+    <text x="326" y="174" font-size="10" fill={muted}>aft cradle slides:</text>
+    <text x="326" y="187" font-size="10" fill={muted}>the case grows</text>
+    <line x1="128" x2="160" y1="190" y2="218" stroke={muted}></line>
+    <text x="162" y="222" font-size="10" fill={muted}>flexures: stiff sideways, soft along the axis</text>
+    <line x1="70" x2="70" y1="180" y2="226" stroke={muted}></line>
+    <text x="74" y="236" font-size="10" fill={muted}>in-place calibration</text>
+  </svg>
+  <figcaption>
+    The thrust path is the measurement: everything between the motor and the load cell (adapter, flexures, cables and
+    pipes) shares the force. Thus the calibration pushes through the same path, in place, before and after the firing.
+    The motor must move freely along its axis onto the load cell, and the aft cradle must let the case grow.
+  </figcaption>
+</figure>
