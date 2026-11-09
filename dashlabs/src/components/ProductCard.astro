@@ -1,0 +1,100 @@
+---
+import ProductArt from './ProductArt.astro';
+import { categoryById, type Product } from '../data/catalog.ts';
+import { money } from '../lib/money.ts';
+
+interface Props {
+  product: Product;
+}
+const { product: p } = Astro.props;
+const image = p.images?.[0];
+---
+
+<a href={`/shop/${p.slug}/`} class="card" data-category={p.category}>
+  <div class="media">
+    {image ? <img src={image} alt={p.name} loading="lazy" /> : <ProductArt shape={p.art.shape} hue={p.art.hue} uid={p.id} label={p.name} />}
+    {p.source.kind === 'original' && p.category === 'originals' && <span class="badge">Original</span>}
+  </div>
+  <div class="body">
+    <span class="tag">{categoryById(p.category).label}</span>
+    <h3>{p.name}</h3>
+    <p class="muted">{p.summary}</p>
+    <div class="foot">
+      <span class="price">{p.purchase === 'quote' && <small>from </small>}{money(p.price)}</span>
+      <span class="go">{p.purchase === 'quote' ? 'Request' : 'View'} →</span>
+    </div>
+  </div>
+</a>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    border-radius: var(--r);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    overflow: hidden;
+    transition:
+      border-color 0.2s,
+      transform 0.2s;
+  }
+  .card:hover {
+    border-color: var(--line-2);
+    transform: translateY(-3px);
+  }
+  .media {
+    position: relative;
+    border-bottom: 1px solid var(--line);
+  }
+  .media img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+  .badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: 600 0.68rem/1 var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 18px 18px 16px;
+  }
+  h3 {
+    margin: 8px 0 6px;
+  }
+  .body p {
+    font-size: 0.93rem;
+    flex: 1;
+  }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .price {
+    font: 600 1.05rem/1 var(--mono);
+  }
+  .price small {
+    font-size: 0.75rem;
+    color: var(--text-3);
+    font-weight: 500;
+  }
+  .go {
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 0.92rem;
+  }
+</style>

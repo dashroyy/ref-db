@@ -1,0 +1,100 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { PRODUCTS } from '../data/catalog.ts';
+
+const originals = PRODUCTS.filter((p) => p.category === 'originals');
+
+// Portfolio log: past builds and experiments. Add real entries (and photos in
+// /public/lab/) as you go — these are placeholders.
+const log = [
+  { date: '2026-10', title: 'Pen Launcher', note: 'Example entry — describe a version, what changed and why.', example: true },
+  { date: '2026-09', title: 'Pet portrait commission', note: 'Example entry — replace with a real commission (with the customer\'s OK).', example: true },
+  { date: '2026-08', title: 'Business cards', note: 'Example entry — replace with a real job.', example: true },
+];
+---
+
+<Base title="The lab" description="DashLabs originals, experiments and past builds.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="tag tag--accent">The lab</p>
+      <h1>Things I designed myself.</h1>
+      <p class="lede">
+        DashLabs originals are designed, prototyped and tested here. Every one went through a pile of failed prints
+        before it was good enough to sell.
+      </p>
+    </div>
+  </section>
+
+  <section class="section originals">
+    <div class="wrap">
+      <div class="grid">{originals.map((p) => <ProductCard product={p} />)}</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="head">
+        <h2>Build log</h2>
+        <p class="muted">Recent projects and commissions.</p>
+      </div>
+      <ol class="log">
+        {
+          log.map((e) => (
+            <li>
+              <span class="tag">
+                {e.date}
+                {e.example && <em class="ex">Example</em>}
+              </span>
+              <div>
+                <h3>{e.title}</h3>
+                <p class="muted">{e.note}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+    padding-bottom: 32px;
+  }
+  .originals {
+    padding-top: 0;
+  }
+  .log {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .log li {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 24px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .log h3 {
+    margin-bottom: 4px;
+  }
+  .log p {
+    margin: 0;
+  }
+  .ex {
+    display: block;
+    margin-top: 8px;
+    font-style: normal;
+    color: var(--warn);
+  }
+  @media (max-width: 560px) {
+    .log li {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
+</style>

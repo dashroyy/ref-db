@@ -1,0 +1,253 @@
+---
+import Base from '../layouts/Base.astro';
+import { CHECKOUT_MODE } from '../data/site.ts';
+---
+
+<Base title="Cart">
+  <section class="section top">
+    <div class="wrap">
+      <p class="tag tag--accent">Cart</p>
+      <h1>Your order</h1>
+
+      <div class="empty panel" data-empty hidden>
+        <p class="lede">Your cart is empty.</p>
+        <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+      </div>
+
+      <div class="layout" data-full hidden>
+        <ul class="lines" data-lines></ul>
+
+        <aside class="summary panel">
+          <h2 class="tag">Summary</h2>
+          <dl>
+            <div><dt>Subtotal</dt><dd data-subtotal>—</dd></div>
+            <div><dt>Shipping</dt><dd class="muted">Calculated at checkout</dd></div>
+            <div><dt>Tax</dt><dd class="muted">Calculated at checkout</dd></div>
+          </dl>
+
+          <form data-checkout>
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" required />
+            </div>
+            <div class="field">
+              <label for="notes">Notes (optional)</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="Shipping country, deadline, gift message…"></textarea>
+            </div>
+            <button class="btn btn--primary btn--block" type="submit">
+              {CHECKOUT_MODE === 'stripe' ? 'Checkout securely' : 'Send order request'}
+            </button>
+            <p class="error" data-error role="alert" hidden></p>
+          </form>
+
+          {
+            CHECKOUT_MODE === 'request' && (
+              <p class="notice">
+                Online payment is coming soon. For now, this sends your order to me by email; I'll confirm stock,
+                shipping and the total, then send you a secure invoice to pay.
+              </p>
+            )
+          }
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { readCart, updateQty, onCartChange } from '../lib/cart-store.ts';
+  import { buildOrder } from '../lib/order.ts';
+  import { startCheckout } from '../lib/checkout.ts';
+  import { money } from '../lib/money.ts';
+  import { productById } from '../data/catalog.ts';
+
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const list = $('[data-lines]');
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  function render() {
+    const cart = readCart();
+    const order = buildOrder(cart);
+    $('[data-empty]').hidden = order.lines.length > 0;
+    $('[data-full]').hidden = order.lines.length === 0;
+    $('[data-subtotal]').textContent = money(order.subtotal);
+
+    // Price each stored line on its own so the index stays usable for editing.
+    list.innerHTML = cart
+      .map((raw, i) => {
+        const p = productById(raw.productId);
+        const line = buildOrder([raw]).lines[0];
+        if (!p || !line) return '';
+        return `<li class="line panel">
+          <div class="dot" style="--h:${p.art.hue}"></div>
+          <div class="meta">
+            <a href="/shop/${p.slug}/"><strong>${esc(line.name)}</strong></a>
+            <span class="muted">${esc(line.optionsText)}${line.note ? ` · “${esc(line.note)}”` : ''}</span>
+            <span class="tag">${money(line.unitPrice)} each</span>
+          </div>
+          <div class="qty">
+            <button type="button" data-i="${i}" data-d="-1" aria-label="Decrease quantity">−</button>
+            <span>${line.qty}</span>
+            <button type="button" data-i="${i}" data-d="1" aria-label="Increase quantity">+</button>
+          </div>
+          <strong class="total">${money(line.lineTotal)}</strong>
+        </li>`;
+      })
+      .join('');
+  }
+
+  list.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-i]');
+    if (!b) return;
+    const i = Number(b.dataset.i);
+    updateQty(i, readCart()[i].qty + Number(b.dataset.d));
+  });
+
+  $('[data-checkout]').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const data = new FormData(form);
+    const err = $('[data-error]');
+    err.hidden = true;
+    const res = await startCheckout(readCart(), {
+      name: String(data.get('name')),
+      email: String(data.get('email')),
+      notes: String(data.get('notes') || ''),
+    });
+    if (res.kind === 'redirect') location.href = res.url;
+    else {
+      err.textContent = res.message;
+      err.hidden = false;
+    }
+  });
+
+  render();
+  onCartChange(render);
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .empty {
+    padding: 32px;
+    margin-top: 24px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    align-items: start;
+    margin-top: 24px;
+  }
+  .lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  :global(.line) {
+    display: grid;
+    grid-template-columns: 52px 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px;
+  }
+  :global(.line .dot) {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    background:
+      var(--layers),
+      hsl(var(--h) 85% 58%);
+  }
+  :global(.line .meta) {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+  :global(.line .meta a) {
+    text-decoration: none;
+  }
+  :global(.line .meta .muted) {
+    font-size: 0.88rem;
+  }
+  :global(.line .qty) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+  }
+  :global(.line .qty button) {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+  :global(.line .total) {
+    font-family: var(--mono);
+    min-width: 72px;
+    text-align: right;
+  }
+  .summary {
+    padding: 24px;
+    position: sticky;
+    top: 88px;
+  }
+  .summary dl {
+    margin: 12px 0 24px;
+    display: grid;
+    gap: 10px;
+  }
+  .summary dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .summary dd {
+    margin: 0;
+    font-family: var(--mono);
+  }
+  .summary [data-subtotal] {
+    font-weight: 600;
+  }
+  .error {
+    color: #ff7676;
+    margin: 12px 0 0;
+  }
+  .notice {
+    margin: 18px 0 0;
+  }
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .summary {
+      position: static;
+    }
+  }
+  @media (max-width: 520px) {
+    :global(.line) {
+      grid-template-columns: 44px 1fr auto;
+    }
+    :global(.line .dot) {
+      width: 44px;
+      height: 44px;
+    }
+    :global(.line .qty) {
+      grid-column: 2;
+    }
+  }
+</style>

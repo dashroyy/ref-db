@@ -1,0 +1,88 @@
+---
+import Logo from './Logo.astro';
+import { SITE } from '../data/site.ts';
+const year = new Date().getFullYear();
+const socials = Object.entries(SITE.social).filter(([, url]) => url);
+---
+
+<footer class="site-footer">
+  <div class="wrap cols">
+    <div>
+      <a href="/" class="brand"><Logo size={24} /> {SITE.name}</a>
+      <p class="muted small">{SITE.tagline}</p>
+    </div>
+    <nav aria-label="Shop">
+      <span class="tag">Shop</span>
+      <a href="/shop/">All products</a>
+      <a href="/custom/">Custom orders</a>
+      <a href="/cart/">Cart</a>
+    </nav>
+    <nav aria-label="Info">
+      <span class="tag">Info</span>
+      <a href="/lab/">The lab</a>
+      <a href="/faq/">FAQ &amp; policies</a>
+      <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+      {socials.map(([name, url]) => <a href={url}>{name}</a>)}
+    </nav>
+  </div>
+  <div class="wrap legal">
+    <span class="tag">© {year} {SITE.name}</span>
+    <span class="tag">Printed layer by layer</span>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line);
+    background: var(--bg-2) var(--layers);
+    padding-top: 48px;
+    margin-top: 40px;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 32px;
+  }
+  .brand {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .small {
+    font-size: 0.9rem;
+  }
+  nav {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  nav a {
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+  }
+  nav a:hover {
+    color: var(--text);
+  }
+  .legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding-block: 32px 28px;
+    margin-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  @media (max-width: 720px) {
+    .cols {
+      grid-template-columns: 1fr 1fr;
+    }
+    .cols > div:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

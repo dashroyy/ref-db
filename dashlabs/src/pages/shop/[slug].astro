@@ -1,0 +1,328 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductArt from '../../components/ProductArt.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { PRODUCTS, categoryById, type Product } from '../../data/catalog.ts';
+import { SITE } from '../../data/site.ts';
+import { money } from '../../lib/money.ts';
+
+export function getStaticPaths() {
+  return PRODUCTS.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+interface Props {
+  product: Product;
+}
+const { product: p } = Astro.props;
+const [lo, hi] = p.leadTimeDays ?? SITE.defaultLeadTimeDays;
+const related = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
+const needsText = p.id === 'mto-keychain';
+const sourceLabel =
+  p.source.kind === 'original'
+    ? 'Designed by DashLabs'
+    : p.source.kind === 'commission'
+      ? 'Sculpted for you by DashLabs'
+      : `Design by ${p.source.designer}`;
+---
+
+<Base title={p.name} description={p.summary}>
+  <section class="section top">
+    <div class="wrap">
+      <nav class="crumbs tag" aria-label="Breadcrumb">
+        <a href="/shop/">Shop</a> / <a href={`/shop/?c=${p.category}`}>{categoryById(p.category).label}</a>
+      </nav>
+
+      <div class="layout">
+        <div class="gallery panel">
+          {
+            p.images?.length ? (
+              <img src={p.images[0]} alt={p.name} />
+            ) : (
+              <ProductArt shape={p.art.shape} hue={p.art.hue} uid={`pdp-${p.id}`} label={p.name} />
+            )
+          }
+        </div>
+
+        <div class="info">
+          <p class="tag tag--accent">{sourceLabel}</p>
+          <h1>{p.name}</h1>
+          <p class="price">
+            {p.purchase === 'quote' && <small>from </small>}<span data-price>{money(p.price)}</span>
+          </p>
+          {p.description.map((para) => <p class="muted">{para}</p>)}
+
+          <form
+            class="buy"
+            data-buy
+            data-product={p.id}
+            data-base={p.price}
+            data-mode={p.purchase}
+            data-deltas={JSON.stringify(
+              Object.fromEntries(p.options.map((o) => [o.id, Object.fromEntries(o.choices.map((c) => [c.id, c.priceDelta ?? 0]))])),
+            )}
+          >
+            {
+              p.options.map((opt) => (
+                <fieldset class="field">
+                  <legend>{opt.label}</legend>
+                  <div class="choices">
+                    {opt.choices.map((c, i) => (
+                      <label class="choice">
+                        <input type="radio" name={opt.id} value={c.id} checked={i === 0} />
+                        <span>
+                          {c.label}
+                          {c.priceDelta ? <em>+{money(c.priceDelta)}</em> : null}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ))
+            }
+
+            {
+              needsText && (
+                <div class="field">
+                  <label for="note">Text to print</label>
+                  <input id="note" name="note" type="text" maxlength="12" required placeholder="e.g. DASH" />
+                </div>
+              )
+            }
+
+            {
+              p.purchase === 'cart' ? (
+                <div class="row">
+                  <div class="field qty">
+                    <label for="quantity">Qty</label>
+                    <input id="quantity" name="quantity" type="number" min="1" max="20" value="1" inputmode="numeric" />
+                  </div>
+                  <button class="btn btn--primary add" type="submit">
+                    Add to cart
+                  </button>
+                </div>
+              ) : (
+                <button class="btn btn--primary btn--block" type="submit">
+                  Request a quote
+                </button>
+              )
+            }
+            <p class="added" data-added role="status" hidden>
+              Added to cart. <a href="/cart/">View cart →</a>
+            </p>
+          </form>
+
+          <dl class="specs">
+            <div><dt class="tag">Ships in</dt><dd>{lo}–{hi} days</dd></div>
+            {
+              p.specs.map((s) => (
+                <div>
+                  <dt class="tag">{s.label}</dt>
+                  <dd>{s.value}</dd>
+                </div>
+              ))
+            }
+            {
+              p.source.kind === 'licensed' && (
+                <div>
+                  <dt class="tag">Licence</dt>
+                  <dd>
+                    <a href={p.source.url} rel="noopener">{p.source.licence}</a>
+                  </dd>
+                </div>
+              )
+            }
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {
+    related.length > 0 && (
+      <section class="section more">
+        <div class="wrap">
+          <h2>More like this</h2>
+          <div class="grid">
+            {related.map((r) => (
+              <ProductCard product={r} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<script>
+  import { addToCart } from '../../lib/cart-store.ts';
+  import { money } from '../../lib/money.ts';
+
+  const form = document.querySelector<HTMLFormElement>('[data-buy]')!;
+  const priceEl = document.querySelector<HTMLElement>('[data-price]')!;
+  const added = form.querySelector<HTMLElement>('[data-added]')!;
+  const base = Number(form.dataset.base);
+  const deltas: Record<string, Record<string, number>> = JSON.parse(form.dataset.deltas!);
+
+  const chosen = () => {
+    const out: Record<string, string> = {};
+    for (const id of Object.keys(deltas)) {
+      const el = form.querySelector<HTMLInputElement>(`input[name="${id}"]:checked`);
+      if (el) out[id] = el.value;
+    }
+    return out;
+  };
+
+  const render = () => {
+    const opts = chosen();
+    priceEl.textContent = money(base + Object.entries(opts).reduce((s, [o, c]) => s + (deltas[o]?.[c] ?? 0), 0));
+  };
+  form.addEventListener('change', render);
+  render();
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const opts = chosen();
+    if (form.dataset.mode === 'quote') {
+      const q = new URLSearchParams({ product: form.dataset.product!, ...opts });
+      location.href = `/custom/?${q}`;
+      return;
+    }
+    const data = new FormData(form);
+    addToCart({
+      productId: form.dataset.product!,
+      options: opts,
+      qty: Number(data.get("quantity")) || 1,
+      note: (data.get('note') as string | null)?.trim() || undefined,
+    });
+    added.hidden = false;
+  });
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(28px, 4vw, 48px);
+  }
+  .crumbs {
+    margin-bottom: 24px;
+  }
+  .crumbs a {
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    color: var(--text);
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(28px, 5vw, 64px);
+    align-items: start;
+  }
+  .gallery {
+    overflow: hidden;
+    position: sticky;
+    top: 88px;
+  }
+  .gallery img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+  .info h1 {
+    font-size: clamp(2rem, 4.4vw, 3.2rem);
+    margin-top: 10px;
+  }
+  .price {
+    font: 600 1.6rem/1 var(--mono);
+    margin-bottom: 20px;
+  }
+  .price small {
+    font-size: 0.9rem;
+    color: var(--text-3);
+  }
+  .buy {
+    margin: 28px 0;
+    padding: 24px 0;
+    border-block: 1px solid var(--line);
+  }
+  fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 18px;
+  }
+  legend {
+    margin-bottom: 8px;
+  }
+  .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .choice span {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-size: 0.93rem;
+  }
+  .choice em {
+    font: normal 500 0.75rem var(--mono);
+    color: var(--text-3);
+  }
+  .choice input:checked + span {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .choice input:focus-visible + span {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+  }
+  .qty {
+    width: 90px;
+    margin: 0;
+  }
+  .add {
+    flex: 1;
+  }
+  .added {
+    margin: 14px 0 0;
+    color: var(--ok);
+  }
+  .added a {
+    color: var(--text);
+  }
+  .specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+    margin: 0;
+  }
+  .specs dd {
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+  }
+  .more {
+    padding-top: 0;
+  }
+  @media (max-width: 820px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .gallery {
+      position: static;
+    }
+  }
+</style>

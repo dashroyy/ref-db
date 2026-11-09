@@ -1,0 +1,331 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import ProductArt from '../components/ProductArt.astro';
+import { CATEGORIES, PRODUCTS, productById } from '../data/catalog.ts';
+import { money } from '../lib/money.ts';
+
+const featured = PRODUCTS.filter((p) => p.featured);
+const launcher = productById('orig-pen-launcher')!;
+const counts = Object.fromEntries(CATEGORIES.map((c) => [c.id, PRODUCTS.filter((p) => p.category === c.id).length]));
+
+// Hero: a part being printed layer by layer.
+const LAYERS = 14;
+const layerWidth = (i: number) => {
+  const t = i / (LAYERS - 1);
+  return 150 - Math.sin(t * Math.PI) * 50 + t * 10; // vase-ish profile
+};
+---
+
+<Base>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="tag tag--accent">3D print lab · made to order</p>
+        <h1>Ideas, printed<br />layer by layer.</h1>
+        <p class="lede">
+          Custom figurines of the people and pets you love, business cards people keep, and original gadgets like
+          the Pen Launcher. Designed and printed by hand at DashLabs.
+        </p>
+        <div class="actions">
+          <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+          <a class="btn" href="/custom/">Start a custom order</a>
+        </div>
+        <dl class="readout">
+          <div><dt class="tag">Turnaround</dt><dd>3–14 days</dd></div>
+          <div><dt class="tag">Materials</dt><dd>PLA · PETG · TPU</dd></div>
+          <div><dt class="tag">Preview</dt><dd>Before every custom print</dd></div>
+        </dl>
+      </div>
+
+      <div class="printer" aria-hidden="true">
+        <svg viewBox="0 0 360 340">
+          <rect x="20" y="10" width="320" height="320" rx="18" fill="var(--panel)" stroke="var(--line)"></rect>
+          <rect x="34" y="34" width="292" height="6" rx="3" fill="var(--line-2)"></rect>
+          <g class="head-move">
+            <rect x="-22" y="40" width="44" height="34" rx="6" fill="var(--panel-2)" stroke="var(--line-2)"></rect>
+            <path d="M-8 74 L8 74 L3 86 L-3 86 Z" fill="var(--accent)"></path>
+          </g>
+          <g class="stack">
+            {
+              Array.from({ length: LAYERS }, (_, i) => {
+                const w = layerWidth(i);
+                return (
+                  <rect
+                    x={180 - w / 2}
+                    y={278 - i * 12}
+                    width={w}
+                    height="11"
+                    rx="2"
+                    fill={i % 2 ? 'var(--accent)' : 'var(--accent-2)'}
+                    style={`animation-delay:${i * 0.32}s`}
+                  />
+                );
+              })
+            }
+          </g>
+          <rect x="44" y="290" width="272" height="12" rx="3" fill="var(--line-2)"></rect>
+          <text x="44" y="320" class="svg-mono">LAYER 14/14 · 0.20 mm</text>
+          <text x="316" y="320" class="svg-mono" text-anchor="end">215°C</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="section cats">
+    <div class="wrap">
+      <div class="head">
+        <h2>What I print</h2>
+        <a href="/shop/" class="muted">See everything →</a>
+      </div>
+      <div class="cat-grid">
+        {
+          CATEGORIES.map((c, i) => (
+            <a class="cat panel" href={`/shop/?c=${c.id}`}>
+              <span class="tag">0{i + 1} · {counts[c.id]} items</span>
+              <h3>{c.label}</h3>
+              <p class="muted">{c.blurb}</p>
+              <span class="arrow">→</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section featured">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <p class="tag tag--accent">Popular</p>
+          <h2>Off the print bed</h2>
+        </div>
+      </div>
+      <div class="grid">{featured.map((p) => <ProductCard product={p} />)}</div>
+    </div>
+  </section>
+
+  <section class="section spotlight">
+    <div class="wrap spot panel">
+      <div class="spot-art">
+        <ProductArt shape={launcher.art.shape} hue={launcher.art.hue} uid="spot" label={launcher.name} />
+      </div>
+      <div class="spot-copy">
+        <p class="tag tag--accent">DashLabs original</p>
+        <h2>The Pen Launcher</h2>
+        <p class="lede">
+          Designed here, tested here, launched across many offices. Load a standard ballpoint, pull back, and let go.
+        </p>
+        <div class="actions">
+          <a class="btn btn--primary" href={`/shop/${launcher.slug}/`}>Get one · {money(launcher.price)}</a>
+          <a class="btn" href="/lab/">More from the lab</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section how">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <p class="tag tag--accent">Custom orders</p>
+          <h2>From a photo to your shelf</h2>
+        </div>
+        <a class="btn" href="/custom/">Start yours</a>
+      </div>
+      <ol class="steps">
+        <li class="panel"><span class="tag">Step 01</span><h3>Send photos</h3><p class="muted">A few angles of the person, pet or object, plus any details you care about.</p></li>
+        <li class="panel"><span class="tag">Step 02</span><h3>Get a quote</h3><p class="muted">I reply with a price and timeline. You pay through a secure invoice.</p></li>
+        <li class="panel"><span class="tag">Step 03</span><h3>Approve the preview</h3><p class="muted">You see a 3D render first. One round of tweaks is included.</p></li>
+        <li class="panel"><span class="tag">Step 04</span><h3>It's printed & shipped</h3><p class="muted">Printed, cleaned up, checked and packed carefully.</p></li>
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    background: var(--layers);
+    border-bottom: 1px solid var(--line);
+    padding-block: clamp(48px, 8vw, 96px);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero h1 {
+    margin-top: 14px;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .readout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 36px;
+    margin: 40px 0 0;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .readout dd {
+    margin: 6px 0 0;
+    font-weight: 500;
+  }
+  .printer svg {
+    width: 100%;
+    max-width: 440px;
+    margin-inline: auto;
+  }
+  .svg-mono {
+    font: 500 11px var(--mono);
+    fill: var(--text-3);
+    letter-spacing: 0.06em;
+  }
+  .stack rect {
+    opacity: 0;
+    animation: layer 6s infinite;
+  }
+  @keyframes layer {
+    0% {
+      opacity: 0;
+    }
+    4%,
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  .head-move {
+    animation: sweep 0.64s ease-in-out infinite alternate;
+  }
+  @keyframes sweep {
+    from {
+      transform: translateX(110px);
+    }
+    to {
+      transform: translateX(250px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stack rect {
+      opacity: 1;
+    }
+    .head-move {
+      transform: translateX(180px);
+    }
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .cat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    min-height: 220px;
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .cat:hover {
+    border-color: var(--accent);
+  }
+  .cat h3 {
+    margin-top: auto;
+    padding-top: 28px;
+  }
+  .cat p {
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  .arrow {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    color: var(--accent);
+    font-size: 1.2rem;
+  }
+
+  .featured,
+  .spotlight,
+  .how {
+    padding-top: 0;
+  }
+
+  .spot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+  .spot-art {
+    border-right: 1px solid var(--line);
+  }
+  .spot-art :global(svg) {
+    height: 100%;
+    object-fit: cover;
+  }
+  .spot-copy {
+    padding: clamp(28px, 5vw, 56px);
+    align-self: center;
+  }
+
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .steps li {
+    padding: 22px;
+  }
+  .steps h3 {
+    margin-top: 18px;
+  }
+  .steps p {
+    font-size: 0.92rem;
+    margin: 0;
+  }
+
+  @media (max-width: 960px) {
+    .cat-grid,
+    .steps {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 760px) {
+    .hero-grid,
+    .spot {
+      grid-template-columns: 1fr;
+    }
+    .printer {
+      order: -1;
+    }
+    .printer svg {
+      max-width: 280px;
+    }
+    .spot-art {
+      border-right: 0;
+      border-bottom: 1px solid var(--line);
+    }
+  }
+  @media (max-width: 480px) {
+    .cat-grid,
+    .steps {
+      grid-template-columns: 1fr;
+    }
+    .cat {
+      min-height: 0;
+    }
+  }
+</style>

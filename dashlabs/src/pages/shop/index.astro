@@ -1,0 +1,89 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
+---
+
+<Base title="Shop" description="Custom figurines, printed business cards, DashLabs originals and made-to-order prints.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="tag tag--accent">Shop</p>
+      <h1>Everything I print</h1>
+      <p class="lede">
+        Every item is printed to order in the colour you choose, so nothing sits in a warehouse. Custom pieces start
+        with a quote.
+      </p>
+
+      <div class="filters" role="group" aria-label="Filter by category">
+        <button type="button" data-filter="all" aria-pressed="true">All <span>{PRODUCTS.length}</span></button>
+        {
+          CATEGORIES.map((c) => (
+            <button type="button" data-filter={c.id} aria-pressed="false">
+              {c.label} <span>{PRODUCTS.filter((p) => p.category === c.id).length}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="grid" data-grid>
+        {PRODUCTS.map((p) => <ProductCard product={p} />)}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-grid] [data-category]')];
+
+  function apply(id: string) {
+    if (!buttons.some((b) => b.dataset.filter === id)) id = 'all';
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === id)));
+    cards.forEach((c) => (c.hidden = id !== 'all' && c.dataset.category !== id));
+    const url = new URL(location.href);
+    if (id === 'all') url.searchParams.delete('c');
+    else url.searchParams.set('c', id);
+    history.replaceState(null, '', url);
+  }
+
+  buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+  apply(new URLSearchParams(location.search).get('c') ?? 'all');
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 32px 0 28px;
+  }
+  .filters button {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text-2);
+    font: 500 0.92rem var(--font);
+    cursor: pointer;
+  }
+  .filters button span {
+    font: 500 0.75rem var(--mono);
+    color: var(--text-3);
+    margin-left: 4px;
+  }
+  .filters button[aria-pressed='true'] {
+    background: var(--text);
+    border-color: var(--text);
+    color: var(--bg);
+  }
+  .filters button[aria-pressed='true'] span {
+    color: var(--bg);
+  }
+  :global([data-grid] > [hidden]) {
+    display: none;
+  }
+</style>
