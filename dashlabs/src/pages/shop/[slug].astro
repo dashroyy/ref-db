@@ -2,6 +2,8 @@
 import Base from '../../layouts/Base.astro';
 import ProductArt from '../../components/ProductArt.astro';
 import ProductCard from '../../components/ProductCard.astro';
+import LaunchLab from '../../components/LaunchLab.astro';
+import { GUIDES } from '../../data/guides.ts';
 import { PRODUCTS, categoryById, type Product } from '../../data/catalog.ts';
 import { SITE } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
@@ -17,6 +19,7 @@ const { product: p } = Astro.props;
 const [lo, hi] = p.leadTimeDays ?? SITE.defaultLeadTimeDays;
 const related = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
 const needsText = p.id === 'mto-keychain';
+const guide = GUIDES.find((g) => g.slug === p.guide);
 const sourceLabel =
   p.source.kind === 'original'
     ? 'Designed by DashLabs'
@@ -136,6 +139,31 @@ const sourceLabel =
       </div>
     </div>
   </section>
+
+  {
+    p.tool === 'launch-lab' && (
+      <section class="section tool">
+        <div class="wrap">
+          <p class="tag tag--accent">Try before you buy</p>
+          <h2>How far will it go?</h2>
+          <p class="muted">Set the angle and pull-back and see where your pen lands.</p>
+          <LaunchLab compact />
+        </div>
+      </section>
+    )
+  }
+
+  {
+    guide && (
+      <section class="wrap">
+        <a class="guide-link panel" href={`/learn/${guide.slug}/`}>
+          <span class="tag">Guide</span>
+          <strong>{guide.title} →</strong>
+          <span class="muted">{guide.summary}</span>
+        </a>
+      </section>
+    )
+  }
 
   {
     related.length > 0 && (
@@ -314,8 +342,19 @@ const sourceLabel =
     margin: 4px 0 0;
     overflow-wrap: anywhere;
   }
-  .more {
+  .more,
+  .tool {
     padding-top: 0;
+  }
+  .guide-link {
+    display: grid;
+    gap: 4px;
+    padding: 18px 20px;
+    margin-bottom: clamp(56px, 9vw, 112px);
+    text-decoration: none;
+  }
+  .guide-link:hover {
+    border-color: var(--accent);
   }
   @media (max-width: 820px) {
     .layout {

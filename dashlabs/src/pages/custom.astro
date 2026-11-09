@@ -33,6 +33,8 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
           <li><span>Something else</span><span class="tag">quoted per job</span></li>
         </ul>
 
+        <p class="muted">Want a ballpark first? Try the <a href="/learn/pricing/">price estimator</a>.</p>
+
         <p class="notice">
           <strong>About photos:</strong> after you send this request, reply to my email with your photos attached. Clear,
           well-lit shots from the front, side and back work best.
@@ -94,6 +96,12 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
     params.delete('product');
     optionsField.value = describeOptions(from, normaliseOptions(from, Object.fromEntries(params)));
   }
+  // Prefill from the price estimator: /custom/?details=...
+  const details = new URLSearchParams(location.search).get('details');
+  if (details && !from) {
+    kind.value = 'other';
+    form.querySelector<HTMLTextAreaElement>('#details')!.value = details.slice(0, 2000);
+  }
   kind.addEventListener('change', () => (optionsField.value = ''));
 
   form.addEventListener('submit', (e) => {
@@ -148,6 +156,9 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   }
   .types a {
     text-decoration: none;
+  }
+  .intro .muted a {
+    color: var(--accent);
   }
   .types a:hover {
     color: var(--accent);

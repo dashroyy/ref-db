@@ -20,6 +20,8 @@ const socials = Object.entries(SITE.social).filter(([, url]) => url);
     <nav aria-label="Info">
       <span class="tag">Info</span>
       <a href="/lab/">The lab</a>
+      <a href="/learn/">Learn</a>
+      <a href="/learn/pricing/">Price estimator</a>
       <a href="/faq/">FAQ &amp; policies</a>
       <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
       {socials.map(([name, url]) => <a href={url}>{name}</a>)}

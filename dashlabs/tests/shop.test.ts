@@ -87,3 +87,8 @@ test('order: reference looks like DL-YYMMDD-XXXX', () => {
   assert.equal(ref, 'DL-261109-2222');
   assert.match(orderReference(), /^DL-\d{6}-[2-9A-HJ-NP-Z]{4}$/);
 });
+
+test('catalog: product guide links point at real guides', async () => {
+  const { GUIDES } = await import('../src/data/guides.ts');
+  for (const p of PRODUCTS) if (p.guide) assert.ok(GUIDES.some((g) => g.slug === p.guide), `${p.id} guide ${p.guide}`);
+});

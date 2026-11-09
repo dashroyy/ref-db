@@ -1,0 +1,62 @@
+---
+// Learn-page layout, after REF·DB's topic pages:
+// At a glance → why it matters → intuition → tool → worked example → where this stops.
+import Base from './Base.astro';
+import { GUIDES } from '../data/guides.ts';
+
+interface Props {
+  slug: string;
+}
+const guide = GUIDES.find((g) => g.slug === Astro.props.slug)!;
+const i = GUIDES.indexOf(guide);
+const next = GUIDES[(i + 1) % GUIDES.length];
+---
+
+<Base title={guide.title} description={guide.summary}>
+  <article class="section top">
+    <div class="wrap">
+      <nav class="tag crumbs" aria-label="Breadcrumb"><a href="/learn/">Learn</a> / Guide {String(i + 1).padStart(2, '0')}</nav>
+      <h1>{guide.title}</h1>
+      <p class="lede">{guide.summary}</p>
+      <dl class="glance">
+        <div><dt class="tag">The idea</dt><dd>{guide.idea}</dd></div>
+        <div><dt class="tag">Tool</dt><dd>{guide.tool}</dd></div>
+        <div><dt class="tag">Read time</dt><dd>{guide.minutes} min</dd></div>
+      </dl>
+      <div class="prose">
+        <slot />
+      </div>
+      <a class="next panel" href={`/learn/${next.slug}/`}>
+        <span class="tag">Next guide</span>
+        <strong>{next.title} →</strong>
+      </a>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .top {
+    padding-top: clamp(32px, 5vw, 56px);
+  }
+  .crumbs {
+    margin-bottom: 18px;
+  }
+  .crumbs a {
+    text-decoration: none;
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    max-width: 18ch;
+  }
+  .next {
+    display: grid;
+    gap: 6px;
+    max-width: 72ch;
+    margin-top: 56px;
+    padding: 20px;
+    text-decoration: none;
+  }
+  .next:hover {
+    border-color: var(--accent);
+  }
+</style>

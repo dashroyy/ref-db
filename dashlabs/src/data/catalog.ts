@@ -83,6 +83,8 @@ export interface Product {
   art: { hue: number; shape: ArtShape }; // placeholder artwork until real photos exist
   images?: string[]; // later: paths under /public/products/
   stripePriceId?: string; // later: optional link to a Stripe Price
+  tool?: 'launch-lab'; // an interactive tool shown on the product page
+  guide?: string; // slug of a related /learn/ guide
 }
 
 export type ArtShape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain';
@@ -204,6 +206,8 @@ export const PRODUCTS: Product[] = [
     source: { kind: 'original' },
     featured: true,
     art: { hue: 24, shape: 'launcher' },
+    tool: 'launch-lab',
+    guide: 'pen-launcher-physics',
   },
   {
     id: 'cards-standard',

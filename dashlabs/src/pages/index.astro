@@ -2,6 +2,8 @@
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import ProductArt from '../components/ProductArt.astro';
+import LabStatus from '../components/LabStatus.astro';
+import { GUIDES } from '../data/guides.ts';
 import { CATEGORIES, PRODUCTS, productById } from '../data/catalog.ts';
 import { money } from '../lib/money.ts';
 
@@ -72,6 +74,10 @@ const layerWidth = (i: number) => {
     </div>
   </section>
 
+  <section class="wrap status-wrap">
+    <LabStatus />
+  </section>
+
   <section class="section cats">
     <div class="wrap">
       <div class="head">
@@ -120,6 +126,29 @@ const layerWidth = (i: number) => {
           <a class="btn btn--primary" href={`/shop/${launcher.slug}/`}>Get one · {money(launcher.price)}</a>
           <a class="btn" href="/lab/">More from the lab</a>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section learn">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <p class="tag tag--accent">Learn</p>
+          <h2>Know before you order</h2>
+        </div>
+        <a href="/learn/" class="muted">All guides →</a>
+      </div>
+      <div class="learn-grid">
+        {
+          GUIDES.map((g, i) => (
+            <a class="panel guide" href={`/learn/${g.slug}/`}>
+              <span class="tag">Guide 0{i + 1} · {g.tool}</span>
+              <h3>{g.title}</h3>
+              <p class="muted">{g.summary}</p>
+            </a>
+          ))
+        }
       </div>
     </div>
   </section>
@@ -257,8 +286,38 @@ const layerWidth = (i: number) => {
 
   .featured,
   .spotlight,
+  .learn,
   .how {
     padding-top: 0;
+  }
+  .status-wrap {
+    margin-top: -28px;
+    position: relative;
+  }
+  .learn-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .guide {
+    padding: 22px;
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .guide:hover {
+    border-color: var(--accent);
+  }
+  .guide h3 {
+    margin-top: 14px;
+  }
+  .guide p {
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  @media (max-width: 860px) {
+    .learn-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .spot {

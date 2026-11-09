@@ -23,11 +23,16 @@ npm run build    # static site in dist/
 ```
 src/data/catalog.ts   THE CATALOG — every product, price, option and category. Edit this to change the shop.
 src/data/site.ts      Business name, contact email, currency, checkout mode.
+src/data/materials.ts Filament library (typical data-sheet values + your spool prices).
+src/data/lab.ts       Lab status board on the home page — update by hand.
+src/data/guides.ts    The Learn section's guides, in order.
+src/lib/estimate.ts   Print price estimator maths (and your shop rates — RATES).
+src/lib/launcher.ts   Pen Launcher physics for the Launch lab.
 src/lib/order.ts      Cart → priced order (pure; will also run on the server for checkout).
 src/lib/cart-store.ts Cart saved in the visitor's browser.
 src/lib/checkout.ts   Checkout entry point: 'request' (email) now, 'stripe' later.
 src/components/       Header, footer, product card, placeholder product artwork.
-src/pages/            Home, shop, product pages, custom orders, the lab, FAQ, cart.
+src/pages/            Home, shop, product pages, custom orders, the lab, learn guides, FAQ, cart.
 tests/                Catalog rules and pricing/cart tests.
 ```
 
@@ -41,7 +46,24 @@ tests/                Catalog rules and pricing/cart tests.
       with the real designer, link and licence. Many MakerWorld models are personal-use only. Selling prints of those
       isn't allowed.
 - [ ] Replace the example build-log entries on `/lab/` with real projects.
+- [ ] Set your real rates in `src/lib/estimate.ts` (`RATES`) and spool prices in `src/data/materials.ts`.
+- [ ] Update `src/data/lab.ts` with your real printers and queue (and keep it current, or remove the board).
+- [ ] Measure your Pen Launcher's spring and range and set `DEFAULT_LAUNCH` in `src/lib/launcher.ts` to match
+      (update the worked example in the guide and its test too).
 - [ ] Read through the FAQ/policies (`src/pages/faq.astro`) and adapt the refund and shipping wording.
+
+## Learn guides and tools (borrowed from REF·DB)
+
+Each guide in `src/pages/learn/` follows the same shape: **at a glance → why it matters → intuition (an analogy and a
+diagram) → the tool → a worked example → where this stops → references**. The rules carried over:
+
+- Maths lives in `src/lib/*.ts` as pure functions; components only do UI.
+- The worked example on a page is the tool's default input, and `tests/tools.test.ts` asserts the same numbers.
+- Every analogy says where it breaks down; every tool says where it stops.
+- Typical values are labelled typical; illustrative values are labelled illustrative.
+
+The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate.ts` and `pricePerKg` in
+`src/data/materials.ts` to your real costs.
 
 ## Adding a product
 

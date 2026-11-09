@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import { GUIDES } from '../../data/guides.ts';
+---
+
+<Base title="Learn" description="Short guides to 3D printing: materials, pricing, and the physics of the Pen Launcher.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="tag tag--accent">Learn</p>
+      <h1>How it's made, and why.</h1>
+      <p class="lede">
+        Short guides that explain the idea first, then hand you a tool to play with. Read one before you order and
+        you'll know exactly what to ask for.
+      </p>
+      <ol class="guides">
+        {
+          GUIDES.map((g, i) => (
+            <li>
+              <a class="panel" href={`/learn/${g.slug}/`}>
+                <span class="num">{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <h2>{g.title}</h2>
+                  <p class="muted">{g.summary}</p>
+                  <span class="tag">Tool · {g.tool} · {g.minutes} min</span>
+                </div>
+                <span class="arrow">→</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .guides {
+    list-style: none;
+    padding: 0;
+    margin: 36px 0 0;
+    display: grid;
+    gap: 14px;
+  }
+  .guides a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 22px 24px;
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .guides a:hover {
+    border-color: var(--accent);
+  }
+  .num {
+    font: 600 2rem var(--mono);
+    color: var(--accent);
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin-bottom: 6px;
+  }
+  p {
+    margin-bottom: 10px;
+  }
+  .arrow {
+    color: var(--accent);
+    font-size: 1.3rem;
+  }
+  @media (max-width: 560px) {
+    .guides a {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .arrow {
+      display: none;
+    }
+  }
+</style>

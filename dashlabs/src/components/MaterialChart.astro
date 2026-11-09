@@ -1,0 +1,104 @@
+---
+// Material comparison: relative ratings (judgement, 1–5) plus typical data-sheet values.
+import { MATERIALS, RATING_LABELS } from '../data/materials.ts';
+const keys = Object.keys(RATING_LABELS) as (keyof typeof RATING_LABELS)[];
+---
+
+<div class="calc">
+  <div class="calc-head"><span>Material comparison</span><span>ratings 1–5 · relative</span></div>
+  <div class="mats">
+    {
+      MATERIALS.map((m) => (
+        <section class="mat">
+          <header>
+            <h3>{m.name}</h3>
+            <span class="tag">{m.short}</span>
+          </header>
+          <dl class="ratings">
+            {keys.map((k) => (
+              <div>
+                <dt>{RATING_LABELS[k]}</dt>
+                <dd aria-label={`${m.ratings[k]} out of 5`}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <i class={n <= m.ratings[k] ? 'on' : ''} />
+                  ))}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <dl class="facts">
+            <div><dt class="tag">Softens at</dt><dd>{m.heatC ? `≈${m.heatC} °C` : 'stays flexible'}</dd></div>
+            <div><dt class="tag">Density</dt><dd>{m.density} g/cm³</dd></div>
+          </dl>
+          <p><strong>Good for:</strong> {m.goodFor}</p>
+          <p><strong>Avoid:</strong> {m.avoid}</p>
+        </section>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .mats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  }
+  .mat {
+    padding: 18px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  header {
+    margin-bottom: 14px;
+  }
+  h3 {
+    margin: 0 0 4px;
+  }
+  .ratings {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 14px;
+  }
+  .ratings div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.86rem;
+    color: var(--text-2);
+  }
+  .ratings dd {
+    display: flex;
+    gap: 3px;
+    margin: 0;
+  }
+  .ratings i {
+    width: 14px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--line-2);
+  }
+  .ratings i.on {
+    background: var(--accent);
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .facts dd {
+    margin: 2px 0 0;
+    font: 500 0.9rem var(--mono);
+  }
+  .mat p {
+    font-size: 0.88rem;
+    color: var(--text-2);
+    margin: 0 0 8px;
+  }
+  .mat strong {
+    color: var(--text);
+  }
+</style>

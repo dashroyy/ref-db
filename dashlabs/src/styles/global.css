@@ -245,3 +245,162 @@ textarea:focus {
     transition: none !important;
   }
 }
+
+/* ── Tools (after REF·DB's .calc) ───────────────────────────────────────────
+   A labelled instrument panel: header strip, inputs on the left, readout on
+   the right. Maths lives in src/lib, never in the component. */
+.calc {
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--panel);
+  overflow: hidden;
+  margin-block: 28px;
+}
+.calc-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-2) var(--layers);
+  font: 500 0.72rem/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.calc-head span:first-child {
+  color: var(--accent);
+}
+.calc-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.calc-body > form {
+  padding: 20px 18px;
+  border-right: 1px solid var(--line);
+}
+.calc-out {
+  padding: 20px 18px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.calc .row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+.calc .row3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 10px;
+}
+.calc .field {
+  margin-bottom: 14px;
+}
+.calc input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 32px;
+}
+.calc .range-val {
+  font: 500 0.85rem var(--mono);
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.big {
+  font: 600 clamp(2rem, 4vw, 2.8rem)/1 var(--mono);
+  letter-spacing: -0.02em;
+}
+.readout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.readout-grid div {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+}
+.readout-grid dd {
+  margin: 4px 0 0;
+  font: 600 1.05rem var(--mono);
+}
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .calc-body {
+    grid-template-columns: 1fr;
+  }
+  .calc-body > form {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+/* ── Learn pages (after REF·DB's topic pages) ─────────────────────────────── */
+.prose > :not(.wide, .math) {
+  max-width: 72ch;
+}
+.prose h2 {
+  margin-top: 2.2em;
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+}
+.prose p,
+.prose li {
+  color: var(--text-2);
+}
+.prose strong {
+  color: var(--text);
+}
+.prose a:not(.btn) {
+  color: var(--accent);
+}
+.prose ol,
+.prose ul {
+  padding-left: 1.2em;
+}
+.prose li {
+  margin-bottom: 0.4em;
+}
+.math {
+  width: fit-content;
+  max-width: 100%;
+  font: 500 0.9rem/1.7 var(--mono);
+  color: var(--text);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 14px 16px;
+  overflow-x: auto;
+  white-space: pre;
+}
+.glance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  margin: 28px 0 8px;
+}
+.glance dt {
+  margin-bottom: 4px;
+}
+.glance dd {
+  margin: 0;
+  color: var(--text);
+}
+.stops {
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  border-radius: var(--r-sm);
+  padding: 4px 20px;
+  background: color-mix(in srgb, var(--warn) 5%, transparent);
+}

@@ -1,0 +1,115 @@
+---
+import Guide from '../../layouts/Guide.astro';
+import Analogy from '../../components/Analogy.astro';
+import QuoteEstimator from '../../components/QuoteEstimator.astro';
+import { RATES, QUALITIES } from '../../lib/estimate.ts';
+import { materialById } from '../../data/materials.ts';
+const pla = materialById('pla')!;
+const std = QUALITIES.find((q) => q.id === 'standard')!;
+---
+
+<Guide slug="pricing">
+  <h2>Why it matters</h2>
+  <p>
+    People are often surprised that a palm-sized print costs more than the plastic in it. A 70 g figurine uses about
+    $1.40 of filament, yet it ties up a printer for over four hours. Knowing where the cost goes helps you ask for the
+    right thing: a hollower part, a coarser layer, or a smaller size can halve the price.
+  </p>
+
+  <h2>The intuition</h2>
+  <Analogy title="A loaf of bread with a crust">
+    <p>
+      A 3D print is mostly <strong>crust</strong> and <strong>crumb</strong>. The outside is a solid skin a few lines
+      thick; the inside is a light honeycomb, the <em>infill</em>. Doubling a part's size makes the crumb grow much
+      faster than the crust, so big prints are mostly infill, and the infill setting matters most for them.
+    </p>
+  </Analogy>
+
+  <figure class="panel xs">
+    <svg viewBox="0 0 560 200" role="img" aria-label="Cross-section of a print showing skin and infill">
+      <desc>
+        Cross-sections of a small and a large printed cube. Each has a solid orange skin of the same thickness and a
+        sparse grid of infill inside. In the larger cube the skin is a much smaller fraction of the material.
+      </desc>
+      <defs>
+        <pattern id="infill" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <path d="M0 0H14M0 0V14" stroke="var(--text-3)" stroke-width="1.5"></path>
+        </pattern>
+      </defs>
+      <g>
+        <rect x="40" y="70" width="90" height="90" fill="var(--accent)" rx="2"></rect>
+        <rect x="52" y="82" width="66" height="66" fill="var(--bg-2)"></rect>
+        <rect x="52" y="82" width="66" height="66" fill="url(#infill)"></rect>
+        <text x="85" y="186" text-anchor="middle" class="lbl">Small: skin ≈ half the plastic</text>
+      </g>
+      <g>
+        <rect x="260" y="20" width="180" height="140" fill="var(--accent)" rx="2"></rect>
+        <rect x="272" y="32" width="156" height="116" fill="var(--bg-2)"></rect>
+        <rect x="272" y="32" width="156" height="116" fill="url(#infill)"></rect>
+        <text x="350" y="186" text-anchor="middle" class="lbl">Large: mostly infill</text>
+      </g>
+      <line x1="440" y1="40" x2="470" y2="40" stroke="var(--text-2)"></line>
+      <text x="474" y="44" class="lbl">skin {RATES.wallMm} mm</text>
+      <line x1="428" y1="100" x2="470" y2="100" stroke="var(--text-2)"></line>
+      <text x="474" y="104" class="lbl">infill</text>
+    </svg>
+    <figcaption class="hint">Schematic, not to scale.</figcaption>
+  </figure>
+
+  <p>The price then has four parts:</p>
+  <ul>
+    <li><strong>Filament</strong>: grams × the spool price (PLA ≈ ${pla.pricePerKg}/kg).</li>
+    <li><strong>Machine time</strong>: hours × ${RATES.machinePerHour.toFixed(2)}/h for electricity, wear and maintenance. Usually the biggest slice.</li>
+    <li><strong>Handling</strong>: ${RATES.handling.toFixed(2)} per job for slicing, removing supports, cleanup and packing.</li>
+    <li><strong>Margin</strong>: {RATES.margin * 100}% on top, which pays for failed prints, design time and keeping the lab running.</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <div class="wide"><QuoteEstimator /></div>
+
+  <h2>Worked example: an 8 × 8 × 10 cm figurine</h2>
+  <p>These are the estimator's default inputs, solved by hand (the site's tests check the same numbers):</p>
+  <div class="math">{`Object volume   8 × 8 × 10 cm × 0.35 (organic shape)      = 224 cm³
+Skin            6 × 224^(2/3) cm² × 0.12 cm               = 26.6 cm³
+Infill          15% × (224 − 26.6) cm³                    = 29.6 cm³
+Plastic         26.6 + 29.6 = 56.2 cm³ × ${pla.density} g/cm³        = 69.7 g
+Print time      69.7 g ÷ ${std.gramsPerHour} g/h (standard, 0.20 mm)        = 4 h 39 min
+
+Filament        0.0697 kg × $${pla.pricePerKg}/kg                        = $1.39
+Machine         4.64 h × $${RATES.machinePerHour.toFixed(2)}/h                            = $4.64
+Handling                                                  = $3.00
+Margin          ${RATES.margin * 100}% × $9.03                                = $3.61
+Price           $12.65 → rounded up                       = $13`}</div>
+  <p>
+    Notice the filament is only about a tenth of the price. Dropping to draft layers cuts the machine time by about
+    40%. Raising infill to 50% adds about 50 g of plastic, and the hours to print it.
+  </p>
+
+  <h2>Where this stops</h2>
+  <div class="stops">
+    <ul>
+      <li><strong>It's a ballpark (±30%).</strong> The real number comes from slicing the actual model. Supports, overhangs and colour changes can add a lot.</li>
+      <li><strong>Shape factor is a guess.</strong> The estimator doesn't see your model. A hollow vase or a dense brick can be far off.</li>
+      <li><strong>Design work isn't included.</strong> Custom figurines from photos include modelling time and are quoted separately.</li>
+      <li><strong>Multi-colour prints</strong> waste filament purging between colours and take longer. Ask for a quote.</li>
+    </ul>
+  </div>
+</Guide>
+
+<style>
+  .xs {
+    margin: 20px 0;
+    padding: 16px;
+  }
+  .xs svg {
+    width: 100%;
+    height: auto;
+  }
+  .lbl {
+    font: 500 11px var(--font);
+    fill: var(--text-2);
+  }
+  figcaption {
+    margin-top: 6px;
+  }
+</style>

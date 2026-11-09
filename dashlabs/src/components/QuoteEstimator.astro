@@ -1,0 +1,161 @@
+---
+// Print price estimator. Maths in src/lib/estimate.ts (unit-tested); UI only here.
+import { SHAPES, QUALITIES, DEFAULT_INPUT as D } from '../lib/estimate.ts';
+import { MATERIALS } from '../data/materials.ts';
+---
+
+<div class="calc estimator" data-estimator>
+  <div class="calc-head"><span>Print price estimator</span><span>ballpark · ±30%</span></div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <div class="row3">
+        <div class="field"><label for="e-w">Width cm</label><input id="e-w" name="w" type="number" min="0.5" max="30" step="0.5" value={D.w} /></div>
+        <div class="field"><label for="e-d">Depth cm</label><input id="e-d" name="d" type="number" min="0.5" max="30" step="0.5" value={D.d} /></div>
+        <div class="field"><label for="e-h">Height cm</label><input id="e-h" name="h" type="number" min="0.1" max="30" step="0.5" value={D.h} /></div>
+      </div>
+      <div class="field">
+        <label for="e-shape">Shape</label>
+        <select id="e-shape" name="shape">{SHAPES.map((s) => <option value={s.id} selected={s.id === D.shape}>{s.label}</option>)}</select>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="e-mat">Material</label>
+          <select id="e-mat" name="material">{MATERIALS.map((m) => <option value={m.id} selected={m.id === D.material}>{m.name}</option>)}</select>
+        </div>
+        <div class="field">
+          <label for="e-qty">Quantity</label>
+          <input id="e-qty" name="qty" type="number" min="1" max="100" step="1" value={D.qty} />
+        </div>
+      </div>
+      <div class="field">
+        <label for="e-q">Quality</label>
+        <select id="e-q" name="quality">{QUALITIES.map((q) => <option value={q.id} selected={q.id === D.quality}>{q.label}</option>)}</select>
+      </div>
+      <div class="field">
+        <label for="e-inf">Infill <span class="range-val" data-infill-val></span></label>
+        <input id="e-inf" name="infill" type="range" min="0" max="100" step="5" value={D.infill * 100} />
+      </div>
+      <p class="hint">Infill is how solid the inside is. 15% is plenty for display pieces; 40%+ for parts that take a beating.</p>
+    </form>
+
+    <div class="calc-out" aria-live="polite">
+      <div>
+        <span class="tag">Estimated price</span>
+        <div class="big" data-total>—</div>
+        <span class="hint" data-each></span>
+      </div>
+      <dl class="readout-grid">
+        <div><dt class="tag">Plastic</dt><dd data-grams>—</dd></div>
+        <div><dt class="tag">Print time</dt><dd data-hours>—</dd></div>
+        <div><dt class="tag">Solid skin</dt><dd data-skin>—</dd></div>
+      </dl>
+      <div>
+        <span class="tag">Where the money goes (per part)</span>
+        <div class="bar" data-bar aria-hidden="true"></div>
+        <ul class="legend" data-legend></ul>
+      </div>
+      <a class="btn btn--primary" data-request href="/custom/">Request this print</a>
+      <p class="hint">Custom modelling (figurines from photos) is quoted separately.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { estimate, formatHours, SHAPES, QUALITIES, type EstimateInput } from '../lib/estimate.ts';
+  import { materialById, type MaterialId } from '../data/materials.ts';
+
+  const COLORS = ['var(--accent)', 'var(--accent-2)', '#7b808c', '#4a4f5b'];
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-estimator]')) {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const usd = (n: number) => `$${n.toFixed(2)}`;
+
+    const render = () => {
+      const f = new FormData(form);
+      const input: EstimateInput = {
+        w: Number(f.get('w')),
+        d: Number(f.get('d')),
+        h: Number(f.get('h')),
+        shape: f.get('shape') as EstimateInput['shape'],
+        material: f.get('material') as MaterialId,
+        infill: Number(f.get('infill')) / 100,
+        quality: f.get('quality') as EstimateInput['quality'],
+        qty: Number(f.get('qty')),
+      };
+      const r = estimate(input);
+      $('[data-infill-val]').textContent = `${Math.round(input.infill * 100)}%`;
+      $('[data-total]').textContent = `$${r.total}`;
+      $('[data-each]').textContent = input.qty > 1 ? `for ${input.qty} · about ${usd(r.total / input.qty)} each` : 'for one print';
+      $('[data-grams]').textContent = `${r.grams.toFixed(0)} g`;
+      $('[data-hours]').textContent = formatHours(r.hours);
+      $('[data-skin]').textContent = r.volume ? `${Math.round((r.shell / r.material) * 100)}%` : '—';
+
+      const parts = [
+        ['Filament', r.cost.filament],
+        ['Machine time', r.cost.machine],
+        ['Handling', r.cost.handling],
+        ['Margin', r.cost.margin],
+      ] as const;
+      const sum = parts.reduce((s, [, v]) => s + v, 0) || 1;
+      $('[data-bar]').innerHTML = parts
+        .map(([, v], i) => `<span style="width:${(v / sum) * 100}%;background:${COLORS[i]}"></span>`)
+        .join('');
+      $('[data-legend]').innerHTML = parts
+        .map(([n, v], i) => `<li><i style="background:${COLORS[i]}"></i>${n}<b>${usd(v)}</b></li>`)
+        .join('');
+
+      const shape = SHAPES.find((s) => s.id === input.shape)!.label;
+      const q = QUALITIES.find((x) => x.id === input.quality)!.label;
+      const details =
+        `Print request from the estimator:\n${input.qty} × ${input.w}×${input.d}×${input.h} cm, ${shape}\n` +
+        `${materialById(input.material)!.name}, ${q}, ${Math.round(input.infill * 100)}% infill\n` +
+        `Estimate shown: $${r.total}\n\nWhat is it / link to the model:`;
+      root.querySelector<HTMLAnchorElement>('[data-request]')!.href = `/custom/?${new URLSearchParams({ details })}`;
+    };
+    form.addEventListener('input', render);
+    render();
+  }
+</script>
+
+<style>
+  .bar {
+    display: flex;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 8px 0 10px;
+    background: var(--bg-2);
+  }
+  .bar :global(span) {
+    display: block;
+    height: 100%;
+    transition: width 0.2s;
+  }
+  .legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    font-size: 0.88rem;
+    color: var(--text-2);
+  }
+  .legend :global(li) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend :global(i) {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex: none;
+  }
+  .legend :global(b) {
+    margin-left: auto;
+    font: 500 0.85rem var(--mono);
+    color: var(--text);
+  }
+</style>
