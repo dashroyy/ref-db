@@ -11,29 +11,55 @@ export type CategoryId = 'custom' | 'originals' | 'cards' | 'made-to-order';
 export interface Category {
   id: CategoryId;
   label: string;
+  short: string; // rail/station name, e.g. FIGURINES
+  sub: string; // one line under the station name
+  code: string; // item code prefix, like REF·DB's Z-numbers: F01, O01…
+  glyph: string;
+  color: string; // the station colour (REF·DB phase colours)
   blurb: string;
 }
 
+// Each category is a "station", coloured like REF·DB's phases.
 export const CATEGORIES: Category[] = [
   {
     id: 'custom',
     label: 'Custom figurines',
+    short: 'FIGURINES',
+    sub: 'People & pets, from photos',
+    code: 'F',
+    glyph: '◎',
+    color: '#C77BAA',
     blurb: 'You send photos, I model and print a miniature of your person, pet or thing.',
   },
   {
     id: 'originals',
     label: 'DashLabs originals',
-    blurb: 'Gadgets and toys I designed myself — you won\'t find these anywhere else.',
+    short: 'ORIGINALS',
+    sub: 'Designed in the lab',
+    code: 'O',
+    glyph: '▲',
+    color: '#FC3D21',
+    blurb: "Gadgets and toys I designed myself — you won't find these anywhere else.",
   },
   {
     id: 'cards',
     label: 'Business cards',
+    short: 'CARDS',
+    sub: 'Printed, QR & NFC',
+    code: 'B',
+    glyph: '⊞',
+    color: '#3EC5D3',
     blurb: 'Printed cards that people actually keep. Your logo, your colours.',
   },
   {
     id: 'made-to-order',
     label: 'Made to order',
-    blurb: 'Great community designs I\'m licensed to print and sell, made in the colours you pick.',
+    short: 'MADE TO ORDER',
+    sub: 'Licensed community designs',
+    code: 'M',
+    glyph: '⚙',
+    color: '#5BC48A',
+    blurb: "Great community designs I'm licensed to print and sell, made in the colours you pick.",
   },
 ];
 
@@ -342,6 +368,13 @@ export const PRODUCTS: Product[] = [
 export const productBySlug = (slug: string) => PRODUCTS.find((p) => p.slug === slug);
 export const productById = (id: string) => PRODUCTS.find((p) => p.id === id);
 export const categoryById = (id: CategoryId) => CATEGORIES.find((c) => c.id === id)!;
+export const productsIn = (id: CategoryId) => PRODUCTS.filter((p) => p.category === id);
+
+/** Item code, like REF·DB's zone numbers: F01, O02, B01… (by position in its category). */
+export function productCode(p: Product): string {
+  const c = categoryById(p.category);
+  return c.code + String(productsIn(p.category).indexOf(p) + 1).padStart(2, '0');
+}
 
 // Price of a product with a set of chosen options (optionId → choiceId).
 // Unknown or missing choices fall back to the first choice.

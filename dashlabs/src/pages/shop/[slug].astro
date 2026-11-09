@@ -3,8 +3,9 @@ import Base from '../../layouts/Base.astro';
 import ProductArt from '../../components/ProductArt.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import LaunchLab from '../../components/LaunchLab.astro';
+import Banner from '../../components/Banner.astro';
 import { GUIDES } from '../../data/guides.ts';
-import { PRODUCTS, categoryById, type Product } from '../../data/catalog.ts';
+import { PRODUCTS, type Product } from '../../data/catalog.ts';
 import { SITE } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
 
@@ -31,9 +32,7 @@ const sourceLabel =
 <Base title={p.name} description={p.summary}>
   <section class="section top">
     <div class="wrap">
-      <nav class="crumbs tag" aria-label="Breadcrumb">
-        <a href="/shop/">Shop</a> / <a href={`/shop/?c=${p.category}`}>{categoryById(p.category).label}</a>
-      </nav>
+      <Banner />
 
       <div class="layout">
         <div class="gallery panel">
@@ -145,7 +144,7 @@ const sourceLabel =
       <section class="section tool">
         <div class="wrap">
           <p class="tag tag--accent">Try before you buy</p>
-          <h2>How far will it go?</h2>
+          <h2 class="h-rule">How far will it go?</h2>
           <p class="muted">Set the angle and pull-back and see where your pen lands.</p>
           <LaunchLab compact />
         </div>
@@ -169,7 +168,7 @@ const sourceLabel =
     related.length > 0 && (
       <section class="section more">
         <div class="wrap">
-          <h2>More like this</h2>
+          <h2 class="h-rule">More like this</h2>
           <div class="grid">
             {related.map((r) => (
               <ProductCard product={r} />
@@ -260,6 +259,7 @@ const sourceLabel =
     margin-top: 10px;
   }
   .price {
+    color: var(--white);
     font: 600 1.6rem/1 var(--mono);
     margin-bottom: 20px;
   }
@@ -306,8 +306,10 @@ const sourceLabel =
     color: var(--text-3);
   }
   .choice input:checked + span {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: var(--pc);
+    color: var(--white);
+    background: color-mix(in srgb, var(--pc) 14%, transparent);
+    box-shadow: 0 0 12px -6px var(--pc);
   }
   .choice input:focus-visible + span {
     outline: 2px solid var(--accent);

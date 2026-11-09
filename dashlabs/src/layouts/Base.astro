@@ -1,12 +1,19 @@
 ---
-import '@fontsource/space-grotesk/400.css';
-import '@fontsource/space-grotesk/500.css';
-import '@fontsource/space-grotesk/600.css';
-import '@fontsource/jetbrains-mono/500.css';
+// The frame (after REF·DB's PageFrame): deep-field sky, glass header, mission
+// rail, scroll telemetry, and the content plate the words sit on.
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
 import '../styles/global.css';
+import SpaceSky from '../components/hud/SpaceSky.astro';
 import Header from '../components/Header.astro';
+import Rail from '../components/Rail.astro';
 import Footer from '../components/Footer.astro';
 import { SITE } from '../data/site.ts';
+import { pageColor } from '../data/nav.ts';
 
 interface Props {
   title?: string;
@@ -14,10 +21,11 @@ interface Props {
 }
 const { title, description = SITE.description } = Astro.props;
 const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+const pc = pageColor(Astro.url.pathname);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark" style={`--pc:${pc}`}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,14 +33,102 @@ const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE
     <meta name="description" content={description} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta name="theme-color" content="#111216" />
+    <meta name="theme-color" content="#03050b" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>
+      // Restore PAUSE MOTION before first paint. Storage is guarded: it can throw.
+      try {
+        if (localStorage.getItem('dashlabs-motion') === 'off') document.documentElement.classList.add('motion-off');
+      } catch (e) {}
+    </script>
   </head>
   <body>
+    <SpaceSky />
+    <div id="scrollTelemetry" aria-hidden="true"><i></i></div>
     <Header />
-    <main>
-      <slot />
-    </main>
-    <Footer />
+    <Rail />
+    <div class="main-pane">
+      <main class="plate">
+        <slot />
+      </main>
+      <div class="plate plate--foot">
+        <Footer />
+      </div>
+    </div>
+
+    <script>
+      const bar = document.querySelector<HTMLElement>('#scrollTelemetry i');
+      const update = () => {
+        if (!bar) return;
+        const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+        bar.style.transform = `scaleX(${Math.min(1, scrollY / max)})`;
+      };
+      addEventListener('scroll', update, { passive: true });
+      addEventListener('resize', update);
+      update();
+    </script>
   </body>
 </html>
+
+<style is:global>
+  /* the sky shows round the work, never under the words (REF·DB rule) */
+  .main-pane {
+    padding: calc(var(--nav-h) + 20px) clamp(0px, 2.5vw, 40px) 40px;
+    margin-left: var(--rail-w);
+  }
+  .plate {
+    display: block;
+    max-width: 64rem;
+    margin-inline: auto;
+    background: var(--plate);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 40px 90px -50px rgba(0, 0, 0, 0.9);
+    position: relative;
+    overflow: clip;
+  }
+  /* accent-to-cyan rule across the top of the plate */
+  main.plate::before {
+    content: '';
+    position: absolute;
+    inset: 0 8% auto;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--pc) 25%, var(--blue) 75%, transparent);
+    opacity: 0.8;
+  }
+  .plate--foot {
+    margin-top: 16px;
+  }
+
+  #scrollTelemetry {
+    position: fixed;
+    top: var(--nav-h);
+    inset-inline: 0;
+    height: 2px;
+    z-index: 41;
+    pointer-events: none;
+  }
+  #scrollTelemetry i {
+    display: block;
+    height: 100%;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, var(--pc), var(--blue));
+    box-shadow: 0 0 8px var(--pc);
+  }
+
+  @media (max-width: 68.75rem) {
+    .main-pane {
+      margin-left: 0;
+    }
+  }
+  @media (max-width: 40rem) {
+    .main-pane {
+      padding: calc(var(--nav-h) + 8px) 0 16px;
+    }
+    .plate {
+      border-inline: 0;
+      border-radius: 0;
+    }
+  }
+</style>

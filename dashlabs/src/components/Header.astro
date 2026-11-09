@@ -1,142 +1,215 @@
 ---
+// Glass HUD header (after REF·DB): wordmark with the stamp dot, a live queue
+// readout, PAUSE MOTION, the cart chip, and MENU on small screens.
 import Logo from './Logo.astro';
-const path = Astro.url.pathname;
-const links = [
-  { href: '/shop/', label: 'Shop' },
-  { href: '/custom/', label: 'Custom orders' },
-  { href: '/lab/', label: 'The lab' },
-  { href: '/learn/', label: 'Learn' },
-  { href: '/faq/', label: 'FAQ' },
-];
-const active = (href: string) => path.startsWith(href);
+import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
+const [lo, hi] = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
 ---
 
-<header class="site-header">
-  <div class="wrap bar">
-    <a href="/" class="brand" aria-label="DashLabs home">
-      <Logo />
-      <span>Dash<b>Labs</b></span>
-    </a>
+<header class="hud-header">
+  <button type="button" class="hud-chip menu" data-menu aria-controls="rail" aria-expanded="false">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+    <span class="v">MENU</span>
+  </button>
 
-    <nav class="nav" aria-label="Main">
-      {links.map((l) => <a href={l.href} aria-current={active(l.href) ? 'page' : undefined}>{l.label}</a>)}
-    </nav>
+  <a href="/" class="site-title" aria-label="DashLabs home">
+    <Logo />
+    <span class="brand">DASH<span class="stamp">·</span>LABS</span>
+    <span class="brand-sub">3D print lab · made to order</span>
+  </a>
 
-    <a href="/cart/" class="cart" aria-label="Cart">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
+  <div class="hud-right">
+    <span class="hud-met" title="Current queue and lead time">
+      <span class="k">QUEUE</span>{LAB_STATUS.queuedJobs} JOBS<span class="k">·</span><span class="k">SHIPS</span>{lo}–{hi} DAYS
+    </span>
+    <button type="button" class="hud-chip motion" data-motion-switch aria-pressed="false" title="Pause the background and all animation">
+      <span class="v" data-motion-label>PAUSE MOTION</span>
+    </button>
+    <a href="/cart/" class="hud-chip cart" aria-label="Cart">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
         ><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"></path><circle cx="10" cy="20.5" r="1.3"
         ></circle><circle cx="17" cy="20.5" r="1.3"></circle></svg
       >
-      <span class="count" data-cart-count hidden>0</span>
+      <span class="k">CART</span><span class="v" data-cart-count>0</span>
     </a>
   </div>
 </header>
 
 <script>
   import { cartCount, onCartChange } from '../lib/cart-store.ts';
+
+  // Cart count
   const badge = document.querySelector<HTMLElement>('[data-cart-count]')!;
-  const render = () => {
+  const chip = badge.closest<HTMLElement>('.cart')!;
+  const renderCart = () => {
     const n = cartCount();
     badge.textContent = String(n);
-    badge.hidden = n === 0;
+    chip.classList.toggle('full', n > 0);
   };
-  render();
-  onCartChange(render);
+  renderCart();
+  onCartChange(renderCart);
+
+  // PAUSE MOTION (state restored before first paint in Base.astro)
+  const root = document.documentElement;
+  const KEY = 'dashlabs-motion';
+  const sync = () => {
+    const off = root.classList.contains('motion-off');
+    document.querySelectorAll('[data-motion-label]').forEach((el) => (el.textContent = off ? 'RESUME MOTION' : 'PAUSE MOTION'));
+    document.querySelectorAll('[data-motion-switch]').forEach((el) => el.setAttribute('aria-pressed', String(off)));
+  };
+  document.querySelectorAll('[data-motion-switch]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const off = !root.classList.contains('motion-off');
+      root.classList.toggle('motion-off', off);
+      try {
+        localStorage.setItem(KEY, off ? 'off' : 'on');
+      } catch {}
+      sync();
+    }),
+  );
+  sync();
+
+  // MENU: the rail becomes a drawer on small screens
+  const menu = document.querySelector<HTMLButtonElement>('[data-menu]')!;
+  const setOpen = (open: boolean) => {
+    root.classList.toggle('rail-open', open);
+    menu.setAttribute('aria-expanded', String(open));
+  };
+  menu.addEventListener('click', () => setOpen(!root.classList.contains('rail-open')));
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && setOpen(false));
+  document.querySelector('[data-rail-scrim]')?.addEventListener('click', () => setOpen(false));
 </script>
 
 <style>
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(12px);
+  .hud-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 40;
+    height: var(--nav-h);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-inline: clamp(12px, 2vw, 24px);
+    background: var(--glass);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
     border-bottom: 1px solid var(--line);
   }
-  .bar {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+  /* the thrust-trace hairline: accent into cyan */
+  .hud-header::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--pc) 30%, var(--blue) 70%, transparent);
+    opacity: 0.7;
+  }
+  .site-title {
+    display: flex;
     align-items: center;
-    gap: 16px;
-    min-height: 64px;
+    gap: 0.65rem;
+    text-decoration: none;
+    color: var(--white);
+    min-width: 0;
   }
   .brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 1.15rem;
-    letter-spacing: -0.01em;
+    font: 600 1.3rem var(--mono);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
   }
-  .brand b {
-    font-weight: 600;
+  .stamp {
     color: var(--accent);
   }
-  .nav {
+  .brand-sub {
+    font: 400 0.66rem var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    white-space: nowrap;
+    border-left: 1px solid var(--rule);
+    padding-left: 0.65rem;
+  }
+  .hud-right {
+    margin-left: auto;
     display: flex;
-    justify-content: center;
-    gap: 4px;
+    align-items: center;
+    gap: 10px;
   }
-  .nav a {
-    padding: 8px 12px;
-    border-radius: 999px;
-    text-decoration: none;
+  .hud-met {
+    display: inline-flex;
+    gap: 0.45rem;
+    font: 400 0.68rem var(--mono);
+    letter-spacing: 0.12em;
+    color: var(--blue);
+    white-space: nowrap;
+    margin-right: 6px;
+  }
+  .hud-met .k {
+    color: var(--text-3);
+  }
+  .hud-met .k + * {
+    margin-left: -0.1rem;
+  }
+  .hud-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 34px;
+    padding: 0 0.6rem;
+    font: 400 0.68rem var(--mono);
+    letter-spacing: 0.12em;
     color: var(--text-2);
-    font-size: 0.95rem;
-  }
-  .nav a:hover {
-    color: var(--text);
-  }
-  .nav a[aria-current='page'] {
-    color: var(--text);
-    background: var(--panel-2);
-  }
-  .cart {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 999px;
+    background: transparent;
     border: 1px solid var(--line-2);
-    color: var(--text);
+    border-radius: 3px;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
   }
-  .count {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 5px;
-    border-radius: 999px;
-    background: var(--accent);
-    color: var(--accent-ink);
-    font: 600 0.72rem/20px var(--mono);
-    text-align: center;
+  .hud-chip:hover {
+    color: var(--accent);
+    border-color: var(--accent);
   }
-  .count[hidden] {
+  .hud-chip .k {
+    color: var(--text-3);
+  }
+  .hud-chip .v {
+    color: var(--white);
+  }
+  .cart.full {
+    border-color: var(--accent);
+    box-shadow: 0 0 14px -6px var(--accent);
+  }
+  .cart.full .v {
+    color: var(--accent);
+  }
+  .menu {
     display: none;
   }
-
-  /* Phone: nav becomes a scrolling second row */
-  @media (max-width: 720px) {
-    .bar {
-      grid-template-columns: 1fr auto;
-      padding-top: 10px;
+  @media (max-width: 82rem) {
+    .hud-met {
+      display: none;
     }
-    .nav {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      justify-content: flex-start;
-      overflow-x: auto;
-      margin-inline: calc(var(--gutter) * -1);
-      padding: 0 var(--gutter) 8px;
-      scrollbar-width: none;
+  }
+  @media (max-width: 68.75rem) {
+    .menu {
+      display: inline-flex;
     }
-    .nav a {
-      white-space: nowrap;
-      font-size: 0.9rem;
+    .brand-sub {
+      display: none;
+    }
+  }
+  @media (max-width: 34rem) {
+    .motion,
+    .cart .k {
+      display: none;
+    }
+    .brand {
+      font-size: 1.1rem;
+    }
+    .menu .v {
+      display: none;
     }
   }
 </style>

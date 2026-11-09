@@ -27,13 +27,13 @@ const gid = `gl-${uid}`;
     </radialGradient>
   </defs>
 
-  <rect width="400" height="300" fill="var(--panel-2)"></rect>
+  <rect width="400" height="300" fill="#0a1016"></rect>
   <rect width="400" height="300" fill={`url(#${gid})`}></rect>
 
   <!-- print bed -->
-  <path d="M40 262 L360 262 L392 300 L8 300 Z" fill="#2b2f37"></path>
-  <path d="M40 262 L360 262" stroke="#454b57" stroke-width="2"></path>
-  <g stroke="#363b45" stroke-width="1">
+  <path d="M40 262 L360 262 L392 300 L8 300 Z" fill="#151d23"></path>
+  <path d="M40 262 L360 262" stroke="#4fb3c6" stroke-opacity=".5" stroke-width="1.5"></path>
+  <g stroke="#26323a" stroke-width="1">
     <path d="M100 262 L84 300"></path><path d="M160 262 L154 300"></path><path d="M240 262 L246 300"></path><path
       d="M300 262 L316 300"></path>
   </g>
@@ -147,7 +147,7 @@ const gid = `gl-${uid}`;
         <g>
           <circle cx="146" cy="128" r="34" fill="none" stroke="#a9adb7" stroke-width="8" />
           <rect x="150" y="150" width="190" height="78" rx="18" fill={fill} transform="rotate(14 150 150)" />
-          <circle cx="174" cy="170" r="10" fill="var(--panel-2)" />
+          <circle cx="174" cy="170" r="10" fill="#0a1016" />
           <g transform="rotate(14 150 150)" fill={shade}>
             <rect x="196" y="174" width="22" height="34" rx="4" />
             <rect x="226" y="174" width="22" height="34" rx="4" />

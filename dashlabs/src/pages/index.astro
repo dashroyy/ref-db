@@ -1,340 +1,352 @@
 ---
+// Home, after REF·DB's mission home: hero with the stamp-dot wordmark and a
+// meta strip, three ways in, the lab status board, the systems board (one
+// station per category), then featured items and the Pen Launcher.
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import ProductArt from '../components/ProductArt.astro';
 import LabStatus from '../components/LabStatus.astro';
-import { GUIDES } from '../data/guides.ts';
-import { CATEGORIES, PRODUCTS, productById } from '../data/catalog.ts';
+import Planet from '../components/hud/Planet.astro';
+import { PRODUCTS, productById } from '../data/catalog.ts';
+import { STATIONS } from '../data/nav.ts';
+import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
 import { money } from '../lib/money.ts';
 
 const featured = PRODUCTS.filter((p) => p.featured);
 const launcher = productById('orig-pen-launcher')!;
-const counts = Object.fromEntries(CATEGORIES.map((c) => [c.id, PRODUCTS.filter((p) => p.category === c.id).length]));
-
-// Hero: a part being printed layer by layer.
-const LAYERS = 14;
-const layerWidth = (i: number) => {
-  const t = i / (LAYERS - 1);
-  return 150 - Math.sin(t * Math.PI) * 50 + t * 10; // vase-ish profile
-};
+const [lo, hi] = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
+const shopStations = STATIONS.filter((s) => s.id !== 'learn');
 ---
 
 <Base>
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <p class="tag tag--accent">3D print lab · made to order</p>
-        <h1>Ideas, printed<br />layer by layer.</h1>
-        <p class="lede">
-          Custom figurines of the people and pets you love, business cards people keep, and original gadgets like
-          the Pen Launcher. Designed and printed by hand at DashLabs.
-        </p>
-        <div class="actions">
-          <a class="btn btn--primary" href="/shop/">Browse the shop</a>
-          <a class="btn" href="/custom/">Start a custom order</a>
-        </div>
-        <dl class="readout">
-          <div><dt class="tag">Turnaround</dt><dd>3–14 days</dd></div>
-          <div><dt class="tag">Materials</dt><dd>PLA · PETG · TPU</dd></div>
-          <div><dt class="tag">Preview</dt><dd>Before every custom print</dd></div>
-        </dl>
-      </div>
-
-      <div class="printer" aria-hidden="true">
-        <svg viewBox="0 0 360 340">
-          <rect x="20" y="10" width="320" height="320" rx="18" fill="var(--panel)" stroke="var(--line)"></rect>
-          <rect x="34" y="34" width="292" height="6" rx="3" fill="var(--line-2)"></rect>
-          <g class="head-move">
-            <rect x="-22" y="40" width="44" height="34" rx="6" fill="var(--panel-2)" stroke="var(--line-2)"></rect>
-            <path d="M-8 74 L8 74 L3 86 L-3 86 Z" fill="var(--accent)"></path>
-          </g>
-          <g class="stack">
-            {
-              Array.from({ length: LAYERS }, (_, i) => {
-                const w = layerWidth(i);
-                return (
-                  <rect
-                    x={180 - w / 2}
-                    y={278 - i * 12}
-                    width={w}
-                    height="11"
-                    rx="2"
-                    fill={i % 2 ? 'var(--accent)' : 'var(--accent-2)'}
-                    style={`animation-delay:${i * 0.32}s`}
-                  />
-                );
-              })
-            }
-          </g>
-          <rect x="44" y="290" width="272" height="12" rx="3" fill="var(--line-2)"></rect>
-          <text x="44" y="320" class="svg-mono">LAYER 14/14 · 0.20 mm</text>
-          <text x="316" y="320" class="svg-mono" text-anchor="end">215°C</text>
-        </svg>
-      </div>
-    </div>
+  <section class="hero wrap">
+    <p class="kicker"><span class="dot"></span>Lab online · 3D print lab · made to order</p>
+    <h1 class="hero-title">DASH<span class="stamp">·</span>LABS</h1>
+    <p class="hero-tag">
+      Ideas, printed layer by layer. Custom figurines of the people and pets you love, business cards people keep, and
+      original gadgets like the Pen Launcher, designed and printed by hand.
+    </p>
+    <dl class="hero-meta">
+      <div><dt>REV</dt><dd>v1 · {LAB_STATUS.updated}</dd></div>
+      <div><dt>QUEUE</dt><dd>{LAB_STATUS.queuedJobs} jobs</dd></div>
+      <div><dt>SHIPS IN</dt><dd>{lo}–{hi} days</dd></div>
+      <div><dt>MATERIALS</dt><dd>PLA · PETG · TPU · ASA</dd></div>
+    </dl>
   </section>
 
-  <section class="wrap status-wrap">
+  <section class="wrap ways" aria-label="Three ways in">
+    <a class="way" href="/shop/">
+      <span class="way-k">01 · BROWSE</span>
+      <span class="way-t">You know what you want</span>
+      <span class="way-d">Every item, printed to order in the colour you pick. Straight into the cart.</span>
+    </a>
+    <a class="way" href="/custom/">
+      <span class="way-k">02 · CUSTOM ORDER</span>
+      <span class="way-t">You have an idea</span>
+      <span class="way-d">A figurine from photos, a logo, a part you sketched. Describe it and get a quote.</span>
+    </a>
+    <a class="way" href="/learn/">
+      <span class="way-k">03 · LEARN</span>
+      <span class="way-t">You want to know more</span>
+      <span class="way-d">Materials, what a print costs and why, and the physics of the Pen Launcher.</span>
+    </a>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="h-rule">Lab status</h2>
     <LabStatus />
   </section>
 
-  <section class="section cats">
-    <div class="wrap">
-      <div class="head">
-        <h2>What I print</h2>
-        <a href="/shop/" class="muted">See everything →</a>
+  <section class="wrap block">
+    <h2 class="h-rule">The stations</h2>
+    <div class="board">
+      <div class="board-head" aria-hidden="true">
+        <span>SYSTEMS STATUS · {STATIONS.length} STATIONS · SELECT A STATION</span><span class="go">ALL STATIONS GO</span>
       </div>
-      <div class="cat-grid">
-        {
-          CATEGORIES.map((c, i) => (
-            <a class="cat panel" href={`/shop/?c=${c.id}`}>
-              <span class="tag">0{i + 1} · {counts[c.id]} items</span>
-              <h3>{c.label}</h3>
-              <p class="muted">{c.blurb}</p>
-              <span class="arrow">→</span>
-            </a>
-          ))
-        }
-      </div>
+      {
+        STATIONS.map((s, i) => (
+          <a class="station" href={s.href} style={`--c:${s.color}`}>
+            <Planet color={s.color} id={`st-${s.id}`} />
+            <span class="st-k">
+              STATION {i + 1} · {s.glyph}
+            </span>
+            <span class="st-n">{s.short}</span>
+            <span class="st-s">{s.sub}</span>
+            <span class="st-bar" aria-hidden="true">
+              <i />
+            </span>
+            <span class="st-c">
+              {s.items.length} {s.id === 'learn' ? 'guides' : s.items.length === 1 ? 'item' : 'items'}
+              {s.items.some((it) => it.quote) && ' · quote'}
+            </span>
+            <span class="st-list">
+              {s.items.map((it) => (
+                <span>
+                  {it.code} {it.label}
+                </span>
+              ))}
+            </span>
+          </a>
+        ))
+      }
     </div>
   </section>
 
-  <section class="section featured">
-    <div class="wrap">
-      <div class="head">
-        <div>
-          <p class="tag tag--accent">Popular</p>
-          <h2>Off the print bed</h2>
-        </div>
-      </div>
-      <div class="grid">{featured.map((p) => <ProductCard product={p} />)}</div>
+  <section class="wrap block">
+    <div class="head">
+      <h2 class="h-rule">Off the print bed</h2>
+      <a href="/shop/">All {PRODUCTS.length} items →</a>
     </div>
+    <div class="grid">{featured.map((p) => <ProductCard product={p} />)}</div>
   </section>
 
-  <section class="section spotlight">
-    <div class="wrap spot panel">
+  <section class="wrap block">
+    <div class="spot" style={`--c:${shopStations[1].color}`}>
       <div class="spot-art">
         <ProductArt shape={launcher.art.shape} hue={launcher.art.hue} uid="spot" label={launcher.name} />
       </div>
       <div class="spot-copy">
-        <p class="tag tag--accent">DashLabs original</p>
+        <p class="tag" style="color:var(--c)">Station 2 · Originals · O01</p>
         <h2>The Pen Launcher</h2>
-        <p class="lede">
-          Designed here, tested here, launched across many offices. Load a standard ballpoint, pull back, and let go.
-        </p>
+        <p>Designed here, tested here, launched across many offices. Load a standard ballpoint, pull back, and let go.</p>
         <div class="actions">
           <a class="btn btn--primary" href={`/shop/${launcher.slug}/`}>Get one · {money(launcher.price)}</a>
-          <a class="btn" href="/lab/">More from the lab</a>
+          <a class="btn" href="/learn/pen-launcher-physics/">Launch lab</a>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section learn">
-    <div class="wrap">
-      <div class="head">
-        <div>
-          <p class="tag tag--accent">Learn</p>
-          <h2>Know before you order</h2>
-        </div>
-        <a href="/learn/" class="muted">All guides →</a>
-      </div>
-      <div class="learn-grid">
-        {
-          GUIDES.map((g, i) => (
-            <a class="panel guide" href={`/learn/${g.slug}/`}>
-              <span class="tag">Guide 0{i + 1} · {g.tool}</span>
-              <h3>{g.title}</h3>
-              <p class="muted">{g.summary}</p>
-            </a>
-          ))
-        }
-      </div>
+  <section class="wrap block last">
+    <div class="head">
+      <h2 class="h-rule">From a photo to your shelf</h2>
+      <a href="/custom/">Start a custom order →</a>
     </div>
-  </section>
-
-  <section class="section how">
-    <div class="wrap">
-      <div class="head">
-        <div>
-          <p class="tag tag--accent">Custom orders</p>
-          <h2>From a photo to your shelf</h2>
-        </div>
-        <a class="btn" href="/custom/">Start yours</a>
-      </div>
-      <ol class="steps">
-        <li class="panel"><span class="tag">Step 01</span><h3>Send photos</h3><p class="muted">A few angles of the person, pet or object, plus any details you care about.</p></li>
-        <li class="panel"><span class="tag">Step 02</span><h3>Get a quote</h3><p class="muted">I reply with a price and timeline. You pay through a secure invoice.</p></li>
-        <li class="panel"><span class="tag">Step 03</span><h3>Approve the preview</h3><p class="muted">You see a 3D render first. One round of tweaks is included.</p></li>
-        <li class="panel"><span class="tag">Step 04</span><h3>It's printed & shipped</h3><p class="muted">Printed, cleaned up, checked and packed carefully.</p></li>
-      </ol>
-    </div>
+    <ol class="steps">
+      <li><span class="tag">Step 01</span><h3>Send photos</h3><p>A few angles of the person, pet or object, plus any details you care about.</p></li>
+      <li><span class="tag">Step 02</span><h3>Get a quote</h3><p>I reply with a price and timeline. You pay through a secure invoice.</p></li>
+      <li><span class="tag">Step 03</span><h3>Approve the preview</h3><p>You see a 3D render first. One round of tweaks is included.</p></li>
+      <li><span class="tag">Step 04</span><h3>Printed & shipped</h3><p>Printed, cleaned up, checked and packed carefully.</p></li>
+    </ol>
   </section>
 </Base>
 
+<script>
+  // 3D tilt and a cursor glow on the home cards (REF·DB): fine pointers only, never under PAUSE MOTION
+  const root = document.documentElement;
+  const calm = () => root.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll<HTMLElement>('.way, .station').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+        el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+        el.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+        el.style.transform = calm()
+          ? ''
+          : `perspective(700px) rotateX(${((0.5 - y) * 6).toFixed(2)}deg) rotateY(${((x - 0.5) * 8).toFixed(2)}deg) translateZ(4px)`;
+      });
+      el.addEventListener('pointerleave', () => (el.style.transform = ''));
+    });
+  }
+</script>
+
 <style>
   .hero {
-    background: var(--layers);
+    padding-top: clamp(28px, 5vw, 56px);
+    padding-bottom: 8px;
+    background:
+      radial-gradient(ellipse 60% 80% at 20% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
+      transparent;
+  }
+  .hero-title {
+    margin: 0.3rem 0 0.4rem;
+    font: 600 clamp(3rem, 10vw, 5.8rem)/1 var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--white);
+    text-shadow: 0 0 40px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .stamp {
+    color: var(--accent);
+  }
+  .hero-tag {
+    max-width: 44rem;
+    font-size: clamp(1.05rem, 1.7vw, 1.22rem);
+    color: var(--text-2);
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.6rem;
+    margin: 1.2rem 0 0;
+    padding: 0.65rem 0.8rem;
+    border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    padding-block: clamp(48px, 8vw, 96px);
+    font: 400 0.72rem var(--mono);
+    letter-spacing: 0.1em;
   }
-  .hero-grid {
+  .hero-meta div {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .hero-meta dt {
+    color: var(--text-3);
+  }
+  .hero-meta dd {
+    margin: 0;
+    color: var(--white);
+  }
+
+  .ways {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 48px;
-    align-items: center;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding-top: 28px;
   }
-  .hero h1 {
-    margin-top: 14px;
+  .way,
+  .station {
+    position: relative;
+    text-decoration: none;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s;
+    background:
+      radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.06), transparent 50%),
+      rgba(3, 5, 11, 0.55);
+  }
+  .way {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding: 18px;
+    border: 1px solid var(--line-2);
+    border-radius: 4px;
+  }
+  .way:hover {
+    border-color: var(--accent);
+  }
+  .way-k {
+    font: 500 0.7rem var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .way-t {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--white);
+    margin-top: 0.6rem;
+  }
+  .way-d {
+    font-size: 0.92rem;
+    color: var(--text-3);
+  }
+
+  .block {
+    padding-top: clamp(36px, 5vw, 56px);
+  }
+  .block > h2 {
+    margin-bottom: 18px;
+  }
+  .last {
+    padding-bottom: clamp(36px, 5vw, 56px);
+  }
+
+  /* systems board */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line-2);
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(3, 5, 11, 0.4);
+  }
+  .board-head {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font: 400 0.66rem var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--text-3);
+  }
+  .go {
+    color: var(--ok);
+  }
+  .station {
+    display: grid;
+    align-content: start;
+    gap: 0.35rem;
+    padding: 16px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .station:hover {
+    background-color: color-mix(in srgb, var(--c) 6%, transparent);
+  }
+  .st-k {
+    font: 400 0.66rem var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--text-3);
+    margin-top: 6px;
+  }
+  .st-n {
+    font: 600 1.05rem var(--mono);
+    letter-spacing: 0.12em;
+    color: var(--c);
+  }
+  .st-s {
+    color: var(--white);
+    font-size: 0.95rem;
+  }
+  .st-bar {
+    height: 3px;
+    background: var(--c);
+    margin: 6px 0 2px;
+    border-radius: 2px;
+    box-shadow: 0 0 10px -2px var(--c);
+  }
+  .st-c {
+    font: 400 0.7rem var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--text-3);
+  }
+  .st-list {
+    display: grid;
+    gap: 3px;
+    margin-top: 8px;
+    font: 400 0.7rem var(--mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-2);
+  }
+
+  /* Pen Launcher spotlight */
+  .spot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--line-2);
+    border-left: 3px solid var(--c);
+    border-radius: 0 4px 4px 0;
+    overflow: hidden;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--c) 10%, transparent), transparent 60%);
+  }
+  .spot-copy {
+    padding: clamp(20px, 4vw, 40px);
+    align-self: center;
+  }
+  .spot-copy h2 {
+    font-size: clamp(1.7rem, 3vw, 2.3rem);
+    margin-top: 6px;
   }
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 28px;
-  }
-  .readout {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px 36px;
-    margin: 40px 0 0;
-    padding-top: 22px;
-    border-top: 1px solid var(--line);
-  }
-  .readout dd {
-    margin: 6px 0 0;
-    font-weight: 500;
-  }
-  .printer svg {
-    width: 100%;
-    max-width: 440px;
-    margin-inline: auto;
-  }
-  .svg-mono {
-    font: 500 11px var(--mono);
-    fill: var(--text-3);
-    letter-spacing: 0.06em;
-  }
-  .stack rect {
-    opacity: 0;
-    animation: layer 6s infinite;
-  }
-  @keyframes layer {
-    0% {
-      opacity: 0;
-    }
-    4%,
-    90% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-  .head-move {
-    animation: sweep 0.64s ease-in-out infinite alternate;
-  }
-  @keyframes sweep {
-    from {
-      transform: translateX(110px);
-    }
-    to {
-      transform: translateX(250px);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .stack rect {
-      opacity: 1;
-    }
-    .head-move {
-      transform: translateX(180px);
-    }
-  }
-
-  .cat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-  .cat {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 22px;
-    min-height: 220px;
-    text-decoration: none;
-    transition: border-color 0.2s;
-  }
-  .cat:hover {
-    border-color: var(--accent);
-  }
-  .cat h3 {
-    margin-top: auto;
-    padding-top: 28px;
-  }
-  .cat p {
-    font-size: 0.92rem;
-    margin: 0;
-  }
-  .arrow {
-    position: absolute;
-    top: 18px;
-    right: 20px;
-    color: var(--accent);
-    font-size: 1.2rem;
-  }
-
-  .featured,
-  .spotlight,
-  .learn,
-  .how {
-    padding-top: 0;
-  }
-  .status-wrap {
-    margin-top: -28px;
-    position: relative;
-  }
-  .learn-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-  .guide {
-    padding: 22px;
-    text-decoration: none;
-    transition: border-color 0.2s;
-  }
-  .guide:hover {
-    border-color: var(--accent);
-  }
-  .guide h3 {
-    margin-top: 14px;
-  }
-  .guide p {
-    font-size: 0.92rem;
-    margin: 0;
-  }
-  @media (max-width: 860px) {
-    .learn-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .spot {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    overflow: hidden;
-  }
-  .spot-art {
-    border-right: 1px solid var(--line);
-  }
-  .spot-art :global(svg) {
-    height: 100%;
-    object-fit: cover;
-  }
-  .spot-copy {
-    padding: clamp(28px, 5vw, 56px);
-    align-self: center;
+    gap: 10px;
+    margin-top: 20px;
   }
 
   .steps {
@@ -343,48 +355,42 @@ const layerWidth = (i: number) => {
     margin: 0;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 10px;
   }
   .steps li {
-    padding: 22px;
+    padding: 16px;
+    border: 1px solid var(--line-2);
+    border-top: 2px solid var(--accent);
+    border-radius: 4px;
+    background: rgba(3, 5, 11, 0.5);
   }
   .steps h3 {
-    margin-top: 18px;
+    margin: 12px 0 6px;
   }
   .steps p {
-    font-size: 0.92rem;
+    font-size: 0.9rem;
+    color: var(--text-3);
     margin: 0;
   }
 
   @media (max-width: 960px) {
-    .cat-grid,
+    .board {
+      grid-template-columns: 1fr 1fr;
+    }
     .steps {
       grid-template-columns: 1fr 1fr;
     }
   }
   @media (max-width: 760px) {
-    .hero-grid,
+    .ways,
     .spot {
       grid-template-columns: 1fr;
     }
-    .printer {
-      order: -1;
-    }
-    .printer svg {
-      max-width: 280px;
-    }
-    .spot-art {
-      border-right: 0;
-      border-bottom: 1px solid var(--line);
-    }
   }
   @media (max-width: 480px) {
-    .cat-grid,
+    .board,
     .steps {
       grid-template-columns: 1fr;
-    }
-    .cat {
-      min-height: 0;
     }
   }
 </style>

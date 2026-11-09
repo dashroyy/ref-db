@@ -1,0 +1,308 @@
+---
+// The mission rail (after REF·DB's Sidebar override): briefing chips, an orbit
+// map of the stations around the lab, then every station with its items.
+// Built from src/data/nav.ts, so new products appear here automatically.
+import { BRIEF, STATIONS, locate } from '../data/nav.ts';
+
+const path = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : Astro.url.pathname + '/';
+const here = locate(path);
+const total = STATIONS.reduce((n, s) => n + s.items.length, 0);
+
+// Orbit map geometry
+const CX = 130, CY = 74, RX = 104, RY = 50;
+const orbit = STATIONS.map((s, i) => {
+  const a = -Math.PI / 2 + (i / STATIONS.length) * Math.PI * 2;
+  const x = CX + RX * Math.cos(a), y = CY + RY * Math.sin(a);
+  return { s, x, y, below: y > CY + 4 };
+});
+const hereIdx = here.station ? STATIONS.indexOf(here.station) : -1;
+---
+
+<aside class="rail" id="rail" aria-label="Site menu">
+  <nav class="brief" aria-label="Briefing">
+    {BRIEF.map((b) => <a href={b.href} aria-current={path === b.href ? 'page' : undefined}>{b.label}</a>)}
+  </nav>
+
+  <div class="orbit">
+    <svg viewBox="0 0 260 150" role="img" aria-label="Station map">
+      <defs>
+        <radialGradient id="sun" cx=".4" cy=".35" r=".7">
+          <stop offset="0" stop-color="#fff6d8"></stop>
+          <stop offset=".35" stop-color="#ffb347"></stop>
+          <stop offset="1" stop-color="#c2410c"></stop>
+        </radialGradient>
+        {
+          orbit.map(({ s }) => (
+            <radialGradient id={`ob-${s.id}`} cx=".35" cy=".35" r=".75">
+              <stop offset="0" stop-color="#fff" stop-opacity=".9" />
+              <stop offset=".4" stop-color={s.color} />
+              <stop offset="1" stop-color="#000" />
+            </radialGradient>
+          ))
+        }
+      </defs>
+      <ellipse class="orb-path" cx={CX} cy={CY} rx={RX} ry={RY}></ellipse>
+      <a href="/" class="orb-sun">
+        <circle cx={CX} cy={CY} r="17" fill="url(#sun)" style="filter:drop-shadow(0 0 10px rgba(255,140,40,.6))"></circle>
+        <text x={CX} y={CY + 3.5}>DL</text>
+      </a>
+      {
+        orbit.map(({ s, x, y, below }, i) => (
+          <a href={s.href} class:list={['orb-p', i === hereIdx && 'here']} style={`--c:${s.color}`}>
+            <title>{s.short}</title>
+            {i === hereIdx && <circle cx={x} cy={y} r="11" class="orb-ring" stroke={s.color} />}
+            <circle cx={x} cy={y} r={i === hereIdx ? 7 : 5.5} fill={`url(#ob-${s.id})`} />
+            <text x={x} y={below ? y + 17 : y - 11}>{s.short.split(' ')[0]}</text>
+          </a>
+        ))
+      }
+    </svg>
+    <p class="where">
+      {here.station ? `STATION ${hereIdx + 1}/${STATIONS.length} · ` : ''}{STATIONS.length} STATIONS · {total} ITEMS
+    </p>
+  </div>
+
+  {
+    STATIONS.map((s) => (
+      <section class="phase" style={`--c:${s.color}`}>
+        <a class="ph-head" href={s.href}>
+          <span class="orb" />
+          <span class="ph-ico">{s.glyph}</span>
+          <span class="ph-n">{s.short}</span>
+          <span class="ph-sub">{s.sub}</span>
+          <span class="ph-cnt">{s.items.length}</span>
+        </a>
+        <ul>
+          {s.items.map((it) => (
+            <li>
+              <a href={it.href} class:list={['z', here.item === it && 'here']} aria-current={here.item === it ? 'page' : undefined}>
+                <span class="zn">{it.code}</span>
+                <span class="zl">{it.label}</span>
+                {it.quote && <span class="ztag">QUOTE</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</aside>
+<div class="rail-scrim" data-rail-scrim aria-hidden="true"></div>
+
+<style>
+  .rail {
+    position: fixed;
+    top: var(--nav-h);
+    bottom: 0;
+    left: 0;
+    width: var(--rail-w);
+    z-index: 30;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 14px 14px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--glass);
+    backdrop-filter: blur(10px) saturate(1.15);
+    -webkit-backdrop-filter: blur(10px) saturate(1.15);
+    border-right: 1px solid var(--line);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+  }
+  .brief {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .brief a {
+    font: 400 0.68rem var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text-2);
+    border: 1px solid var(--line-2);
+    border-radius: 3px;
+    padding: 0.3rem 0.5rem;
+  }
+  .brief a:hover,
+  .brief a[aria-current='page'] {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .orbit svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .orb-path {
+    fill: none;
+    stroke: var(--line-2);
+    stroke-dasharray: 2 4;
+  }
+  .orb-sun text {
+    font: 600 10px var(--mono);
+    fill: #2a1600;
+    text-anchor: middle;
+  }
+  .orb-p text {
+    font: 400 8.5px var(--mono);
+    letter-spacing: 0.08em;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+  .orb-p:hover text,
+  .orb-p.here text {
+    fill: var(--white);
+  }
+  .orb-ring {
+    fill: none;
+    stroke-width: 1.2;
+  }
+  .where {
+    margin: 2px 0 6px;
+    text-align: center;
+    font: 400 0.62rem var(--mono);
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+  }
+
+  .phase {
+    position: relative;
+    padding: 0.5rem 0 0.3rem 0.75rem;
+  }
+  .phase::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.75rem;
+    bottom: 0.4rem;
+    width: 2px;
+    background: linear-gradient(var(--c), transparent);
+    opacity: 0.85;
+  }
+  .ph-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.3rem;
+    text-decoration: none;
+    font: 600 0.72rem var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--c);
+    min-width: 0;
+  }
+  .orb {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+    background: radial-gradient(circle at 35% 35%, #fff 0, var(--c) 45%, #000 120%);
+    box-shadow: 0 0 8px -1px var(--c);
+  }
+  .ph-ico {
+    opacity: 0.8;
+  }
+  .ph-n {
+    white-space: nowrap;
+  }
+  .ph-sub {
+    font: 400 0.68rem var(--font);
+    letter-spacing: 0;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .ph-cnt {
+    margin-left: auto;
+    font-size: 0.64rem;
+    font-weight: 400;
+    color: var(--text-3);
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1px;
+  }
+  .z {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font: 400 0.72rem/1.25 var(--mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.36rem 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: var(--white);
+  }
+  .zn {
+    min-width: 2.1rem;
+    color: var(--c);
+    font-size: 0.66rem;
+  }
+  .zl {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ztag {
+    margin-left: auto;
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+    color: var(--c);
+    border: 1px solid var(--c);
+    border-radius: 2px;
+    padding: 0 0.25rem;
+    flex: none;
+    opacity: 0.8;
+  }
+  .z:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--line);
+  }
+  .z.here {
+    background: var(--c);
+    border-color: var(--c);
+    color: #05080f;
+    font-weight: 600;
+    box-shadow: 0 0 14px -4px var(--c);
+  }
+  .z.here .zn,
+  .z.here .ztag {
+    color: #05080f;
+    border-color: #05080f;
+    opacity: 0.8;
+  }
+  .rail-scrim {
+    display: none;
+  }
+
+  /* small screens: the rail is a drawer behind MENU */
+  @media (max-width: 68.75rem) {
+    .rail {
+      width: min(88vw, 340px);
+      transform: translateX(-102%);
+      transition: transform 0.25s ease;
+      background: rgba(6, 10, 18, 0.97);
+      z-index: 50;
+    }
+    :global(.rail-open) .rail {
+      transform: none;
+    }
+    :global(.rail-open) .rail-scrim {
+      display: block;
+      position: fixed;
+      inset: var(--nav-h) 0 0 0;
+      z-index: 45;
+      background: rgba(3, 5, 11, 0.6);
+    }
+  }
+</style>

@@ -1,13 +1,15 @@
 ---
-// The DashLabs mark: a "D" built from a nozzle path, with a filled print inside.
+// The DashLabs mark, drawn like REF·DB's: an accent outline with a cyan stroke.
+// A print nozzle over a layer line.
 interface Props {
   size?: number;
 }
-const { size = 28 } = Astro.props;
+const { size = 30 } = Astro.props;
 ---
 
-<svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-  <rect width="32" height="32" rx="7" fill="var(--panel-2)"></rect>
-  <path d="M9 8h7a8 8 0 0 1 0 16H9z" fill="none" stroke="var(--accent)" stroke-width="3"></path>
-  <path d="M13 13h3a3 3 0 0 1 0 6h-3z" fill="var(--accent)"></path>
+<svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" class="mark">
+  <path d="M20 10 H44 V28 L36 38 H28 L20 28 Z" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round"></path>
+  <path d="M29 38 L32 45 L35 38" fill="var(--accent)"></path>
+  <path d="M10 52 H54" stroke="var(--blue)" stroke-width="4" stroke-linecap="round"></path>
+  <path d="M26 20 H38" stroke="var(--blue)" stroke-width="4" stroke-linecap="round"></path>
 </svg>

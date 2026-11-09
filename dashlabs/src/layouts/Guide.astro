@@ -3,6 +3,7 @@
 // At a glance → why it matters → intuition → tool → worked example → where this stops.
 import Base from './Base.astro';
 import { GUIDES } from '../data/guides.ts';
+import Banner from '../components/Banner.astro';
 
 interface Props {
   slug: string;
@@ -15,7 +16,7 @@ const next = GUIDES[(i + 1) % GUIDES.length];
 <Base title={guide.title} description={guide.summary}>
   <article class="section top">
     <div class="wrap">
-      <nav class="tag crumbs" aria-label="Breadcrumb"><a href="/learn/">Learn</a> / Guide {String(i + 1).padStart(2, '0')}</nav>
+      <Banner />
       <h1>{guide.title}</h1>
       <p class="lede">{guide.summary}</p>
       <dl class="glance">
@@ -56,7 +57,11 @@ const next = GUIDES[(i + 1) % GUIDES.length];
     padding: 20px;
     text-decoration: none;
   }
+  .next {
+    border-left: 3px solid var(--pc);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--pc) 10%, transparent), transparent 70%);
+  }
   .next:hover {
-    border-color: var(--accent);
+    border-color: var(--pc);
   }
 </style>

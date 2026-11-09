@@ -15,11 +15,12 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
       </p>
 
       <div class="filters" role="group" aria-label="Filter by category">
-        <button type="button" data-filter="all" aria-pressed="true">All <span>{PRODUCTS.length}</span></button>
+        <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--accent)">All <span>{PRODUCTS.length}</span></button>
         {
           CATEGORIES.map((c) => (
-            <button type="button" data-filter={c.id} aria-pressed="false">
-              {c.label} <span>{PRODUCTS.filter((p) => p.category === c.id).length}</span>
+            <button type="button" data-filter={c.id} aria-pressed="false" style={`--c:${c.color}`}>
+              <i />
+              {c.short} <span>{PRODUCTS.filter((p) => p.category === c.id).length}</span>
             </button>
           ))
         }
@@ -61,14 +62,30 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
     margin: 32px 0 28px;
   }
   .filters button {
-    min-height: 40px;
-    padding: 0 14px;
-    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 3px;
     border: 1px solid var(--line-2);
     background: transparent;
     color: var(--text-2);
-    font: 500 0.92rem var(--font);
+    font: 400 0.72rem var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     cursor: pointer;
+  }
+  .filters button i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow: 0 0 6px var(--c);
+  }
+  .filters button:hover {
+    border-color: var(--c);
+    color: var(--white);
   }
   .filters button span {
     font: 500 0.75rem var(--mono);
@@ -76,12 +93,20 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
     margin-left: 4px;
   }
   .filters button[aria-pressed='true'] {
-    background: var(--text);
-    border-color: var(--text);
-    color: var(--bg);
+    background: var(--c);
+    border-color: var(--c);
+    color: #05080f;
+    font-weight: 600;
+    box-shadow: 0 0 14px -4px var(--c);
+  }
+  .filters button[aria-pressed='true'] span,
+  .filters button[aria-pressed='true'] i {
+    color: #05080f;
+    background: #05080f;
+    box-shadow: none;
   }
   .filters button[aria-pressed='true'] span {
-    color: var(--bg);
+    background: none;
   }
   :global([data-grid] > [hidden]) {
     display: none;

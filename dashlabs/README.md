@@ -52,6 +52,19 @@ tests/                Catalog rules and pricing/cart tests.
       (update the worked example in the guide and its test too).
 - [ ] Read through the FAQ/policies (`src/pages/faq.astro`) and adapt the refund and shipping wording.
 
+## Look and menu (sister site to REF·DB)
+
+DashLabs uses REF·DB's visual language: the deep-field starfield (`src/components/hud/SpaceSky.astro`, copied from
+REF·DB with the black hole switched off), glass header and rail, IBM Plex Sans/Mono, the REF·DB palette
+(`#03050b` space, `#ff5a3d` accent, `#4fb3c6` cyan, blue-grey text) and its rules: words always sit on a solid
+plate, dark by default, PAUSE MOTION stops everything.
+
+- **Stations** = shop categories (plus Learn), each with its own colour, glyph and item code (F01, O01, B01, M01, L01),
+  like REF·DB's phases and zone numbers. Set in `CATEGORIES` in `src/data/catalog.ts`.
+- **The mission rail** (`src/components/Rail.astro`) and the station banner, home systems board and footer are all
+  built from `src/data/nav.ts`, so a new product appears everywhere automatically.
+- The page colour `--pc` follows the station you're in: rail highlight, banner, ▸ headings, tool corner brackets.
+
 ## Learn guides and tools (borrowed from REF·DB)
 
 Each guide in `src/pages/learn/` follows the same shape: **at a glance → why it matters → intuition (an analogy and a
