@@ -1,16 +1,18 @@
 ---
-// The frame (after REF·DB's PageFrame): deep-field sky, glass header, mission
-// rail, scroll telemetry, and the content plate the words sit on.
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-import '@fontsource/ibm-plex-mono/400.css';
-import '@fontsource/ibm-plex-mono/500.css';
-import '@fontsource/ibm-plex-mono/600.css';
+// The page frame: the print chamber background, top bar, footer, and the
+// site-wide motion: sections printing in, 3D product thumbnails, card tilt.
+import '@fontsource/unbounded/400.css';
+import '@fontsource/unbounded/500.css';
+import '@fontsource/unbounded/600.css';
+import '@fontsource/unbounded/700.css';
+import '@fontsource/manrope/400.css';
+import '@fontsource/manrope/500.css';
+import '@fontsource/manrope/600.css';
+import '@fontsource/manrope/700.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/600.css';
 import '../styles/global.css';
-import SpaceSky from '../components/hud/SpaceSky.astro';
 import Header from '../components/Header.astro';
-import Rail from '../components/Rail.astro';
 import Footer from '../components/Footer.astro';
 import { SITE } from '../data/site.ts';
 import { pageColor } from '../data/nav.ts';
@@ -21,11 +23,11 @@ interface Props {
 }
 const { title, description = SITE.description } = Astro.props;
 const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
-const pc = pageColor(Astro.url.pathname);
+const tone = pageColor(Astro.url.pathname);
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark" style={`--pc:${pc}`}>
+<html lang="en" style={`--tone:${tone}`}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,102 +35,88 @@ const pc = pageColor(Astro.url.pathname);
     <meta name="description" content={description} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta name="theme-color" content="#03050b" />
+    <meta name="theme-color" content="#08070d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline>
-      // Restore PAUSE MOTION before first paint. Storage is guarded: it can throw.
+      // Before first paint: enable print-in effects, restore Motion off. Storage can throw.
+      document.documentElement.classList.add('js');
       try {
         if (localStorage.getItem('dashlabs-motion') === 'off') document.documentElement.classList.add('motion-off');
       } catch (e) {}
     </script>
   </head>
   <body>
-    <SpaceSky />
-    <div id="scrollTelemetry" aria-hidden="true"><i></i></div>
+    <div class="chamber" aria-hidden="true"></div>
     <Header />
-    <Rail />
-    <div class="main-pane">
-      <main class="plate">
-        <slot />
-      </main>
-      <div class="plate plate--foot">
-        <Footer />
-      </div>
-    </div>
+    <main>
+      <slot />
+    </main>
+    <Footer />
 
     <script>
-      const bar = document.querySelector<HTMLElement>('#scrollTelemetry i');
-      const update = () => {
-        if (!bar) return;
-        const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-        bar.style.transform = `scaleX(${Math.min(1, scrollY / max)})`;
+      import { webglOK } from '../lib/three/support.ts';
+
+      // Print-in: [data-print] sections build up layer by layer as they enter view.
+      // (A position check, not IntersectionObserver: Chromium treats a fully
+      // clip-path'd element as never intersecting, so it would never reveal.)
+      let pending = [...document.querySelectorAll<HTMLElement>('[data-print]')];
+      let queued = false;
+      const check = () => {
+        queued = false;
+        const edge = innerHeight * 0.92;
+        pending = pending.filter((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.top < edge && r.bottom > 0) {
+            el.classList.add('printed');
+            return false;
+          }
+          // anything already scrolled past is shown without the effect
+          if (r.bottom <= 0) {
+            el.classList.add('printed');
+            return false;
+          }
+          return true;
+        });
       };
-      addEventListener('scroll', update, { passive: true });
-      addEventListener('resize', update);
-      update();
+      const queue = () => {
+        if (!queued && pending.length) {
+          queued = true;
+          requestAnimationFrame(check);
+        }
+      };
+      addEventListener('scroll', queue, { passive: true });
+      addEventListener('resize', queue);
+      check();
+
+      // 3D tilt on [data-tilt] cards: fine pointers only, never under Motion off
+      const root = document.documentElement;
+      const calm = () => root.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((el) => {
+          el.addEventListener('pointermove', (e) => {
+            if (calm()) return;
+            const r = el.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width;
+            const y = (e.clientY - r.top) / r.height;
+            el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+            el.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+            el.style.setProperty('--rx', `${((0.5 - y) * 10).toFixed(2)}deg`);
+            el.style.setProperty('--ry', `${((x - 0.5) * 12).toFixed(2)}deg`);
+            el.classList.add('tilting');
+          });
+          el.addEventListener('pointerleave', () => {
+            el.style.setProperty('--rx', '0deg');
+            el.style.setProperty('--ry', '0deg');
+            el.classList.remove('tilting');
+          });
+        });
+      }
+
+      // Real 3D renders for product thumbnails, generated in the browser once idle
+      if (document.querySelector('[data-thumb]') && webglOK()) {
+        const go = () => import('../lib/three/viewer.ts').then((m) => m.renderThumbs());
+        'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 1500 }) : setTimeout(go, 300);
+      }
     </script>
   </body>
 </html>
-
-<style is:global>
-  /* the sky shows round the work, never under the words (REF·DB rule) */
-  .main-pane {
-    padding: calc(var(--nav-h) + 20px) clamp(0px, 2.5vw, 40px) 40px;
-    margin-left: var(--rail-w);
-  }
-  .plate {
-    display: block;
-    max-width: 64rem;
-    margin-inline: auto;
-    background: var(--plate);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    box-shadow: 0 40px 90px -50px rgba(0, 0, 0, 0.9);
-    position: relative;
-    overflow: clip;
-  }
-  /* accent-to-cyan rule across the top of the plate */
-  main.plate::before {
-    content: '';
-    position: absolute;
-    inset: 0 8% auto;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--pc) 25%, var(--blue) 75%, transparent);
-    opacity: 0.8;
-  }
-  .plate--foot {
-    margin-top: 16px;
-  }
-
-  #scrollTelemetry {
-    position: fixed;
-    top: var(--nav-h);
-    inset-inline: 0;
-    height: 2px;
-    z-index: 41;
-    pointer-events: none;
-  }
-  #scrollTelemetry i {
-    display: block;
-    height: 100%;
-    transform-origin: 0 50%;
-    transform: scaleX(0);
-    background: linear-gradient(90deg, var(--pc), var(--blue));
-    box-shadow: 0 0 8px var(--pc);
-  }
-
-  @media (max-width: 68.75rem) {
-    .main-pane {
-      margin-left: 0;
-    }
-  }
-  @media (max-width: 40rem) {
-    .main-pane {
-      padding: calc(var(--nav-h) + 8px) 0 16px;
-    }
-    .plate {
-      border-inline: 0;
-      border-radius: 0;
-    }
-  }
-</style>

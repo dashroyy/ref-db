@@ -13,13 +13,13 @@ export interface Category {
   label: string;
   short: string; // rail/station name, e.g. FIGURINES
   sub: string; // one line under the station name
-  code: string; // item code prefix, like REF·DB's Z-numbers: F01, O01…
+  code: string; // SKU prefix: F01, O01, B01…
   glyph: string;
-  color: string; // the station colour (REF·DB phase colours)
+  color: string; // the category's filament colour, used across the site
   blurb: string;
 }
 
-// Each category is a "station", coloured like REF·DB's phases.
+// Each category has its own filament colour, used for its tiles, tags and menu entries.
 export const CATEGORIES: Category[] = [
   {
     id: 'custom',
@@ -28,7 +28,7 @@ export const CATEGORIES: Category[] = [
     sub: 'People & pets, from photos',
     code: 'F',
     glyph: '◎',
-    color: '#C77BAA',
+    color: '#ff6ec7',
     blurb: 'You send photos, I model and print a miniature of your person, pet or thing.',
   },
   {
@@ -38,7 +38,7 @@ export const CATEGORIES: Category[] = [
     sub: 'Designed in the lab',
     code: 'O',
     glyph: '▲',
-    color: '#FC3D21',
+    color: '#ffab2e',
     blurb: "Gadgets and toys I designed myself — you won't find these anywhere else.",
   },
   {
@@ -48,7 +48,7 @@ export const CATEGORIES: Category[] = [
     sub: 'Printed, QR & NFC',
     code: 'B',
     glyph: '⊞',
-    color: '#3EC5D3',
+    color: '#3dffc5',
     blurb: 'Printed cards that people actually keep. Your logo, your colours.',
   },
   {
@@ -58,7 +58,7 @@ export const CATEGORIES: Category[] = [
     sub: 'Licensed community designs',
     code: 'M',
     glyph: '⚙',
-    color: '#5BC48A',
+    color: '#8f8cff',
     blurb: "Great community designs I'm licensed to print and sell, made in the colours you pick.",
   },
 ];
@@ -72,6 +72,7 @@ export interface OptionChoice {
   id: string;
   label: string;
   priceDelta?: number; // cents added to the base price
+  hex?: string; // filament colour, used by the 3D viewer ('rainbow' for silk)
 }
 
 export interface ProductOption {
@@ -119,11 +120,11 @@ const COLOURS: ProductOption = {
   id: 'colour',
   label: 'Filament colour',
   choices: [
-    { id: 'black', label: 'Matte black' },
-    { id: 'white', label: 'Bone white' },
-    { id: 'orange', label: 'Lab orange' },
-    { id: 'blue', label: 'Signal blue' },
-    { id: 'silk', label: 'Silk rainbow', priceDelta: 300 },
+    { id: 'black', label: 'Matte black', hex: '#2b2a33' },
+    { id: 'white', label: 'Bone white', hex: '#ece6da' },
+    { id: 'orange', label: 'Lab orange', hex: '#ff8a1f' },
+    { id: 'blue', label: 'Signal blue', hex: '#2f7dff' },
+    { id: 'silk', label: 'Silk rainbow', priceDelta: 300, hex: 'rainbow' },
   ],
 };
 
@@ -370,7 +371,7 @@ export const productById = (id: string) => PRODUCTS.find((p) => p.id === id);
 export const categoryById = (id: CategoryId) => CATEGORIES.find((c) => c.id === id)!;
 export const productsIn = (id: CategoryId) => PRODUCTS.filter((p) => p.category === id);
 
-/** Item code, like REF·DB's zone numbers: F01, O02, B01… (by position in its category). */
+/** SKU code: F01, O02, B01… (by position in its category). */
 export function productCode(p: Product): string {
   const c = categoryById(p.category);
   return c.code + String(productsIn(p.category).indexOf(p) + 1).padStart(2, '0');

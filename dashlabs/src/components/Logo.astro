@@ -1,15 +1,18 @@
 ---
-// The DashLabs mark, drawn like REF·DB's: an accent outline with a cyan stroke.
-// A print nozzle over a layer line.
+// The DashLabs mark: an isometric printed cube. Hot amber top face, UV violet
+// sides with layer lines, mid-print.
 interface Props {
   size?: number;
 }
-const { size = 30 } = Astro.props;
+const { size = 34 } = Astro.props;
+const lines = [0, 1, 2, 3];
 ---
 
-<svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" class="mark">
-  <path d="M20 10 H44 V28 L36 38 H28 L20 28 Z" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round"></path>
-  <path d="M29 38 L32 45 L35 38" fill="var(--accent)"></path>
-  <path d="M10 52 H54" stroke="var(--blue)" stroke-width="4" stroke-linecap="round"></path>
-  <path d="M26 20 H38" stroke="var(--blue)" stroke-width="4" stroke-linecap="round"></path>
+<svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" class="mark">
+  <polygon points="20,4 35,12 20,20 5,12" fill="var(--hot)"></polygon>
+  <polygon points="5,12 20,20 20,36 5,28" fill="#6c47d6"></polygon>
+  <polygon points="20,20 35,12 35,28 20,36" fill="#4a2ca8"></polygon>
+  {lines.map((k) => <line x1="5" y1={15.5 + k * 3.6} x2="20" y2={23.5 + k * 3.6} stroke="#9b7bff" stroke-width=".9" opacity=".8" />)}
+  {lines.map((k) => <line x1="20" y1={23.5 + k * 3.6} x2="35" y2={15.5 + k * 3.6} stroke="#7d55e6" stroke-width=".9" opacity=".8" />)}
+  <polygon points="20,7.5 29,12 20,16.5 11,12" fill="none" stroke="#fff4d6" stroke-width="1" opacity=".7"></polygon>
 </svg>

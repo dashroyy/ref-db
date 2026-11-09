@@ -1,9 +1,8 @@
 ---
-// Learn-page layout, after REF·DB's topic pages:
-// At a glance → why it matters → intuition → tool → worked example → where this stops.
+// Learn-page layout: at a glance → why it matters → intuition → tool →
+// worked example → where this stops.
 import Base from './Base.astro';
 import { GUIDES } from '../data/guides.ts';
-import Banner from '../components/Banner.astro';
 
 interface Props {
   slug: string;
@@ -16,20 +15,28 @@ const next = GUIDES[(i + 1) % GUIDES.length];
 <Base title={guide.title} description={guide.summary}>
   <article class="section top">
     <div class="wrap">
-      <Banner />
-      <h1>{guide.title}</h1>
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/learn/">Learn</a>
+        <span aria-hidden="true">/</span>
+        <span class="steps" aria-label={`Guide ${i + 1} of ${GUIDES.length}`}>
+          {GUIDES.map((g, k) => <a href={`/learn/${g.slug}/`} class:list={[k === i && 'here']} title={g.title}><span class="sr-only">{g.title}</span></a>)}
+        </span>
+        <span class="count">Guide {String(i + 1).padStart(2, '0')} of {String(GUIDES.length).padStart(2, '0')}</span>
+      </nav>
+      <h1 class="x3d">{guide.title}</h1>
       <p class="lede">{guide.summary}</p>
-      <dl class="glance">
-        <div><dt class="tag">The idea</dt><dd>{guide.idea}</dd></div>
-        <div><dt class="tag">Tool</dt><dd>{guide.tool}</dd></div>
-        <div><dt class="tag">Read time</dt><dd>{guide.minutes} min</dd></div>
+      <dl class="glance" data-print>
+        <div><dt>The idea</dt><dd>{guide.idea}</dd></div>
+        <div><dt>Tool</dt><dd>{guide.tool}</dd></div>
+        <div><dt>Read time</dt><dd>{guide.minutes} min</dd></div>
       </dl>
       <div class="prose">
         <slot />
       </div>
-      <a class="next panel" href={`/learn/${next.slug}/`}>
+      <a class="next" href={`/learn/${next.slug}/`} data-print>
         <span class="tag">Next guide</span>
-        <strong>{next.title} →</strong>
+        <strong>{next.title}</strong>
+        <span class="arrow" aria-hidden="true">→</span>
       </a>
     </div>
   </article>
@@ -37,31 +44,74 @@ const next = GUIDES[(i + 1) % GUIDES.length];
 
 <style>
   .top {
-    padding-top: clamp(32px, 5vw, 56px);
+    padding-top: clamp(28px, 4vw, 48px);
   }
   .crumbs {
-    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    font: 500 0.8rem var(--font);
+    color: var(--text-3);
   }
-  .crumbs a {
+  .crumbs > a {
+    color: var(--text-2);
     text-decoration: none;
+  }
+  .steps {
+    display: inline-flex;
+    gap: 5px;
+  }
+  .steps a {
+    width: 22px;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--panel-3);
+  }
+  .steps a.here {
+    background: var(--tone);
+    box-shadow: 0 0 10px var(--tone);
+  }
+  .count {
+    font: 500 0.72rem var(--mono);
   }
   h1 {
     font-size: clamp(2.2rem, 5vw, 3.6rem);
+    letter-spacing: -0.04em;
     max-width: 18ch;
   }
   .next {
+    position: relative;
     display: grid;
-    gap: 6px;
-    max-width: 72ch;
-    margin-top: 56px;
-    padding: 20px;
+    gap: 4px;
+    max-width: 70ch;
+    margin-top: 60px;
+    padding: 22px 26px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
     text-decoration: none;
+    background:
+      radial-gradient(circle at 100% 50%, color-mix(in srgb, var(--tone) 16%, transparent), transparent 60%),
+      var(--panel);
   }
-  .next {
-    border-left: 3px solid var(--pc);
-    background: linear-gradient(90deg, color-mix(in srgb, var(--pc) 10%, transparent), transparent 70%);
+  .next strong {
+    font: 600 1.3rem var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+  .next .arrow {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.6rem;
+    color: var(--tone);
+    transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
   }
   .next:hover {
-    border-color: var(--pc);
+    border-color: var(--tone);
+  }
+  .next:hover .arrow {
+    transform: translate(8px, -50%);
   }
 </style>

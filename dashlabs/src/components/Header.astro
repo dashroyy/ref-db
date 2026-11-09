@@ -1,215 +1,592 @@
 ---
-// Glass HUD header (after REF·DB): wordmark with the stamp dot, a live queue
-// readout, PAUSE MOTION, the cart chip, and MENU on small screens.
+// Top bar: wordmark, Shop mega-menu (every category and product, from the
+// catalog), main links, live queue pill, motion toggle, cart. On phones a
+// full-screen menu whose links print in one after another.
 import Logo from './Logo.astro';
-import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
-const [lo, hi] = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
+import { MAIN_LINKS, SHOP_GROUPS, LEARN_GROUP } from '../data/nav.ts';
+import { LAB_STATUS } from '../data/lab.ts';
+import { money } from '../lib/money.ts';
+
+const path = Astro.url.pathname;
+const inShop = path.startsWith('/shop');
 ---
 
-<header class="hud-header">
-  <button type="button" class="hud-chip menu" data-menu aria-controls="rail" aria-expanded="false">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
-    <span class="v">MENU</span>
-  </button>
-
-  <a href="/" class="site-title" aria-label="DashLabs home">
-    <Logo />
-    <span class="brand">DASH<span class="stamp">·</span>LABS</span>
-    <span class="brand-sub">3D print lab · made to order</span>
-  </a>
-
-  <div class="hud-right">
-    <span class="hud-met" title="Current queue and lead time">
-      <span class="k">QUEUE</span>{LAB_STATUS.queuedJobs} JOBS<span class="k">·</span><span class="k">SHIPS</span>{lo}–{hi} DAYS
-    </span>
-    <button type="button" class="hud-chip motion" data-motion-switch aria-pressed="false" title="Pause the background and all animation">
-      <span class="v" data-motion-label>PAUSE MOTION</span>
-    </button>
-    <a href="/cart/" class="hud-chip cart" aria-label="Cart">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
-        ><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"></path><circle cx="10" cy="20.5" r="1.3"
-        ></circle><circle cx="17" cy="20.5" r="1.3"></circle></svg
-      >
-      <span class="k">CART</span><span class="v" data-cart-count>0</span>
+<header class="topbar" data-topbar>
+  <div class="bar">
+    <a href="/" class="brand" aria-label="DashLabs home">
+      <Logo />
+      <span class="word">Dash<b>Labs</b></span>
     </a>
+
+    <nav class="links" aria-label="Main">
+      <button type="button" class="link shop-btn" data-mega-btn aria-expanded="false" aria-controls="mega" aria-current={inShop ? 'page' : undefined}>
+        Shop
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      {MAIN_LINKS.map((l) => <a class="link" href={l.href} aria-current={path.startsWith(l.href) ? 'page' : undefined}>{l.label}</a>)}
+    </nav>
+
+    <div class="right">
+      <a class="queue" href="/#lab-status" title="Jobs in the print queue">
+        <span class="live-dot"></span>{LAB_STATUS.queuedJobs} in queue
+      </a>
+      <button type="button" class="icon-btn" data-motion-switch aria-pressed="false" title="Pause animation">
+        <svg class="i-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+        <svg class="i-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
+        <span class="sr-only" data-motion-label>Pause animation</span>
+      </button>
+      <a href="/cart/" class="cart" aria-label="Cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"
+          ><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"></path><circle cx="10" cy="20.5" r="1.3"
+          ></circle><circle cx="17" cy="20.5" r="1.3"></circle></svg
+        >
+        <span class="count" data-cart-count>0</span>
+      </a>
+      <button type="button" class="icon-btn burger" data-burger aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mega" id="mega" data-mega>
+    <div class="mega-inner">
+      {
+        SHOP_GROUPS.map((g) => (
+          <section style={`--c:${g.color}`}>
+            <a class="g-head" href={g.href}>
+              <i />
+              {g.label}
+            </a>
+            <p class="g-sub">{g.sub}</p>
+            <ul>
+              {g.items.map((it) => (
+                <li>
+                  <a href={it.href}>
+                    <span class="sku">{it.sku}</span>
+                    <span class="nm">{it.label}</span>
+                    <span class="pr">
+                      {it.quote ? 'from ' : ''}
+                      {money(it.price)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+      <aside class="mega-cta">
+        <span class="tag">Got an idea?</span>
+        <p>Figurines from photos, logos, one-off parts. Tell me what you want printed.</p>
+        <a class="btn btn--primary" href="/custom/">Start a custom order</a>
+        <a class="all" href="/shop/">Browse everything →</a>
+      </aside>
+    </div>
   </div>
 </header>
 
+<div class="mobile-menu" id="mobile-menu" data-mobile-menu>
+  <nav aria-label="Mobile">
+    <a href="/shop/" style="--i:0">Shop all</a>
+    {MAIN_LINKS.map((l, i) => <a href={l.href} style={`--i:${i + 1}`}>{l.label}</a>)}
+    <a href="/cart/" style={`--i:${MAIN_LINKS.length + 1}`}>Cart</a>
+  </nav>
+  <div class="m-groups">
+    {
+      SHOP_GROUPS.map((g, i) => (
+        <section style={`--c:${g.color};--i:${i + 6}`}>
+          <a class="g-head" href={g.href}>
+            <i />
+            {g.label}
+          </a>
+          {g.items.map((it) => (
+            <a class="m-item" href={it.href}>
+              {it.label}
+            </a>
+          ))}
+        </section>
+      ))
+    }
+    <section style={`--c:${LEARN_GROUP.color};--i:10`}>
+      <a class="g-head" href="/learn/"><i></i>{LEARN_GROUP.label}</a>
+      {LEARN_GROUP.items.map((it) => <a class="m-item" href={it.href}>{it.label}</a>)}
+    </section>
+  </div>
+</div>
+
 <script>
   import { cartCount, onCartChange } from '../lib/cart-store.ts';
+  const root = document.documentElement;
 
-  // Cart count
+  // cart
   const badge = document.querySelector<HTMLElement>('[data-cart-count]')!;
-  const chip = badge.closest<HTMLElement>('.cart')!;
+  const cart = badge.closest<HTMLElement>('.cart')!;
+  let lastN = -1;
   const renderCart = () => {
     const n = cartCount();
     badge.textContent = String(n);
-    chip.classList.toggle('full', n > 0);
+    cart.classList.toggle('full', n > 0);
+    if (lastN >= 0 && n > lastN) {
+      cart.classList.remove('bump');
+      void cart.offsetWidth;
+      cart.classList.add('bump');
+    }
+    lastN = n;
   };
   renderCart();
   onCartChange(renderCart);
 
-  // PAUSE MOTION (state restored before first paint in Base.astro)
-  const root = document.documentElement;
-  const KEY = 'dashlabs-motion';
-  const sync = () => {
+  // motion toggle (restored before paint in Base)
+  const syncMotion = () => {
     const off = root.classList.contains('motion-off');
-    document.querySelectorAll('[data-motion-label]').forEach((el) => (el.textContent = off ? 'RESUME MOTION' : 'PAUSE MOTION'));
-    document.querySelectorAll('[data-motion-switch]').forEach((el) => el.setAttribute('aria-pressed', String(off)));
+    document.querySelectorAll('[data-motion-switch]').forEach((b) => b.setAttribute('aria-pressed', String(off)));
+    document.querySelectorAll('[data-motion-label]').forEach((l) => (l.textContent = off ? 'Resume animation' : 'Pause animation'));
   };
   document.querySelectorAll('[data-motion-switch]').forEach((b) =>
     b.addEventListener('click', () => {
       const off = !root.classList.contains('motion-off');
       root.classList.toggle('motion-off', off);
       try {
-        localStorage.setItem(KEY, off ? 'off' : 'on');
+        localStorage.setItem('dashlabs-motion', off ? 'off' : 'on');
       } catch {}
-      sync();
+      syncMotion();
     }),
   );
-  sync();
+  syncMotion();
 
-  // MENU: the rail becomes a drawer on small screens
-  const menu = document.querySelector<HTMLButtonElement>('[data-menu]')!;
-  const setOpen = (open: boolean) => {
-    root.classList.toggle('rail-open', open);
-    menu.setAttribute('aria-expanded', String(open));
+  // mega menu: hover on desktop pointers, click everywhere
+  const topbar = document.querySelector<HTMLElement>('[data-topbar]')!;
+  const btn = document.querySelector<HTMLButtonElement>('[data-mega-btn]')!;
+  const mega = document.querySelector<HTMLElement>('[data-mega]')!;
+  let closeT = 0;
+  const setMega = (open: boolean) => {
+    topbar.classList.toggle('mega-open', open);
+    btn.setAttribute('aria-expanded', String(open));
   };
-  menu.addEventListener('click', () => setOpen(!root.classList.contains('rail-open')));
-  document.addEventListener('keydown', (e) => e.key === 'Escape' && setOpen(false));
-  document.querySelector('[data-rail-scrim]')?.addEventListener('click', () => setOpen(false));
+  btn.addEventListener('click', () => setMega(!topbar.classList.contains('mega-open')));
+  if (matchMedia('(hover: hover)').matches) {
+    for (const el of [btn, mega]) {
+      el.addEventListener('pointerenter', () => (clearTimeout(closeT), setMega(true)));
+      el.addEventListener('pointerleave', () => (closeT = window.setTimeout(() => setMega(false), 180)));
+    }
+  }
+  document.addEventListener('click', (e) => !topbar.contains(e.target as Node) && setMega(false));
+
+  // mobile menu
+  const burger = document.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const setMobile = (open: boolean) => {
+    root.classList.toggle('menu-open', open);
+    burger.setAttribute('aria-expanded', String(open));
+  };
+  burger.addEventListener('click', () => setMobile(!root.classList.contains('menu-open')));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      setMega(false);
+      setMobile(false);
+    }
+  });
+
+  // the bar firms up once you scroll
+  const onScroll = () => topbar.classList.toggle('scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 </script>
 
 <style>
-  .hud-header {
+  .topbar {
     position: fixed;
     inset: 0 0 auto 0;
-    z-index: 40;
+    z-index: 50;
+    transition:
+      background 0.25s,
+      border-color 0.25s;
+    border-bottom: 1px solid transparent;
+  }
+  .topbar.scrolled,
+  .topbar.mega-open,
+  :global(.menu-open) .topbar {
+    background: rgba(10, 8, 17, 0.82);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom-color: var(--line);
+  }
+  .bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 20px;
     height: var(--nav-h);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding-inline: clamp(12px, 2vw, 24px);
-    background: var(--glass);
-    backdrop-filter: blur(10px) saturate(1.2);
-    -webkit-backdrop-filter: blur(10px) saturate(1.2);
-    border-bottom: 1px solid var(--line);
-  }
-  /* the thrust-trace hairline: accent into cyan */
-  .hud-header::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    bottom: -1px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--pc) 30%, var(--blue) 70%, transparent);
-    opacity: 0.7;
-  }
-  .site-title {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    text-decoration: none;
-    color: var(--white);
-    min-width: 0;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding-inline: var(--gutter);
   }
   .brand {
-    font: 600 1.3rem var(--mono);
-    letter-spacing: 0.08em;
-    white-space: nowrap;
-  }
-  .stamp {
-    color: var(--accent);
-  }
-  .brand-sub {
-    font: 400 0.66rem var(--mono);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    white-space: nowrap;
-    border-left: 1px solid var(--rule);
-    padding-left: 0.65rem;
-  }
-  .hud-right {
-    margin-left: auto;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 10px;
-  }
-  .hud-met {
-    display: inline-flex;
-    gap: 0.45rem;
-    font: 400 0.68rem var(--mono);
-    letter-spacing: 0.12em;
-    color: var(--blue);
-    white-space: nowrap;
-    margin-right: 6px;
-  }
-  .hud-met .k {
-    color: var(--text-3);
-  }
-  .hud-met .k + * {
-    margin-left: -0.1rem;
-  }
-  .hud-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    min-height: 34px;
-    padding: 0 0.6rem;
-    font: 400 0.68rem var(--mono);
-    letter-spacing: 0.12em;
-    color: var(--text-2);
-    background: transparent;
-    border: 1px solid var(--line-2);
-    border-radius: 3px;
     text-decoration: none;
-    cursor: pointer;
-    white-space: nowrap;
   }
-  .hud-chip:hover {
-    color: var(--accent);
-    border-color: var(--accent);
+  .brand :global(.mark) {
+    transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
   }
-  .hud-chip .k {
-    color: var(--text-3);
+  .brand:hover :global(.mark) {
+    transform: rotate(-12deg) scale(1.08);
   }
-  .hud-chip .v {
+  .word {
+    font: 500 1.2rem var(--display);
+    letter-spacing: -0.03em;
     color: var(--white);
   }
-  .cart.full {
-    border-color: var(--accent);
-    box-shadow: 0 0 14px -6px var(--accent);
+  .word b {
+    font-weight: 700;
+    color: var(--hot);
   }
-  .cart.full .v {
-    color: var(--accent);
+
+  .links {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
   }
-  .menu {
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 0;
+    background: none;
+    font: 600 0.93rem var(--font);
+    color: var(--text-2);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      color 0.15s,
+      background 0.15s;
+  }
+  .link:hover,
+  .link[aria-current='page'],
+  .mega-open .shop-btn {
+    color: var(--white);
+    background: rgba(196, 168, 255, 0.08);
+  }
+  .shop-btn svg {
+    transition: transform 0.2s;
+  }
+  .mega-open .shop-btn svg {
+    transform: rotate(180deg);
+  }
+
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .queue {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    font: 500 0.72rem var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--text-2);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .icon-btn,
+  .cart {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: rgba(26, 22, 40, 0.6);
+    color: var(--text-2);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .icon-btn:hover,
+  .cart:hover {
+    color: var(--white);
+    border-color: var(--uv-2);
+  }
+  .i-play,
+  [aria-pressed='true'] .i-pause {
     display: none;
   }
-  @media (max-width: 82rem) {
-    .hud-met {
+  [aria-pressed='true'] .i-play {
+    display: block;
+  }
+  .count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--panel-3);
+    color: var(--text-3);
+    font: 700 0.7rem/20px var(--mono);
+    text-align: center;
+  }
+  .cart.full {
+    border-color: var(--hot);
+    color: var(--hot);
+  }
+  .cart.full .count {
+    background: var(--hot);
+    color: var(--hot-ink);
+    box-shadow: 0 0 12px var(--hot);
+  }
+  .cart.bump {
+    animation: bump 0.5s cubic-bezier(0.3, 1.8, 0.5, 1);
+  }
+  @keyframes bump {
+    30% {
+      transform: scale(1.25) rotate(-8deg);
+    }
+  }
+  .burger {
+    display: none;
+    gap: 4px;
+    align-content: center;
+  }
+  .burger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform 0.25s;
+  }
+  :global(.menu-open) .burger span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+  :global(.menu-open) .burger span:nth-child(2) {
+    transform: scaleX(0);
+  }
+  :global(.menu-open) .burger span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  /* mega menu: prints down from the bar, layer by layer */
+  .mega {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: rgba(12, 10, 20, 0.99);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line-2);
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+    transition:
+      clip-path 0.35s steps(10, end),
+      visibility 0s 0.35s;
+  }
+  .mega-open .mega {
+    clip-path: inset(0 0 -40px 0);
+    visibility: visible;
+    transition:
+      clip-path 0.35s steps(10, end),
+      visibility 0s;
+  }
+  .mega-inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 1.1fr;
+    gap: 28px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 28px var(--gutter) 34px;
+  }
+  .g-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font: 600 0.92rem var(--display);
+    letter-spacing: -0.01em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .g-head i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--c);
+    box-shadow: 0 0 10px var(--c);
+    transform: rotate(45deg);
+  }
+  .g-sub {
+    font-size: 0.82rem;
+    color: var(--text-3);
+    margin: 4px 0 12px;
+  }
+  .mega ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .mega li a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 10px;
+    padding: 8px 10px;
+    margin-inline: -10px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .mega li a:hover {
+    background: color-mix(in srgb, var(--c) 12%, transparent);
+  }
+  .sku {
+    grid-row: span 2;
+    font: 600 0.66rem var(--mono);
+    color: var(--c);
+    padding-top: 3px;
+  }
+  .nm {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--white);
+  }
+  .pr {
+    font: 500 0.75rem var(--mono);
+    color: var(--text-3);
+  }
+  .mega-cta {
+    padding: 20px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(255, 140, 30, 0.18), transparent 60%),
+      var(--panel);
+  }
+  .mega-cta p {
+    color: var(--text-2);
+    font-size: 0.9rem;
+    margin: 8px 0 16px;
+  }
+  .mega-cta .all {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-3);
+    text-decoration: none;
+  }
+  .mega-cta .all:hover {
+    color: var(--white);
+  }
+
+  /* mobile menu */
+  .mobile-menu {
+    position: fixed;
+    inset: var(--nav-h) 0 0 0;
+    z-index: 49;
+    overflow-y: auto;
+    padding: 18px var(--gutter) 40px;
+    background: #0a0811;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.25s,
+      visibility 0s 0.25s;
+  }
+  :global(.menu-open) .mobile-menu {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.25s;
+  }
+  .mobile-menu nav {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 26px;
+  }
+  .mobile-menu nav a,
+  .m-groups section {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.4s,
+      transform 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+    transition-delay: calc(var(--i) * 45ms);
+  }
+  :global(.menu-open) .mobile-menu nav a,
+  :global(.menu-open) .m-groups section {
+    opacity: 1;
+    transform: none;
+  }
+  .mobile-menu nav a {
+    font: 600 clamp(1.6rem, 8vw, 2.4rem) / 1.25 var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .mobile-menu nav a:hover {
+    color: var(--hot);
+  }
+  .m-groups {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 18px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .m-groups section {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+  .m-groups .g-head {
+    margin-bottom: 4px;
+  }
+  .m-item {
+    font-size: 0.92rem;
+    color: var(--text-2);
+    text-decoration: none;
+  }
+
+  @media (max-width: 1080px) {
+    .queue {
       display: none;
     }
   }
-  @media (max-width: 68.75rem) {
-    .menu {
-      display: inline-flex;
+  @media (max-width: 900px) {
+    .links,
+    .mega {
+      display: none;
     }
-    .brand-sub {
+    .burger {
+      display: inline-grid;
+    }
+    .bar {
+      grid-template-columns: auto 1fr;
+    }
+    .right {
+      justify-self: end;
+    }
+  }
+  @media (min-width: 901px) {
+    .mobile-menu {
       display: none;
     }
   }
-  @media (max-width: 34rem) {
-    .motion,
-    .cart .k {
-      display: none;
+  @media (max-width: 400px) {
+    .m-groups {
+      grid-template-columns: 1fr;
     }
-    .brand {
-      font-size: 1.1rem;
-    }
-    .menu .v {
-      display: none;
+    .word {
+      font-size: 1.05rem;
     }
   }
 </style>

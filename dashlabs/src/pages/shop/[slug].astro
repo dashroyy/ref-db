@@ -1,11 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ProductArt from '../../components/ProductArt.astro';
+import ModelViewer from '../../components/ModelViewer.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import LaunchLab from '../../components/LaunchLab.astro';
-import Banner from '../../components/Banner.astro';
 import { GUIDES } from '../../data/guides.ts';
-import { PRODUCTS, type Product } from '../../data/catalog.ts';
+import { PRODUCTS, categoryById, productCode, type Product } from '../../data/catalog.ts';
 import { SITE } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
 
@@ -21,6 +20,10 @@ const [lo, hi] = p.leadTimeDays ?? SITE.defaultLeadTimeDays;
 const related = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
 const needsText = p.id === 'mto-keychain';
 const guide = GUIDES.find((g) => g.slug === p.guide);
+const cat = categoryById(p.category);
+const siblings = PRODUCTS.filter((x) => x.category === p.category);
+const pos = PRODUCTS.indexOf(p);
+const next = PRODUCTS[(pos + 1) % PRODUCTS.length];
 const sourceLabel =
   p.source.kind === 'original'
     ? 'Designed by DashLabs'
@@ -32,22 +35,23 @@ const sourceLabel =
 <Base title={p.name} description={p.summary}>
   <section class="section top">
     <div class="wrap">
-      <Banner />
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/shop/">Shop</a>
+        <span aria-hidden="true">/</span>
+        <a href={`/shop/?c=${p.category}`} class="cat-chip"><i></i>{cat.label}</a>
+        <span aria-hidden="true">/</span>
+        <span class="sku">SKU DL-{productCode(p)}</span>
+        {siblings.length > 1 && <span class="pos">{siblings.indexOf(p) + 1} of {siblings.length}</span>}
+      </nav>
 
       <div class="layout">
-        <div class="gallery panel">
-          {
-            p.images?.length ? (
-              <img src={p.images[0]} alt={p.name} />
-            ) : (
-              <ProductArt shape={p.art.shape} hue={p.art.hue} uid={`pdp-${p.id}`} label={p.name} />
-            )
-          }
+        <div class="gallery">
+          {p.images?.length ? <img class="photo" src={p.images[0]} alt={p.name} /> : <ModelViewer product={p} />}
         </div>
 
         <div class="info">
           <p class="tag tag--accent">{sourceLabel}</p>
-          <h1>{p.name}</h1>
+          <h1 class="x3d title">{p.name}</h1>
           <p class="price">
             {p.purchase === 'quote' && <small>from </small>}<span data-price>{money(p.price)}</span>
           </p>
@@ -72,6 +76,12 @@ const sourceLabel =
                       <label class="choice">
                         <input type="radio" name={opt.id} value={c.id} checked={i === 0} />
                         <span>
+                          {c.hex && (
+                            <b
+                              class="sw"
+                              style={`background:${c.hex === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d,#3dffc5,#2f7dff,#9b6bff,#ff5c7a)' : c.hex}`}
+                            />
+                          )}
                           {c.label}
                           {c.priceDelta ? <em>+{money(c.priceDelta)}</em> : null}
                         </span>
@@ -168,7 +178,7 @@ const sourceLabel =
     related.length > 0 && (
       <section class="section more">
         <div class="wrap">
-          <h2 class="h-rule">More like this</h2>
+          <h2 class="h-rule" data-print>More like this</h2>
           <div class="grid">
             {related.map((r) => (
               <ProductCard product={r} />
@@ -178,6 +188,14 @@ const sourceLabel =
       </section>
     )
   }
+
+  <section class="wrap next-wrap">
+    <a class="next-print" href={`/shop/${next.slug}/`} style={`--c:${categoryById(next.category).color}`} data-print>
+      <span class="tag">Next print in the queue</span>
+      <strong>{next.name}</strong>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
 </Base>
 
 <script>
@@ -230,13 +248,97 @@ const sourceLabel =
     padding-top: clamp(28px, 4vw, 48px);
   }
   .crumbs {
-    margin-bottom: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-bottom: 26px;
+    font: 500 0.8rem var(--font);
+    color: var(--text-3);
   }
   .crumbs a {
     text-decoration: none;
+    color: var(--text-2);
   }
   .crumbs a:hover {
-    color: var(--text);
+    color: var(--white);
+  }
+  .cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+    background: color-mix(in srgb, var(--tone) 10%, transparent);
+  }
+  .cat-chip i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    transform: rotate(45deg);
+    background: var(--tone);
+    box-shadow: 0 0 8px var(--tone);
+  }
+  .sku {
+    font: 600 0.72rem var(--mono);
+    color: var(--tone);
+  }
+  .pos {
+    margin-left: auto;
+    font: 500 0.72rem var(--mono);
+  }
+  .title {
+    font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+    letter-spacing: -0.04em;
+    margin: 10px 0 18px;
+  }
+  .photo {
+    width: 100%;
+    border-radius: var(--r);
+  }
+  .sw {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+    flex: none;
+  }
+  .next-wrap {
+    padding-bottom: clamp(40px, 6vw, 72px);
+  }
+  .next-print {
+    position: relative;
+    display: grid;
+    gap: 4px;
+    padding: 24px 28px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    text-decoration: none;
+    background:
+      radial-gradient(circle at 100% 50%, color-mix(in srgb, var(--c) 18%, transparent), transparent 60%),
+      var(--panel);
+  }
+  .next-print strong {
+    font: 600 clamp(1.3rem, 3vw, 2rem) var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+  .next-print .arrow {
+    position: absolute;
+    right: 26px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.8rem;
+    color: var(--c);
+    transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .next-print:hover .arrow {
+    transform: translate(8px, -50%);
+  }
+  .next-print:hover {
+    border-color: var(--c);
   }
   .layout {
     display: grid;
@@ -245,9 +347,8 @@ const sourceLabel =
     align-items: start;
   }
   .gallery {
-    overflow: hidden;
     position: sticky;
-    top: 88px;
+    top: calc(var(--nav-h) + 20px);
   }
   .gallery img {
     width: 100%;
@@ -259,8 +360,9 @@ const sourceLabel =
     margin-top: 10px;
   }
   .price {
-    color: var(--white);
-    font: 600 1.6rem/1 var(--mono);
+    color: var(--hot);
+    font: 700 1.9rem/1 var(--display);
+    letter-spacing: -0.03em;
     margin-bottom: 20px;
   }
   .price small {
@@ -292,24 +394,34 @@ const sourceLabel =
   }
   .choice span {
     display: inline-flex;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
-    min-height: 42px;
+    min-height: 44px;
     padding: 0 14px;
     border: 1px solid var(--line-2);
-    border-radius: var(--r-sm);
+    border-radius: 12px;
+    background: var(--panel);
     cursor: pointer;
-    font-size: 0.93rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-2);
+    transition:
+      transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1),
+      border-color 0.2s;
+  }
+  .choice span:hover {
+    transform: translateY(-2px);
+    border-color: var(--uv-2);
   }
   .choice em {
     font: normal 500 0.75rem var(--mono);
     color: var(--text-3);
   }
   .choice input:checked + span {
-    border-color: var(--pc);
+    border-color: var(--tone);
     color: var(--white);
-    background: color-mix(in srgb, var(--pc) 14%, transparent);
-    box-shadow: 0 0 12px -6px var(--pc);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    box-shadow: 0 0 12px -6px var(--tone);
   }
   .choice input:focus-visible + span {
     outline: 2px solid var(--accent);

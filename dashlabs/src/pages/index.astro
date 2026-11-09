@@ -1,114 +1,125 @@
 ---
-// Home, after REF·DB's mission home: hero with the stamp-dot wordmark and a
-// meta strip, three ways in, the lab status board, the systems board (one
-// station per category), then featured items and the Pen Launcher.
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import ProductArt from '../components/ProductArt.astro';
+import PrintHero from '../components/PrintHero.astro';
+import ModelViewer from '../components/ModelViewer.astro';
 import LabStatus from '../components/LabStatus.astro';
-import Planet from '../components/hud/Planet.astro';
-import { PRODUCTS, productById } from '../data/catalog.ts';
-import { STATIONS } from '../data/nav.ts';
+import { PRODUCTS, CATEGORIES, productById } from '../data/catalog.ts';
+import { GUIDES } from '../data/guides.ts';
 import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
+import { MATERIALS } from '../data/materials.ts';
 import { money } from '../lib/money.ts';
 
 const featured = PRODUCTS.filter((p) => p.featured);
 const launcher = productById('orig-pen-launcher')!;
 const [lo, hi] = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
-const shopStations = STATIONS.filter((s) => s.id !== 'learn');
+const firstOf = (id: string) => PRODUCTS.find((p) => p.category === id)!;
+
+const ticker = [
+  `${LAB_STATUS.queuedJobs} jobs in the queue`,
+  `Ships in ${lo}–${hi} days`,
+  ...MATERIALS.map((m) => `${m.name} · ${m.short}`),
+  'Preview before every custom print',
+  'Printed layer by layer',
+];
 ---
 
 <Base>
-  <section class="hero wrap">
-    <p class="kicker"><span class="dot"></span>Lab online · 3D print lab · made to order</p>
-    <h1 class="hero-title">DASH<span class="stamp">·</span>LABS</h1>
-    <p class="hero-tag">
-      Ideas, printed layer by layer. Custom figurines of the people and pets you love, business cards people keep, and
-      original gadgets like the Pen Launcher, designed and printed by hand.
-    </p>
-    <dl class="hero-meta">
-      <div><dt>REV</dt><dd>v1 · {LAB_STATUS.updated}</dd></div>
-      <div><dt>QUEUE</dt><dd>{LAB_STATUS.queuedJobs} jobs</dd></div>
-      <div><dt>SHIPS IN</dt><dd>{lo}–{hi} days</dd></div>
-      <div><dt>MATERIALS</dt><dd>PLA · PETG · TPU · ASA</dd></div>
-    </dl>
-  </section>
-
-  <section class="wrap ways" aria-label="Three ways in">
-    <a class="way" href="/shop/">
-      <span class="way-k">01 · BROWSE</span>
-      <span class="way-t">You know what you want</span>
-      <span class="way-d">Every item, printed to order in the colour you pick. Straight into the cart.</span>
-    </a>
-    <a class="way" href="/custom/">
-      <span class="way-k">02 · CUSTOM ORDER</span>
-      <span class="way-t">You have an idea</span>
-      <span class="way-d">A figurine from photos, a logo, a part you sketched. Describe it and get a quote.</span>
-    </a>
-    <a class="way" href="/learn/">
-      <span class="way-k">03 · LEARN</span>
-      <span class="way-t">You want to know more</span>
-      <span class="way-d">Materials, what a print costs and why, and the physics of the Pen Launcher.</span>
-    </a>
-  </section>
-
-  <section class="wrap block">
-    <h2 class="h-rule">Lab status</h2>
-    <LabStatus />
-  </section>
-
-  <section class="wrap block">
-    <h2 class="h-rule">The stations</h2>
-    <div class="board">
-      <div class="board-head" aria-hidden="true">
-        <span>SYSTEMS STATUS · {STATIONS.length} STATIONS · SELECT A STATION</span><span class="go">ALL STATIONS GO</span>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="kicker"><span class="dot"></span>Printers online · taking orders</p>
+        <h1 class="hero-title x3d">Ideas,<br />printed <span class="hot">layer</span><br />by layer.</h1>
+        <p class="lede">
+          Custom figurines of the people and pets you love, business cards people actually keep, and original gadgets
+          like the Pen Launcher. Designed and printed to order at DashLabs.
+        </p>
+        <div class="actions">
+          <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+          <a class="btn" href="/custom/">Start a custom order</a>
+        </div>
+        <dl class="specs">
+          <div><dt>Ships in</dt><dd>{lo}–{hi} days</dd></div>
+          <div><dt>Materials</dt><dd>{MATERIALS.length} filaments</dd></div>
+          <div><dt>Custom work</dt><dd>3D preview first</dd></div>
+        </dl>
       </div>
-      {
-        STATIONS.map((s, i) => (
-          <a class="station" href={s.href} style={`--c:${s.color}`}>
-            <Planet color={s.color} id={`st-${s.id}`} />
-            <span class="st-k">
-              STATION {i + 1} · {s.glyph}
-            </span>
-            <span class="st-n">{s.short}</span>
-            <span class="st-s">{s.sub}</span>
-            <span class="st-bar" aria-hidden="true">
-              <i />
-            </span>
-            <span class="st-c">
-              {s.items.length} {s.id === 'learn' ? 'guides' : s.items.length === 1 ? 'item' : 'items'}
-              {s.items.some((it) => it.quote) && ' · quote'}
-            </span>
-            <span class="st-list">
-              {s.items.map((it) => (
-                <span>
-                  {it.code} {it.label}
-                </span>
-              ))}
-            </span>
-          </a>
-        ))
-      }
+      <div class="hero-stage">
+        <PrintHero />
+      </div>
     </div>
   </section>
 
-  <section class="wrap block">
-    <div class="head">
-      <h2 class="h-rule">Off the print bed</h2>
-      <a href="/shop/">All {PRODUCTS.length} items →</a>
+  <!-- TICKER -->
+  <div class="ticker" aria-hidden="true">
+    <div class="track">
+      {[0, 1].map(() => ticker.map((t) => <span>{t}<i /></span>))}
     </div>
-    <div class="grid">{featured.map((p) => <ProductCard product={p} />)}</div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">What I print</h2>
+        <a href="/shop/">See all {PRODUCTS.length} items →</a>
+      </div>
+      <div class="cats">
+        {
+          CATEGORIES.map((c, i) => {
+            const p = firstOf(c.id);
+            const n = PRODUCTS.filter((x) => x.category === c.id).length;
+            return (
+              <a class="cat" href={`/shop/?c=${c.id}`} style={`--c:${c.color}`} data-tilt data-print>
+                <div class="cat-slab">
+                  <div class="cat-art" data-thumb data-shape={p.art.shape} data-color={c.color}>
+                    <ProductArt shape={p.art.shape} hue={p.art.hue} uid={`cat-${c.id}`} label={c.label} />
+                  </div>
+                  <div class="cat-txt">
+                    <span class="tag">
+                      0{i + 1} · {n} {n === 1 ? 'item' : 'items'}
+                    </span>
+                    <h3>{c.label}</h3>
+                    <p>{c.blurb}</p>
+                  </div>
+                  <span class="cat-go" aria-hidden="true">
+                    →
+                  </span>
+                </div>
+              </a>
+            );
+          })
+        }
+      </div>
+    </div>
   </section>
 
-  <section class="wrap block">
-    <div class="spot" style={`--c:${shopStations[1].color}`}>
-      <div class="spot-art">
-        <ProductArt shape={launcher.art.shape} hue={launcher.art.hue} uid="spot" label={launcher.name} />
+  <!-- FEATURED -->
+  <section class="section tight">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">Off the print bed</h2>
+        <a href="/shop/">Shop everything →</a>
       </div>
-      <div class="spot-copy">
-        <p class="tag" style="color:var(--c)">Station 2 · Originals · O01</p>
-        <h2>The Pen Launcher</h2>
-        <p>Designed here, tested here, launched across many offices. Load a standard ballpoint, pull back, and let go.</p>
+      <div class="grid">{featured.map((p) => <ProductCard product={p} />)}</div>
+    </div>
+  </section>
+
+  <!-- PEN LAUNCHER -->
+  <section class="section">
+    <div class="wrap spot" style="--tone:#ffab2e">
+      <div class="spot-3d">
+        <ModelViewer product={launcher} />
+      </div>
+      <div class="spot-copy" data-print>
+        <p class="kicker"><span class="dot"></span>DashLabs original</p>
+        <h2 class="spot-title x3d">The Pen<br /><span class="hot">Launcher</span></h2>
+        <p class="lede">
+          Designed, prototyped and tested in the lab. Load a standard ballpoint, pull back, and send it across the room.
+          Spin it, watch it print, then try the launch lab to see how far yours will fly.
+        </p>
         <div class="actions">
           <a class="btn btn--primary" href={`/shop/${launcher.slug}/`}>Get one · {money(launcher.price)}</a>
           <a class="btn" href="/learn/pen-launcher-physics/">Launch lab</a>
@@ -117,279 +128,413 @@ const shopStations = STATIONS.filter((s) => s.id !== 'learn');
     </div>
   </section>
 
-  <section class="wrap block last">
-    <div class="head">
-      <h2 class="h-rule">From a photo to your shelf</h2>
-      <a href="/custom/">Start a custom order →</a>
+  <!-- LAB STATUS -->
+  <section class="section tight" id="lab-status">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">Inside the lab right now</h2>
+        <a href="/lab/">More from the lab →</a>
+      </div>
+      <div data-print><LabStatus /></div>
     </div>
-    <ol class="steps">
-      <li><span class="tag">Step 01</span><h3>Send photos</h3><p>A few angles of the person, pet or object, plus any details you care about.</p></li>
-      <li><span class="tag">Step 02</span><h3>Get a quote</h3><p>I reply with a price and timeline. You pay through a secure invoice.</p></li>
-      <li><span class="tag">Step 03</span><h3>Approve the preview</h3><p>You see a 3D render first. One round of tweaks is included.</p></li>
-      <li><span class="tag">Step 04</span><h3>Printed & shipped</h3><p>Printed, cleaned up, checked and packed carefully.</p></li>
-    </ol>
+  </section>
+
+  <!-- HOW CUSTOM WORKS -->
+  <section class="section">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">From a photo to your shelf</h2>
+        <a href="/custom/">Start a custom order →</a>
+      </div>
+      <ol class="timeline" data-print>
+        <li style="--i:0"><span class="n">01</span><h3>Send photos</h3><p>A few angles of the person, pet or thing, plus the details that matter.</p></li>
+        <li style="--i:1"><span class="n">02</span><h3>Get a quote</h3><p>A price and timeline by email. You pay through a secure invoice.</p></li>
+        <li style="--i:2"><span class="n">03</span><h3>Approve the 3D preview</h3><p>You see the model before it prints. One round of tweaks included.</p></li>
+        <li style="--i:3"><span class="n">04</span><h3>Printed &amp; shipped</h3><p>Printed, cleaned up, checked and packed to survive the trip.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- LEARN -->
+  <section class="section tight last">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">Know before you order</h2>
+        <a href="/learn/">All guides →</a>
+      </div>
+      <div class="learn">
+        {
+          GUIDES.map((g, i) => (
+            <a class="guide" href={`/learn/${g.slug}/`} data-tilt data-print>
+              <span class="gnum">0{i + 1}</span>
+              <span class="tag">Tool · {g.tool}</span>
+              <h3>{g.title}</h3>
+              <p>{g.summary}</p>
+            </a>
+          ))
+        }
+      </div>
+    </div>
   </section>
 </Base>
 
-<script>
-  // 3D tilt and a cursor glow on the home cards (REF·DB): fine pointers only, never under PAUSE MOTION
-  const root = document.documentElement;
-  const calm = () => root.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    document.querySelectorAll<HTMLElement>('.way, .station').forEach((el) => {
-      el.addEventListener('pointermove', (e) => {
-        const r = el.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width;
-        const y = (e.clientY - r.top) / r.height;
-        el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
-        el.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
-        el.style.transform = calm()
-          ? ''
-          : `perspective(700px) rotateX(${((0.5 - y) * 6).toFixed(2)}deg) rotateY(${((x - 0.5) * 8).toFixed(2)}deg) translateZ(4px)`;
-      });
-      el.addEventListener('pointerleave', () => (el.style.transform = ''));
-    });
-  }
-</script>
-
 <style>
+  /* hero */
   .hero {
-    padding-top: clamp(28px, 5vw, 56px);
-    padding-bottom: 8px;
-    background:
-      radial-gradient(ellipse 60% 80% at 20% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
-      transparent;
+    position: relative;
+    padding-block: clamp(20px, 4vw, 48px) clamp(24px, 4vw, 40px);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: clamp(20px, 4vw, 56px);
+    align-items: center;
   }
   .hero-title {
-    margin: 0.3rem 0 0.4rem;
-    font: 600 clamp(3rem, 10vw, 5.8rem)/1 var(--mono);
-    letter-spacing: 0.06em;
-    color: var(--white);
-    text-shadow: 0 0 40px color-mix(in srgb, var(--accent) 35%, transparent);
+    font: 700 clamp(2.7rem, 6.6vw, 5.4rem) / 0.98 var(--display);
+    letter-spacing: -0.045em;
+    margin: 0.2rem 0 1.3rem;
+    animation: rise 0.9s cubic-bezier(0.2, 1, 0.3, 1) both;
   }
-  .stamp {
-    color: var(--accent);
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+      text-shadow: none;
+    }
   }
-  .hero-tag {
-    max-width: 44rem;
-    font-size: clamp(1.05rem, 1.7vw, 1.22rem);
-    color: var(--text-2);
-  }
-  .hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.6rem;
-    margin: 1.2rem 0 0;
-    padding: 0.65rem 0.8rem;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    font: 400 0.72rem var(--mono);
-    letter-spacing: 0.1em;
-  }
-  .hero-meta div {
-    display: flex;
-    gap: 0.5rem;
-  }
-  .hero-meta dt {
-    color: var(--text-3);
-  }
-  .hero-meta dd {
-    margin: 0;
-    color: var(--white);
-  }
-
-  .ways {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding-top: 28px;
-  }
-  .way,
-  .station {
-    position: relative;
-    text-decoration: none;
-    transition:
-      transform 0.2s ease,
-      border-color 0.2s;
-    background:
-      radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.06), transparent 50%),
-      rgba(3, 5, 11, 0.55);
-  }
-  .way {
-    display: grid;
-    align-content: start;
-    gap: 0.5rem;
-    padding: 18px;
-    border: 1px solid var(--line-2);
-    border-radius: 4px;
-  }
-  .way:hover {
-    border-color: var(--accent);
-  }
-  .way-k {
-    font: 500 0.7rem var(--mono);
-    letter-spacing: 0.14em;
-    color: var(--accent);
-  }
-  .way-t {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--white);
-    margin-top: 0.6rem;
-  }
-  .way-d {
-    font-size: 0.92rem;
-    color: var(--text-3);
-  }
-
-  .block {
-    padding-top: clamp(36px, 5vw, 56px);
-  }
-  .block > h2 {
-    margin-bottom: 18px;
-  }
-  .last {
-    padding-bottom: clamp(36px, 5vw, 56px);
-  }
-
-  /* systems board */
-  .board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    border: 1px solid var(--line-2);
-    border-radius: 4px;
-    overflow: hidden;
-    background: rgba(3, 5, 11, 0.4);
-  }
-  .board-head {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--line);
-    font: 400 0.66rem var(--mono);
-    letter-spacing: 0.14em;
-    color: var(--text-3);
-  }
-  .go {
-    color: var(--ok);
-  }
-  .station {
-    display: grid;
-    align-content: start;
-    gap: 0.35rem;
-    padding: 16px;
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
-  .station:hover {
-    background-color: color-mix(in srgb, var(--c) 6%, transparent);
-  }
-  .st-k {
-    font: 400 0.66rem var(--mono);
-    letter-spacing: 0.14em;
-    color: var(--text-3);
-    margin-top: 6px;
-  }
-  .st-n {
-    font: 600 1.05rem var(--mono);
-    letter-spacing: 0.12em;
-    color: var(--c);
-  }
-  .st-s {
-    color: var(--white);
-    font-size: 0.95rem;
-  }
-  .st-bar {
-    height: 3px;
-    background: var(--c);
-    margin: 6px 0 2px;
-    border-radius: 2px;
-    box-shadow: 0 0 10px -2px var(--c);
-  }
-  .st-c {
-    font: 400 0.7rem var(--mono);
-    letter-spacing: 0.06em;
-    color: var(--text-3);
-  }
-  .st-list {
-    display: grid;
-    gap: 3px;
-    margin-top: 8px;
-    font: 400 0.7rem var(--mono);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--text-2);
-  }
-
-  /* Pen Launcher spotlight */
-  .spot {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border: 1px solid var(--line-2);
-    border-left: 3px solid var(--c);
-    border-radius: 0 4px 4px 0;
-    overflow: hidden;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--c) 10%, transparent), transparent 60%);
-  }
-  .spot-copy {
-    padding: clamp(20px, 4vw, 40px);
-    align-self: center;
-  }
-  .spot-copy h2 {
-    font-size: clamp(1.7rem, 3vw, 2.3rem);
-    margin-top: 6px;
+  .hero-copy .lede {
+    animation: rise 0.9s 0.12s cubic-bezier(0.2, 1, 0.3, 1) both;
   }
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 34px;
+    margin: 38px 0 0;
+  }
+  .specs dt {
+    font: 500 0.66rem var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .specs dd {
+    margin: 4px 0 0;
+    font: 600 1rem var(--display);
+    letter-spacing: -0.02em;
+    color: var(--white);
+  }
+  .hero-stage {
+    position: relative;
+  }
+  .hero-stage::before {
+    /* glow under the printer */
+    content: '';
+    position: absolute;
+    inset: 15% 5% 0;
+    background: radial-gradient(closest-side, rgba(255, 140, 30, 0.22), transparent);
+    filter: blur(20px);
+    z-index: -1;
   }
 
-  .steps {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  /* ticker */
+  .ticker {
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+    background: rgba(13, 11, 21, 0.75);
+    transform: rotate(-1.2deg) scale(1.02);
+    margin-block: 8px 0;
+  }
+  .track {
+    display: flex;
+    width: max-content;
+    animation: tick 42s linear infinite;
+  }
+  .track span {
+    display: inline-flex;
+    align-items: center;
+    gap: 22px;
+    padding: 14px 0 14px 22px;
+    font: 600 0.95rem var(--display);
+    letter-spacing: -0.01em;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .track i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--hot);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px var(--hot);
+  }
+  .track span:nth-child(3n + 2) i {
+    background: var(--uv);
+    box-shadow: 0 0 10px var(--uv);
+  }
+  .track span:nth-child(3n) i {
+    background: var(--mint);
+    box-shadow: 0 0 10px var(--mint);
+  }
+  @keyframes tick {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  .tight {
+    padding-top: 0;
+  }
+  .last {
+    padding-bottom: clamp(48px, 8vw, 96px);
+  }
+
+  /* category tiles */
+  .cats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 22px;
   }
-  .steps li {
-    padding: 16px;
+  .cat {
+    display: block;
+    text-decoration: none;
+    perspective: 900px;
+  }
+  .cat-slab {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--r);
     border: 1px solid var(--line-2);
-    border-top: 2px solid var(--accent);
-    border-radius: 4px;
-    background: rgba(3, 5, 11, 0.5);
+    overflow: hidden;
+    background:
+      radial-gradient(circle at var(--mx, 50%) var(--my, 30%), color-mix(in srgb, var(--c) 18%, transparent), transparent 60%),
+      var(--panel);
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:
+      transform 0.5s cubic-bezier(0.2, 1, 0.3, 1),
+      border-color 0.3s;
+    box-shadow:
+      2px 2px 0 -1px color-mix(in srgb, var(--c) 35%, var(--panel-3)),
+      4px 4px 0 -1px var(--panel-2),
+      6px 6px 0 -1px color-mix(in srgb, var(--c) 25%, var(--panel-3)),
+      8px 8px 0 -1px var(--ink-2),
+      8px 8px 0 0 color-mix(in srgb, var(--c) 30%, transparent);
   }
-  .steps h3 {
-    margin: 12px 0 6px;
+  :global(.tilting) .cat-slab {
+    transition: transform 0.08s linear;
   }
-  .steps p {
+  .cat:hover .cat-slab {
+    border-color: var(--c);
+  }
+  .cat-art {
+    aspect-ratio: 4 / 3;
+    position: relative;
+  }
+  .cat-art :global(svg) {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.5s;
+  }
+  .cat-art:global(.thumb-ready) :global(svg) {
+    opacity: 0;
+  }
+  .cat-art :global(.thumb-3d) {
+    transform: translateZ(0);
+    transition:
+      opacity 0.5s,
+      transform 0.6s cubic-bezier(0.2, 1, 0.3, 1) !important;
+  }
+  .cat:hover .cat-art :global(.thumb-3d) {
+    transform: scale(1.1) rotate(-3deg);
+  }
+  .cat-txt {
+    padding: 4px 20px 22px;
+  }
+  .cat-txt h3 {
+    margin: 8px 0 6px;
+    font-size: 1.1rem;
+  }
+  .cat-txt p {
+    font-size: 0.9rem;
+    color: var(--text-3);
+    margin: 0;
+  }
+  .cat-go {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--c);
+    color: #12091a;
+    font-weight: 700;
+    transform: scale(0.6);
+    opacity: 0;
+    transition:
+      transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1),
+      opacity 0.2s;
+  }
+  .cat:hover .cat-go {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  /* spotlight */
+  .spot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(24px, 5vw, 64px);
+    align-items: center;
+  }
+  .spot-title {
+    font: 700 clamp(2.4rem, 5.4vw, 4.2rem) / 0.98 var(--display);
+    letter-spacing: -0.045em;
+    margin: 0.2rem 0 1rem;
+  }
+
+  /* timeline */
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    position: relative;
+  }
+  .timeline::after {
+    content: '';
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    top: 26px;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--uv), var(--hot), var(--mint), var(--pink));
+    z-index: -1;
+    opacity: 0.7;
+  }
+  .timeline li {
+    padding: 0 4px;
+  }
+  .n {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    border: 1px solid var(--line-2);
+    background: var(--panel-2);
+    font: 700 1rem var(--display);
+    color: var(--hot);
+    box-shadow:
+      2px 2px 0 -1px var(--panel-3),
+      4px 4px 0 -1px var(--ink-2),
+      4px 4px 0 0 var(--line);
+    margin-bottom: 16px;
+  }
+  .timeline li:nth-child(2) .n {
+    color: var(--uv-2);
+  }
+  .timeline li:nth-child(3) .n {
+    color: var(--mint);
+  }
+  .timeline li:nth-child(4) .n {
+    color: var(--pink);
+  }
+  .timeline h3 {
+    margin-bottom: 6px;
+  }
+  .timeline p {
     font-size: 0.9rem;
     color: var(--text-3);
     margin: 0;
   }
 
-  @media (max-width: 960px) {
-    .board {
-      grid-template-columns: 1fr 1fr;
-    }
-    .steps {
+  /* learn */
+  .learn {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .guide {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    padding: 24px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    text-decoration: none;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at var(--mx, 100%) var(--my, 0%), rgba(255, 225, 77, 0.12), transparent 55%),
+      var(--panel);
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:
+      transform 0.5s cubic-bezier(0.2, 1, 0.3, 1),
+      border-color 0.3s;
+  }
+  .guide:hover {
+    border-color: #ffe14d;
+  }
+  .gnum {
+    position: absolute;
+    right: 14px;
+    top: 4px;
+    font: 700 4.2rem/1 var(--display);
+    letter-spacing: -0.06em;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 225, 77, 0.35);
+  }
+  .guide h3 {
+    margin: 10px 0 4px;
+    font-size: 1.12rem;
+  }
+  .guide p {
+    font-size: 0.9rem;
+    color: var(--text-3);
+    margin: 0;
+  }
+
+  @media (max-width: 1080px) {
+    .cats {
       grid-template-columns: 1fr 1fr;
     }
   }
-  @media (max-width: 760px) {
-    .ways,
+  @media (max-width: 900px) {
+    .hero-grid,
     .spot {
       grid-template-columns: 1fr;
     }
+    .hero-stage {
+      max-width: 520px;
+      margin-inline: auto;
+      width: 100%;
+    }
+    .timeline,
+    .learn {
+      grid-template-columns: 1fr 1fr;
+    }
+    .timeline::after {
+      display: none;
+    }
   }
-  @media (max-width: 480px) {
-    .board,
-    .steps {
+  @media (max-width: 560px) {
+    .cats,
+    .timeline,
+    .learn {
       grid-template-columns: 1fr;
     }
   }

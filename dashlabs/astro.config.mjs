@@ -8,6 +8,6 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
   site: process.env.SITE_URL || 'http://localhost:4321',
   // Pin Vite to this project's tsconfig so it never walks up into the parent
-  // REF·DB repo's tsconfig while DashLabs lives in a subfolder of it.
+  // repository's tsconfig while DashLabs lives in a subfolder of another project.
   vite: { tsconfig: './tsconfig.json' },
 });

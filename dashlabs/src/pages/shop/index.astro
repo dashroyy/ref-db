@@ -7,20 +7,20 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
 <Base title="Shop" description="Custom figurines, printed business cards, DashLabs originals and made-to-order prints.">
   <section class="section top">
     <div class="wrap">
-      <p class="tag tag--accent">Shop</p>
-      <h1>Everything I print</h1>
+      <p class="kicker"><span class="dot"></span>Printed to order · {PRODUCTS.length} items</p>
+      <h1 class="x3d">Everything <span class="hot">I print</span></h1>
       <p class="lede">
         Every item is printed to order in the colour you choose, so nothing sits in a warehouse. Custom pieces start
         with a quote.
       </p>
 
       <div class="filters" role="group" aria-label="Filter by category">
-        <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--accent)">All <span>{PRODUCTS.length}</span></button>
+        <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--hot)"><i></i>All <span>{PRODUCTS.length}</span></button>
         {
           CATEGORIES.map((c) => (
             <button type="button" data-filter={c.id} aria-pressed="false" style={`--c:${c.color}`}>
               <i />
-              {c.short} <span>{PRODUCTS.filter((p) => p.category === c.id).length}</span>
+              {c.label} <span>{PRODUCTS.filter((p) => p.category === c.id).length}</span>
             </button>
           ))
         }
@@ -64,22 +64,28 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
   .filters button {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    min-height: 38px;
-    padding: 0 12px;
-    border-radius: 3px;
+    gap: 9px;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 12px;
     border: 1px solid var(--line-2);
-    background: transparent;
+    background: var(--panel);
     color: var(--text-2);
-    font: 400 0.72rem var(--mono);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font: 600 0.9rem var(--font);
     cursor: pointer;
+    transition:
+      transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1),
+      background 0.2s,
+      border-color 0.2s;
+  }
+  .filters button:hover {
+    transform: translateY(-2px);
   }
   .filters button i {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    transform: rotate(45deg);
     background: var(--c);
     box-shadow: 0 0 6px var(--c);
   }

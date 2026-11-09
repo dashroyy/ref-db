@@ -1,144 +1,189 @@
 ---
-// Home-page status board — REF·DB's mission-control board, for a print farm.
+// Lab status: the print bays, the queue and the current lead time.
 // Data in src/data/lab.ts, updated by hand.
 import { LAB_STATUS as S, leadTimeDays } from '../data/lab.ts';
 const [lo, hi] = leadTimeDays(S.queuedJobs, S.printers);
 const updated = new Date(S.updated + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-const LABEL = { printing: 'Printing', idle: 'Ready', maintenance: 'Maintenance' };
+const LABEL = { printing: 'Printing', idle: 'Ready for your job', maintenance: 'Maintenance' };
 ---
 
-<section class="board" aria-label="Lab status">
-  <div class="cell status">
-    <span class="tag">Lab status</span>
-    <strong class:list={['state', S.acceptingOrders ? 'open' : 'closed']}>
-      <i></i>{S.acceptingOrders ? 'Taking orders' : 'Orders paused'}
-    </strong>
+<section class="lab" aria-label="Lab status">
+  <div class="stats">
+    <div class="stat">
+      <span class="tag">Status</span>
+      <strong class:list={['state', S.acceptingOrders ? 'open' : 'closed']}>
+        <span class="live-dot"></span>{S.acceptingOrders ? 'Taking orders' : 'Orders paused'}
+      </strong>
+    </div>
+    <div class="stat">
+      <span class="tag">In the queue</span>
+      <strong><span class="num">{S.queuedJobs}</span> jobs</strong>
+    </div>
+    <div class="stat">
+      <span class="tag">Ships in</span>
+      <strong><span class="num">{lo}–{hi}</span> days</strong>
+    </div>
   </div>
-  <div class="cell">
-    <span class="tag">In the queue</span>
-    <strong>{S.queuedJobs} {S.queuedJobs === 1 ? 'job' : 'jobs'}</strong>
-  </div>
-  <div class="cell">
-    <span class="tag">Ships in</span>
-    <strong>{lo}–{hi} days</strong>
-  </div>
-  <div class="cell printers">
-    <span class="tag">Printers</span>
-    <ul>
-      {
-        S.printers.map((p) => (
-          <li>
-            <i class={p.state} />
-            {p.name} <span>{LABEL[p.state]}{p.job ? ` · ${p.job}` : ''}</span>
-          </li>
-        ))
-      }
-    </ul>
+  <div class="bays">
+    {
+      S.printers.map((p, i) => (
+        <div class:list={['bay', p.state]}>
+          <svg class="mini" viewBox="0 0 60 60" aria-hidden="true">
+            <rect x="8" y="6" width="44" height="48" rx="6" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="2" />
+            <rect class="headx" x="22" y="14" width="16" height="7" rx="2" fill="currentColor" />
+            <rect x="14" y="46" width="32" height="3" rx="1.5" fill="currentColor" fill-opacity=".5" />
+            {[0, 1, 2, 3].map((k) => (
+              <rect class="lay" x={22 + k} y={42 - k * 4} width={16 - k * 2} height="3" rx="1" fill="currentColor" style={`--k:${k}`} />
+            ))}
+          </svg>
+          <div class="bay-txt">
+            <span class="tag">Bay {String(i + 1).padStart(2, '0')}</span>
+            <strong>{p.name}</strong>
+            <span class="muted">
+              {LABEL[p.state]}
+              {p.job ? ` · ${p.job}` : ''}
+            </span>
+            {p.state === 'printing' && (
+              <span class="bar">
+                <i />
+              </span>
+            )}
+          </div>
+        </div>
+      ))
+    }
   </div>
   <p class="foot tag">{S.note} · Updated {updated}</p>
 </section>
 
 <style>
-  .board {
+  .lab {
     display: grid;
-    grid-template-columns: 1.1fr 0.8fr 0.8fr 1.6fr;
+    gap: 16px;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .stat,
+  .bay {
     border: 1px solid var(--line-2);
     border-radius: var(--r);
-    background: var(--panel) var(--layers);
-    overflow: hidden;
-  }
-  .cell {
-    display: grid;
-    gap: 8px;
-    align-content: start;
+    background: var(--panel);
     padding: 18px 20px;
-    border-right: 1px solid var(--line);
   }
-  .cell:nth-child(4) {
-    border-right: 0;
+  .stat {
+    display: grid;
+    gap: 10px;
   }
-  .cell strong {
-    font: 600 1.15rem var(--mono);
+  .stat strong {
+    font: 600 1.15rem var(--display);
+    letter-spacing: -0.02em;
+    color: var(--white);
+  }
+  .num {
+    font-size: 1.7rem;
+    color: var(--hot);
   }
   .state {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 10px;
   }
-  .state i,
-  .printers i {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    flex: none;
-  }
-  .open i {
-    background: var(--ok);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 20%, transparent);
-    animation: pulse 2.4s infinite;
-  }
-  .closed i {
+  .closed .live-dot {
     background: var(--warn);
+    box-shadow: 0 0 10px var(--warn);
   }
-  @keyframes pulse {
-    50% {
-      box-shadow: 0 0 0 7px color-mix(in srgb, var(--ok) 0%, transparent);
+  .bays {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .bay {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+  .bay.printing {
+    color: var(--hot);
+  }
+  .bay.idle {
+    color: var(--mint);
+  }
+  .bay.maintenance {
+    color: var(--warn);
+  }
+  .bay-txt {
+    display: grid;
+    gap: 3px;
+  }
+  .bay-txt strong {
+    color: var(--white);
+    font: 600 1rem var(--display);
+    letter-spacing: -0.02em;
+  }
+  .bay-txt .muted {
+    font-size: 0.88rem;
+  }
+  .bar {
+    display: block;
+    height: 5px;
+    border-radius: 5px;
+    background: var(--panel-3);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--uv), var(--hot));
+    transform-origin: 0 50%;
+    animation: job 9s ease-in-out infinite;
+  }
+  @keyframes job {
+    from {
+      transform: scaleX(0.05);
+    }
+    to {
+      transform: scaleX(1);
     }
   }
-  .printers ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 6px;
+  .printing .headx {
+    animation: head 1.1s ease-in-out infinite alternate;
   }
-  .printers li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.92rem;
-    flex-wrap: wrap;
+  @keyframes head {
+    to {
+      transform: translateX(10px);
+    }
   }
-  .printers li span {
-    color: var(--text-3);
-    font-size: 0.85rem;
+  .printing .lay {
+    animation: lay 4.4s steps(1) infinite;
+    animation-delay: calc(var(--k) * 1s);
+    opacity: 0;
   }
-  i.printing {
-    background: var(--accent);
+  @keyframes lay {
+    0% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
   }
-  i.idle {
-    background: var(--ok);
-  }
-  i.maintenance {
-    background: var(--warn);
+  .idle .lay {
+    opacity: 0;
   }
   .foot {
-    grid-column: 1 / -1;
     margin: 0;
-    padding: 10px 20px;
-    border-top: 1px solid var(--line);
-    line-height: 1.5;
   }
-  @media (max-width: 860px) {
-    .board {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
-    .cell:nth-child(3) {
-      border-right: 0;
-    }
-    .printers {
-      grid-column: 1 / -1;
-      border-top: 1px solid var(--line);
-    }
-  }
-  @media (max-width: 520px) {
-    .board {
-      grid-template-columns: 1fr 1fr;
-    }
-    .status {
-      grid-column: 1 / -1;
-      border-right: 0;
-      border-bottom: 1px solid var(--line);
+  @media (max-width: 640px) {
+    .stats {
+      grid-template-columns: 1fr;
     }
   }
 </style>

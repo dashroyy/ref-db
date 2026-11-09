@@ -1,6 +1,5 @@
-// Lab status — shown on the home page status board (REF·DB's mission-control
-// board, for a print farm). Update by hand when things change; the board shows
-// the date so visitors know how fresh it is.
+// Lab status — the print bays on the home page. Update by hand when things
+// change; the board shows the date so visitors know how fresh it is.
 
 export type PrinterState = 'printing' | 'idle' | 'maintenance';
 

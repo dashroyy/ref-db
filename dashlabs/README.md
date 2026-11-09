@@ -31,7 +31,8 @@ src/lib/launcher.ts   Pen Launcher physics for the Launch lab.
 src/lib/order.ts      Cart → priced order (pure; will also run on the server for checkout).
 src/lib/cart-store.ts Cart saved in the visitor's browser.
 src/lib/checkout.ts   Checkout entry point: 'request' (email) now, 'stripe' later.
-src/components/       Header, footer, product card, placeholder product artwork.
+src/components/       Header (menus), footer, product card, 3D hero and viewer, fallback artwork.
+src/lib/three/        Three.js: printed-plastic material, procedural models, hero printer, viewer, thumbnails.
 src/pages/            Home, shop, product pages, custom orders, the lab, learn guides, FAQ, cart.
 tests/                Catalog rules and pricing/cart tests.
 ```
@@ -52,20 +53,28 @@ tests/                Catalog rules and pricing/cart tests.
       (update the worked example in the guide and its test too).
 - [ ] Read through the FAQ/policies (`src/pages/faq.astro`) and adapt the refund and shipping wording.
 
-## Look and menu (sister site to REF·DB)
+## Look and feel: the print chamber
 
-DashLabs uses REF·DB's visual language: the deep-field starfield (`src/components/hud/SpaceSky.astro`, copied from
-REF·DB with the black hole switched off), glass header and rail, IBM Plex Sans/Mono, the REF·DB palette
-(`#03050b` space, `#ff5a3d` accent, `#4fb3c6` cyan, blue-grey text) and its rules: words always sit on a solid
-plate, dark by default, PAUSE MOTION stops everything.
+DashLabs is designed as a dark 3D-printer build chamber, lit by a hot amber nozzle and UV violet.
 
-- **Stations** = shop categories (plus Learn), each with its own colour, glyph and item code (F01, O01, B01, M01, L01),
-  like REF·DB's phases and zone numbers. Set in `CATEGORIES` in `src/data/catalog.ts`.
-- **The mission rail** (`src/components/Rail.astro`) and the station banner, home systems board and footer are all
-  built from `src/data/nav.ts`, so a new product appears everywhere automatically.
-- The page colour `--pc` follows the station you're in: rail highlight, banner, ▸ headings, tool corner brackets.
+- **Palette and type** (`src/styles/global.css`): ink `#08070d`, hot amber `#ffab2e`, UV violet `#9b6bff`, mint
+  `#3dffc5`; Unbounded for display, Manrope for text, JetBrains Mono for labels.
+- **Extruded everything**: headlines (`.x3d`), cards, buttons and panels carry stacked layers like a printed part.
+- **Print-in**: anything with `data-print` builds up from the bottom in layers, with a hot nozzle line, as it scrolls
+  into view. `data-tilt` makes a card tilt toward the pointer.
+- **Real 3D (Three.js, `src/lib/three/`)**:
+  - `hero.ts`: the home-page printer prints models layer by layer, then ejects them.
+  - `viewer.ts`: the product viewer (drag to spin, recolours to the chosen filament, "Watch it print"), and
+    `renderThumbs()` which renders every product card's 3D thumbnail in the browser with one WebGL context.
+  - `print.ts`: the printed-plastic material (layer lines, hot fresh-layer glow, silk rainbow) and the procedural
+    model for each product `art.shape`.
+  Without WebGL, the drawn SVG artwork shows instead.
+- **Menus** (`src/components/Header.astro`): the Shop mega-menu and the phone menu are built from `src/data/nav.ts`,
+  so new products appear automatically. Each category's colour is set in `CATEGORIES` in `src/data/catalog.ts`.
+- **Motion**: the pause button in the header (remembered per visitor) and the system "reduce motion" setting stop all
+  animation; the hero then shows a finished print as a still.
 
-## Learn guides and tools (borrowed from REF·DB)
+## Learn guides and tools
 
 Each guide in `src/pages/learn/` follows the same shape: **at a glance → why it matters → intuition (an analogy and a
 diagram) → the tool → a worked example → where this stops → references**. The rules carried over:

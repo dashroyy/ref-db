@@ -1,4 +1,7 @@
 ---
+// Product card: an extruded slab that tilts in 3D toward the pointer, with a
+// real 3D render of the product (rendered in the browser; the SVG drawing
+// shows until it's ready, or if WebGL isn't available).
 import ProductArt from './ProductArt.astro';
 import { categoryById, productCode, type Product } from '../data/catalog.ts';
 import { money } from '../lib/money.ts';
@@ -9,97 +12,148 @@ interface Props {
 const { product: p } = Astro.props;
 const cat = categoryById(p.category);
 const image = p.images?.[0];
+const filament = cat.color;
 ---
 
-<a href={`/shop/${p.slug}/`} class="card" data-category={p.category} style={`--c:${cat.color}`}>
-  <div class="media">
-    {image ? <img src={image} alt={p.name} loading="lazy" /> : <ProductArt shape={p.art.shape} hue={p.art.hue} uid={p.id} label={p.name} />}
-    <span class="code">{productCode(p)}</span>
-    {p.purchase === 'quote' && <span class="badge">QUOTE</span>}
-  </div>
-  <div class="body">
-    <span class="kind"><i></i>{cat.short}</span>
-    <h3>{p.name}</h3>
-    <p>{p.summary}</p>
-    <div class="foot">
-      <span class="price">{p.purchase === 'quote' && <small>FROM </small>}{money(p.price)}</span>
-      <span class="go">{p.purchase === 'quote' ? 'REQUEST' : 'VIEW'} ›</span>
+<a href={`/shop/${p.slug}/`} class="card" data-category={p.category} data-tilt style={`--c:${cat.color}`}>
+  <div class="slab">
+    <div class="media" data-thumb={image ? undefined : ''} data-shape={p.art.shape} data-color={filament}>
+      {image ? <img src={image} alt={p.name} loading="lazy" /> : <ProductArt shape={p.art.shape} hue={p.art.hue} uid={p.id} label={p.name} />}
+      <span class="sku">{productCode(p)}</span>
+      {p.purchase === 'quote' && <span class="badge">Custom quote</span>}
     </div>
+    <div class="body">
+      <span class="kind"><i></i>{cat.label}</span>
+      <h3>{p.name}</h3>
+      <p>{p.summary}</p>
+      <div class="foot">
+        <span class="price">{p.purchase === 'quote' && <small>from </small>}{money(p.price)}</span>
+        <span class="go" aria-hidden="true">→</span>
+      </div>
+    </div>
+    <span class="glare" aria-hidden="true"></span>
   </div>
 </a>
 
 <style>
   .card {
+    display: block;
+    text-decoration: none;
+    perspective: 900px;
+  }
+  .slab {
+    position: relative;
     display: flex;
     flex-direction: column;
-    text-decoration: none;
-    border-radius: 4px;
+    height: 100%;
+    border-radius: var(--r);
     border: 1px solid var(--line-2);
-    border-top: 2px solid var(--c);
-    background: rgba(3, 5, 11, 0.55);
+    background: var(--panel);
     overflow: hidden;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     transition:
-      border-color 0.2s,
-      transform 0.2s,
-      box-shadow 0.2s;
+      transform 0.5s cubic-bezier(0.2, 1, 0.3, 1),
+      box-shadow 0.3s,
+      border-color 0.3s;
+    box-shadow:
+      2px 2px 0 -1px var(--panel-3),
+      4px 4px 0 -1px var(--panel-2),
+      6px 6px 0 -1px var(--panel-3),
+      8px 8px 0 -1px var(--ink-2),
+      8px 8px 0 0 var(--line);
   }
-  .card:hover {
-    border-color: var(--c);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px -18px var(--c);
+  .card:hover .slab {
+    border-color: color-mix(in srgb, var(--c) 70%, transparent);
+    box-shadow:
+      2px 2px 0 -1px var(--panel-3),
+      4px 4px 0 -1px var(--panel-2),
+      6px 6px 0 -1px var(--panel-3),
+      8px 8px 0 -1px var(--panel-2),
+      10px 10px 0 -1px var(--panel-3),
+      12px 12px 0 -1px var(--ink-2),
+      12px 12px 0 0 color-mix(in srgb, var(--c) 40%, transparent),
+      0 24px 50px -24px var(--c);
+  }
+  :global(.tilting) .slab {
+    transition:
+      transform 0.08s linear,
+      box-shadow 0.3s,
+      border-color 0.3s;
   }
   .media {
     position: relative;
-    border-bottom: 1px solid var(--line);
-  }
-  .media img {
-    width: 100%;
     aspect-ratio: 4 / 3;
-    object-fit: cover;
+    background:
+      radial-gradient(circle at 50% 70%, color-mix(in srgb, var(--c) 22%, transparent), transparent 65%),
+      var(--ink-2);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
   }
-  .code,
+  .media > :global(svg),
+  .media > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.5s;
+  }
+  .media:global(.thumb-ready) > :global(svg) {
+    opacity: 0;
+  }
+  .media :global(.thumb-3d) {
+    transition:
+      opacity 0.5s,
+      transform 0.6s cubic-bezier(0.2, 1, 0.3, 1) !important;
+  }
+  .card:hover .media :global(.thumb-3d) {
+    transform: scale(1.07) translateY(-2%);
+  }
+  .sku,
   .badge {
     position: absolute;
-    top: 10px;
-    font: 500 0.64rem/1 var(--mono);
-    letter-spacing: 0.1em;
-    padding: 4px 6px;
-    border-radius: 2px;
+    top: 12px;
+    z-index: 2;
+    font: 600 0.66rem/1 var(--mono);
+    padding: 6px 8px;
+    border-radius: 7px;
   }
-  .code {
-    left: 10px;
+  .sku {
+    left: 12px;
     color: var(--c);
-    border: 1px solid var(--c);
-    background: rgba(3, 5, 11, 0.7);
+    background: rgba(8, 7, 13, 0.75);
+    border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
   }
   .badge {
-    right: 10px;
-    color: #05080f;
+    right: 12px;
+    color: #12091a;
     background: var(--c);
+    letter-spacing: 0.04em;
   }
   .body {
     display: flex;
     flex-direction: column;
     flex: 1;
-    padding: 14px 14px 12px;
+    padding: 16px 18px 16px;
   }
   .kind {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font: 500 0.64rem var(--mono);
-    letter-spacing: 0.14em;
+    gap: 8px;
+    font: 500 0.68rem var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--c);
   }
   .kind i {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    transform: rotate(45deg);
     background: var(--c);
-    box-shadow: 0 0 6px var(--c);
+    box-shadow: 0 0 8px var(--c);
   }
   h3 {
-    margin: 8px 0 6px;
+    margin: 9px 0 6px;
+    font-size: 1.05rem;
   }
   .body p {
     font-size: 0.9rem;
@@ -109,23 +163,47 @@ const image = p.images?.[0];
   .foot {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    padding-top: 10px;
-    border-top: 1px dashed var(--line);
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
   }
   .price {
-    font: 600 1rem/1 var(--mono);
+    font: 700 1.05rem/1 var(--display);
     color: var(--white);
+    letter-spacing: -0.02em;
   }
   .price small {
-    font-size: 0.62rem;
+    font: 500 0.72rem var(--font);
     color: var(--text-3);
-    font-weight: 400;
-    letter-spacing: 0.1em;
+    letter-spacing: 0;
   }
   .go {
-    font: 500 0.7rem var(--mono);
-    letter-spacing: 0.12em;
-    color: var(--c);
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--panel-3);
+    color: var(--white);
+    transition:
+      background 0.2s,
+      color 0.2s,
+      transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .card:hover .go {
+    background: var(--c);
+    color: #12091a;
+    transform: translateX(3px);
+  }
+  .glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.12), transparent 45%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card:hover .glare {
+    opacity: 1;
   }
 </style>

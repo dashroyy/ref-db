@@ -1,47 +1,62 @@
 /* =====================================================================
-   DashLabs — mission HUD, after REF·DB v2 (src/styles/custom.css + hud.css)
-   Deep space behind glass. Rules carried from REF·DB: text never sits on
-   stars (solid content plate), dark by default, motion can always be paused.
-   Each station (category) has its own colour, exposed as --pc.
+   DashLabs — "the print chamber"
+   A dark build chamber lit by a hot amber nozzle and UV violet. Everything
+   is extruded: type and cards carry stacked layers like a printed part, and
+   sections print in, layer by layer, as they scroll into view.
    ===================================================================== */
 
 :root {
-  /* REF·DB palette */
-  --space: #03050b;
-  --bg: #0e1418;
-  --bg-2: #0b1116;
-  --panel: rgba(13, 20, 26, 0.82);
-  --panel-2: #151d23;
-  --panel-3: #1b252c;
-  --glass: rgba(6, 10, 18, 0.74);
-  --plate: rgba(6, 10, 18, 0.9);
-  --line: rgba(140, 200, 230, 0.14); /* hud edge */
-  --line-2: rgba(140, 200, 230, 0.28); /* hud edge, strong */
-  --rule: #34434c;
-  --white: #ffffff;
-  --text: #e2e9ed;
-  --text-2: #b4c3cb;
-  --text-3: #8ca0ac;
-  --text-4: #5a6b75;
-  --accent: #ff5a3d;
-  --accent-2: #ff7a5f;
-  --accent-ink: #160502;
-  --blue: #4fb3c6;
-  --ok: #5bc48a;
-  --warn: #e0a94e;
-  --pc: var(--accent); /* station colour, set per page */
+  /* chamber */
+  --ink: #08070d;
+  --ink-2: #0d0b15;
+  --panel: #13101d;
+  --panel-2: #1a1628;
+  --panel-3: #231d36;
+  --line: rgba(196, 168, 255, 0.12);
+  --line-2: rgba(196, 168, 255, 0.24);
+  --white: #fbf8f2;
+  --text: #f1ece3;
+  --text-2: #c8c1d6;
+  --text-3: #8e87a3;
+  --text-4: #5e5875;
 
-  --font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* light sources */
+  --hot: #ffab2e; /* the nozzle */
+  --hot-2: #ffc766;
+  --hot-deep: #ff7a00;
+  --hot-ink: #1d0f00;
+  --uv: #9b6bff; /* UV / resin violet */
+  --uv-2: #c4a8ff;
+  --uv-deep: #5b34c9;
+  --mint: #3dffc5;
+  --pink: #ff6ec7;
+  --warn: #ffd84d;
+  --danger: #ff5c7a;
 
-  --r: 8px;
-  --r-sm: 4px;
-  --nav-h: 60px;
-  --rail-w: 19rem;
-  --gutter: clamp(16px, 3vw, 36px);
+  /* per-page tone (category colour), defaults to the nozzle */
+  --tone: var(--hot);
 
-  /* 3D-print layer lines: DashLabs' own signature, kept faint */
-  --layers: repeating-linear-gradient(0deg, rgba(140, 200, 230, 0.035) 0 1px, transparent 1px 4px);
+  /* compatibility names used by tools and components */
+  --accent: var(--hot);
+  --accent-2: var(--hot-2);
+  --accent-ink: var(--hot-ink);
+  --blue: var(--uv);
+  --ok: var(--mint);
+  --bg: var(--ink);
+  --bg-2: var(--ink-2);
+  --rule: var(--line-2);
+
+  --display: 'Unbounded', 'Manrope', system-ui, sans-serif;
+  --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --r: 14px;
+  --r-sm: 9px;
+  --nav-h: 68px;
+  --gutter: clamp(16px, 4vw, 44px);
+
+  /* printed layer lines */
+  --layers: repeating-linear-gradient(0deg, rgba(196, 168, 255, 0.045) 0 1px, transparent 1px 4px);
   color-scheme: dark;
 }
 
@@ -53,21 +68,22 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  background: var(--space);
+  background: var(--ink);
   scroll-padding-top: calc(var(--nav-h) + 16px);
 }
 
 body {
   margin: 0;
-  background: transparent;
   color: var(--text-2);
   font: 400 1rem/1.65 var(--font);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  background: transparent;
 }
 
 img,
-svg {
+svg,
+canvas {
   display: block;
   max-width: 100%;
 }
@@ -79,20 +95,23 @@ a {
 h1,
 h2,
 h3 {
+  font-family: var(--display);
   color: var(--white);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
   margin: 0 0 0.5em;
   font-weight: 600;
 }
 h1 {
-  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-size: clamp(2.2rem, 5.4vw, 4rem);
 }
 h2 {
-  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+  font-size: clamp(1.45rem, 2.8vw, 2.2rem);
 }
 h3 {
-  font-size: 1.12rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  font-weight: 500;
 }
 
 p {
@@ -100,9 +119,9 @@ p {
 }
 
 :focus-visible {
-  outline: 2px solid var(--pc);
+  outline: 2px solid var(--tone);
   outline-offset: 3px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .sr-only {
@@ -114,121 +133,225 @@ p {
   white-space: nowrap;
 }
 
-/* ---------- layout pieces used inside the plate ---------- */
+/* ---------- the chamber: a build grid in perspective, lit hot and UV ---------- */
+.chamber {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(60vw 50vh at 85% 0%, rgba(155, 107, 255, 0.16), transparent 70%),
+    radial-gradient(50vw 50vh at 0% 100%, rgba(255, 140, 30, 0.12), transparent 70%),
+    var(--ink);
+}
+.chamber::before {
+  /* the build plate grid, scrolling slowly toward you */
+  content: '';
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  bottom: -20vh;
+  height: 75vh;
+  background-image:
+    linear-gradient(rgba(155, 107, 255, 0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155, 107, 255, 0.28) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(520px) rotateX(68deg);
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(to top, #000 10%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 85%);
+  animation: grid-run 6s linear infinite;
+  opacity: 0.55;
+}
+.chamber::after {
+  /* faint layer lines over everything, and a vignette */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    var(--layers),
+    radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0, 0, 0, 0.55));
+}
+@keyframes grid-run {
+  to {
+    background-position: 0 64px;
+  }
+}
+
+/* ---------- layout ---------- */
 .wrap {
   width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
   padding-inline: var(--gutter);
 }
 .section {
-  padding-block: clamp(36px, 6vw, 72px);
+  padding-block: clamp(48px, 8vw, 104px);
+}
+main {
+  display: block;
+  padding-top: var(--nav-h);
+  min-height: 70vh;
 }
 
-/* Mono HUD label: "PHASE 3 · SIZE" */
+/* ---------- labels ---------- */
 .tag {
   font: 500 0.7rem/1.4 var(--mono);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-3);
 }
 .tag--accent {
-  color: var(--pc);
+  color: var(--tone);
 }
-
-/* Kicker with the pulsing "online" dot */
 .kicker {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
+  padding: 6px 12px 6px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: rgba(19, 16, 29, 0.7);
   font: 500 0.7rem/1.4 var(--mono);
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--blue);
-  margin: 0 0 0.6rem;
+  color: var(--text-2);
+  margin: 0 0 1rem;
+  backdrop-filter: blur(6px);
 }
 .kicker .dot,
 .live-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 8px var(--ok);
-  animation: hud-pulse 2.4s ease-in-out infinite;
+  background: var(--mint);
+  box-shadow: 0 0 10px var(--mint);
+  animation: pulse 2s ease-in-out infinite;
   flex: none;
 }
-@keyframes hud-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
+@keyframes pulse {
   50% {
     opacity: 0.35;
+    transform: scale(0.8);
   }
 }
 
 .lede {
-  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  font-size: clamp(1.05rem, 1.6vw, 1.22rem);
   color: var(--text-2);
-  max-width: 42rem;
+  max-width: 40rem;
 }
 .muted {
   color: var(--text-3);
 }
 
-/* ▸ section headings in the station colour, with a hairline (REF·DB h2) */
-.h-rule {
-  display: flex;
-  align-items: baseline;
-  gap: 0.55rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid var(--line);
+/* Extruded headline: stacked layers in UV violet, like a printed part */
+.x3d {
+  color: var(--white);
+  text-shadow:
+    1px 1px 0 #7d55e6,
+    2px 2px 0 #6c47d6,
+    3px 3px 0 #7d55e6,
+    4px 4px 0 #5b39c2,
+    5px 5px 0 #6c47d6,
+    6px 6px 0 #4a2ca8,
+    7px 7px 0 #3b2290,
+    8px 8px 18px rgba(155, 107, 255, 0.45);
 }
-.h-rule::before {
-  content: '▸';
-  font-family: var(--mono);
-  font-size: 0.75em;
-  color: var(--pc);
-  flex: none;
+.x3d .hot {
+  color: var(--hot);
+  text-shadow:
+    1px 1px 0 #e08a12,
+    2px 2px 0 #c97606,
+    3px 3px 0 #e08a12,
+    4px 4px 0 #b36500,
+    5px 5px 0 #c97606,
+    6px 6px 0 #9a5500,
+    7px 7px 0 #7f4500,
+    8px 8px 22px rgba(255, 140, 30, 0.5);
 }
 
-/* ---------- buttons: HUD chips ---------- */
+/* Section heading with a short hot "extrusion" underline */
+.h-rule {
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+.h-rule::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--tone), var(--uv));
+  box-shadow: 0 0 14px -2px var(--tone);
+}
+
+/* ---------- buttons ---------- */
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5em;
-  min-height: 44px;
-  padding: 0 1.1rem;
-  border-radius: var(--r-sm);
+  gap: 0.55em;
+  min-height: 48px;
+  padding: 0 1.3rem;
+  border-radius: 12px;
   border: 1px solid var(--line-2);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(26, 22, 40, 0.75);
   color: var(--white);
-  font: 500 0.78rem/1 var(--mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font: 600 0.93rem/1 var(--font);
   text-decoration: none;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    color 0.15s,
-    background 0.15s,
-    box-shadow 0.15s;
+    transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1),
+    box-shadow 0.18s,
+    background 0.18s,
+    border-color 0.18s;
+  box-shadow:
+    0 1px 0 var(--panel-3),
+    0 2px 0 var(--panel-2),
+    0 3px 0 var(--panel-3),
+    0 4px 0 var(--ink-2);
 }
 .btn:hover {
-  border-color: var(--pc);
-  color: var(--pc);
+  border-color: var(--uv-2);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 var(--panel-3),
+    0 2px 0 var(--panel-2),
+    0 3px 0 var(--panel-3),
+    0 4px 0 var(--panel-2),
+    0 5px 0 var(--panel-3),
+    0 6px 0 var(--ink-2);
+}
+.btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink-2);
 }
 .btn--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
-  box-shadow: 0 0 22px -8px var(--accent);
+  background: linear-gradient(180deg, var(--hot-2), var(--hot));
+  border-color: var(--hot);
+  color: var(--hot-ink);
+  box-shadow:
+    0 1px 0 #e08a12,
+    0 2px 0 #c97606,
+    0 3px 0 #e08a12,
+    0 4px 0 #9a5500,
+    0 10px 30px -10px rgba(255, 140, 30, 0.7);
 }
 .btn--primary:hover {
-  background: var(--accent-2);
-  border-color: var(--accent-2);
-  color: var(--accent-ink);
-  box-shadow: 0 0 26px -4px var(--accent);
+  border-color: var(--hot-2);
+  box-shadow:
+    0 1px 0 #e08a12,
+    0 2px 0 #c97606,
+    0 3px 0 #e08a12,
+    0 4px 0 #c97606,
+    0 5px 0 #e08a12,
+    0 6px 0 #9a5500,
+    0 16px 40px -10px rgba(255, 140, 30, 0.8);
 }
 .btn[disabled] {
   opacity: 0.5;
@@ -238,6 +361,20 @@ p {
   width: 100%;
 }
 
+/* ---------- extruded panels: a printed slab with visible layers ---------- */
+.panel,
+.extrude {
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  box-shadow:
+    2px 2px 0 -1px var(--panel-3),
+    4px 4px 0 -1px var(--panel-2),
+    6px 6px 0 -1px var(--panel-3),
+    8px 8px 0 -1px var(--ink-2),
+    8px 8px 0 0 var(--line);
+}
+
 /* Section header row */
 .head {
   display: flex;
@@ -245,30 +382,25 @@ p {
   align-items: end;
   justify-content: space-between;
   gap: 12px 32px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
-.head h2 {
-  margin: 0;
-}
+.head h2,
 .head p {
   margin: 0;
 }
 .head > a:not(.btn) {
-  font: 500 0.72rem var(--mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font: 600 0.85rem var(--font);
   color: var(--text-3);
   text-decoration: none;
 }
 .head > a:not(.btn):hover {
-  color: var(--pc);
+  color: var(--tone);
 }
 
-/* Product grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 26px 22px;
 }
 
 /* ---------- forms ---------- */
@@ -280,7 +412,7 @@ p {
 .field > label,
 .field > legend {
   font: 500 0.7rem/1.3 var(--mono);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-3);
 }
@@ -290,124 +422,111 @@ input[type='number'],
 select,
 textarea {
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border-radius: var(--r-sm);
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 10px;
   border: 1px solid var(--line-2);
-  background: rgba(3, 5, 11, 0.6);
+  background: var(--ink-2);
   color: var(--white);
-  font: 400 0.95rem var(--mono);
+  font: 500 0.95rem var(--font);
 }
 textarea {
   min-height: 120px;
   resize: vertical;
-  font-family: var(--font);
 }
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--pc);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pc) 18%, transparent);
+  border-color: var(--tone);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone) 20%, transparent);
 }
 
-/* ---------- panels: dark glass with a hud edge ---------- */
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-}
 .notice {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--blue);
-  border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  background: color-mix(in srgb, var(--blue) 7%, transparent);
-  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--uv) 40%, transparent);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--uv) 9%, transparent);
+  padding: 13px 15px;
   color: var(--text-2);
   font-size: 0.92rem;
 }
 
 /* =====================================================================
-   Tools (REF·DB .calc): corner brackets in the station colour, a pulsing
-   green dot in the head. Maths lives in src/lib, never in the component.
+   Tools: a slicer window — tab label, a moving "print progress" bar
    ===================================================================== */
 .calc,
 .viz {
   position: relative;
+  background: var(--panel);
   border: 1px solid var(--line-2);
   border-radius: var(--r);
-  background: var(--panel);
-  margin-block: 24px;
-}
-.calc::before,
-.calc::after,
-.viz::before,
-.viz::after {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  border: 2px solid var(--pc);
-  opacity: 0.85;
-}
-.calc::before,
-.viz::before {
-  top: -1px;
-  left: -1px;
-  border-right: 0;
-  border-bottom: 0;
-  border-top-left-radius: var(--r);
-}
-.calc::after,
-.viz::after {
-  bottom: -1px;
-  right: -1px;
-  border-left: 0;
-  border-top: 0;
-  border-bottom-right-radius: var(--r);
+  margin-block: 28px;
+  box-shadow:
+    2px 2px 0 -1px var(--panel-3),
+    4px 4px 0 -1px var(--panel-2),
+    6px 6px 0 -1px var(--panel-3),
+    8px 8px 0 -1px var(--ink-2),
+    8px 8px 0 0 var(--line);
 }
 .calc-head {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--pc) 6%, transparent);
   font: 500 0.7rem/1.4 var(--mono);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-3);
+  overflow: hidden;
   border-radius: var(--r) var(--r) 0 0;
 }
 .calc-head > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--white);
 }
 .calc-head > span:first-child::before {
   content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 0.55rem;
-  vertical-align: 1px;
-  background: var(--ok);
-  box-shadow: 0 0 6px var(--ok);
-  animation: hud-pulse 2.4s ease-in-out infinite;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--tone);
+  box-shadow: 0 0 10px var(--tone);
+}
+.calc-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, var(--tone), transparent);
+  animation: scan 3.2s ease-in-out infinite;
+}
+@keyframes scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
 }
 .calc-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 .calc-body > form {
-  padding: 18px 16px;
+  padding: 20px 18px;
   border-right: 1px solid var(--line);
 }
 .calc-out {
-  padding: 18px 16px;
+  padding: 20px 18px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   align-content: start;
 }
 .calc .row2 {
@@ -425,37 +544,35 @@ textarea:focus {
 }
 .calc input[type='range'] {
   width: 100%;
-  accent-color: var(--pc);
+  accent-color: var(--tone);
   min-height: 32px;
 }
 .calc .range-val {
-  font: 500 0.82rem var(--mono);
+  font: 600 0.85rem var(--mono);
   color: var(--white);
   text-transform: none;
   letter-spacing: 0;
 }
 .big {
-  font: 600 clamp(2rem, 4vw, 2.7rem)/1 var(--mono);
+  font: 700 clamp(2.2rem, 4.5vw, 3rem)/1 var(--display);
   color: var(--white);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.03em;
 }
-/* readout tiles: REF·DB result boxes with a coloured left rule */
 .readout-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 8px;
+  gap: 10px;
   margin: 0;
 }
 .readout-grid div {
   border: 1px solid var(--line);
-  border-left: 2px solid var(--pc);
-  border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--ink-2);
+  padding: 10px 12px;
 }
 .readout-grid dt {
-  font: 500 0.66rem/1.3 var(--mono);
-  letter-spacing: 0.12em;
+  font: 500 0.65rem/1.3 var(--mono);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-3);
 }
@@ -465,7 +582,7 @@ textarea:focus {
   color: var(--white);
 }
 .hint {
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   color: var(--text-3);
   margin: 0;
 }
@@ -480,26 +597,26 @@ textarea:focus {
 }
 
 /* =====================================================================
-   Learn pages (REF·DB topic pages)
+   Learn pages
    ===================================================================== */
 .prose > :not(.wide, .math) {
-  max-width: 72ch;
+  max-width: 70ch;
 }
 .prose h2 {
   margin-top: 2.2em;
-  font-size: clamp(1.4rem, 2.6vw, 1.85rem);
-  display: flex;
-  align-items: baseline;
-  gap: 0.55rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid var(--line);
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  position: relative;
+  padding-bottom: 0.5rem;
 }
-.prose h2::before {
-  content: '▸';
-  font-family: var(--mono);
-  font-size: 0.75em;
-  color: var(--pc);
-  flex: none;
+.prose h2::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 44px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--tone), var(--uv));
 }
 .prose p,
 .prose li {
@@ -509,7 +626,7 @@ textarea:focus {
   color: var(--white);
 }
 .prose a:not(.btn) {
-  color: var(--pc);
+  color: var(--tone);
 }
 .prose ol,
 .prose ul {
@@ -523,33 +640,30 @@ textarea:focus {
   max-width: 100%;
   font: 400 0.88rem/1.75 var(--mono);
   color: var(--white);
-  background: rgba(3, 5, 11, 0.6);
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--pc);
+  background: var(--ink-2);
+  border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
-  padding: 14px 16px;
+  padding: 14px 18px;
   overflow-x: auto;
   white-space: pre;
 }
-/* "At a glance": REF·DB mission cards with a coloured top rule */
 .glance {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
-  margin: 24px 0 8px;
+  gap: 14px;
+  margin: 26px 0 8px;
 }
 .glance > div {
   border: 1px solid var(--line-2);
-  border-top: 2px solid var(--pc);
   border-radius: var(--r-sm);
-  background: rgba(3, 5, 11, 0.5);
-  padding: 14px 16px;
+  background: var(--panel);
+  padding: 15px 17px;
 }
 .glance dt {
-  font: 600 0.72rem/1.3 var(--mono);
-  letter-spacing: 0.14em;
+  font: 500 0.68rem/1.3 var(--mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--pc);
+  color: var(--tone);
   margin-bottom: 6px;
 }
 .glance dd {
@@ -557,20 +671,94 @@ textarea:focus {
   color: var(--text);
 }
 .stops {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--warn);
-  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+  border-radius: var(--r-sm);
   padding: 4px 20px;
   background: color-mix(in srgb, var(--warn) 6%, transparent);
 }
 
 /* =====================================================================
-   Motion: PAUSE MOTION and prefers-reduced-motion stop everything
+   Print-in: sections build up from the bottom in layers when they enter
+   view (only when JS is running, so nothing is ever hidden without it)
+   ===================================================================== */
+html.js [data-print] {
+  clip-path: inset(100% 0 0 0);
+}
+html.js [data-print].printed {
+  animation: print-in 0.9s steps(14, end) forwards;
+}
+@keyframes print-in {
+  from {
+    clip-path: inset(100% -20px -20px -20px);
+  }
+  to {
+    clip-path: inset(-20px -20px -20px -20px);
+  }
+}
+html.js [data-print].printed::before {
+  /* the hot nozzle line riding up as it prints */
+  content: '';
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  height: 2px;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, var(--hot), var(--hot-2), var(--hot), transparent);
+  box-shadow: 0 0 16px 2px rgba(255, 160, 40, 0.8);
+  margin-bottom: -2px;
+  animation: nozzle-up 0.9s steps(14, end) forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes nozzle-up {
+  from {
+    bottom: 0;
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  to {
+    bottom: 100%;
+    opacity: 0;
+  }
+}
+[data-print] {
+  position: relative;
+}
+
+/* ---------- 3D thumbnails fade in over the SVG fallback ---------- */
+[data-thumb] {
+  position: relative;
+}
+[data-thumb] .thumb-3d {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+[data-thumb].thumb-ready .thumb-3d {
+  opacity: 1;
+}
+
+/* =====================================================================
+   Motion off and reduced motion stop everything
    ===================================================================== */
 html.motion-off *,
 html.motion-off *::before,
 html.motion-off *::after {
   animation-play-state: paused !important;
+}
+html.motion-off [data-print],
+html.motion-off [data-print].printed {
+  clip-path: none !important;
+  animation: none !important;
+}
+html.motion-off [data-print]::before {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -578,5 +766,11 @@ html.motion-off *::after {
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+  html.js [data-print] {
+    clip-path: none !important;
+  }
+  html.js [data-print]::before {
+    display: none;
   }
 }
