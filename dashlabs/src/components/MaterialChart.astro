@@ -10,6 +10,7 @@ const keys = Object.keys(RATING_LABELS) as (keyof typeof RATING_LABELS)[];
     {
       MATERIALS.map((m) => (
         <section class="mat">
+          <div class="spool" data-thumb data-shape="spool" data-color={m.hex} />
           <header>
             <h3>{m.name}</h3>
             <span class="tag">{m.short}</span>
@@ -50,6 +51,13 @@ const keys = Object.keys(RATING_LABELS) as (keyof typeof RATING_LABELS)[];
   }
   header {
     margin-bottom: 14px;
+  }
+  .spool {
+    aspect-ratio: 4 / 3;
+    margin: -18px -18px 10px;
+    background: radial-gradient(circle at 50% 60%, rgba(155, 107, 255, 0.16), transparent 65%);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
   }
   h3 {
     margin: 0 0 4px;

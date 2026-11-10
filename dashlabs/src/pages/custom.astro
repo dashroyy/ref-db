@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import StlQuote from '../components/StlQuote.astro';
 import { PRODUCTS } from '../data/catalog.ts';
 import { SITE } from '../data/site.ts';
 import { money } from '../lib/money.ts';
@@ -33,7 +34,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
           <li><span>Something else</span><span class="tag">quoted per job</span></li>
         </ul>
 
-        <p class="muted">Want a ballpark first? Try the <a href="/learn/pricing/">price estimator</a>.</p>
+        <p class="muted">Have a 3D file? <a href="#stl">Get an instant STL quote</a>. Just an idea? Try the <a href="/learn/pricing/">price estimator</a>.</p>
 
         <p class="notice">
           <strong>About photos:</strong> after you send this request, reply to my email with your photos attached. Clear,
@@ -75,6 +76,22 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         <button class="btn btn--primary btn--block" type="submit">Send request</button>
         <p class="muted small">Opens your email app with everything filled in, addressed to {SITE.email}.</p>
       </form>
+    </div>
+  </section>
+
+  <section class="section stl-sec" id="stl">
+    <div class="wrap">
+      <div class="head" data-print>
+        <div>
+          <p class="kicker"><span class="dot"></span>New · instant quote</p>
+          <h2 class="h-rule">Got a 3D file already?</h2>
+        </div>
+        <p class="muted stl-note">
+          Drop your STL to see it printed and get a price from its real volume. Nothing is uploaded: it's measured right
+          here in your browser.
+        </p>
+      </div>
+      <StlQuote />
     </div>
   </section>
 </Base>
@@ -156,6 +173,12 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   }
   .types a {
     text-decoration: none;
+  }
+  .stl-sec {
+    padding-top: 0;
+  }
+  .stl-note {
+    max-width: 30rem;
   }
   .intro .muted a {
     color: var(--accent);

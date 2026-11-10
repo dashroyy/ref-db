@@ -27,6 +27,8 @@ src/data/materials.ts Filament library (typical data-sheet values + your spool p
 src/data/lab.ts       Lab status board on the home page — update by hand.
 src/data/guides.ts    The Learn section's guides, in order.
 src/lib/estimate.ts   Print price estimator maths (and your shop rates — RATES).
+src/lib/mesh.ts       STL measurements: exact volume, surface area, size, watertight check, fits-the-bed.
+src/lib/fly.ts        Fly-to-cart animation and toasts.
 src/lib/launcher.ts   Pen Launcher physics for the Launch lab.
 src/lib/order.ts      Cart → priced order (pure; will also run on the server for checkout).
 src/lib/cart-store.ts Cart saved in the visitor's browser.
@@ -68,7 +70,12 @@ DashLabs is designed as a dark 3D-printer build chamber, lit by a hot amber nozz
     `renderThumbs()` which renders every product card's 3D thumbnail in the browser with one WebGL context.
   - `print.ts`: the printed-plastic material (layer lines, hot fresh-layer glow, silk rainbow) and the procedural
     model for each product `art.shape`.
+  - `stl.ts`: parses an uploaded STL in the browser (never uploaded anywhere) for the **instant STL quote** on
+    `/custom/`, which prices it from its real volume and surface area (`estimateSolid()`), with scale, infill,
+    material and quality, and hands the numbers to the request form.
+  - Extra models: filament spools (materials guide) and a failed "spaghetti" print (404 page).
   Without WebGL, the drawn SVG artwork shows instead.
+- **Slicer preview** in the price estimator: a top-down layer with walls and grid infill that follows the slider.
 - **Menus** (`src/components/Header.astro`): the Shop mega-menu and the phone menu are built from `src/data/nav.ts`,
   so new products appear automatically. Each category's colour is set in `CATEGORIES` in `src/data/catalog.ts`.
 - **Motion**: the pause button in the header (remembered per visitor) and the system "reduce motion" setting stop all

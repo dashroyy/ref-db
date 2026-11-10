@@ -64,6 +64,14 @@ function frameCamera(camera: THREE.PerspectiveCamera, model: THREE.Object3D, asp
 }
 
 export function mountViewer(canvas: HTMLCanvasElement, shape: Shape, color: string) {
+  return mountModel(canvas, buildModel(shape, color));
+}
+
+/**
+ * Show any model (base at y = 0) on the turntable: drag to spin, auto-rotate,
+ * recolour, replay the print, or swap in another model (e.g. an uploaded STL).
+ */
+export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   const t = stage(renderer);
@@ -71,10 +79,15 @@ export function mountViewer(canvas: HTMLCanvasElement, shape: Shape, color: stri
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
   const pivot = new THREE.Group();
   scene.add(pivot);
-  const model = buildModel(shape, color);
-  pivot.add(model);
-  fitDisc(t, model);
-  const height = modelHeight(model);
+  let model = first;
+  let height = 1;
+  const place = (m: THREE.Object3D) => {
+    pivot.add(m);
+    fitDisc(t, m);
+    height = modelHeight(m);
+    frameCamera(camera, m, camera.aspect || 1);
+  };
+  place(model);
 
   const resize = () => {
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -107,6 +120,7 @@ export function mountViewer(canvas: HTMLCanvasElement, shape: Shape, color: stri
   canvas.addEventListener('pointercancel', up);
 
   let printT = -1; // < 0: not printing
+  let printDur = 3.2;
   let clock = 0, last = performance.now(), visible = true;
   new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(canvas);
 
@@ -121,7 +135,7 @@ export function mountViewer(canvas: HTMLCanvasElement, shape: Shape, color: stri
     let cut = 99;
     if (printT >= 0) {
       printT += dt;
-      const p = Math.min(1, printT / 3.2);
+      const p = Math.min(1, printT / printDur);
       cut = Math.ceil((p * height) / LAYER_H) * LAYER_H;
       if (p >= 1) printT = -1;
     }
@@ -142,17 +156,35 @@ export function mountViewer(canvas: HTMLCanvasElement, shape: Shape, color: stri
       setFilament(model, c);
       draw(0);
     },
-    reprint() {
+    reprint(seconds = 3.2) {
+      printDur = seconds;
       printT = 0;
       idle = 0;
+    },
+    replace(next: THREE.Object3D) {
+      pivot.remove(model);
+      model.traverse((o) => (o as THREE.Mesh).geometry?.dispose?.());
+      model = next;
+      place(model);
+      rotY = -0.5;
+      draw(0);
     },
   };
 }
 
+// One shared thumbnail renderer and a cache, so re-rendered lists (the cart)
+// reuse images instead of drawing the same model twice.
+const thumbCache = new Map<string, string>();
+let thumbQueue: HTMLElement[] = [];
+let thumbBusy = false;
+
 /** Render every [data-thumb] element (data-shape, data-color) to an image, once. */
 export function renderThumbs(root: ParentNode = document) {
   const els = [...root.querySelectorAll<HTMLElement>('[data-thumb]:not([data-thumb-done])')];
-  if (!els.length) return;
+  for (const el of els) el.dataset.thumbDone = '';
+  thumbQueue.push(...els);
+  if (thumbBusy || !thumbQueue.length) return;
+  thumbBusy = true;
   const W = 640, H = 480;
   const canvas = document.createElement('canvas');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -161,28 +193,37 @@ export function renderThumbs(root: ParentNode = document) {
   const t = stage(renderer);
   const scene = t.scene;
   const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 50);
-  const work = () => {
-    const el = els.shift();
-    if (!el) {
-      renderer.dispose();
-      return;
-    }
-    const model = buildModel(el.dataset.shape as Shape, el.dataset.color || '#ffab2e');
-    model.rotation.y = -0.55;
-    scene.add(model);
-    fitDisc(t, model);
-    frameCamera(camera, model, W / H, 0.92);
-    setCut(model, 99, 1.3);
-    renderer.render(scene, camera);
+  const show = (el: HTMLElement, src: string) => {
     const img = new Image();
     img.alt = '';
-    img.src = canvas.toDataURL('image/webp', 0.9);
+    img.src = src;
     img.className = 'thumb-3d';
     el.appendChild(img);
-    el.dataset.thumbDone = '';
     requestAnimationFrame(() => el.classList.add('thumb-ready'));
-    scene.remove(model);
-    model.traverse((o) => (o as THREE.Mesh).geometry?.dispose?.());
+  };
+  const work = () => {
+    const el = thumbQueue.shift();
+    if (!el) {
+      renderer.dispose();
+      thumbBusy = false;
+      return;
+    }
+    const key = `${el.dataset.shape}|${el.dataset.color}`;
+    let src = thumbCache.get(key);
+    if (!src) {
+      const model = buildModel(el.dataset.shape as Shape, el.dataset.color || '#ffab2e');
+      model.rotation.y = -0.55;
+      scene.add(model);
+      fitDisc(t, model);
+      frameCamera(camera, model, W / H, 0.92);
+      setCut(model, 99, 1.3);
+      renderer.render(scene, camera);
+      src = canvas.toDataURL('image/webp', 0.9);
+      thumbCache.set(key, src);
+      scene.remove(model);
+      model.traverse((o) => (o as THREE.Mesh).geometry?.dispose?.());
+    }
+    show(el, src);
     (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 16)))(work);
   };
   work();

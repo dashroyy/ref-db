@@ -73,13 +73,26 @@ export const DEFAULT_INPUT: EstimateInput = {
 
 export function estimate(input: EstimateInput, rates = RATES): Estimate {
   const shape = SHAPES.find((s) => s.id === input.shape) ?? SHAPES[0];
-  const quality = QUALITIES.find((q) => q.id === input.quality) ?? QUALITIES[1];
-  const mat = materialById(input.material) ?? materialById('pla')!;
-  const infill = Math.min(1, Math.max(0, input.infill));
-  const qty = Math.max(1, Math.floor(input.qty) || 1);
-
   const volume = Math.max(0, input.w) * Math.max(0, input.d) * Math.max(0, input.h) * shape.factor;
   const area = 6 * Math.pow(volume, 2 / 3); // cm², cube of the same volume
+  return estimateSolid({ volume, area }, input, rates);
+}
+
+/** Settings for pricing a known solid. */
+export type PrintSettings = Pick<EstimateInput, 'material' | 'infill' | 'quality' | 'qty'>;
+
+/**
+ * Price a solid whose volume (cm³) and surface area (cm²) are known, e.g.
+ * measured from an uploaded STL. `estimate()` uses this after guessing both
+ * from the bounding box.
+ */
+export function estimateSolid(solid: { volume: number; area: number }, s: PrintSettings, rates = RATES): Estimate {
+  const quality = QUALITIES.find((q) => q.id === s.quality) ?? QUALITIES[1];
+  const mat = materialById(s.material) ?? materialById('pla')!;
+  const infill = Math.min(1, Math.max(0, s.infill));
+  const qty = Math.max(1, Math.floor(s.qty) || 1);
+  const volume = Math.max(0, solid.volume);
+  const area = Math.max(0, solid.area);
   const shell = Math.min(volume, area * (rates.wallMm / 10));
   const material = shell + (volume - shell) * infill;
   const grams = material * mat.density;

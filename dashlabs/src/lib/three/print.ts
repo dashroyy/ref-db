@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 
-export type Shape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain';
+export type Shape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain' | 'spool' | 'spaghetti';
 
 export const LAYER_H = 0.022; // world units per printed layer
 
@@ -305,6 +305,62 @@ export function buildModel(shape: Shape, color: string): THREE.Group {
       ring.rotation.x = Math.PI / 2;
       add(ring);
       g.rotation.y = 0.3;
+      break;
+    }
+    case 'spool': {
+      // a filament spool lying on its side: dark flanges and hub, wound filament rings
+      const flange = accent('#4b4370');
+      const sp = new THREE.Group();
+      const cyl = (r: number, len: number, m: THREE.Material, x = 0) => {
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 64), m);
+        c.rotation.z = Math.PI / 2;
+        c.position.x = x;
+        return c;
+      };
+      for (const x of [-0.44, 0.44]) sp.add(cyl(0.78, 0.05, flange, x));
+      sp.add(cyl(0.24, 0.92, flange));
+      const wound = printMaterial(color, { layers: false, roughness: 0.4 });
+      sp.add(cyl(0.56, 0.8, wound));
+      for (let i = 0; i < 12; i++) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.585, 0.034, 10, 64), wound);
+        ring.rotation.y = Math.PI / 2;
+        ring.position.x = -0.37 + i * (0.74 / 11);
+        sp.add(ring);
+      }
+      // a loose end of filament curling off the top
+      const tail = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0.1, 0.6, 0.1),
+        new THREE.Vector3(0.3, 0.75, 0.45),
+        new THREE.Vector3(0.65, 0.55, 0.75),
+        new THREE.Vector3(1.0, 0.25, 0.7),
+      ]);
+      sp.add(new THREE.Mesh(new THREE.TubeGeometry(tail, 40, 0.03, 8), wound));
+      sp.position.y = 0.8;
+      // turn the axle across the view (thumbnails look from about 50° round, model turned −0.55)
+      sp.rotation.y = 0.87;
+      add(sp);
+      // dark parts keep their colour when the filament changes
+      sp.traverse((c) => ((c as THREE.Mesh).isMesh && (c as THREE.Mesh).material === flange ? (c.userData.accent = true) : null));
+      break;
+    }
+    case 'spaghetti': {
+      // a failed print: a few good first layers, then a tangle of loose filament
+      add(slab(0.9, 0.9, 0.12, 0.08, mat));
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let k = 0; k < 9; k++) {
+        const pts: THREE.Vector3[] = [];
+        let x = (rnd() - 0.5) * 0.6, y = 0.15, z = (rnd() - 0.5) * 0.6;
+        for (let i = 0; i < 9; i++) {
+          pts.push(new THREE.Vector3(x, y, z));
+          x += (rnd() - 0.5) * 0.7;
+          z += (rnd() - 0.5) * 0.7;
+          y = Math.max(0.05, y + (rnd() - 0.35) * 0.35);
+          x = Math.max(-0.95, Math.min(0.95, x));
+          z = Math.max(-0.95, Math.min(0.95, z));
+        }
+        add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, 0.022, 6), mat));
+      }
       break;
     }
   }

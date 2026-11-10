@@ -63,7 +63,9 @@ import { CHECKOUT_MODE } from '../data/site.ts';
   import { buildOrder } from '../lib/order.ts';
   import { startCheckout } from '../lib/checkout.ts';
   import { money } from '../lib/money.ts';
-  import { productById } from '../data/catalog.ts';
+  import { productById, categoryById } from '../data/catalog.ts';
+  import { webglOK } from '../lib/three/support.ts';
+  const gl = webglOK();
 
   const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const list = $('[data-lines]');
@@ -82,8 +84,11 @@ import { CHECKOUT_MODE } from '../data/site.ts';
         const p = productById(raw.productId);
         const line = buildOrder([raw]).lines[0];
         if (!p || !line) return '';
+        // the thumbnail shows the filament colour that was chosen, when there is one
+        const chosen = p.options.find((o) => o.id === 'colour')?.choices.find((c) => c.id === line.options.colour)?.hex;
+        const tint = chosen ?? categoryById(p.category).color;
         return `<li class="line panel">
-          <div class="dot" style="--h:${p.art.hue}"></div>
+          <div class="dot" style="--h:${p.art.hue}" data-thumb data-shape="${p.art.shape}" data-color="${tint}"></div>
           <div class="meta">
             <a href="/shop/${p.slug}/"><strong>${esc(line.name)}</strong></a>
             <span class="muted">${esc(line.optionsText)}${line.note ? ` · “${esc(line.note)}”` : ''}</span>
@@ -98,6 +103,7 @@ import { CHECKOUT_MODE } from '../data/site.ts';
         </li>`;
       })
       .join('');
+    if (gl) import('../lib/three/viewer.ts').then((m) => m.renderThumbs(list));
   }
 
   list.addEventListener('click', (e) => {
@@ -156,18 +162,23 @@ import { CHECKOUT_MODE } from '../data/site.ts';
   }
   :global(.line) {
     display: grid;
-    grid-template-columns: 52px 1fr auto auto;
+    grid-template-columns: 72px 1fr auto auto;
     gap: 16px;
     align-items: center;
     padding: 16px;
   }
   :global(.line .dot) {
-    width: 52px;
-    height: 52px;
-    border-radius: 10px;
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
     background:
       var(--layers),
-      hsl(var(--h) 85% 58%);
+      hsl(var(--h) 70% 45%);
+  }
+  :global(.line .dot.thumb-ready) {
+    background: var(--ink-2);
   }
   :global(.line .meta) {
     display: grid;
@@ -240,11 +251,11 @@ import { CHECKOUT_MODE } from '../data/site.ts';
   }
   @media (max-width: 520px) {
     :global(.line) {
-      grid-template-columns: 44px 1fr auto;
+      grid-template-columns: 56px 1fr auto;
     }
     :global(.line .dot) {
-      width: 44px;
-      height: 44px;
+      width: 56px;
+      height: 56px;
     }
     :global(.line .qty) {
       grid-column: 2;

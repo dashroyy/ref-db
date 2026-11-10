@@ -36,6 +36,18 @@ import { MATERIALS } from '../data/materials.ts';
         <input id="e-inf" name="infill" type="range" min="0" max="100" step="5" value={D.infill * 100} />
       </div>
       <p class="hint">Infill is how solid the inside is. 15% is plenty for display pieces; 40%+ for parts that take a beating.</p>
+      <figure class="slice">
+        <svg viewBox="0 0 200 200" data-slice role="img" aria-label="Top-down preview of one printed layer: walls and infill">
+          <defs><clipPath id="slice-clip"><path data-clip></path></clipPath></defs>
+          <g class="infill" clip-path="url(#slice-clip)" data-infill></g>
+          <g data-walls></g>
+          <circle r="4" class="nozzle" data-nozzle></circle>
+        </svg>
+        <figcaption>
+          <span class="tag">Slicer preview</span>
+          <span data-layer-info>—</span>
+        </figcaption>
+      </figure>
     </form>
 
     <div class="calc-out" aria-live="polite">
@@ -65,6 +77,60 @@ import { MATERIALS } from '../data/materials.ts';
   import { materialById, type MaterialId } from '../data/materials.ts';
 
   const COLORS = ['var(--accent)', 'var(--accent-2)', '#7b808c', '#4a4f5b'];
+
+  // Slicer preview: the part outline for the chosen shape, three wall
+  // perimeters, and grid infill whose spacing follows the infill density.
+  const OUTLINES: Record<string, string> = {
+    block: 'M34 40 H166 Q180 40 180 54 V146 Q180 160 166 160 H34 Q20 160 20 146 V54 Q20 40 34 40 Z',
+    organic: 'M100 22 C150 22 180 60 176 100 C172 150 140 180 98 178 C52 176 22 146 24 100 C26 54 54 22 100 22 Z',
+    thin: 'M80 18 H120 V80 H182 V120 H120 V182 H80 V120 H18 V80 H80 Z',
+    flat: 'M22 62 H178 Q190 62 190 74 V126 Q190 138 178 138 H22 Q10 138 10 126 V74 Q10 62 22 62 Z',
+  };
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function drawSlice(shape: string, infill: number, quality: string, hCm: number) {
+    for (const root of document.querySelectorAll<SVGSVGElement>('[data-slice]')) {
+      const d = OUTLINES[shape] ?? OUTLINES.block;
+      const walls = root.querySelector('[data-walls]')!;
+      walls.innerHTML = '';
+      [1, 0.94, 0.88].forEach((k, i) => {
+        const p = document.createElementNS(svgNS, 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('transform', `translate(${100 - 100 * k} ${100 - 100 * k}) scale(${k})`);
+        p.setAttribute('class', i === 0 ? 'wall outer' : 'wall');
+        walls.appendChild(p);
+      });
+      const clip = root.querySelector('[data-clip]')!;
+      clip.setAttribute('d', d);
+      clip.setAttribute('transform', 'translate(14 14) scale(0.86)');
+      const g = root.querySelector('[data-infill]')!;
+      g.innerHTML = '';
+      if (infill >= 0.98) {
+        const r = document.createElementNS(svgNS, 'rect');
+        r.setAttribute('width', '200');
+        r.setAttribute('height', '200');
+        r.setAttribute('class', 'solid');
+        g.appendChild(r);
+      } else if (infill > 0) {
+        const step = Math.max(4.4, (2 * 2.2) / infill); // grid: two line sets
+        for (let o = -200; o < 400; o += step) {
+          for (const dir of [1, -1]) {
+            const l = document.createElementNS(svgNS, 'line');
+            l.setAttribute('x1', String(o));
+            l.setAttribute('y1', dir > 0 ? '0' : '200');
+            l.setAttribute('x2', String(o + 200));
+            l.setAttribute('y2', dir > 0 ? '200' : '0');
+            g.appendChild(l);
+          }
+        }
+      }
+      const noz = root.querySelector<SVGCircleElement>('[data-nozzle]')!;
+      noz.style.setProperty('offset-path', `path('${d}')`);
+      const q = QUALITIES.find((x) => x.id === quality)!;
+      const layers = Math.max(1, Math.round((hCm * 10) / q.layerMm));
+      const info = root.closest('.slice')!.querySelector('[data-layer-info]')!;
+      info.textContent = `Layer ${Math.round(layers / 2)} of ${layers} · ${q.layerMm.toFixed(2)} mm · ${Math.round(infill * 100)}% grid`;
+    }
+  }
 
   for (const root of document.querySelectorAll<HTMLElement>('[data-estimator]')) {
     const form = root.querySelector<HTMLFormElement>('[data-form]')!;
@@ -105,6 +171,7 @@ import { MATERIALS } from '../data/materials.ts';
         .map(([n, v], i) => `<li><i style="background:${COLORS[i]}"></i>${n}<b>${usd(v)}</b></li>`)
         .join('');
 
+      drawSlice(input.shape, input.infill, input.quality, input.h);
       const shape = SHAPES.find((s) => s.id === input.shape)!.label;
       const q = QUALITIES.find((x) => x.id === input.quality)!.label;
       const details =
@@ -119,6 +186,64 @@ import { MATERIALS } from '../data/materials.ts';
 </script>
 
 <style>
+  .slice {
+    margin: 14px 0 0;
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--ink-2);
+  }
+  .slice svg {
+    width: 150px;
+    height: 150px;
+    overflow: visible;
+  }
+  .slice figcaption {
+    display: grid;
+    gap: 6px;
+    font: 500 0.8rem var(--mono);
+    color: var(--text-2);
+  }
+  .slice :global(.wall) {
+    fill: none;
+    stroke: var(--uv-2);
+    stroke-width: 2.4;
+    vector-effect: non-scaling-stroke;
+  }
+  .slice :global(.wall.outer) {
+    stroke: var(--hot);
+  }
+  .slice :global(.infill line) {
+    stroke: color-mix(in srgb, var(--hot) 70%, transparent);
+    stroke-width: 1.6;
+  }
+  .slice :global(.infill .solid) {
+    fill: color-mix(in srgb, var(--hot) 70%, transparent);
+  }
+  .nozzle {
+    fill: #fff3d6;
+    filter: drop-shadow(0 0 4px var(--hot)) drop-shadow(0 0 8px var(--hot));
+    offset-rotate: 0deg;
+    animation: trace 5s linear infinite;
+  }
+  @keyframes trace {
+    from {
+      offset-distance: 0%;
+    }
+    to {
+      offset-distance: 100%;
+    }
+  }
+  @media (max-width: 420px) {
+    .slice {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+  }
   .bar {
     display: flex;
     height: 14px;

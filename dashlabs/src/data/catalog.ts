@@ -116,7 +116,7 @@ export interface Product {
 
 export type ArtShape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain';
 
-const COLOURS: ProductOption = {
+export const COLOURS: ProductOption = {
   id: 'colour',
   label: 'Filament colour',
   choices: [

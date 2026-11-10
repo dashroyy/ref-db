@@ -200,6 +200,7 @@ const sourceLabel =
 
 <script>
   import { addToCart } from '../../lib/cart-store.ts';
+  import { flyToCart, toast } from '../../lib/fly.ts';
   import { money } from '../../lib/money.ts';
 
   const form = document.querySelector<HTMLFormElement>('[data-buy]')!;
@@ -233,13 +234,21 @@ const sourceLabel =
       return;
     }
     const data = new FormData(form);
-    addToCart({
+    const line = {
       productId: form.dataset.product!,
       options: opts,
-      qty: Number(data.get("quantity")) || 1,
+      qty: Number(data.get('quantity')) || 1,
       note: (data.get('note') as string | null)?.trim() || undefined,
+    };
+    const button = form.querySelector('button[type="submit"]')!;
+    const tone = getComputedStyle(document.documentElement).getPropertyValue('--tone').trim() || '#ffab2e';
+    const name = document.querySelector('h1')?.textContent?.trim() ?? 'Item';
+    // the cube lands, then the cart updates (and bumps)
+    flyToCart(button, tone).then(() => {
+      addToCart(line);
+      added.hidden = false;
+      toast(`<span class="t-cube"></span><span><b>${name.replace(/</g, '&lt;')}</b> added to your cart</span><a href="/cart/">View cart →</a>`);
     });
-    added.hidden = false;
   });
 </script>
 
