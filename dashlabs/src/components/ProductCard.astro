@@ -60,6 +60,7 @@ const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
 <style>
   .card-wrap {
     position: relative;
+    display: flex; /* cards in a row share one height */
   }
   .save {
     position: absolute;
@@ -107,6 +108,8 @@ const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
   }
   .card {
     display: block;
+    flex: 1;
+    min-width: 0;
     text-decoration: none;
     perspective: 900px;
   }

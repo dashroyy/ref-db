@@ -8,11 +8,12 @@ import { categoryById } from '../data/catalog.ts';
 
 interface Props {
   product: Product;
+  color?: string; // starting filament colour (showcases); product pages start on the first option
 }
-const { product: p } = Astro.props;
+const { product: p, color } = Astro.props;
 const colours = p.options.find((o) => o.id === 'colour');
 const hexes = Object.fromEntries((colours?.choices ?? []).map((c) => [c.id, c.hex ?? categoryById(p.category).color]));
-const start = colours?.choices[0]?.hex ?? categoryById(p.category).color;
+const start = color ?? colours?.choices[0]?.hex ?? categoryById(p.category).color;
 const textHexes = Object.fromEntries((p.options.find((o) => o.id === 'textColour')?.choices ?? []).map((c) => [c.id, c.hex]));
 const firstText = Object.values(textHexes)[0] ?? '#ece6da';
 const size = p.size;

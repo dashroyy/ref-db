@@ -54,9 +54,11 @@ const ticker = [
   </section>
 
   <!-- TICKER -->
-  <div class="ticker" aria-hidden="true">
-    <div class="track">
-      {[0, 1].map(() => ticker.map((t) => <span>{t}<i /></span>))}
+  <div class="ticker-clip">
+    <div class="ticker" aria-hidden="true">
+      <div class="track">
+        {[0, 1].map(() => ticker.map((t) => <span>{t}<i /></span>))}
+      </div>
     </div>
   </div>
 
@@ -116,7 +118,7 @@ const ticker = [
   <section class="section">
     <div class="wrap spot" style="--tone:#ffab2e">
       <div class="spot-3d">
-        <ModelViewer product={launcher} />
+        <ModelViewer product={launcher} color="#ff8a1f" />
       </div>
       <div class="spot-copy" data-print>
         <p class="kicker"><span class="dot"></span>DashLabs original</p>
@@ -250,6 +252,12 @@ const ticker = [
   }
 
   /* ticker */
+  /* the tilted band is wider than the page: clip it so the page never scrolls sideways */
+  .ticker-clip {
+    overflow: clip;
+    padding-block: 14px;
+    margin-block: -14px;
+  }
   .ticker {
     overflow: hidden;
     border-block: 1px solid var(--line);

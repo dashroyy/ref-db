@@ -58,7 +58,9 @@ tests/                Catalog rules and pricing/cart tests.
       `SITE_URL=https://your-domain.com npm run build`.
 - [ ] Set real sizes (`size` in `src/data/catalog.ts`) for the Pen Launcher, cable dock and keychain. They're marked
       `placeholder: true` and show as "≈" in the Real size view until you do.
-- [ ] Read through the FAQ/policies (`src/pages/faq.astro`) and adapt the refund and shipping wording.
+- [ ] Review the draft policies (`src/pages/policies.astro`) and the FAQ, then remove the "Draft" notice.
+- [ ] Write the maker's note on the About page (`src/pages/about.astro`).
+- [ ] After changing products, models or category colours, run `npm run thumbs` to re-render the thumbnails.
 
 ## Look and feel: the print chamber
 
@@ -121,6 +123,11 @@ The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate
 - **Flow**: order and custom requests open a "ready to send" dialog (open email app, copy message, copy address);
   the cart has remove with undo and suggestions when empty; phones get a sticky buy bar on product pages; guides end
   with a next step; a "got an idea?" band sits above the footer; pages cross-fade.
+- **Thumbnails**: product, category and spool images are pre-rendered 3D (`public/thumbs/`, listed in
+  `src/data/thumbs.json`). `npm run thumbs` rebuilds them with the site's own 3D code (needs Playwright). A product
+  without one is rendered in the visitor's browser, so nothing breaks if you forget.
+- **Gift finder** (`/gifts/`, logic and tags in `src/lib/gifts.ts`), **policies** (`/policies/`) and **About**
+  (`/about/`).
 - **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
   `src/components/Search.astro`, so new products are searchable automatically.
 - **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page
