@@ -10,6 +10,7 @@ import { GUIDES } from '../data/guides.ts';
 import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
 import { MATERIALS } from '../data/materials.ts';
 import { money } from '../lib/money.ts';
+import { thumbSrc } from '../data/thumbs.ts';
 
 const featured = PRODUCTS.filter((p) => p.featured);
 const launcher = productById('orig-pen-launcher')!;
@@ -74,8 +75,12 @@ const ticker = [
             return (
               <a class="cat" href={`/shop/?c=${c.id}`} style={`--c:${c.color}`} data-tilt data-print>
                 <div class="cat-slab">
-                  <div class="cat-art" data-thumb data-shape={p.art.shape} data-color={c.color}>
-                    <ProductArt shape={p.art.shape} hue={p.art.hue} uid={`cat-${c.id}`} label={c.label} />
+                  <div class="cat-art" data-thumb={thumbSrc(p.art.shape, c.color) ? undefined : ''} data-shape={p.art.shape} data-color={c.color}>
+                    {thumbSrc(p.art.shape, c.color) ? (
+                      <img class="thumb-3d thumb-static" src={thumbSrc(p.art.shape, c.color)} alt="" width="640" height="480" loading="lazy" decoding="async" />
+                    ) : (
+                      <ProductArt shape={p.art.shape} hue={p.art.hue} uid={`cat-${c.id}`} label={c.label} />
+                    )}
                   </div>
                   <div class="cat-txt">
                     <span class="tag">

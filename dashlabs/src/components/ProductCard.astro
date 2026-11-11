@@ -5,6 +5,7 @@
 import ProductArt from './ProductArt.astro';
 import { categoryById, productCode, type Product } from '../data/catalog.ts';
 import { money } from '../lib/money.ts';
+import { thumbSrc } from '../data/thumbs.ts';
 
 interface Props {
   product: Product;
@@ -15,13 +16,22 @@ const H = level === 2 ? 'h2' : 'h3';
 const cat = categoryById(p.category);
 const image = p.images?.[0];
 const filament = cat.color;
+const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
 ---
 
 <div class="card-wrap" data-category={p.category} data-product={p.id} data-price={p.price} data-name={p.name} style={`--c:${cat.color}`}>
 <a href={`/shop/${p.slug}/`} class="card" data-tilt>
   <div class="slab">
-    <div class="media" data-thumb={image ? undefined : ''} data-shape={p.art.shape} data-color={filament}>
-      {image ? <img src={image} alt={p.name} loading="lazy" /> : <ProductArt shape={p.art.shape} hue={p.art.hue} uid={p.id} label={p.name} />}
+    <div class="media" data-thumb={image || thumb ? undefined : ''} data-shape={p.art.shape} data-color={filament}>
+      {
+        image ? (
+          <img src={image} alt={p.name} loading="lazy" />
+        ) : thumb ? (
+          <img class="thumb-3d thumb-static" src={thumb} alt="" width="640" height="480" loading="lazy" decoding="async" />
+        ) : (
+          <ProductArt shape={p.art.shape} hue={p.art.hue} uid={p.id} label={p.name} />
+        )
+      }
       <span class="sku">{productCode(p)}</span>
       {p.purchase === 'quote' && <span class="badge">Custom quote</span>}
     </div>

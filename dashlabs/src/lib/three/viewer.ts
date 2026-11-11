@@ -4,6 +4,7 @@
 
 import * as THREE from 'three';
 import { scaleProps } from './scale.ts';
+import { governor } from './support.ts';
 import { buildModel, setCut, setFilament, setLook, modelHeight, calm, LAYER_H, type Shape } from './print.ts';
 
 function stage(renderer: THREE.WebGLRenderer) {
@@ -167,10 +168,20 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
     setCut(model, cut, clock);
     renderer.render(scene, camera);
   };
+  const gov = governor(renderer);
+  let owed = 0;
   const loop = (now: number) => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (visible && !document.hidden && (!calm() || dragging || printT >= 0 || faceTo !== null || Math.abs(vel) > 1e-4)) draw(dt);
+    if (visible && !document.hidden && (!calm() || dragging || printT >= 0 || faceTo !== null || Math.abs(vel) > 1e-4)) {
+      owed += dt;
+      if (dragging || !gov.skip()) {
+        const t0 = performance.now();
+        draw(Math.min(0.1, owed));
+        owed = 0;
+        gov.tick(performance.now() - t0);
+      }
+    }
     requestAnimationFrame(loop);
   };
   draw(0);
@@ -265,6 +276,12 @@ export function renderThumbs(root: ParentNode = document) {
   renderer.setSize(W, H, false);
   const t = stage(renderer);
   const scene = t.scene;
+  // thumbnails are theme-independent: no turntable, just the part and its shadow on transparency
+  t.disc.visible = t.ring.visible = false;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: 0.38 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
   const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 50);
   const show = (el: HTMLElement, src: string) => {
     const img = new Image();
@@ -293,8 +310,7 @@ export function renderThumbs(root: ParentNode = document) {
       }
       model.rotation.y = -0.55;
       scene.add(model);
-      fitDisc(t, model);
-      frameCamera(camera, model, W / H, 0.92);
+      frameCamera(camera, model, W / H, 0.86);
       setCut(model, 99, 1.3);
       renderer.render(scene, camera);
       src = canvas.toDataURL('image/webp', 0.9);
@@ -303,7 +319,9 @@ export function renderThumbs(root: ParentNode = document) {
       model.traverse((o) => (o as THREE.Mesh).geometry?.dispose?.());
     }
     show(el, src);
-    (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 16)))(() => void work());
+    // idle time when there is some, but never starved by a busy page (e.g. the hero animation)
+    if ('requestIdleCallback' in window) requestIdleCallback(() => void work(), { timeout: 250 });
+    else setTimeout(() => void work(), 16);
   };
   void work();
 }

@@ -3,12 +3,13 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "description": "DashLabs — 3D printing portfolio and made-to-order shop.",
+  "description": "DashLabs \u2014 3D printing portfolio and made-to-order shop.",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "node --test tests/*.test.ts"
+    "test": "node --test tests/*.test.ts",
+    "thumbs": "node scripts/render-thumbs.mjs"
   },
   "dependencies": {
     "@astrojs/netlify": "^8.2.13",

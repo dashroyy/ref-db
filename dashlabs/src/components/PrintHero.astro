@@ -55,7 +55,8 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
       $('[data-fallback]').hidden = false;
       el.classList.add('no-gl');
     } else {
-      import('../lib/three/hero.ts').then(({ mountHero }) => {
+      // start once the page itself has loaded and the browser has a quiet moment
+      const start = () => import('../lib/three/hero.ts').then(({ mountHero }) => {
         const jobs = [...el.querySelectorAll<HTMLButtonElement>('[data-job]')];
         const hero = mountHero(el.querySelector('canvas')!, (s) => {
           jobs.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.job) === s.index)));
@@ -70,6 +71,9 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
         jobs.forEach((b) => b.addEventListener('click', () => hero.printNow(Number(b.dataset.job))));
         $('[data-pick]').hidden = false;
       });
+      const whenIdle = () => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 1200 }) : setTimeout(start, 300));
+      if (document.readyState === 'complete') whenIdle();
+      else addEventListener('load', whenIdle, { once: true });
     }
   }
 </script>

@@ -5,6 +5,7 @@
 
 import * as THREE from 'three';
 import { buildModel, setCut, modelHeight, calm, LAYER_H, type Shape } from './print.ts';
+import { governor } from './support.ts';
 
 export interface HeroStatus {
   index: number; // position in HERO_QUEUE
@@ -322,10 +323,20 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
 
   let visible = true;
   new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(canvas);
+  const gov = governor(renderer);
+  let owed = 0;
   const loop = (now: number) => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (visible && !document.hidden && !calm()) frame(dt);
+    if (visible && !document.hidden && !calm()) {
+      owed += dt;
+      if (!gov.skip()) {
+        const t0 = performance.now();
+        frame(Math.min(0.1, owed));
+        owed = 0;
+        gov.tick(performance.now() - t0);
+      }
+    }
     requestAnimationFrame(loop);
   };
   if (calm()) still();
