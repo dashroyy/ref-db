@@ -15,6 +15,7 @@ const hexes = Object.fromEntries((colours?.choices ?? []).map((c) => [c.id, c.he
 const start = colours?.choices[0]?.hex ?? categoryById(p.category).color;
 const textHexes = Object.fromEntries((p.options.find((o) => o.id === 'textColour')?.choices ?? []).map((c) => [c.id, c.hex]));
 const firstText = Object.values(textHexes)[0] ?? '#ece6da';
+const size = p.size;
 ---
 
 <div
@@ -26,6 +27,7 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
   data-personalise={p.personalise ? p.personalise.max : undefined}
   data-text-hexes={JSON.stringify(textHexes)}
   data-text-color={firstText}
+  data-size={size ? JSON.stringify(size) : undefined}
 >
   <canvas data-canvas aria-label={`3D model of ${p.name}. Drag to rotate.`} role="img"></canvas>
   <div class="fallback" data-fallback><ProductArt shape={p.art.shape} hue={p.art.hue} uid={`v-${p.id}`} label={p.name} /></div>
@@ -35,6 +37,14 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
   </label>
   <div class="controls">
     <span class="hint-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg>Drag to spin</span>
+    {
+      size && (
+        <button type="button" class="reprint size-btn" data-size-btn aria-pressed="false" title={size.placeholder ? 'Approximate size' : undefined}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z"></path><path d="m7 13 2 2M10 10l2 2M13 7l2 2"></path></svg>
+          <span data-size-label>Real size</span>
+        </button>
+      )
+    }
     <button type="button" class="reprint" data-reprint>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
       Watch it print
@@ -62,6 +72,33 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
         read.textContent = 'all';
         v.reprint();
       });
+
+      // Real size: ruler + bank card beside the model, following the size option
+      const sizeBtn = el.querySelector<HTMLButtonElement>('[data-size-btn]');
+      if (sizeBtn && el.dataset.size) {
+        const sz = JSON.parse(el.dataset.size) as { mm: number; axis: 'height' | 'length'; byOption?: { option: string; mm: Record<string, number> }; placeholder?: boolean };
+        const label = el.querySelector<HTMLElement>('[data-size-label]')!;
+        const currentMm = () => {
+          if (!sz.byOption) return sz.mm;
+          const chosen = document.querySelector<HTMLInputElement>(`input[name="${sz.byOption.option}"]:checked`);
+          return (chosen && sz.byOption.mm[chosen.value]) || sz.mm;
+        };
+        let on = false;
+        const apply = () => {
+          const mm = currentMm();
+          v.showScale(on ? { mm, axis: sz.axis } : null);
+          sizeBtn.setAttribute('aria-pressed', String(on));
+          const word = sz.axis === 'height' ? 'tall' : 'long';
+          label.textContent = on ? `${sz.placeholder ? '≈' : ''}${mm} mm ${word}` : 'Real size';
+          el.querySelector<HTMLElement>('.label')!.textContent = on
+            ? `Real-size view · ruler in cm · bank card for scale${sz.placeholder ? ' · size approximate' : ''}`
+            : 'Preview · not to scale · colours approximate';
+        };
+        sizeBtn.addEventListener('click', () => ((on = !on), apply()));
+        if (sz.byOption) {
+          document.querySelectorAll<HTMLInputElement>(`input[name="${sz.byOption.option}"]`).forEach((i) => i.addEventListener('change', () => on && apply()));
+        }
+      }
 
       // Layer scrubber: slice through the part like a slicer preview
       const scrub = el.querySelector<HTMLInputElement>('[data-layer-scrub]')!;
@@ -156,6 +193,7 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
     bottom: 14px;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 8px;
     pointer-events: none;
   }
@@ -167,7 +205,7 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
     padding: 8px 12px;
     border-radius: 999px;
     border: 1px solid var(--line-2);
-    background: rgba(13, 11, 21, 0.8);
+    background: var(--overlay);
     backdrop-filter: blur(6px);
     font: 600 0.78rem var(--font);
     color: var(--text-2);
@@ -176,6 +214,10 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
     pointer-events: auto;
     cursor: pointer;
     color: var(--white);
+  }
+  .size-btn[aria-pressed='true'] {
+    border-color: var(--mint);
+    color: var(--mint);
   }
   .reprint:hover {
     border-color: var(--hot);
@@ -195,7 +237,7 @@ const firstText = Object.values(textHexes)[0] ?? '#ece6da';
     padding: 8px 12px;
     border-radius: 12px;
     border: 1px solid var(--line-2);
-    background: rgba(13, 11, 21, 0.8);
+    background: var(--overlay);
     backdrop-filter: blur(6px);
   }
   .scrub-lbl {

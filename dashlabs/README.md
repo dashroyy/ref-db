@@ -55,6 +55,8 @@ tests/                Catalog rules and pricing/cart tests.
       (update the worked example in the guide and its test too).
 - [ ] Build with your real address so links, the sitemap and share previews are correct:
       `SITE_URL=https://your-domain.com npm run build`.
+- [ ] Set real sizes (`size` in `src/data/catalog.ts`) for the Pen Launcher, cable dock and keychain. They're marked
+      `placeholder: true` and show as "≈" in the Real size view until you do.
 - [ ] Read through the FAQ/policies (`src/pages/faq.astro`) and adapt the refund and shipping wording.
 
 ## Look and feel: the print chamber
@@ -105,6 +107,13 @@ The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate
   (see the Name keychain and business cards). Customers type their text and see it as raised 3D letters on the model,
   in the text colour they pick; the text is saved on the cart line. Models mark where text goes with a `text-anchor`
   in `src/lib/three/print.ts`. The 3D font is Helvetiker Bold (`public/fonts/`, MgOpen licence included).
+- **Real size view**: the "Real size" button on a product's 3D viewer adds a centimetre ruler and a bank card
+  (85.6 × 54 mm) at true scale, following the size option (`size` in the catalog; `src/lib/three/scale.ts`).
+- **Saved for later**: hearts on cards and product pages, a count in the header, and `/saved/`. Kept in the visitor's
+  browser (`src/lib/saved-store.ts`); no account needed.
+- **Day shift / Night shift**: the sun/moon button switches to a light theme (remembered). Colours are tokens in
+  `src/styles/global.css` (`:root[data-theme='light']`); the 3D turntable follows the theme. Both themes pass an axe
+  accessibility audit.
 - **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
   `src/components/Search.astro`, so new products are searchable automatically.
 - **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page

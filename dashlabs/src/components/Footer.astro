@@ -48,7 +48,7 @@ const socials = Object.entries(SITE.social).filter(([, url]) => url);
     border-top: 1px solid var(--line);
     background:
       radial-gradient(70vw 40vh at 50% 120%, rgba(155, 107, 255, 0.18), transparent 70%),
-      linear-gradient(to bottom, transparent, rgba(8, 7, 13, 0.9) 30%);
+      linear-gradient(to bottom, transparent, var(--footer-fade) 30%);
   }
   .sign p:first-child {
     font: 700 clamp(2.6rem, 9vw, 6.5rem) / 1 var(--display);

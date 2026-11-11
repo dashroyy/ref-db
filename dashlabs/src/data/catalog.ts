@@ -111,6 +111,10 @@ export interface Product {
   images?: string[]; // later: paths under /public/products/
   stripePriceId?: string; // later: optional link to a Stripe Price
   tool?: 'launch-lab'; // an interactive tool shown on the product page
+  // Real size of the part's longest dimension along `axis`, in mm, for the 3D
+  // scale view (ruler + bank card). `byOption` gives sizes per choice of a size
+  // option. `placeholder: true` marks a guess you should replace with the real size.
+  size?: { mm: number; axis: 'height' | 'length'; byOption?: { option: string; mm: Record<string, number> }; placeholder?: boolean };
   // Customer text printed on the part, shown live in 3D on the product page.
   // Saved on the cart line as its note. Pair with a 'textColour' option.
   personalise?: { label: string; max: number; placeholder: string; required?: boolean };
@@ -183,6 +187,7 @@ export const PRODUCTS: Product[] = [
     leadTimeDays: [7, 14],
     source: { kind: 'commission' },
     featured: true,
+    size: { mm: 80, axis: 'height', byOption: { option: 'size', mm: { '8cm': 80, '12cm': 120, '18cm': 180 } } },
     art: { hue: 24, shape: 'bust' },
   },
   {
@@ -224,6 +229,7 @@ export const PRODUCTS: Product[] = [
     leadTimeDays: [7, 14],
     source: { kind: 'commission' },
     featured: true,
+    size: { mm: 60, axis: 'height', byOption: { option: 'size', mm: { small: 60, medium: 100, large: 150 } } },
     art: { hue: 200, shape: 'paw' },
   },
   {
@@ -247,6 +253,7 @@ export const PRODUCTS: Product[] = [
     ],
     source: { kind: 'original' },
     featured: true,
+    size: { mm: 160, axis: 'length', placeholder: true },
     art: { hue: 24, shape: 'launcher' },
     tool: 'launch-lab',
     guide: 'pen-launcher-physics',
@@ -293,6 +300,7 @@ export const PRODUCTS: Product[] = [
     leadTimeDays: [4, 8],
     source: { kind: 'original' },
     featured: true,
+    size: { mm: 85, axis: 'length' },
     art: { hue: 160, shape: 'card' },
   },
   {
@@ -307,6 +315,7 @@ export const PRODUCTS: Product[] = [
     options: [COLOURS],
     specs: [{ label: 'Slots', value: '5' }],
     source: { kind: 'original' },
+    size: { mm: 120, axis: 'length', placeholder: true },
     art: { hue: 260, shape: 'organizer' },
   },
   // ── Made to order ─────────────────────────────────────────────────────────
@@ -344,6 +353,7 @@ export const PRODUCTS: Product[] = [
       url: 'https://makerworld.com/',
       licence: 'EXAMPLE — MakerWorld Commercial License',
     },
+    size: { mm: 200, axis: 'length', byOption: { option: 'size', mm: { '20': 200, '35': 350 } } },
     art: { hue: 340, shape: 'dragon' },
   },
   {
@@ -365,6 +375,7 @@ export const PRODUCTS: Product[] = [
       url: 'https://makerworld.com/',
       licence: 'EXAMPLE — MakerWorld Commercial License',
     },
+    size: { mm: 200, axis: 'height' },
     art: { hue: 50, shape: 'vase' },
   },
   {
@@ -382,6 +393,7 @@ export const PRODUCTS: Product[] = [
     personalise: { label: 'Your text', max: 12, placeholder: 'e.g. DASH', required: true },
     specs: [{ label: 'Text', value: 'Up to 12 characters' }],
     source: { kind: 'original' },
+    size: { mm: 60, axis: 'length', placeholder: true },
     art: { hue: 120, shape: 'keychain' },
   },
 ];

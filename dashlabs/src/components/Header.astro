@@ -37,6 +37,15 @@ const inShop = path.startsWith('/shop');
         <svg class="i-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
         <span class="sr-only" data-motion-label>Pause animation</span>
       </button>
+      <button type="button" class="icon-btn theme-btn" data-theme-switch aria-pressed="false" title="Switch to Day shift (light)">
+        <svg class="i-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path></svg>
+        <svg class="i-moon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"></path></svg>
+        <span class="sr-only" data-theme-label>Switch to light theme</span>
+      </button>
+      <a href="/saved/" class="saved-link" title="Saved for later">
+        <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4 7.4 4c2 0 3.6 1.1 4.6 2.7C13 5.1 14.6 4 16.6 4c3.5 0 5.8 3.6 4.6 7.1-1.7 4.8-9.2 9.4-9.2 9.4z"></path></svg>
+        <span class="sr-only">Saved, </span><span class="count" data-saved-count>0</span><span class="sr-only"> items</span>
+      </a>
       <a href="/cart/" class="cart">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"
           ><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"></path><circle cx="10" cy="20.5" r="1.3"
@@ -91,8 +100,13 @@ const inShop = path.startsWith('/shop');
   <nav aria-label="Mobile">
     <a href="/shop/" style="--i:0">Shop all</a>
     {MAIN_LINKS.map((l, i) => <a href={l.href} style={`--i:${i + 1}`}>{l.label}</a>)}
-    <a href="/cart/" style={`--i:${MAIN_LINKS.length + 1}`}>Cart</a>
+    <a href="/saved/" style={`--i:${MAIN_LINKS.length + 1}`}>Saved</a>
+    <a href="/cart/" style={`--i:${MAIN_LINKS.length + 2}`}>Cart</a>
   </nav>
+  <div class="m-toggles">
+    <button type="button" class="m-toggle" data-theme-switch aria-pressed="false"><svg class="i-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path></svg><svg class="i-moon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"></path></svg><span data-theme-word>Day shift</span></button>
+    <button type="button" class="m-toggle" data-motion-switch aria-pressed="false"><span data-motion-label>Pause animation</span></button>
+  </div>
   <div class="m-groups">
     {
       SHOP_GROUPS.map((g, i) => (
@@ -118,6 +132,15 @@ const inShop = path.startsWith('/shop');
 
 <script>
   import { cartCount, onCartChange } from '../lib/cart-store.ts';
+  import { readSaved, onSavedChange } from '../lib/saved-store.ts';
+  const savedBadge = document.querySelector<HTMLElement>('[data-saved-count]')!;
+  const renderSaved = () => {
+    const n = readSaved().length;
+    savedBadge.textContent = String(n);
+    savedBadge.closest('a')!.classList.toggle('full', n > 0);
+  };
+  renderSaved();
+  onSavedChange(renderSaved);
   const root = document.documentElement;
 
   // cart
@@ -155,6 +178,30 @@ const inShop = path.startsWith('/shop');
     }),
   );
   syncMotion();
+
+  // Day shift / Night shift theme (restored before paint in Base)
+  const syncTheme = () => {
+    const light = root.dataset.theme === 'light';
+    document.querySelectorAll('[data-theme-switch]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(light));
+      b.setAttribute('title', light ? 'Switch to Night shift (dark)' : 'Switch to Day shift (light)');
+    });
+    document.querySelectorAll('[data-theme-label]').forEach((l) => (l.textContent = light ? 'Switch to dark theme' : 'Switch to light theme'));
+    document.querySelectorAll('[data-theme-word]').forEach((l) => (l.textContent = light ? 'Night shift' : 'Day shift'));
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#f5f0e6' : '#08070d');
+  };
+  document.querySelectorAll('[data-theme-switch]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const light = root.dataset.theme !== 'light';
+      if (light) root.dataset.theme = 'light';
+      else delete root.dataset.theme;
+      try {
+        localStorage.setItem('dashlabs-theme', light ? 'light' : 'dark');
+      } catch {}
+      syncTheme();
+    }),
+  );
+  syncTheme();
 
   // mega menu: hover on desktop pointers, click everywhere
   const topbar = document.querySelector<HTMLElement>('[data-topbar]')!;
@@ -207,7 +254,7 @@ const inShop = path.startsWith('/shop');
   .topbar.scrolled,
   .topbar.mega-open,
   :global(.menu-open) .topbar {
-    background: rgba(10, 8, 17, 0.82);
+    background: var(--bar);
     backdrop-filter: blur(14px) saturate(1.3);
     -webkit-backdrop-filter: blur(14px) saturate(1.3);
     border-bottom-color: var(--line);
@@ -297,6 +344,7 @@ const inShop = path.startsWith('/shop');
     white-space: nowrap;
   }
   .icon-btn,
+  .saved-link,
   .cart {
     position: relative;
     display: inline-grid;
@@ -305,12 +353,13 @@ const inShop = path.startsWith('/shop');
     height: 42px;
     border-radius: 12px;
     border: 1px solid var(--line-2);
-    background: rgba(26, 22, 40, 0.6);
+    background: var(--btn-bg);
     color: var(--text-2);
     cursor: pointer;
     text-decoration: none;
   }
   .icon-btn:hover,
+  .saved-link:hover,
   .cart:hover {
     color: var(--white);
     border-color: var(--uv-2);
@@ -318,6 +367,31 @@ const inShop = path.startsWith('/shop');
   .i-play,
   [aria-pressed='true'] .i-pause {
     display: none;
+  }
+  .i-moon,
+  [data-theme-switch][aria-pressed='true'] .i-sun {
+    display: none;
+  }
+  [data-theme-switch][aria-pressed='true'] .i-moon {
+    display: block;
+  }
+  .m-toggles {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: -8px 0 22px;
+  }
+  .m-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--btn-bg);
+    color: var(--text);
+    font: 700 0.9rem var(--font);
+    cursor: pointer;
   }
   [aria-pressed='true'] .i-play {
     display: block;
@@ -334,6 +408,26 @@ const inShop = path.startsWith('/shop');
     color: var(--text-3);
     font: 700 0.7rem/20px var(--mono);
     text-align: center;
+  }
+  .saved-link svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+  .saved-link .count {
+    display: none;
+  }
+  .saved-link.full {
+    color: var(--pink);
+    border-color: color-mix(in srgb, var(--pink) 60%, transparent);
+  }
+  .saved-link.full svg {
+    fill: currentColor;
+  }
+  .saved-link.full .count {
+    display: block;
+    background: var(--pink);
+    color: #1a0612;
   }
   .cart.full {
     border-color: var(--hot);
@@ -381,7 +475,7 @@ const inShop = path.startsWith('/shop');
     left: 0;
     right: 0;
     top: 100%;
-    background: rgba(12, 10, 20, 0.99);
+    background: var(--overlay-solid);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--line-2);
@@ -495,7 +589,7 @@ const inShop = path.startsWith('/shop');
     z-index: 49;
     overflow-y: auto;
     padding: 18px var(--gutter) 40px;
-    background: #0a0811;
+    background: var(--overlay-solid);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     visibility: hidden;
@@ -561,6 +655,12 @@ const inShop = path.startsWith('/shop');
   @media (max-width: 1080px) {
     .queue {
       display: none;
+    }
+  }
+  @media (max-width: 520px) {
+    .theme-btn,
+    .saved-link {
+      display: none; /* in the menu instead */
     }
   }
   @media (max-width: 900px) {

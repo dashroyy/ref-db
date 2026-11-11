@@ -57,7 +57,98 @@
 
   /* printed layer lines */
   --layers: repeating-linear-gradient(0deg, rgba(196, 168, 255, 0.045) 0 1px, transparent 1px 4px);
+
+  /* overlays: glass bars, HUD chips, menus, dialogs */
+  --overlay: rgba(13, 11, 21, 0.8);
+  --overlay-solid: #0c0a14;
+  --btn-bg: rgba(26, 22, 40, 0.65);
+  --bar: rgba(10, 8, 17, 0.82);
+  --scrim: rgba(8, 7, 13, 0.7);
+  --footer-fade: rgba(8, 7, 13, 0.9);
+  --grid-line: rgba(155, 107, 255, 0.28);
+  --glow-uv: rgba(155, 107, 255, 0.16);
+  --glow-hot: rgba(255, 140, 30, 0.12);
+  --vignette: rgba(0, 0, 0, 0.55);
   color-scheme: dark;
+}
+
+/* ---------- Day shift: the workshop with the lights on ---------- */
+:root[data-theme='light'] {
+  --ink: #f5f0e6;
+  --ink-2: #ece5d7;
+  --panel: #fffdf8;
+  --panel-2: #f2ebde;
+  --panel-3: #e5dbc9;
+  --line: rgba(70, 45, 130, 0.14);
+  --line-2: rgba(70, 45, 130, 0.26);
+  --white: #17121f; /* "brightest text" = darkest ink in daylight */
+  --text: #241d30;
+  --text-2: #463d55;
+  --text-3: #625a77;
+  --text-4: #8c84a0;
+  --hot: #a34f00; /* deeper amber: readable on paper (4.5:1+) */
+  --hot-2: #ffab2e;
+  --hot-deep: #a65000;
+  --hot-ink: #1d0f00;
+  --uv: #6a3ee0;
+  --uv-2: #5530c2;
+  --mint: #0b8f69;
+  --pink: #c4318a;
+  --warn: #855b00;
+  --layers: repeating-linear-gradient(0deg, rgba(70, 45, 130, 0.05) 0 1px, transparent 1px 4px);
+  --overlay: rgba(255, 253, 248, 0.88);
+  --overlay-solid: #fffdf8;
+  --btn-bg: rgba(255, 253, 248, 0.85);
+  --bar: rgba(245, 240, 230, 0.86);
+  --scrim: rgba(40, 30, 60, 0.35);
+  --footer-fade: rgba(236, 229, 215, 0.95);
+  --grid-line: rgba(106, 62, 224, 0.22);
+  --glow-uv: rgba(106, 62, 224, 0.1);
+  --glow-hot: rgba(255, 150, 40, 0.14);
+  --vignette: rgba(120, 100, 70, 0.12);
+  color-scheme: light;
+}
+/* category colours (--c) are bright filament tones; on paper, text and labels
+   in them are mixed toward ink so they stay readable */
+:root[data-theme='light'] [style*='--c:'] {
+  --c-text: color-mix(in srgb, var(--c) 40%, #1a1030);
+}
+:root[data-theme='light'] [style*='--c:'] :is(.kind, .sku, .go, .tag, .g-head, .nm, .k, .st-n, .zn, .cat-txt .tag) {
+  color: var(--c-text);
+}
+/* the page tone (--tone, the category colour) as text, readable on paper */
+:root[data-theme='light'] .tag--accent,
+:root[data-theme='light'] .crumbs .sku {
+  color: color-mix(in srgb, var(--tone) 40%, #1a1030);
+}
+/* the primary button keeps the bright nozzle orange in both themes */
+:root[data-theme='light'] .btn--primary {
+  background: linear-gradient(180deg, #ffc766, #ffab2e);
+  border-color: #f29a12;
+}
+/* extruded type: lighter violet layers on paper */
+:root[data-theme='light'] .x3d {
+  text-shadow:
+    1px 1px 0 #b9a2f5,
+    2px 2px 0 #a88ef0,
+    3px 3px 0 #b9a2f5,
+    4px 4px 0 #957ae6,
+    5px 5px 0 #a88ef0,
+    6px 6px 0 #8366db,
+    7px 7px 0 #7254cf,
+    8px 8px 16px rgba(106, 62, 224, 0.25);
+}
+:root[data-theme='light'] .x3d .hot {
+  color: #e68a00;
+  text-shadow:
+    1px 1px 0 #ffcf80,
+    2px 2px 0 #ffc062,
+    3px 3px 0 #ffcf80,
+    4px 4px 0 #f5a83a,
+    5px 5px 0 #ffc062,
+    6px 6px 0 #e8962a,
+    7px 7px 0 #d9851c,
+    8px 8px 18px rgba(255, 150, 40, 0.3);
 }
 
 *,
@@ -141,8 +232,8 @@ p {
   pointer-events: none;
   overflow: hidden;
   background:
-    radial-gradient(60vw 50vh at 85% 0%, rgba(155, 107, 255, 0.16), transparent 70%),
-    radial-gradient(50vw 50vh at 0% 100%, rgba(255, 140, 30, 0.12), transparent 70%),
+    radial-gradient(60vw 50vh at 85% 0%, var(--glow-uv), transparent 70%),
+    radial-gradient(50vw 50vh at 0% 100%, var(--glow-hot), transparent 70%),
     var(--ink);
 }
 .chamber::before {
@@ -154,8 +245,8 @@ p {
   bottom: -20vh;
   height: 75vh;
   background-image:
-    linear-gradient(rgba(155, 107, 255, 0.28) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(155, 107, 255, 0.28) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 64px 64px;
   transform: perspective(520px) rotateX(68deg);
   transform-origin: 50% 100%;
@@ -171,7 +262,7 @@ p {
   inset: 0;
   background:
     var(--layers),
-    radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0, 0, 0, 0.55));
+    radial-gradient(ellipse at 50% 40%, transparent 50%, var(--vignette));
 }
 @keyframes grid-run {
   to {
@@ -212,7 +303,7 @@ main {
   padding: 6px 12px 6px 10px;
   border: 1px solid var(--line-2);
   border-radius: 999px;
-  background: rgba(19, 16, 29, 0.7);
+  background: var(--overlay);
   font: 500 0.7rem/1.4 var(--mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -300,7 +391,7 @@ main {
   padding: 0 1.3rem;
   border-radius: 12px;
   border: 1px solid var(--line-2);
-  background: rgba(26, 22, 40, 0.75);
+  background: var(--btn-bg);
   color: var(--white);
   font: 600 0.93rem/1 var(--font);
   text-decoration: none;
@@ -757,7 +848,7 @@ html.js [data-print].printed::before {
   padding: 12px 14px 12px 12px;
   border-radius: 14px;
   border: 1px solid var(--line-2);
-  background: rgba(19, 16, 29, 0.96);
+  background: var(--overlay-solid);
   backdrop-filter: blur(10px);
   color: var(--text);
   font-size: 0.92rem;

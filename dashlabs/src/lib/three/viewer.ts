@@ -3,6 +3,7 @@
 // one shared WebGL context.
 
 import * as THREE from 'three';
+import { scaleProps } from './scale.ts';
 import { buildModel, setCut, setFilament, setLook, modelHeight, calm, LAYER_H, type Shape } from './print.ts';
 
 function stage(renderer: THREE.WebGLRenderer) {
@@ -22,6 +23,10 @@ function stage(renderer: THREE.WebGLRenderer) {
   const rim = new THREE.DirectionalLight('#9b6bff', 2.4);
   rim.position.set(-3, 1.5, -2.5);
   scene.add(rim);
+  // a cool back light so dark filaments (matte black) still show their edges
+  const back = new THREE.DirectionalLight('#d9ccff', 1.4);
+  back.position.set(0.5, 2.2, -3.5);
+  scene.add(back);
   const warm = new THREE.PointLight('#ffab2e', 1.2, 6);
   warm.position.set(2, 0.6, 1.5);
   scene.add(warm);
@@ -37,13 +42,22 @@ function stage(renderer: THREE.WebGLRenderer) {
   ring.rotation.x = Math.PI / 2;
   ring.position.y = -0.02;
   scene.add(ring);
+  // follow Day shift / Night shift
+  const applyTheme = () => {
+    const light = document.documentElement.dataset.theme === 'light';
+    (disc.material as THREE.MeshStandardMaterial).color.set(light ? '#e9e1f5' : '#171326');
+    (ring.material as THREE.MeshBasicMaterial).color.set(light ? '#7d55e6' : '#9b6bff');
+  };
+  applyTheme();
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   return { scene, disc, ring };
 }
 
 /** Size the turntable to a model: a little wider than its footprint. */
 function fitDisc(t: { disc: THREE.Mesh; ring: THREE.Mesh }, model: THREE.Object3D) {
+  // reach the furthest point of whatever is on the turntable (centred or not)
   const box = new THREE.Box3().setFromObject(model);
-  const r = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2 * 1.08 + 0.12;
+  const r = Math.max(Math.abs(box.min.x), Math.abs(box.max.x), Math.abs(box.min.z), Math.abs(box.max.z)) * 1.08 + 0.12;
   const s = r / 1.27;
   t.disc.scale.set(s, 1, s);
   t.ring.scale.set(s, s, 1);
@@ -58,7 +72,8 @@ function frameCamera(camera: THREE.PerspectiveCamera, model: THREE.Object3D, asp
   const fit = Math.min(vfov, 2 * Math.atan(Math.tan(vfov / 2) * aspect));
   const dist = (radius / Math.sin(fit / 2)) * zoom;
   const dir = new THREE.Vector3(0.62, 0.48, 0.78).normalize();
-  const target = new THREE.Vector3(0, size.y * 0.45, 0);
+  const centre = box.getCenter(new THREE.Vector3());
+  const target = new THREE.Vector3(centre.x, size.y * 0.45, centre.z);
   camera.position.copy(target).addScaledVector(dir, dist);
   camera.lookAt(target);
 }
@@ -81,8 +96,11 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   scene.add(pivot);
   let model = first;
   let height = 1;
+  let framed: THREE.Object3D = model; // what the camera and turntable fit: the model, or the model + scale props
+  let zoom = 1;
   const place = (m: THREE.Object3D) => {
     pivot.add(m);
+    framed = m;
     fitDisc(t, m);
     height = modelHeight(m);
     frameCamera(camera, m, camera.aspect || 1);
@@ -95,7 +113,7 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    frameCamera(camera, model, camera.aspect);
+    frameCamera(camera, framed, camera.aspect, zoom);
   };
   new ResizeObserver(resize).observe(canvas);
   resize();
@@ -187,6 +205,28 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
     /** Layers in the current model at the print's layer height. */
     layers: () => Math.round(height / LAYER_H),
     /** Turn the front of the model toward the viewer (the shortest way round). */
+    /** Show a ruler and a bank card at real size beside the model (null hides them). */
+    showScale(sz: { mm: number; axis: 'height' | 'length' } | null) {
+      const old = pivot.getObjectByName('scale-props');
+      if (old) pivot.remove(old);
+      const keep = pivot.rotation.y;
+      pivot.rotation.y = 0;
+      if (sz) {
+        pivot.add(scaleProps(model, sz.mm, sz.axis));
+        framed = pivot;
+        spin = false;
+        zoom = 1.3; // the turntable grows with the props; keep it in view
+      } else {
+        framed = model;
+        spin = true;
+        zoom = 1;
+      }
+      fitDisc(t, framed);
+      frameCamera(camera, framed, camera.aspect || 1, zoom);
+      pivot.rotation.y = keep;
+      this.face();
+      draw(0);
+    },
     face() {
       const front = -0.5;
       const turns = Math.round((rotY - front) / (Math.PI * 2));

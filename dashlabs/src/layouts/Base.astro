@@ -70,6 +70,8 @@ const tone = pageColor(Astro.url.pathname);
       document.documentElement.classList.add('js');
       try {
         if (localStorage.getItem('dashlabs-motion') === 'off') document.documentElement.classList.add('motion-off');
+        // Night shift (dark) is the default; Day shift only when chosen
+        if (localStorage.getItem('dashlabs-theme') === 'light') document.documentElement.dataset.theme = 'light';
       } catch (e) {}
     </script>
   </head>

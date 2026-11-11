@@ -70,7 +70,13 @@ const sourceLabel =
 
         <div class="info">
           <p class="tag tag--accent">{sourceLabel}</p>
-          <h1 class="x3d title">{p.name}</h1>
+          <div class="title-row">
+            <h1 class="x3d title">{p.name}</h1>
+            <button type="button" class="save-big" data-save={p.id} aria-pressed="false" aria-label={`Save ${p.name} for later`}>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4 7.4 4c2 0 3.6 1.1 4.6 2.7C13 5.1 14.6 4 16.6 4c3.5 0 5.8 3.6 4.6 7.1-1.7 4.8-9.2 9.4-9.2 9.4z"></path></svg>
+              <span>Save</span>
+            </button>
+          </div>
           <p class="price">
             {p.purchase === 'quote' && <small>from </small>}<span data-price>{money(p.price)}</span>
           </p>
@@ -230,6 +236,8 @@ const sourceLabel =
 <script>
   import { addToCart } from '../../lib/cart-store.ts';
   import { flyToCart, toast } from '../../lib/fly.ts';
+  import { wireSaveButtons } from '../../lib/saved-store.ts';
+  wireSaveButtons();
   import { money } from '../../lib/money.ts';
 
   const form = document.querySelector<HTMLFormElement>('[data-buy]')!;
@@ -325,6 +333,54 @@ const sourceLabel =
   .pos {
     margin-left: auto;
     font: 500 0.72rem var(--mono);
+  }
+  .title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .save-big {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 14px;
+    padding: 9px 13px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+    color: var(--text-2);
+    font: 700 0.85rem var(--font);
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      border-color 0.2s,
+      transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .save-big svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+  .save-big:hover,
+  .save-big[aria-pressed='true'] {
+    color: var(--pink);
+    border-color: color-mix(in srgb, var(--pink) 60%, transparent);
+  }
+  .save-big[aria-pressed='true'] svg {
+    fill: currentColor;
+  }
+  .save-big[aria-pressed='true'] span::after {
+    content: 'd';
+  }
+  .save-big:global(.pop) {
+    animation: heart-pop 0.45s cubic-bezier(0.3, 1.8, 0.5, 1);
+  }
+  @keyframes heart-pop {
+    40% {
+      transform: scale(1.15);
+    }
   }
   .title {
     font-size: clamp(2.1rem, 4.6vw, 3.4rem);

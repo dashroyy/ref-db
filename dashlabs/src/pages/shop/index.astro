@@ -15,7 +15,7 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
       </p>
 
       <div class="filters" role="group" aria-label="Filter by category">
-        <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--hot)"><i></i>All <span>{PRODUCTS.length}</span></button>
+        <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--hot-2)"><i></i>All <span>{PRODUCTS.length}</span></button>
         {
           CATEGORIES.map((c) => (
             <button type="button" data-filter={c.id} aria-pressed="false" style={`--c:${c.color}`}>

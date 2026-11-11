@@ -123,3 +123,14 @@ test('order request email lists the gift wrap and note', async () => {
   assert.match(text, /Gift note: "For Sam"/);
   assert.match(text, /Subtotal: \$27\.00/);
 });
+
+test('catalog: every product has a size, and size options map every choice', () => {
+  for (const p of PRODUCTS) {
+    assert.ok(p.size && p.size.mm > 0, `${p.id} size`);
+    const by = p.size!.byOption;
+    if (!by) continue;
+    const opt = p.options.find((o) => o.id === by.option);
+    assert.ok(opt, `${p.id} size option ${by.option}`);
+    for (const c of opt!.choices) assert.ok(by.mm[c.id] > 0, `${p.id} size for ${c.id}`);
+  }
+});

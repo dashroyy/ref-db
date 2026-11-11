@@ -165,7 +165,7 @@ const STEPS = [
     padding: 6px 11px;
     border-radius: 999px;
     border: 1px solid var(--line-2);
-    background: rgba(13, 11, 21, 0.8);
+    background: var(--overlay);
     font: 600 0.76rem var(--font);
     color: var(--white);
   }
@@ -196,6 +196,9 @@ const STEPS = [
       background 0.3s,
       border-color 0.3s,
       transform 0.4s cubic-bezier(0.2, 1.3, 0.4, 1);
+  }
+:root[data-theme='light'] .story .n {
+    color: color-mix(in srgb, var(--c) 45%, #1a1030);
   }
   .steps li:not(.on) h3 {
     color: var(--text-2);
