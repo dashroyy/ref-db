@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { buildModel, setCut, modelHeight, calm, LAYER_H, type Shape } from './print.ts';
 
 export interface HeroStatus {
+  index: number; // position in HERO_QUEUE
   model: string;
   layer: number;
   layers: number;
@@ -14,7 +15,7 @@ export interface HeroStatus {
   temp: number;
 }
 
-const QUEUE: { shape: Shape; color: string; name: string }[] = [
+export const HERO_QUEUE: { shape: Shape; color: string; name: string }[] = [
   { shape: 'vase', color: '#9b6bff', name: 'Spiral vase' },
   { shape: 'launcher', color: '#ffab2e', name: 'Pen Launcher' },
   { shape: 'bust', color: '#ff6ec7', name: 'Mini-Me figurine' },
@@ -154,7 +155,7 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
 
   // job state
   let idx = 0;
-  let model: THREE.Group = buildModel(QUEUE[0].shape, QUEUE[0].color);
+  let model: THREE.Group = buildModel(HERO_QUEUE[0].shape, HERO_QUEUE[0].color);
   let height = modelHeight(model);
   let radius = 0.5;
   scene.add(model);
@@ -172,11 +173,13 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
   let spin = 0;
   let mouseX = 0, mouseY = 0, camX = 0, camY = 0;
 
+  let pending: number | null = null; // a job a visitor picked
   const nextJob = () => {
     scene.remove(model);
     model.traverse((o) => (o as THREE.Mesh).geometry?.dispose?.());
-    idx = (idx + 1) % QUEUE.length;
-    model = buildModel(QUEUE[idx].shape, QUEUE[idx].color);
+    idx = pending ?? (idx + 1) % HERO_QUEUE.length;
+    pending = null;
+    model = buildModel(HERO_QUEUE[idx].shape, HERO_QUEUE[idx].color);
     scene.add(model);
     fit();
     spin = 0;
@@ -298,7 +301,8 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
       statusAt = clock;
       const layers = Math.round(height / LAYER_H);
       onStatus({
-        model: QUEUE[idx].name,
+        index: idx,
+        model: HERO_QUEUE[idx].name,
         layer: phase === 'printing' ? Math.round(Math.min(cut, height) / LAYER_H) : phase === 'heating' ? 0 : layers,
         layers,
         phase,
@@ -326,4 +330,17 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
   };
   if (calm()) still();
   requestAnimationFrame(loop);
+
+  return {
+    /** Eject the current part and print this one next. */
+    printNow(i: number) {
+      if (i === idx && phase !== 'ejecting') return;
+      pending = ((i % HERO_QUEUE.length) + HERO_QUEUE.length) % HERO_QUEUE.length;
+      if (phase !== 'ejecting') ((phase = 'ejecting'), (phaseT = 0));
+      if (calm()) {
+        nextJob();
+        still();
+      }
+    },
+  };
 }

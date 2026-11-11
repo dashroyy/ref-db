@@ -8,8 +8,10 @@ import { money } from '../lib/money.ts';
 
 interface Props {
   product: Product;
+  level?: 2 | 3; // heading level for the title: 2 when cards sit directly under the page h1
 }
-const { product: p } = Astro.props;
+const { product: p, level = 3 } = Astro.props;
+const H = level === 2 ? 'h2' : 'h3';
 const cat = categoryById(p.category);
 const image = p.images?.[0];
 const filament = cat.color;
@@ -24,7 +26,7 @@ const filament = cat.color;
     </div>
     <div class="body">
       <span class="kind"><i></i>{cat.label}</span>
-      <h3>{p.name}</h3>
+      <H class="title">{p.name}</H>
       <p>{p.summary}</p>
       <div class="foot">
         <span class="price">{p.purchase === 'quote' && <small>from </small>}{money(p.price)}</span>
@@ -151,9 +153,11 @@ const filament = cat.color;
     background: var(--c);
     box-shadow: 0 0 8px var(--c);
   }
-  h3 {
+  .title {
     margin: 9px 0 6px;
     font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    font-weight: 500;
   }
   .body p {
     font-size: 0.9rem;

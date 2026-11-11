@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
+import PrintStory from '../components/PrintStory.astro';
 import { PRODUCTS } from '../data/catalog.ts';
 
 const originals = PRODUCTS.filter((p) => p.category === 'originals');
@@ -28,9 +29,11 @@ const log = [
 
   <section class="section originals">
     <div class="wrap">
-      <div class="grid">{originals.map((p) => <ProductCard product={p} />)}</div>
+      <div class="grid">{originals.map((p) => <ProductCard product={p} level={2} />)}</div>
     </div>
   </section>
+
+  <div class="wrap"><PrintStory /></div>
 
   <section class="section">
     <div class="wrap">

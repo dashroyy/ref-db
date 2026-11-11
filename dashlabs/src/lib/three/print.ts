@@ -17,6 +17,7 @@ export interface PrintUniforms {
   uCut: { value: number };
   uTime: { value: number };
   uRainbow: { value: number };
+  uLines: { value: number }; // layer-line contrast: 0.14 normal, up to ~0.7 for a "sliced" look
   uHot: { value: THREE.Color };
 }
 
@@ -35,6 +36,7 @@ export function printMaterial(color: string | THREE.Color, opts: { roughness?: n
     uCut: { value: 99 },
     uTime: { value: 0 },
     uRainbow: { value: rainbow ? 1 : 0 },
+    uLines: { value: 0.14 },
     uHot: { value: new THREE.Color('#ffab2e') },
   };
   m.userData.uniforms = uniforms;
@@ -55,6 +57,7 @@ export function printMaterial(color: string | THREE.Color, opts: { roughness?: n
         uniform float uCut;
         uniform float uTime;
         uniform float uRainbow;
+        uniform float uLines;
         uniform vec3 uHot;
         vec3 hue2rgb(float h){ return clamp(abs(mod(h*6.0+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.); }`,
       )
@@ -73,7 +76,8 @@ export function printMaterial(color: string | THREE.Color, opts: { roughness?: n
         ${
           layers
             ? `float lp = fract(vWorldPos.y / ${LAYER_H.toFixed(4)});
-        diffuseColor.rgb *= 0.86 + 0.14 * smoothstep(0.0, 0.35, lp) * smoothstep(1.0, 0.65, lp);`
+        diffuseColor.rgb *= (1.0 - uLines) + uLines * smoothstep(0.0, 0.35, lp) * smoothstep(1.0, 0.65, lp);
+        if (uLines > 0.3) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.61, 0.42, 1.0), (uLines - 0.3) * 0.6 * (1.0 - smoothstep(0.0, 0.25, lp)));`
             : ''
         }`,
       )
@@ -102,6 +106,16 @@ export function setFilament(root: THREE.Object3D, color: string) {
     if (!rainbow) m.color.set(color);
     m.roughness = rainbow ? 0.28 : 0.55;
     m.metalness = rainbow ? 0.35 : 0.05;
+  });
+}
+
+/** Set how the part looks: wireframe (CAD), layer-line strength (sliced). */
+export function setLook(root: THREE.Object3D, look: { wire?: boolean; lines?: number }) {
+  root.traverse((o) => {
+    const m = (o as THREE.Mesh).material as PrintMaterial | undefined;
+    if (!m?.userData?.uniforms) return;
+    if (look.wire !== undefined) m.wireframe = look.wire;
+    if (look.lines !== undefined) m.userData.uniforms.uLines.value = look.lines;
   });
 }
 

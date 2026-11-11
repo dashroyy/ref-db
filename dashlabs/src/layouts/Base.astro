@@ -1,7 +1,6 @@
 ---
 // The page frame: the print chamber background, top bar, footer, and the
 // site-wide motion: sections printing in, 3D product thumbnails, card tilt.
-import '@fontsource/unbounded/400.css';
 import '@fontsource/unbounded/500.css';
 import '@fontsource/unbounded/600.css';
 import '@fontsource/unbounded/700.css';
@@ -12,6 +11,10 @@ import '@fontsource/manrope/700.css';
 import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource/jetbrains-mono/600.css';
 import '../styles/global.css';
+// Preload the latin files every page needs at once (headlines + body text)
+import unbounded700 from '@fontsource/unbounded/files/unbounded-latin-700-normal.woff2?url';
+import unbounded600 from '@fontsource/unbounded/files/unbounded-latin-600-normal.woff2?url';
+import manrope400 from '@fontsource/manrope/files/manrope-latin-400-normal.woff2?url';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE } from '../data/site.ts';
@@ -61,6 +64,7 @@ const tone = pageColor(Astro.url.pathname);
     <script type="application/ld+json" set:html={JSON.stringify(jsonld ?? org)} />
     <meta name="theme-color" content="#08070d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {[unbounded700, unbounded600, manrope400].map((href) => <link rel="preload" as="font" type="font/woff2" href={href} crossorigin />)}
     <script is:inline>
       // Before first paint: enable print-in effects, restore Motion off. Storage can throw.
       document.documentElement.classList.add('js');

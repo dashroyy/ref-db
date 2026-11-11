@@ -3,7 +3,7 @@
 // one shared WebGL context.
 
 import * as THREE from 'three';
-import { buildModel, setCut, setFilament, modelHeight, calm, LAYER_H, type Shape } from './print.ts';
+import { buildModel, setCut, setFilament, setLook, modelHeight, calm, LAYER_H, type Shape } from './print.ts';
 
 function stage(renderer: THREE.WebGLRenderer) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -121,6 +121,8 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   canvas.addEventListener('pointercancel', up);
 
   let printT = -1; // < 0: not printing
+  let scrubCut: number | null = null; // 0..1 of the height, set from outside (layer slider, scroll story)
+  let spin = true;
   let printDur = 3.2;
   let clock = 0, last = performance.now(), visible = true;
   new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(canvas);
@@ -133,10 +135,11 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
       if (Math.abs(faceTo - rotY) < 0.002) faceTo = null;
     } else if (!dragging) {
       vel *= Math.pow(0.04, dt);
-      rotY += vel + (idle > 2.5 && !calm() ? dt * 0.45 : 0);
+      rotY += vel + (spin && idle > 2.5 && !calm() ? dt * 0.45 : 0);
     }
     pivot.rotation.y = rotY;
-    let cut = 99;
+    let cut = scrubCut === null ? 99 : Math.max(LAYER_H, Math.ceil((scrubCut * height) / LAYER_H) * LAYER_H);
+    if (scrubCut !== null && scrubCut >= 0.999) cut = 99;
     if (printT >= 0) {
       printT += dt;
       const p = Math.min(1, printT / printDur);
@@ -170,6 +173,19 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
       await fn(model);
       draw(0);
     },
+    /**
+     * Drive the view from outside: cut at a fraction of the height (null = whole part),
+     * CAD wireframe, layer-line strength, auto-spin on/off.
+     */
+    scrub(s: { cut?: number | null; wire?: boolean; lines?: number; spin?: boolean }) {
+      if (s.cut !== undefined) scrubCut = s.cut;
+      if (s.spin !== undefined) spin = s.spin;
+      if (s.wire !== undefined || s.lines !== undefined) setLook(model, s);
+      printT = -1;
+      draw(0);
+    },
+    /** Layers in the current model at the print's layer height. */
+    layers: () => Math.round(height / LAYER_H),
     /** Turn the front of the model toward the viewer (the shortest way round). */
     face() {
       const front = -0.5;

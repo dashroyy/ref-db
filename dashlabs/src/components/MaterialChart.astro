@@ -19,9 +19,10 @@ const keys = Object.keys(RATING_LABELS) as (keyof typeof RATING_LABELS)[];
             {keys.map((k) => (
               <div>
                 <dt>{RATING_LABELS[k]}</dt>
-                <dd aria-label={`${m.ratings[k]} out of 5`}>
+                <dd>
+                  <span class="sr-only">{m.ratings[k]} out of 5</span>
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <i class={n <= m.ratings[k] ? 'on' : ''} />
+                    <i class={n <= m.ratings[k] ? 'on' : ''} aria-hidden="true" />
                   ))}
                 </dd>
               </div>

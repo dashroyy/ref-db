@@ -77,6 +77,9 @@ DashLabs is designed as a dark 3D-printer build chamber, lit by a hot amber nozz
     material and quality, and hands the numbers to the request form.
   - Extra models: filament spools (materials guide) and a failed "spaghetti" print (404 page).
   Without WebGL, the drawn SVG artwork shows instead.
+- **Layer scrubber** on product viewers, a **scroll story** on `/lab/` (`src/components/PrintStory.astro`: design →
+  slice → print → finish, driven by scroll through the viewer's `scrub()` API), and **pick the next print** chips
+  under the home-page printer (`printNow()` in `hero.ts`).
 - **Slicer preview** in the price estimator: a top-down layer with walls and grid infill that follows the slider.
 - **Menus** (`src/components/Header.astro`): the Shop mega-menu and the phone menu are built from `src/data/nav.ts`,
   so new products appear automatically. Each category's colour is set in `CATEGORIES` in `src/data/catalog.ts`.
