@@ -23,8 +23,11 @@ export const SITE = {
 // How checkout behaves right now.
 //   'request' : the cart is sent as an order request (email). You confirm and invoice by hand.
 //   'stripe'  : the cart is posted to /api/checkout, which creates a Stripe Checkout Session.
-//               Needs a server adapter and STRIPE_SECRET_KEY — see docs/SHOP-ROADMAP.md.
-export const CHECKOUT_MODE: 'request' | 'stripe' = 'request';
+//               Needs a server and STRIPE_SECRET_KEY.
+// Switched from the host's settings, no code edit: set the environment variable
+// PUBLIC_CHECKOUT_MODE=stripe (see docs/DEPLOY.md). Anything else means 'request'.
+const envMode = (import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_CHECKOUT_MODE;
+export const CHECKOUT_MODE: 'request' | 'stripe' = envMode === 'stripe' ? 'stripe' : 'request';
 
 // Gift wrap, added per order (cents). Placeholder — set your own, or 0 to make it free.
 export const GIFT_WRAP_PRICE = 300;

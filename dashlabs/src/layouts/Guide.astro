@@ -33,6 +33,10 @@ const next = GUIDES[(i + 1) % GUIDES.length];
       <div class="prose">
         <slot />
       </div>
+      <div class="do" data-print>
+        <p>{guide.cta.text}</p>
+        <a class="btn btn--primary" href={guide.cta.href}>{guide.cta.label}</a>
+      </div>
       <a class="next" href={`/learn/${next.slug}/`} data-print>
         <span class="tag">Next guide</span>
         <strong>{next.title}</strong>
@@ -80,12 +84,30 @@ const next = GUIDES[(i + 1) % GUIDES.length];
     letter-spacing: -0.04em;
     max-width: 18ch;
   }
+  .do {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    max-width: 70ch;
+    margin-top: 56px;
+    padding: 20px 24px;
+    border-radius: var(--r);
+    border: 1px solid color-mix(in srgb, var(--hot) 45%, transparent);
+    background: color-mix(in srgb, var(--hot) 8%, var(--panel));
+  }
+  .do p {
+    margin: 0;
+    font-weight: 700;
+    color: var(--white);
+  }
   .next {
     position: relative;
     display: grid;
     gap: 4px;
     max-width: 70ch;
-    margin-top: 60px;
+    margin-top: 18px;
     padding: 22px 26px;
     border-radius: var(--r);
     border: 1px solid var(--line-2);

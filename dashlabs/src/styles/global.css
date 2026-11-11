@@ -835,6 +835,128 @@ html.js [data-print].printed::before {
   opacity: 1;
 }
 
+/* ---------- page-to-page: a quick cross-fade instead of a hard cut ---------- */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.22s;
+}
+html.motion-off::view-transition-group(*),
+html.motion-off::view-transition-old(*),
+html.motion-off::view-transition-new(*) {
+  animation: none !important;
+}
+
+/* ---------- skip link ---------- */
+.skip {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 200;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--hot-2);
+  color: #1d0f00;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus {
+  transform: none;
+}
+
+/* ---------- "ready to send" dialog ---------- */
+.dl-send {
+  width: min(620px, calc(100vw - 24px));
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid var(--line-2);
+  background: var(--overlay-solid);
+  color: var(--text-2);
+  box-shadow:
+    4px 4px 0 -1px var(--panel-3),
+    8px 8px 0 -1px var(--ink-2),
+    0 40px 120px -20px rgba(155, 107, 255, 0.45);
+}
+.dl-send::backdrop {
+  background: var(--scrim);
+  backdrop-filter: blur(4px);
+}
+.dl-send .s-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 1.15rem var(--display);
+  letter-spacing: -0.02em;
+  color: var(--white);
+}
+.dl-send .s-ref {
+  margin-left: auto;
+  font: 600 0.78rem var(--mono);
+  color: var(--hot);
+}
+.dl-send .s-lead {
+  margin: 10px 0 16px;
+}
+.dl-send .s-steps {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.dl-send .s-steps li {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 14px;
+  align-items: center;
+  font-size: 0.88rem;
+}
+.dl-send .s-to {
+  color: var(--white);
+  overflow-wrap: anywhere;
+}
+.dl-send .s-mini {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--hot);
+  font: 700 0.82rem var(--font);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.dl-send .s-lbl {
+  font: 500 0.7rem var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.dl-send textarea {
+  margin-top: 6px;
+  font: 400 0.82rem/1.5 var(--mono);
+  resize: vertical;
+}
+.dl-send .s-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.dl-send .s-status {
+  color: var(--mint);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+@media (max-width: 560px) {
+  .dl-send .s-steps li {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
 /* ---------- toast ---------- */
 .dl-toast {
   position: fixed;

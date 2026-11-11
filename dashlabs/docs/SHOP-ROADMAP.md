@@ -24,25 +24,15 @@ What's already there:
   its options and personalised text, gift wrap, the order reference, shipping countries (`SHIP_TO` in
   `src/data/site.ts`) and **`invoice_creation` on**, so Stripe emails a receipt and a numbered PDF invoice for every
   paid order. Also verifies webhook signatures. Tested in `tests/stripe.test.ts` (no network).
-- `src/server-routes/api/checkout.ts` — `POST /api/checkout`: validates the cart, re-prices it, creates the session,
+- `src/server-routes/api/checkout.ts` (served at `/api/checkout` on Netlify) — `POST /api/checkout`: validates the cart, re-prices it, creates the session,
   returns Stripe's hosted payment URL.
 - `src/server-routes/api/stripe-webhook.ts` — `POST /api/stripe-webhook`: verifies the signature and records
   `checkout.session.completed` (logs for now).
 - `/order/success/` (clears the cart, shows the reference) and `/cart/?cancelled=1` (friendly "nothing was charged").
 
-To switch it on:
-
-1. Create a [Stripe](https://stripe.com) account. Stay in **test mode** to start.
-2. Choose a host that runs server code and add its adapter: `npx astro add netlify` (or `vercel`, `cloudflare`,
-   `node`). Pages stay static; only `/api/*` runs on the server.
-3. Move the two files from `src/server-routes/api/` to `src/pages/api/`.
-4. In the host's environment settings (never in the repo) set `STRIPE_SECRET_KEY` (`sk_test_…` first),
-   `SITE_URL`, and later `STRIPE_WEBHOOK_SECRET`.
-5. Set `CHECKOUT_MODE = 'stripe'` in `src/data/site.ts`. The cart button becomes "Checkout securely".
-6. Pay with test card `4242 4242 4242 4242`, any future date, any CVC. Check the invoice email arrives.
-7. In Stripe: add the webhook endpoint (event `checkout.session.completed`), turn on email notifications for
-   successful payments, add your logo and colours under Branding (they appear on Checkout and invoices).
-8. Switch to live keys when you're happy.
+To switch it on, follow **[DEPLOY.md](DEPLOY.md)**: deploy to Netlify, add two environment variables, test with
+Stripe's test card. No code edits; the payment routes are added automatically on Netlify builds
+(`astro.config.mjs`). On another host, add its Astro adapter there instead.
 
 Optional later: Stripe Tax (`automaticTax: true` in the session options once registered), shipping rates.
 

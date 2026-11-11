@@ -21,12 +21,13 @@ import { SITE } from '../data/site.ts';
 import { pageColor } from '../data/nav.ts';
 
 interface Props {
+  cta?: boolean; // the "got an idea?" band above the footer (off on pages that are already the destination)
   title?: string;
   description?: string;
   jsonld?: Record<string, unknown>; // extra structured data for this page (e.g. a Product)
   noindex?: boolean; // keep this page out of search results
 }
-const { title, description = SITE.description, jsonld, noindex = false } = Astro.props;
+const { title, description = SITE.description, jsonld, noindex = false, cta = true } = Astro.props;
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site).href;
 const ogImage = new URL('/og.png', site).href;
@@ -77,10 +78,27 @@ const tone = pageColor(Astro.url.pathname);
   </head>
   <body>
     <div class="chamber" aria-hidden="true"></div>
+    <a class="skip" href="#main">Skip to content</a>
     <Header />
-    <main>
+    <main id="main">
       <slot />
     </main>
+    {
+      cta && (
+        <aside class="wrap idea" data-print>
+          <div class="idea-in">
+            <div>
+              <p class="tag">Can't find it in the shop?</p>
+              <p class="idea-t">If you can describe it, I can probably print it.</p>
+            </div>
+            <div class="idea-a">
+              <a class="btn btn--primary" href="/custom/">Start a custom order</a>
+              <a class="btn" href="/custom/#stl">Quote my 3D file</a>
+            </div>
+          </div>
+        </aside>
+      )
+    }
     <Footer />
 
     <script>
@@ -150,3 +168,34 @@ const tone = pageColor(Astro.url.pathname);
     </script>
   </body>
 </html>
+
+<style>
+  .idea {
+    margin-top: 24px;
+  }
+  .idea-in {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px 32px;
+    padding: clamp(22px, 4vw, 36px);
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background:
+      radial-gradient(circle at 0% 100%, var(--glow-hot), transparent 55%),
+      radial-gradient(circle at 100% 0%, var(--glow-uv), transparent 55%),
+      var(--panel);
+  }
+  .idea-t {
+    margin: 6px 0 0;
+    font: 600 clamp(1.2rem, 2.6vw, 1.7rem) var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+  .idea-a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>

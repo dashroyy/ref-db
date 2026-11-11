@@ -4,6 +4,8 @@ import ModelViewer from '../../components/ModelViewer.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import LaunchLab from '../../components/LaunchLab.astro';
 import { GUIDES } from '../../data/guides.ts';
+import Reviews from '../../components/Reviews.astro';
+import { reviewsFor, ratingSummary } from '../../data/reviews.ts';
 import { PRODUCTS, categoryById, productCode, type Product } from '../../data/catalog.ts';
 import { SITE } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
@@ -38,6 +40,9 @@ const productLd = {
     itemCondition: 'https://schema.org/NewCondition',
   },
 };
+// star ratings in search results only once real reviews exist
+const rating = ratingSummary(reviewsFor(p.id));
+if (rating) Object.assign(productLd, { aggregateRating: { '@type': 'AggregateRating', ratingValue: rating.average, reviewCount: rating.count } });
 const guide = GUIDES.find((g) => g.slug === p.guide);
 const cat = categoryById(p.category);
 const siblings = PRODUCTS.filter((x) => x.category === p.category);
@@ -224,6 +229,18 @@ const sourceLabel =
     )
   }
 
+  <div class="buybar" data-buybar aria-hidden="true">
+    <div>
+      <b>{p.name}</b>
+      <span data-buybar-price>{money(p.price)}</span>
+    </div>
+    <button type="button" class="btn btn--primary" data-buybar-btn tabindex="-1">{p.purchase === 'quote' ? 'Request a quote' : 'Add to cart'}</button>
+  </div>
+
+  <section class="wrap reviews-wrap">
+    <Reviews product={p} />
+  </section>
+
   <section class="wrap next-wrap">
     <a class="next-print" href={`/shop/${next.slug}/`} style={`--c:${categoryById(next.category).color}`} data-print>
       <span class="tag">Next print in the queue</span>
@@ -260,6 +277,23 @@ const sourceLabel =
     priceEl.textContent = money(base + Object.entries(opts).reduce((s, [o, c]) => s + (deltas[o]?.[c] ?? 0), 0));
   };
   form.addEventListener('change', render);
+
+  // Phones: when the buy button scrolls away, a slim bar keeps it in reach
+  const bar = document.querySelector<HTMLElement>('[data-buybar]')!;
+  const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  // (checked on scroll: jumping straight past the button never "intersects" it)
+  let barQueued = false;
+  const checkBar = () => {
+    barQueued = false;
+    bar.classList.toggle('show', submit.getBoundingClientRect().bottom < 0);
+  };
+  addEventListener('scroll', () => !barQueued && ((barQueued = true), requestAnimationFrame(checkBar)), { passive: true });
+  checkBar();
+  new MutationObserver(() => (bar.querySelector('[data-buybar-price]')!.textContent = priceEl.textContent)).observe(priceEl, { childList: true, characterData: true, subtree: true });
+  bar.querySelector('[data-buybar-btn]')!.addEventListener('click', () => {
+    if (form.reportValidity()) form.requestSubmit();
+    else form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
   render();
 
   form.addEventListener('submit', (e) => {
@@ -398,6 +432,51 @@ const sourceLabel =
     border: 1px solid rgba(255, 255, 255, 0.35);
     box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.35);
     flex: none;
+  }
+  .buybar {
+    display: none;
+  }
+  @media (max-width: 820px) {
+    .buybar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+      background: var(--overlay-solid);
+      border-top: 1px solid var(--line-2);
+      transform: translateY(110%);
+      transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+    }
+    .buybar.show {
+      transform: none;
+    }
+    .buybar div {
+      display: grid;
+      min-width: 0;
+    }
+    .buybar b {
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .buybar span {
+      font: 700 0.95rem var(--display);
+      color: var(--hot);
+    }
+    .buybar .btn {
+      flex: none;
+      min-height: 44px;
+    }
+  }
+  .reviews-wrap {
+    padding-bottom: clamp(40px, 6vw, 72px);
   }
   .next-wrap {
     padding-bottom: clamp(40px, 6vw, 72px);

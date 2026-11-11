@@ -4,7 +4,8 @@ Portfolio and made-to-order shop for DashLabs 3D printing: custom figurines of p
 cards, DashLabs originals (like the Pen Launcher) and licensed made-to-order prints.
 
 Built with [Astro](https://astro.build). Static today; designed so online checkout and automatic invoices can be
-switched on later without rewriting the shop. See [docs/SHOP-ROADMAP.md](docs/SHOP-ROADMAP.md).
+switched on later without rewriting the shop. To put it online and take payments, follow
+[docs/DEPLOY.md](docs/DEPLOY.md); the bigger picture is in [docs/SHOP-ROADMAP.md](docs/SHOP-ROADMAP.md).
 
 ## Run it
 
@@ -114,6 +115,12 @@ The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate
 - **Day shift / Night shift**: the sun/moon button switches to a light theme (remembered). Colours are tokens in
   `src/styles/global.css` (`:root[data-theme='light']`); the 3D turntable follows the theme. Both themes pass an axe
   accessibility audit.
+- **Reviews and gallery**: `src/data/reviews.ts` holds customer reviews and customer-print photos. Both start empty
+  and must only contain real ones; products show "No reviews yet" with a link to send one, and the gallery on `/lab/`
+  appears once it has photos. Star ratings reach search results only when real reviews exist.
+- **Flow**: order and custom requests open a "ready to send" dialog (open email app, copy message, copy address);
+  the cart has remove with undo and suggestions when empty; phones get a sticky buy bar on product pages; guides end
+  with a next step; a "got an idea?" band sits above the footer; pages cross-fade.
 - **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
   `src/components/Search.astro`, so new products are searchable automatically.
 - **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page

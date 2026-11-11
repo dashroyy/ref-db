@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import PrintStory from '../components/PrintStory.astro';
+import Gallery from '../components/Gallery.astro';
 import { PRODUCTS } from '../data/catalog.ts';
 
 const originals = PRODUCTS.filter((p) => p.category === 'originals');
@@ -34,6 +35,8 @@ const log = [
   </section>
 
   <div class="wrap"><PrintStory /></div>
+
+  <Gallery />
 
   <section class="section">
     <div class="wrap">

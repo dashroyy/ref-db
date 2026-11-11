@@ -1,0 +1,128 @@
+---
+// Customer prints gallery with a lightbox. Renders nothing until
+// GALLERY (src/data/reviews.ts) has real photos.
+import { GALLERY } from '../data/reviews.ts';
+import { productById } from '../data/catalog.ts';
+---
+
+{
+  GALLERY.length > 0 && (
+    <section class="section gallery">
+      <div class="wrap">
+        <div class="head" data-print>
+          <h2 class="h-rule">Out in the wild</h2>
+          <p class="muted">Real prints, in their new homes. Shared with permission.</p>
+        </div>
+        <ul class="shots">
+          {GALLERY.map((g, i) => {
+            const p = g.productId ? productById(g.productId) : undefined;
+            return (
+              <li>
+                <button type="button" data-shot={i} aria-label={`Enlarge: ${g.alt}`}>
+                  <img src={g.src} alt={g.alt} loading="lazy" />
+                </button>
+                <span class="cap">
+                  {g.caption}
+                  {p && <a href={`/shop/${p.slug}/`}>Get one →</a>}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      <dialog class="lightbox" data-lightbox>
+        <img alt="" data-lightbox-img />
+        <p data-lightbox-cap />
+        <button type="button" class="btn" data-lightbox-close>Close</button>
+      </dialog>
+    </section>
+  )
+}
+
+<script>
+  const dlg = document.querySelector<HTMLDialogElement>('[data-lightbox]');
+  if (dlg) {
+    const img = dlg.querySelector<HTMLImageElement>('[data-lightbox-img]')!;
+    const cap = dlg.querySelector<HTMLElement>('[data-lightbox-cap]')!;
+    document.querySelectorAll<HTMLButtonElement>('[data-shot]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const src = b.querySelector('img')!;
+        img.src = src.src;
+        img.alt = src.alt;
+        cap.textContent = b.parentElement!.querySelector('.cap')!.firstChild!.textContent;
+        dlg.showModal();
+      }),
+    );
+    dlg.querySelector('[data-lightbox-close]')!.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => e.target === dlg && dlg.close());
+  }
+</script>
+
+<style>
+  .gallery {
+    padding-top: 0;
+  }
+  .shots {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    columns: 3 240px;
+    column-gap: 18px;
+  }
+  .shots li {
+    break-inside: avoid;
+    margin-bottom: 18px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .shots button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+  }
+  .shots img {
+    width: 100%;
+    transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+  }
+  .shots button:hover img {
+    transform: scale(1.04);
+  }
+  .cap {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    color: var(--text-2);
+  }
+  .cap a {
+    color: var(--hot);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .lightbox {
+    max-width: min(92vw, 1000px);
+    padding: 14px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background: var(--overlay-solid);
+    color: var(--text);
+    text-align: center;
+  }
+  .lightbox::backdrop {
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+  }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 72vh;
+    border-radius: 10px;
+    margin-inline: auto;
+  }
+</style>

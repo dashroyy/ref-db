@@ -1,11 +1,9 @@
 // POST /api/checkout — creates a Stripe Checkout Session from the cart.
 //
-// NOT ACTIVE YET. To switch online checkout on:
-//   1. npx astro add netlify   (or vercel / cloudflare / node)
-//   2. move this folder's files to src/pages/api/
-//   3. set STRIPE_SECRET_KEY (and SITE_URL) in your host's environment settings
-//   4. set CHECKOUT_MODE = 'stripe' in src/data/site.ts
-// See docs/SHOP-ROADMAP.md. The browser only sends ids, options and quantities;
+// Added to the site only on Netlify builds (astro.config.mjs). It answers 503
+// until STRIPE_SECRET_KEY is set in the host's environment; the cart uses it
+// once PUBLIC_CHECKOUT_MODE=stripe is set too. See docs/DEPLOY.md.
+// The browser only sends ids, options and quantities;
 // every price is recomputed here from the catalog.
 import type { APIRoute } from 'astro';
 import { buildOrder, type CartLine } from '../../lib/order.ts';

@@ -8,7 +8,7 @@ import { money } from '../lib/money.ts';
 const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 ---
 
-<Base
+<Base cta={false}
   title="Custom orders"
   description="Custom 3D-printed figurines of people and pets, business cards and one-off prints."
 >
@@ -74,7 +74,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         </div>
         <input type="hidden" name="options" value="" />
         <button class="btn btn--primary btn--block" type="submit">Send request</button>
-        <p class="muted small">Opens your email app with everything filled in, addressed to {SITE.email}.</p>
+        <p class="muted small">Nothing is sent yet: you'll see your message ready to email, with a copy button if you use webmail.</p>
       </form>
     </div>
   </section>
@@ -98,6 +98,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 
 <script>
   import { SITE } from '../data/site.ts';
+  import { showSendDialog } from '../lib/send.ts';
   import { productById, describeOptions, normaliseOptions } from '../data/catalog.ts';
 
   const form = document.querySelector<HTMLFormElement>('[data-request]')!;
@@ -140,7 +141,13 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
     ]
       .filter((l, i, a) => l !== '' || a[i - 1] !== '')
       .join('\n');
-    location.href = `mailto:${SITE.email}?subject=${encodeURIComponent(`${SITE.name} custom request: ${what}`)}&body=${encodeURIComponent(body)}`;
+    showSendDialog({
+      title: 'Your request is ready',
+      lead: 'One last step: send it to me by email, with your photos or 3D file attached. I usually reply within a day or two.',
+      to: SITE.email,
+      subject: `${SITE.name} custom request: ${what}`,
+      text: body,
+    });
   });
 </script>
 

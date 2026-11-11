@@ -11,6 +11,7 @@
     "test": "node --test tests/*.test.ts"
   },
   "dependencies": {
+    "@astrojs/netlify": "^8.2.13",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/manrope": "^5.3.0",
     "@fontsource/unbounded": "^5.3.0",

@@ -1,8 +1,8 @@
 // Checkout — one entry point, two modes (set CHECKOUT_MODE in src/data/site.ts).
 //
-// 'request' (today): builds an order request email with every line priced from
-//   the catalog and an order reference. You confirm by replying and send an
-//   invoice (Stripe Invoicing, PayPal, etc. — see docs/SHOP-ROADMAP.md).
+// 'request' (today): builds an order request with every line priced from the
+//   catalog and an order reference; the cart shows it ready to send by email.
+//   You confirm by replying and send an invoice (see docs/SHOP-ROADMAP.md).
 //
 // 'stripe' (later): POSTs the cart (ids, options and quantities only — never
 //   prices) to /api/checkout, which re-prices it with buildOrder(), creates a
@@ -18,7 +18,10 @@ export interface Customer {
   notes?: string;
 }
 
-export type CheckoutResult = { kind: 'redirect'; url: string } | { kind: 'error'; message: string };
+export type CheckoutResult =
+  | { kind: 'redirect'; url: string } // Stripe's payment page
+  | { kind: 'request'; reference: string; subject: string; text: string } // order request to send by email
+  | { kind: 'error'; message: string };
 
 export async function startCheckout(cart: CartLine[], customer: Customer, extras: OrderExtras = {}): Promise<CheckoutResult> {
   const order = buildOrder(cart, undefined, undefined, extras);
@@ -43,7 +46,12 @@ export async function startCheckout(cart: CartLine[], customer: Customer, extras
     }
   }
 
-  return { kind: 'redirect', url: orderRequestMailto(order, customer) };
+  return {
+    kind: 'request',
+    reference: order.reference,
+    subject: `${SITE.name} order request ${order.reference}`,
+    text: orderRequestText(order, customer),
+  };
 }
 
 export function orderRequestText(order: Order, customer: Customer): string {
@@ -67,11 +75,4 @@ export function orderRequestText(order: Order, customer: Customer): string {
   ]
     .filter((s) => s !== undefined)
     .join('\n');
-}
-
-export function orderRequestMailto(order: Order, customer: Customer): string {
-  const subject = `${SITE.name} order request ${order.reference}`;
-  return `mailto:${SITE.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-    orderRequestText(order, customer),
-  )}`;
 }

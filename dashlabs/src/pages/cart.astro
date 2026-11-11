@@ -2,9 +2,11 @@
 import Base from '../layouts/Base.astro';
 import { CHECKOUT_MODE, GIFT_WRAP_PRICE, GIFT_NOTE_MAX } from '../data/site.ts';
 import { money } from '../lib/money.ts';
+import ProductCard from '../components/ProductCard.astro';
+import { PRODUCTS } from '../data/catalog.ts';
 ---
 
-<Base title="Cart">
+<Base cta={false} title="Cart">
   <section class="section top">
     <div class="wrap">
       <p class="tag tag--accent">Cart</p>
@@ -14,13 +16,28 @@ import { money } from '../lib/money.ts';
         Checkout was cancelled, so nothing was charged. Your cart is just as you left it.
       </p>
 
-      <div class="empty panel" data-empty hidden>
-        <p class="lede">Your cart is empty.</p>
-        <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+      <p class="notice undo" data-undo hidden>
+        <span><b data-undo-name>Item</b> removed.</span>
+        <button type="button" class="btn" data-undo-btn>Undo</button>
+      </p>
+
+      <div data-empty hidden>
+        <div class="empty panel">
+          <p class="lede">Your cart is empty. The printers are warm, though.</p>
+          <div class="empty-actions">
+            <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+            <a class="btn" href="/custom/">Start a custom order</a>
+          </div>
+        </div>
+        <h2 class="h-rule sugg-h">Popular right now</h2>
+        <div class="grid">{PRODUCTS.filter((p) => p.featured).map((p) => <ProductCard product={p} />)}</div>
       </div>
 
       <div class="layout" data-full hidden>
-        <ul class="lines" data-lines></ul>
+        <div>
+          <ul class="lines" data-lines></ul>
+          <a class="keep" href="/shop/">← Keep shopping</a>
+        </div>
 
         <aside class="summary panel">
           <h2 class="tag">Summary</h2>
@@ -67,8 +84,8 @@ import { money } from '../lib/money.ts';
           {
             CHECKOUT_MODE === 'request' && (
               <p class="notice">
-                Online payment is coming soon. For now, this sends your order to me by email; I'll confirm stock,
-                shipping and the total, then send you a secure invoice to pay.
+                No payment is taken here. You send me the order by email; I confirm shipping and the total, then
+                send a secure invoice to pay by card.
               </p>
             )
           }
@@ -82,6 +99,9 @@ import { money } from '../lib/money.ts';
   import { readCart, updateQty, onCartChange } from '../lib/cart-store.ts';
   import { buildOrder } from '../lib/order.ts';
   import { startCheckout } from '../lib/checkout.ts';
+  import { showSendDialog } from '../lib/send.ts';
+  import { SITE } from '../data/site.ts';
+  import { addToCart } from '../lib/cart-store.ts';
   import { money } from '../lib/money.ts';
   import { productById, categoryById } from '../data/catalog.ts';
   import { webglOK } from '../lib/three/support.ts';
@@ -133,17 +153,32 @@ import { money } from '../lib/money.ts';
             <button type="button" data-i="${i}" data-d="1" aria-label="Increase quantity">+</button>
           </div>
           <strong class="total">${money(line.lineTotal)}</strong>
+          <button type="button" class="rm" data-i="${i}" data-remove aria-label="Remove ${esc(line.name)}">×</button>
         </li>`;
       })
       .join('');
     if (gl) import('../lib/three/viewer.ts').then((m) => m.renderThumbs(list));
   }
 
+  let undo: ReturnType<typeof readCart>[number] | null = null;
   list.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-i]');
     if (!b) return;
     const i = Number(b.dataset.i);
-    updateQty(i, readCart()[i].qty + Number(b.dataset.d));
+    const line = readCart()[i];
+    if (b.dataset.remove !== undefined) {
+      undo = line;
+      updateQty(i, 0);
+      $('[data-undo]').hidden = false;
+      $('[data-undo-name]').textContent = productById(line.productId)?.name ?? 'Item';
+      return;
+    }
+    updateQty(i, line.qty + Number(b.dataset.d));
+  });
+  $('[data-undo-btn]').addEventListener('click', () => {
+    if (undo) addToCart(undo);
+    undo = null;
+    $('[data-undo]').hidden = true;
   });
 
   $('[data-checkout]').addEventListener('submit', async (e) => {
@@ -162,7 +197,16 @@ import { money } from '../lib/money.ts';
       { giftWrap: giftOn(), giftNote: giftOn() ? String(data.get('giftNote') || '') : undefined },
     );
     if (res.kind === 'redirect') location.href = res.url;
-    else {
+    else if (res.kind === 'request') {
+      showSendDialog({
+        title: 'Your order request is ready',
+        lead: 'One last step: send it to me by email. I’ll reply with shipping and the total, then a secure invoice to pay.',
+        to: SITE.email,
+        subject: res.subject,
+        text: res.text,
+        reference: res.reference,
+      });
+    } else {
       err.textContent = res.message;
       err.hidden = false;
     }
@@ -199,7 +243,7 @@ import { money } from '../lib/money.ts';
   }
   :global(.line) {
     display: grid;
-    grid-template-columns: 72px 1fr auto auto;
+    grid-template-columns: 72px 1fr auto auto auto;
     gap: 16px;
     align-items: center;
     padding: 16px;
@@ -267,6 +311,50 @@ import { money } from '../lib/money.ts';
   .summary dd {
     margin: 0;
     font-family: var(--mono);
+  }
+  :global(.line .rm) {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--text-3);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  :global(.line .rm:hover) {
+    color: var(--danger);
+    border-color: var(--line-2);
+  }
+  .keep {
+    display: inline-block;
+    margin-top: 18px;
+    font-weight: 700;
+    color: var(--text-2);
+    text-decoration: none;
+  }
+  .keep:hover {
+    color: var(--hot);
+  }
+  .undo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .undo .btn {
+    min-height: 36px;
+  }
+  .empty-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .sugg-h {
+    margin: 48px 0 24px;
+    font-size: 1.4rem;
   }
   .gift {
     margin: 6px 0 16px;

@@ -134,3 +134,18 @@ test('catalog: every product has a size, and size options map every choice', () 
     for (const c of opt!.choices) assert.ok(by.mm[c.id] > 0, `${p.id} size for ${c.id}`);
   }
 });
+
+test('reviews: summary maths, per-product filter, and real data only', async () => {
+  const { REVIEWS, GALLERY, reviewsFor, ratingSummary } = await import('../src/data/reviews.ts');
+  const sample = [
+    { productId: 'a', name: 'X', rating: 5 as const, date: '2026-01-02', text: 't' },
+    { productId: 'a', name: 'Y', rating: 4 as const, date: '2026-03-01', text: 't' },
+    { productId: 'b', name: 'Z', rating: 1 as const, date: '2026-02-01', text: 't' },
+  ];
+  assert.deepEqual(ratingSummary(reviewsFor('a', sample)), { average: 4.5, count: 2 });
+  assert.equal(reviewsFor('a', sample)[0].name, 'Y'); // newest first
+  assert.equal(ratingSummary([]), null);
+  // whatever is published must point at real products and have alt text
+  for (const r of REVIEWS) assert.ok(PRODUCTS.some((p) => p.id === r.productId) && r.text.trim() && r.name.trim(), `review for ${r.productId}`);
+  for (const g of GALLERY) assert.ok(g.alt.trim() && g.src.startsWith('/gallery/'), `gallery ${g.src}`);
+});

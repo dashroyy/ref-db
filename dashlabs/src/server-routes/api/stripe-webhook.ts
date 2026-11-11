@@ -1,6 +1,6 @@
 // POST /api/stripe-webhook — Stripe tells us when an order is paid.
 //
-// NOT ACTIVE YET (see checkout.ts in this folder for how to switch on).
+// Added to the site only on Netlify builds (see docs/DEPLOY.md).
 // In the Stripe dashboard: Developers → Webhooks → add endpoint
 //   https://your-domain/api/stripe-webhook   event: checkout.session.completed
 // then set STRIPE_WEBHOOK_SECRET (whsec_…) in your host's environment.
