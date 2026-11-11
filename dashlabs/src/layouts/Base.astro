@@ -65,6 +65,8 @@ const tone = pageColor(Astro.url.pathname);
     <script type="application/ld+json" set:html={JSON.stringify(jsonld ?? org)} />
     <meta name="theme-color" content="#08070d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     {[unbounded700, unbounded600, manrope400].map((href) => <link rel="preload" as="font" type="font/woff2" href={href} crossorigin />)}
     <script is:inline>
       // Before first paint: enable print-in effects, restore Motion off. Storage can throw.

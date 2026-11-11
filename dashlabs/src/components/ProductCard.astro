@@ -17,7 +17,7 @@ const image = p.images?.[0];
 const filament = cat.color;
 ---
 
-<div class="card-wrap" data-category={p.category} data-product={p.id} style={`--c:${cat.color}`}>
+<div class="card-wrap" data-category={p.category} data-product={p.id} data-price={p.price} data-name={p.name} style={`--c:${cat.color}`}>
 <a href={`/shop/${p.slug}/`} class="card" data-tilt>
   <div class="slab">
     <div class="media" data-thumb={image ? undefined : ''} data-shape={p.art.shape} data-color={filament}>

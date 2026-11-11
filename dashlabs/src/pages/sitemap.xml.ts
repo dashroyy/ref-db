@@ -12,6 +12,9 @@ export const GET: APIRoute = ({ site }) => {
     '/lab/',
     '/learn/',
     '/faq/',
+    '/policies/',
+    '/about/',
+    '/gifts/',
     ...PRODUCTS.map((p) => `/shop/${p.slug}/`),
     ...GUIDES.map((g) => `/learn/${g.slug}/`),
   ];

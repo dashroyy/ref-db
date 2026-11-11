@@ -1,0 +1,119 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, SHIP_TO } from '../data/site.ts';
+const sections = [
+  { id: 'shipping', t: 'Shipping' },
+  { id: 'returns', t: 'Returns & refunds' },
+  { id: 'custom', t: 'Custom work' },
+  { id: 'privacy', t: 'Privacy' },
+  { id: 'terms', t: 'Terms of sale' },
+];
+---
+
+<Base title="Policies" description="Shipping, returns, custom work, privacy and terms at DashLabs.">
+  <section class="section top">
+    <div class="wrap layout">
+      <nav class="toc" aria-label="On this page">
+        <span class="tag">Policies</span>
+        {sections.map((s) => <a href={`#${s.id}`}>{s.t}</a>)}
+      </nav>
+      <div class="prose">
+        <h1 class="x3d">The fine print, in plain words.</h1>
+        <p class="notice">
+          <strong>Draft.</strong> These policies are a starting point and haven't been finalised yet. They'll be confirmed
+          before online payments open.
+        </p>
+
+        <h2 id="shipping">Shipping</h2>
+        <ul>
+          <li><strong>Made to order.</strong> Nothing sits in stock, so every item is printed after you order. Each product page shows its usual turnaround, and the home page shows the current queue.</li>
+          <li><strong>Where:</strong> currently shipping to {SHIP_TO.join(', ')}. Elsewhere? <a href={`mailto:${SITE.email}`}>Ask</a> and I'll quote it.</li>
+          <li><strong>Cost:</strong> shipping is worked out from size, weight and destination, and shown before you pay.</li>
+          <li><strong>Tracking:</strong> you get an email when your order ships.</li>
+          <li><strong>Packing:</strong> prints are packed to survive the trip. If something still arrives broken, see Returns.</li>
+        </ul>
+
+        <h2 id="returns">Returns &amp; refunds</h2>
+        <ul>
+          <li><strong>Damaged or faulty:</strong> send a photo within 14 days of delivery and I'll reprint it or refund you, your choice.</li>
+          <li><strong>Changed your mind (standard items):</strong> contact me within 14 days of delivery. Return it unused and I'll refund the item; return postage is yours.</li>
+          <li><strong>Custom and personalised items</strong> (figurines, name keychains, business cards, anything made to your text, photos or file) can't be returned for a change of mind, because they can't be sold to anyone else. Faulty ones are always put right.</li>
+          <li><strong>Cancelling:</strong> free until printing starts. After that, see above.</li>
+        </ul>
+
+        <h2 id="custom">Custom work</h2>
+        <ul>
+          <li><strong>Quote first.</strong> You get a price and a timeline before any work starts.</li>
+          <li><strong>Preview before printing.</strong> For figurines you see a 3D preview and approve it. One round of changes is included; more can be quoted.</li>
+          <li><strong>Likeness:</strong> figurines are stylised sculpts, not scans. The preview is what you'll get.</li>
+          <li><strong>Your files and designs stay yours.</strong> I print them for you and don't sell or share them.</li>
+          <li><strong>What I won't print:</strong> weapons or weapon parts, items that infringe someone else's copyright or trademark, or designs whose licence doesn't allow selling prints.</li>
+        </ul>
+
+        <h2 id="privacy">Privacy</h2>
+        <ul>
+          <li><strong>What I collect:</strong> only what you send me to make and deliver your order: name, email, address, and any photos, text or files for custom work.</li>
+          <li><strong>What it's used for:</strong> your order, and nothing else. No marketing emails unless you ask for them.</li>
+          <li><strong>Photos</strong> for a commission are used only to make your piece, and I won't show your piece publicly without asking you.</li>
+          <li><strong>On this website:</strong> your cart, saved items and theme choice are stored in your own browser, not on a server. There is no tracking or advertising. The STL quote tool reads your file on your device; it is not uploaded.</li>
+          <li><strong>Payments</strong> are handled by Stripe. I never see or store your card number.</li>
+          <li><strong>Your say:</strong> ask me any time to see or delete what I hold about you: <a href={`mailto:${SITE.email}`}>{SITE.email}</a>.</li>
+        </ul>
+
+        <h2 id="terms">Terms of sale</h2>
+        <ul>
+          <li><strong>Prices</strong> are in {SITE.currency}. Estimates from the price tools are ballparks; the price you're quoted or see at checkout is the price.</li>
+          <li><strong>3D prints are handmade objects.</strong> Fine layer lines and small marks where supports touched are normal, and colours vary slightly from screen to plastic.</li>
+          <li><strong>Not toys for small children</strong> unless stated; small parts can break off. Prints aren't food-safe unless stated.</li>
+          <li><strong>The Pen Launcher</strong> is for targets, never people or animals. Use it sensibly.</li>
+          <li><strong>Sizes</strong> are approximate, within a millimetre or two.</li>
+        </ul>
+        <p class="muted">Questions about any of this? <a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: clamp(24px, 5vw, 64px);
+    align-items: start;
+  }
+  .toc {
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+    display: grid;
+    gap: 8px;
+  }
+  .toc a {
+    color: var(--text-2);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .toc a:hover {
+    color: var(--hot);
+  }
+  h1 {
+    font-size: clamp(2rem, 4.6vw, 3.2rem);
+    letter-spacing: -0.04em;
+  }
+  @media (max-width: 760px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .toc {
+      position: static;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+    }
+    .toc .tag {
+      width: 100%;
+    }
+  }
+</style>

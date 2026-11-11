@@ -14,6 +14,7 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
         with a quote.
       </p>
 
+      <div class="bar">
       <div class="filters" role="group" aria-label="Filter by category">
         <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--hot-2)"><i></i>All <span>{PRODUCTS.length}</span></button>
         {
@@ -24,6 +25,15 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
             </button>
           ))
         }
+      </div>
+      <label class="sort">Sort
+        <select data-sort>
+          <option value="featured">Featured</option>
+          <option value="low">Price: low to high</option>
+          <option value="high">Price: high to low</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
       </div>
 
       <div class="grid" data-grid>
@@ -48,6 +58,20 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
   }
 
   buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+
+  // Sorting: reorder the cards in place; "featured" is the catalog order
+  const grid = document.querySelector<HTMLElement>('[data-grid]')!;
+  const original = [...cards];
+  const sort = document.querySelector<HTMLSelectElement>('[data-sort]')!;
+  sort.addEventListener('change', () => {
+    const by = sort.value;
+    const list =
+      by === 'low' ? [...cards].sort((a, b) => Number(a.dataset.price) - Number(b.dataset.price))
+      : by === 'high' ? [...cards].sort((a, b) => Number(b.dataset.price) - Number(a.dataset.price))
+      : by === 'name' ? [...cards].sort((a, b) => a.dataset.name!.localeCompare(b.dataset.name!))
+      : original;
+    list.forEach((c) => grid.appendChild(c));
+  });
   apply(new URLSearchParams(location.search).get('c') ?? 'all');
 </script>
 
@@ -55,11 +79,31 @@ import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
   .top {
     padding-top: clamp(40px, 6vw, 72px);
   }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 20px;
+    margin: 32px 0 28px;
+  }
   .filters {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin: 32px 0 28px;
+  }
+  .sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: 500 0.7rem var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .sort select {
+    width: auto;
+    min-height: 42px;
   }
   .filters button {
     display: inline-flex;

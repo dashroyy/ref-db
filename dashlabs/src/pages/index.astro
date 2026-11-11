@@ -166,7 +166,7 @@ const ticker = [
         {
           GUIDES.map((g, i) => (
             <a class="guide" href={`/learn/${g.slug}/`} data-tilt data-print>
-              <span class="gnum">0{i + 1}</span>
+              <span class="gnum">{String(i + 1).padStart(2, '0')}</span>
               <span class="tag">Tool · {g.tool}</span>
               <h3>{g.title}</h3>
               <p>{g.summary}</p>

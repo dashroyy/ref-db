@@ -92,7 +92,7 @@
   --hot-ink: #1d0f00;
   --uv: #6a3ee0;
   --uv-2: #5530c2;
-  --mint: #0b8f69;
+  --mint: #087a59;
   --pink: #c4318a;
   --warn: #855b00;
   --layers: repeating-linear-gradient(0deg, rgba(70, 45, 130, 0.05) 0 1px, transparent 1px 4px);
@@ -115,6 +115,14 @@
 }
 :root[data-theme='light'] [style*='--c:'] :is(.kind, .sku, .go, .tag, .g-head, .nm, .k, .st-n, .zn, .cat-txt .tag) {
   color: var(--c-text);
+}
+/* On paper, the page tone (a bright filament colour set per page) is deepened
+   once here, so every link, label and accent that uses it stays readable. */
+:root[data-theme='light'] {
+  --tone-src: var(--tone);
+}
+:root[data-theme='light'] body {
+  --tone: color-mix(in srgb, var(--tone-src) 42%, #1a1030);
 }
 /* the page tone (--tone, the category colour) as text, readable on paper */
 :root[data-theme='light'] .tag--accent,

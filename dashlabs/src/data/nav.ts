@@ -25,6 +25,7 @@ export interface NavGroup {
 
 export const MAIN_LINKS = [
   { label: 'Custom', href: '/custom/' },
+  { label: 'Gifts', href: '/gifts/' },
   { label: 'The lab', href: '/lab/' },
   { label: 'Learn', href: '/learn/' },
   { label: 'FAQ', href: '/faq/' },
