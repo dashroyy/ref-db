@@ -1,0 +1,70 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Order received" description="Thanks for your order." noindex>
+  <section class="section wrap done">
+    <div class="tick" aria-hidden="true">
+      <svg viewBox="0 0 40 40" width="88" height="88">
+        <polygon points="20,4 35,12 20,20 5,12" fill="var(--hot)"></polygon>
+        <polygon points="5,12 20,20 20,36 5,28" fill="#6c47d6"></polygon>
+        <polygon points="20,20 35,12 35,28 20,36" fill="#4a2ca8"></polygon>
+        <path d="M13 12.5 l5 3 l9-6" fill="none" stroke="#1d0f00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </div>
+    <p class="kicker"><span class="dot"></span>Payment received · added to the queue</p>
+    <h1 class="x3d">Your print is <span class="hot">queued</span>.</h1>
+    <p class="lede">
+      Thanks! Your receipt and invoice are on their way to your inbox. I'll email you when your order is printed and
+      again when it ships.
+    </p>
+    <p class="ref" data-ref hidden>Order reference <b data-ref-val></b></p>
+    <div class="actions">
+      <a class="btn btn--primary" href="/shop/">Keep browsing</a>
+      <a class="btn" href="/learn/">Read a guide while you wait</a>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { clearCart } from '../../lib/cart-store.ts';
+  clearCart();
+  const ref = new URLSearchParams(location.search).get('ref');
+  if (ref && /^DL-\d{6}-[A-Z0-9]{4}$/.test(ref)) {
+    document.querySelector<HTMLElement>('[data-ref-val]')!.textContent = ref;
+    document.querySelector<HTMLElement>('[data-ref]')!.hidden = false;
+  }
+</script>
+
+<style>
+  .done {
+    min-height: 70vh;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+  }
+  .tick {
+    margin-bottom: 20px;
+    animation: pop 0.8s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+    filter: drop-shadow(0 0 24px rgba(255, 140, 30, 0.45));
+  }
+  @keyframes pop {
+    from {
+      transform: scale(0.3) rotate(-30deg);
+      opacity: 0;
+    }
+  }
+  .ref {
+    font: 500 0.95rem var(--mono);
+    color: var(--text-2);
+  }
+  .ref b {
+    color: var(--hot);
+  }
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+</style>

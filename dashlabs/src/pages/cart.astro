@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
-import { CHECKOUT_MODE } from '../data/site.ts';
+import { CHECKOUT_MODE, GIFT_WRAP_PRICE, GIFT_NOTE_MAX } from '../data/site.ts';
+import { money } from '../lib/money.ts';
 ---
 
 <Base title="Cart">
@@ -8,6 +9,10 @@ import { CHECKOUT_MODE } from '../data/site.ts';
     <div class="wrap">
       <p class="tag tag--accent">Cart</p>
       <h1 class="x3d">Your order</h1>
+
+      <p class="notice cancelled" data-cancelled hidden>
+        Checkout was cancelled, so nothing was charged. Your cart is just as you left it.
+      </p>
 
       <div class="empty panel" data-empty hidden>
         <p class="lede">Your cart is empty.</p>
@@ -20,6 +25,7 @@ import { CHECKOUT_MODE } from '../data/site.ts';
         <aside class="summary panel">
           <h2 class="tag">Summary</h2>
           <dl>
+            <div class="gift-row" data-gift-row hidden><dt>Gift wrap</dt><dd>{money(GIFT_WRAP_PRICE)}</dd></div>
             <div><dt>Subtotal</dt><dd data-subtotal>—</dd></div>
             <div><dt>Shipping</dt><dd class="muted">Calculated at checkout</dd></div>
             <div><dt>Tax</dt><dd class="muted">Calculated at checkout</dd></div>
@@ -34,9 +40,23 @@ import { CHECKOUT_MODE } from '../data/site.ts';
               <label for="email">Email</label>
               <input id="email" name="email" type="email" autocomplete="email" required />
             </div>
+            <div class="gift">
+              <label class="switch">
+                <input type="checkbox" name="giftWrap" data-gift />
+                <span class="track" aria-hidden="true"><span class="knob"></span></span>
+                <span class="sw-txt">
+                  <b>Make it a gift</b>
+                  <small>Gift wrap {GIFT_WRAP_PRICE ? `+${money(GIFT_WRAP_PRICE)}` : 'free'}, no prices in the box, and a printed note.</small>
+                </span>
+              </label>
+              <div class="field gift-note" data-gift-note hidden>
+                <label for="giftNote">Gift note</label>
+                <textarea id="giftNote" name="giftNote" rows="3" maxlength={GIFT_NOTE_MAX} placeholder="Happy birthday, Sam! Love, Alex"></textarea>
+              </div>
+            </div>
             <div class="field">
               <label for="notes">Notes (optional)</label>
-              <textarea id="notes" name="notes" rows="3" placeholder="Shipping country, deadline, gift message…"></textarea>
+              <textarea id="notes" name="notes" rows="3" placeholder="Shipping country, deadline…"></textarea>
             </div>
             <button class="btn btn--primary btn--block" type="submit">
               {CHECKOUT_MODE === 'stripe' ? 'Checkout securely' : 'Send order request'}
@@ -71,9 +91,18 @@ import { CHECKOUT_MODE } from '../data/site.ts';
   const list = $('[data-lines]');
   const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
+  const giftBox = document.querySelector<HTMLInputElement>('[data-gift]')!;
+  const giftOn = () => giftBox.checked;
+  giftBox.addEventListener('change', () => {
+    $('[data-gift-note]').hidden = !giftOn();
+    render();
+  });
+  if (new URLSearchParams(location.search).get('cancelled')) $('[data-cancelled]').hidden = false;
+
   function render() {
     const cart = readCart();
-    const order = buildOrder(cart);
+    const order = buildOrder(cart, undefined, undefined, { giftWrap: giftOn() });
+    $('[data-gift-row]').hidden = !order.gift.wrap;
     $('[data-empty]').hidden = order.lines.length > 0;
     $('[data-full]').hidden = order.lines.length === 0;
     $('[data-subtotal]').textContent = money(order.subtotal);
@@ -88,7 +117,11 @@ import { CHECKOUT_MODE } from '../data/site.ts';
         const chosen = p.options.find((o) => o.id === 'colour')?.choices.find((c) => c.id === line.options.colour)?.hex;
         const tint = chosen ?? categoryById(p.category).color;
         return `<li class="line panel">
-          <div class="dot" style="--h:${p.art.hue}" data-thumb data-shape="${p.art.shape}" data-color="${tint}"></div>
+          <div class="dot" style="--h:${p.art.hue}" data-thumb data-shape="${p.art.shape}" data-color="${tint}"${
+            p.personalise && line.note
+              ? ` data-text="${esc(line.note)}" data-text-color="${p.options.find((o) => o.id === 'textColour')?.choices.find((c) => c.id === line.options.textColour)?.hex ?? '#ece6da'}"`
+              : ''
+          }></div>
           <div class="meta">
             <a href="/shop/${p.slug}/"><strong>${esc(line.name)}</strong></a>
             <span class="muted">${esc(line.optionsText)}${line.note ? ` · “${esc(line.note)}”` : ''}</span>
@@ -119,11 +152,15 @@ import { CHECKOUT_MODE } from '../data/site.ts';
     const data = new FormData(form);
     const err = $('[data-error]');
     err.hidden = true;
-    const res = await startCheckout(readCart(), {
-      name: String(data.get('name')),
-      email: String(data.get('email')),
-      notes: String(data.get('notes') || ''),
-    });
+    const res = await startCheckout(
+      readCart(),
+      {
+        name: String(data.get('name')),
+        email: String(data.get('email')),
+        notes: String(data.get('notes') || ''),
+      },
+      { giftWrap: giftOn(), giftNote: giftOn() ? String(data.get('giftNote') || '') : undefined },
+    );
     if (res.kind === 'redirect') location.href = res.url;
     else {
       err.textContent = res.message;
@@ -230,6 +267,75 @@ import { CHECKOUT_MODE } from '../data/site.ts';
   .summary dd {
     margin: 0;
     font-family: var(--mono);
+  }
+  .gift {
+    margin: 6px 0 16px;
+    padding: 14px;
+    border: 1px dashed color-mix(in srgb, var(--pink) 45%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--pink) 6%, transparent);
+  }
+  .switch {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .switch input {
+    position: absolute;
+    opacity: 0;
+  }
+  .track {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 99px;
+    background: var(--panel-3);
+    border: 1px solid var(--line-2);
+    transition: background 0.2s;
+  }
+  .knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    background: var(--text-3);
+    transition:
+      transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1),
+      background 0.2s;
+  }
+  .switch input:checked + .track {
+    background: color-mix(in srgb, var(--pink) 40%, var(--panel-3));
+    border-color: var(--pink);
+  }
+  .switch input:checked + .track .knob {
+    transform: translateX(20px) rotate(45deg);
+    background: var(--pink);
+    box-shadow: 0 0 10px var(--pink);
+  }
+  .switch input:focus-visible + .track {
+    outline: 2px solid var(--pink);
+    outline-offset: 3px;
+  }
+  .sw-txt {
+    display: grid;
+    gap: 2px;
+  }
+  .sw-txt b {
+    color: var(--white);
+  }
+  .sw-txt small {
+    color: var(--text-3);
+    font-size: 0.84rem;
+  }
+  .gift-note {
+    margin: 14px 0 0;
+  }
+  .cancelled {
+    margin-bottom: 20px;
   }
   .summary [data-subtotal] {
     font-weight: 600;

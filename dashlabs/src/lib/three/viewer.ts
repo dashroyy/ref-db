@@ -218,17 +218,23 @@ export function renderThumbs(root: ParentNode = document) {
     el.appendChild(img);
     requestAnimationFrame(() => el.classList.add('thumb-ready'));
   };
-  const work = () => {
+  const work = async () => {
     const el = thumbQueue.shift();
     if (!el) {
       renderer.dispose();
       thumbBusy = false;
       return;
     }
-    const key = `${el.dataset.shape}|${el.dataset.color}`;
+    const text = el.dataset.text ?? '';
+    const key = `${el.dataset.shape}|${el.dataset.color}|${text}|${el.dataset.textColor ?? ''}`;
     let src = thumbCache.get(key);
     if (!src) {
       const model = buildModel(el.dataset.shape as Shape, el.dataset.color || '#ffab2e');
+      if (text) {
+        // personalised items show the customer's own text
+        const { applyText, cleanText } = await import('./text.ts');
+        await applyText(model, cleanText(text, 40), el.dataset.textColor || '#ece6da');
+      }
       model.rotation.y = -0.55;
       scene.add(model);
       fitDisc(t, model);
@@ -241,7 +247,7 @@ export function renderThumbs(root: ParentNode = document) {
       model.traverse((o) => (o as THREE.Mesh).geometry?.dispose?.());
     }
     show(el, src);
-    (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 16)))(work);
+    (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 16)))(() => void work());
   };
-  work();
+  void work();
 }

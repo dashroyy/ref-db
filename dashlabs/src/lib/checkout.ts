@@ -9,7 +9,7 @@
 //   Stripe Checkout Session with invoice creation on, and returns its URL.
 
 import { CHECKOUT_MODE, SITE } from '../data/site.ts';
-import { buildOrder, type CartLine, type Order } from './order.ts';
+import { buildOrder, type CartLine, type Order, type OrderExtras } from './order.ts';
 import { money } from './money.ts';
 
 export interface Customer {
@@ -20,8 +20,8 @@ export interface Customer {
 
 export type CheckoutResult = { kind: 'redirect'; url: string } | { kind: 'error'; message: string };
 
-export async function startCheckout(cart: CartLine[], customer: Customer): Promise<CheckoutResult> {
-  const order = buildOrder(cart);
+export async function startCheckout(cart: CartLine[], customer: Customer, extras: OrderExtras = {}): Promise<CheckoutResult> {
+  const order = buildOrder(cart, undefined, undefined, extras);
   if (order.lines.length === 0) return { kind: 'error', message: 'Your cart is empty.' };
 
   if (CHECKOUT_MODE === 'stripe') {
@@ -32,6 +32,7 @@ export async function startCheckout(cart: CartLine[], customer: Customer): Promi
         body: JSON.stringify({
           cart: cart.map(({ productId, options, qty, note }) => ({ productId, options, qty, note })),
           customer,
+          extras: { giftWrap: !!extras.giftWrap, giftNote: extras.giftNote },
         }),
       });
       const data = await res.json();
@@ -55,6 +56,8 @@ export function orderRequestText(order: Order, customer: Customer): string {
     `Order request ${order.reference}`,
     '',
     ...rows,
+    ...(order.gift.wrap ? [`• Gift wrap — ${money(order.gift.wrapPrice)}`] : []),
+    ...(order.gift.note ? [`Gift note: "${order.gift.note}"`] : []),
     '',
     `Subtotal: ${money(order.subtotal)} (shipping and tax confirmed on your invoice)`,
     '',

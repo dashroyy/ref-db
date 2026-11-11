@@ -6,6 +6,7 @@
 // quantities, and prices them here from the catalog.
 
 import { PRODUCTS, priceFor, normaliseOptions, describeOptions, type Product } from '../data/catalog.ts';
+import { GIFT_WRAP_PRICE, GIFT_NOTE_MAX } from '../data/site.ts';
 
 export interface CartLine {
   productId: string;
@@ -25,11 +26,18 @@ export interface OrderLine {
   note?: string;
 }
 
+/** Order-level choices that aren't products. */
+export interface OrderExtras {
+  giftWrap?: boolean;
+  giftNote?: string;
+}
+
 export interface Order {
   reference: string;
   createdAt: string;
   lines: OrderLine[];
-  subtotal: number; // cents. Shipping and tax are added at checkout.
+  gift: { wrap: boolean; wrapPrice: number; note?: string }; // wrapPrice in cents, 0 when not wrapped
+  subtotal: number; // cents, products + gift wrap. Shipping and tax are added at checkout.
   itemCount: number;
 }
 
@@ -61,7 +69,7 @@ export function setQty(cart: CartLine[], index: number, qty: number): CartLine[]
 const clampQty = (n: number) => Math.max(1, Math.min(MAX_QTY, Math.floor(n) || 1));
 
 /** Prices a cart from the catalog. Drops lines for unknown or quote-only products. */
-export function buildOrder(cart: CartLine[], catalog: Product[] = PRODUCTS, now = new Date()): Order {
+export function buildOrder(cart: CartLine[], catalog: Product[] = PRODUCTS, now = new Date(), extras: OrderExtras = {}): Order {
   const lines: OrderLine[] = [];
   for (const raw of cart) {
     const product = catalog.find((p) => p.id === raw.productId);
@@ -80,11 +88,15 @@ export function buildOrder(cart: CartLine[], catalog: Product[] = PRODUCTS, now 
       note: raw.note?.slice(0, 200) || undefined,
     });
   }
+  const wrap = !!extras.giftWrap && lines.length > 0;
+  const note = extras.giftNote?.trim().slice(0, GIFT_NOTE_MAX) || undefined;
+  const gift = { wrap, wrapPrice: wrap ? GIFT_WRAP_PRICE : 0, note };
   return {
     reference: orderReference(now),
     createdAt: now.toISOString(),
     lines,
-    subtotal: lines.reduce((s, l) => s + l.lineTotal, 0),
+    gift,
+    subtotal: lines.reduce((s, l) => s + l.lineTotal, 0) + gift.wrapPrice,
     itemCount: lines.reduce((s, l) => s + l.qty, 0),
   };
 }

@@ -100,3 +100,26 @@ test('catalog: personalised products have a text colour option and a sane limit'
     assert.ok(p.personalise.max > 0 && p.personalise.max <= 40, `${p.id} max`);
   }
 });
+
+test('order: gift wrap is priced on the server side and counted once', async () => {
+  const { GIFT_WRAP_PRICE } = await import('../src/data/site.ts');
+  const cart = [{ productId: 'orig-pen-launcher', options: {}, qty: 2 }];
+  const plain = buildOrder(cart);
+  const gift = buildOrder(cart, undefined, undefined, { giftWrap: true, giftNote: '  Happy birthday!  ' });
+  assert.equal(gift.subtotal, plain.subtotal + GIFT_WRAP_PRICE);
+  assert.deepEqual(gift.gift, { wrap: true, wrapPrice: GIFT_WRAP_PRICE, note: 'Happy birthday!' });
+  assert.equal(plain.gift.wrap, false);
+  // no wrap charge on an empty order
+  assert.equal(buildOrder([], undefined, undefined, { giftWrap: true }).subtotal, 0);
+  // the note is capped
+  assert.equal(buildOrder(cart, undefined, undefined, { giftNote: 'x'.repeat(999) }).gift.note!.length, 240);
+});
+
+test('order request email lists the gift wrap and note', async () => {
+  const { orderRequestText } = await import('../src/lib/checkout.ts');
+  const order = buildOrder([{ productId: 'orig-pen-launcher', options: {}, qty: 1 }], undefined, undefined, { giftWrap: true, giftNote: 'For Sam' });
+  const text = orderRequestText(order, { name: 'A', email: 'a@example.com' });
+  assert.match(text, /Gift wrap — \$3\.00/);
+  assert.match(text, /Gift note: "For Sam"/);
+  assert.match(text, /Subtotal: \$27\.00/);
+});

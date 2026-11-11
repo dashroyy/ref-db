@@ -25,3 +25,10 @@ export const SITE = {
 //   'stripe'  : the cart is posted to /api/checkout, which creates a Stripe Checkout Session.
 //               Needs a server adapter and STRIPE_SECRET_KEY — see docs/SHOP-ROADMAP.md.
 export const CHECKOUT_MODE: 'request' | 'stripe' = 'request';
+
+// Gift wrap, added per order (cents). Placeholder — set your own, or 0 to make it free.
+export const GIFT_WRAP_PRICE = 300;
+export const GIFT_NOTE_MAX = 240;
+
+// Where Stripe may ship (ISO country codes), when online checkout is on.
+export const SHIP_TO = ['US'];

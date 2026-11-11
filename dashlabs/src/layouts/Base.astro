@@ -21,8 +21,9 @@ interface Props {
   title?: string;
   description?: string;
   jsonld?: Record<string, unknown>; // extra structured data for this page (e.g. a Product)
+  noindex?: boolean; // keep this page out of search results
 }
-const { title, description = SITE.description, jsonld } = Astro.props;
+const { title, description = SITE.description, jsonld, noindex = false } = Astro.props;
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site).href;
 const ogImage = new URL('/og.png', site).href;
@@ -46,6 +47,7 @@ const tone = pageColor(Astro.url.pathname);
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="sitemap" href="/sitemap.xml" />
     <meta property="og:type" content={jsonld ? 'product' : 'website'} />
     <meta property="og:site_name" content={SITE.name} />
