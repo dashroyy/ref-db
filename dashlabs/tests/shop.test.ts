@@ -43,7 +43,7 @@ test('pricing: options add their price deltas', () => {
 
 test('pricing: unknown options fall back to the first choice', () => {
   const cards = productById('cards-standard')!;
-  assert.deepEqual(normaliseOptions(cards, { qty: 'hacked', bogus: 'x' }), { qty: '10', style: 'flat' });
+  assert.deepEqual(normaliseOptions(cards, { qty: 'hacked', bogus: 'x' }), { qty: '10', style: 'flat', textColour: 'white' });
   assert.equal(priceFor(cards, { qty: 'hacked' }), 2500);
 });
 
@@ -91,4 +91,12 @@ test('order: reference looks like DL-YYMMDD-XXXX', () => {
 test('catalog: product guide links point at real guides', async () => {
   const { GUIDES } = await import('../src/data/guides.ts');
   for (const p of PRODUCTS) if (p.guide) assert.ok(GUIDES.some((g) => g.slug === p.guide), `${p.id} guide ${p.guide}`);
+});
+
+test('catalog: personalised products have a text colour option and a sane limit', () => {
+  for (const p of PRODUCTS) {
+    if (!p.personalise) continue;
+    assert.ok(p.options.some((o) => o.id === 'textColour'), `${p.id} needs a textColour option`);
+    assert.ok(p.personalise.max > 0 && p.personalise.max <= 40, `${p.id} max`);
+  }
 });

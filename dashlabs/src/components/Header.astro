@@ -3,6 +3,7 @@
 // catalog), main links, live queue pill, motion toggle, cart. On phones a
 // full-screen menu whose links print in one after another.
 import Logo from './Logo.astro';
+import Search from './Search.astro';
 import { MAIN_LINKS, SHOP_GROUPS, LEARN_GROUP } from '../data/nav.ts';
 import { LAB_STATUS } from '../data/lab.ts';
 import { money } from '../lib/money.ts';
@@ -27,6 +28,7 @@ const inShop = path.startsWith('/shop');
     </nav>
 
     <div class="right">
+      <Search />
       <a class="queue" href="/#lab-status" title="Jobs in the print queue">
         <span class="live-dot"></span>{LAB_STATUS.queuedJobs} in queue
       </a>

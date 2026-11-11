@@ -111,6 +111,9 @@ export interface Product {
   images?: string[]; // later: paths under /public/products/
   stripePriceId?: string; // later: optional link to a Stripe Price
   tool?: 'launch-lab'; // an interactive tool shown on the product page
+  // Customer text printed on the part, shown live in 3D on the product page.
+  // Saved on the cart line as its note. Pair with a 'textColour' option.
+  personalise?: { label: string; max: number; placeholder: string; required?: boolean };
   guide?: string; // slug of a related /learn/ guide
 }
 
@@ -125,6 +128,18 @@ export const COLOURS: ProductOption = {
     { id: 'orange', label: 'Lab orange', hex: '#ff8a1f' },
     { id: 'blue', label: 'Signal blue', hex: '#2f7dff' },
     { id: 'silk', label: 'Silk rainbow', priceDelta: 300, hex: 'rainbow' },
+  ],
+};
+
+// Second filament for raised text on two-colour prints.
+export const TEXT_COLOURS: ProductOption = {
+  id: 'textColour',
+  label: 'Text colour',
+  choices: [
+    { id: 'white', label: 'Bone white', hex: '#ece6da' },
+    { id: 'black', label: 'Matte black', hex: '#2b2a33' },
+    { id: 'orange', label: 'Lab orange', hex: '#ff8a1f' },
+    { id: 'mint', label: 'Mint', hex: '#3dffc5' },
   ],
 };
 
@@ -268,7 +283,9 @@ export const PRODUCTS: Product[] = [
           { id: 'nfc', label: 'With NFC tag (tap to open link)', priceDelta: 2000 },
         ],
       },
+      TEXT_COLOURS,
     ],
+    personalise: { label: 'Name on the card (preview)', max: 20, placeholder: 'e.g. Alex Dash' },
     specs: [
       { label: 'Size', value: '85 × 55 mm' },
       { label: 'Proof', value: 'Digital proof before printing' },
@@ -356,10 +373,13 @@ export const PRODUCTS: Product[] = [
     name: 'Name keychain',
     category: 'made-to-order',
     summary: 'Your name or a short word, two-colour, on a sturdy ring.',
-    description: ['Tell me the text at checkout (up to 12 characters).'],
+    description: [
+      'Type your name or a short word below and watch it appear on the keychain in 3D. The letters are printed in a second colour, raised so you can feel them.',
+    ],
     price: 800,
     purchase: 'cart',
-    options: [COLOURS],
+    options: [COLOURS, TEXT_COLOURS],
+    personalise: { label: 'Your text', max: 12, placeholder: 'e.g. DASH', required: true },
     specs: [{ label: 'Text', value: 'Up to 12 characters' }],
     source: { kind: 'original' },
     art: { hue: 120, shape: 'keychain' },

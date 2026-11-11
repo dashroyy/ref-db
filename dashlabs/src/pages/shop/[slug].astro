@@ -18,7 +18,26 @@ interface Props {
 const { product: p } = Astro.props;
 const [lo, hi] = p.leadTimeDays ?? SITE.defaultLeadTimeDays;
 const related = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
-const needsText = p.id === 'mto-keychain';
+const pz = p.personalise;
+const site = Astro.site ?? new URL('http://localhost:4321');
+const productLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.name,
+  description: p.summary,
+  sku: `DL-${productCode(p)}`,
+  category: categoryById(p.category).label,
+  brand: { '@type': 'Brand', name: SITE.name },
+  image: new URL(p.images?.[0] ?? '/og.png', site).href,
+  offers: {
+    '@type': 'Offer',
+    url: new URL(`/shop/${p.slug}/`, site).href,
+    priceCurrency: SITE.currency,
+    price: (p.price / 100).toFixed(2),
+    availability: 'https://schema.org/MadeToOrder',
+    itemCondition: 'https://schema.org/NewCondition',
+  },
+};
 const guide = GUIDES.find((g) => g.slug === p.guide);
 const cat = categoryById(p.category);
 const siblings = PRODUCTS.filter((x) => x.category === p.category);
@@ -32,7 +51,7 @@ const sourceLabel =
       : `Design by ${p.source.designer}`;
 ---
 
-<Base title={p.name} description={p.summary}>
+<Base title={p.name} description={p.summary} jsonld={productLd}>
   <section class="section top">
     <div class="wrap">
       <nav class="crumbs" aria-label="Breadcrumb">
@@ -93,10 +112,20 @@ const sourceLabel =
             }
 
             {
-              needsText && (
-                <div class="field">
-                  <label for="note">Text to print</label>
-                  <input id="note" name="note" type="text" maxlength="12" required placeholder="e.g. DASH" />
+              pz && (
+                <div class="field personal">
+                  <label for="note">{pz.label}</label>
+                  <input
+                    id="note"
+                    name="note"
+                    type="text"
+                    maxlength={pz.max}
+                    required={pz.required}
+                    placeholder={pz.placeholder}
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <span class="hint">Up to {pz.max} characters · watch it appear on the model</span>
                 </div>
               )
             }

@@ -53,6 +53,8 @@ tests/                Catalog rules and pricing/cart tests.
 - [ ] Update `src/data/lab.ts` with your real printers and queue (and keep it current, or remove the board).
 - [ ] Measure your Pen Launcher's spring and range and set `DEFAULT_LAUNCH` in `src/lib/launcher.ts` to match
       (update the worked example in the guide and its test too).
+- [ ] Build with your real address so links, the sitemap and share previews are correct:
+      `SITE_URL=https://your-domain.com npm run build`.
 - [ ] Read through the FAQ/policies (`src/pages/faq.astro`) and adapt the refund and shipping wording.
 
 ## Look and feel: the print chamber
@@ -93,6 +95,18 @@ diagram) → the tool → a worked example → where this stops → references**
 
 The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate.ts` and `pricePerKg` in
 `src/data/materials.ts` to your real costs.
+
+## Shop extras
+
+- **Personalised products**: give a product `personalise: { label, max, placeholder }` and a `TEXT_COLOURS` option
+  (see the Name keychain and business cards). Customers type their text and see it as raised 3D letters on the model,
+  in the text colour they pick; the text is saved on the cart line. Models mark where text goes with a `text-anchor`
+  in `src/lib/three/print.ts`. The 3D font is Helvetiker Bold (`public/fonts/`, MgOpen licence included).
+- **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
+  `src/components/Search.astro`, so new products are searchable automatically.
+- **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page
+  has a canonical link and share tags with `public/og.png`; `/sitemap.xml` and `/robots.txt` are generated from the
+  catalog.
 
 ## Adding a product
 

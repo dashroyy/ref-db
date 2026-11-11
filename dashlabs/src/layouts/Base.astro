@@ -20,8 +20,20 @@ import { pageColor } from '../data/nav.ts';
 interface Props {
   title?: string;
   description?: string;
+  jsonld?: Record<string, unknown>; // extra structured data for this page (e.g. a Product)
 }
-const { title, description = SITE.description } = Astro.props;
+const { title, description = SITE.description, jsonld } = Astro.props;
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL('/og.png', site).href;
+const org = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE.name,
+  url: new URL('/', site).href,
+  logo: new URL('/favicon.svg', site).href,
+  description: SITE.description,
+};
 const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
 const tone = pageColor(Astro.url.pathname);
 ---
@@ -33,8 +45,18 @@ const tone = pageColor(Astro.url.pathname);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" href="/sitemap.xml" />
+    <meta property="og:type" content={jsonld ? 'product' : 'website'} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:url" content={canonical} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonld ?? org)} />
     <meta name="theme-color" content="#08070d" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline>

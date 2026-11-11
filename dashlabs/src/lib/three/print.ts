@@ -137,6 +137,15 @@ function slab(w: number, d: number, h: number, r: number, mat: THREE.Material) {
   return new THREE.Mesh(g, mat);
 }
 
+/** Where customer text goes on a model, and how big it may be (see text.ts). */
+function textAnchor(x: number, y: number, z: number, maxWidth: number, maxHeight: number) {
+  const a = new THREE.Object3D();
+  a.name = 'text-anchor';
+  a.position.set(x, y, z);
+  a.userData = { maxWidth, maxHeight };
+  return a;
+}
+
 const mesh = (g: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0) => {
   const o = new THREE.Mesh(g, m);
   o.position.set(x, y, z);
@@ -231,12 +240,22 @@ export function buildModel(shape: Shape, color: string): THREE.Group {
         r.position.set(x, 0.06, z);
         card.add(r);
       };
-      raised(0.6, 0.0, -0.22);
-      raised(0.4, -0.1, -0.1);
+      // the two top lines stand in for the name until real text is applied (text.ts)
+      const ph = new THREE.Group();
+      ph.name = 'placeholder-text';
+      card.add(ph);
+      const rph = (w: number, x: number, z: number) => {
+        const r = slab(w, 0.06, 0.03, 0.02, mat);
+        r.position.set(x, 0.06, z);
+        ph.add(r);
+      };
+      rph(0.6, 0.0, -0.22);
+      rph(0.4, -0.1, -0.1);
       raised(0.5, -0.35, 0.22);
+      card.add(textAnchor(0.2, 0.055, -0.17, 0.82, 0.15)); // right of the round logo
       card.add(mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 32), mat, -0.5, 0.06, -0.18));
       for (const [x, z] of [[0.48, 0.14], [0.6, 0.14], [0.48, 0.26], [0.62, 0.28], [0.55, 0.21]]) card.add(mesh(new THREE.BoxGeometry(0.08, 0.05, 0.08), mat, x, 0.07, z));
-      card.rotation.x = -Math.PI / 2 + 0.32;
+      card.rotation.x = Math.PI / 2 - 0.32; // face toward the viewer (+z), leaning back on the stand
       card.position.set(0, 0.5, 0.12);
       add(card);
       const stand = slab(1.0, 0.36, 0.12, 0.06, mat);
@@ -300,7 +319,11 @@ export function buildModel(shape: Shape, color: string): THREE.Group {
       const tag = slab(1.3, 0.55, 0.12, 0.2, mat);
       tag.position.set(0.15, 0, 0);
       add(tag);
-      for (let i = 0; i < 4; i++) add(mesh(new THREE.BoxGeometry(0.16, 0.08, 0.26), mat, -0.12 + i * 0.24, 0.17, 0));
+      const ph = new THREE.Group();
+      ph.name = 'placeholder-text';
+      for (let i = 0; i < 4; i++) ph.add(mesh(new THREE.BoxGeometry(0.16, 0.08, 0.26), mat, -0.12 + i * 0.24, 0.17, 0));
+      add(ph);
+      g.add(textAnchor(0.22, 0.13, 0, 1.0, 0.3));
       const ring = mesh(new THREE.TorusGeometry(0.26, 0.035, 16, 48), steel, -0.72, 0.06, 0);
       ring.rotation.x = Math.PI / 2;
       add(ring);

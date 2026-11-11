@@ -13,9 +13,20 @@ const { product: p } = Astro.props;
 const colours = p.options.find((o) => o.id === 'colour');
 const hexes = Object.fromEntries((colours?.choices ?? []).map((c) => [c.id, c.hex ?? categoryById(p.category).color]));
 const start = colours?.choices[0]?.hex ?? categoryById(p.category).color;
+const textHexes = Object.fromEntries((p.options.find((o) => o.id === 'textColour')?.choices ?? []).map((c) => [c.id, c.hex]));
+const firstText = Object.values(textHexes)[0] ?? '#ece6da';
 ---
 
-<div class="viewer" data-viewer data-shape={p.art.shape} data-color={start} data-hexes={JSON.stringify(hexes)}>
+<div
+  class="viewer"
+  data-viewer
+  data-shape={p.art.shape}
+  data-color={start}
+  data-hexes={JSON.stringify(hexes)}
+  data-personalise={p.personalise ? p.personalise.max : undefined}
+  data-text-hexes={JSON.stringify(textHexes)}
+  data-text-color={firstText}
+>
   <canvas data-canvas aria-label={`3D model of ${p.name}. Drag to rotate.`} role="img"></canvas>
   <div class="fallback" data-fallback><ProductArt shape={p.art.shape} hue={p.art.hue} uid={`v-${p.id}`} label={p.name} /></div>
   <div class="controls">
@@ -43,6 +54,34 @@ const start = colours?.choices[0]?.hex ?? categoryById(p.category).color;
       );
       el.querySelector('[data-reprint]')!.addEventListener('click', () => v.reprint());
       setTimeout(() => v.reprint(), 350);
+
+      // Personalised products: the text field and text colour drive real 3D letters
+      if (el.dataset.personalise) {
+        const max = Number(el.dataset.personalise);
+        const textHexes: Record<string, string> = JSON.parse(el.dataset.textHexes || '{}');
+        let textColor = el.dataset.textColor!;
+        const note = document.querySelector<HTMLInputElement>('#note');
+        import('../lib/three/text.ts').then(({ applyText, setTextColor, cleanText }) => {
+          let t = 0;
+          const update = () => {
+            v.face();
+            return v.edit((m) => applyText(m, cleanText(note?.value ?? '', max), textColor));
+          };
+          note?.addEventListener('input', () => {
+            clearTimeout(t);
+            t = window.setTimeout(update, 120);
+          });
+          document.querySelectorAll<HTMLInputElement>('input[name="textColour"]').forEach((input) =>
+            input.addEventListener('change', () => {
+              if (!input.checked) return;
+              textColor = textHexes[input.value] ?? textColor;
+              v.face();
+              v.edit((m) => setTextColor(m, textColor));
+            }),
+          );
+          if (note?.value) update();
+        });
+      }
     });
   }
 </script>

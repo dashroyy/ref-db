@@ -54,7 +54,9 @@ function gridTexture() {
 
 export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) => void) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // phones: fewer pixels and a smaller shadow map keep it smooth and cool
+  const small = Math.min(innerWidth, innerHeight) < 700;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.5 : 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -68,7 +70,7 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
   const key = new THREE.DirectionalLight('#ffffff', 1.6);
   key.position.set(3, 5, 2.5);
   key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.mapSize.set(small ? 512 : 1024, small ? 512 : 1024);
   key.shadow.camera.left = key.shadow.camera.bottom = -2;
   key.shadow.camera.right = key.shadow.camera.top = 2;
   scene.add(key);

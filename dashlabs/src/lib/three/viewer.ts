@@ -73,7 +73,7 @@ export function mountViewer(canvas: HTMLCanvasElement, shape: Shape, color: stri
  */
 export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, Math.min(innerWidth, innerHeight) < 700 ? 1.5 : 2));
   const t = stage(renderer);
   const scene = t.scene;
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
@@ -102,6 +102,7 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
 
   // drag to spin, with inertia; auto-rotate resumes when idle
   let rotY = -0.5, vel = 0, dragging = false, lastX = 0, idle = 0;
+  let faceTo: number | null = null; // swing round to face the viewer (e.g. while typing text)
   canvas.addEventListener('pointerdown', (e) => {
     dragging = true;
     lastX = e.clientX;
@@ -127,9 +128,12 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   const draw = (dt: number) => {
     clock += dt;
     idle += dt;
-    if (!dragging) {
+    if (faceTo !== null && !dragging) {
+      rotY += (faceTo - rotY) * Math.min(1, dt * 6);
+      if (Math.abs(faceTo - rotY) < 0.002) faceTo = null;
+    } else if (!dragging) {
       vel *= Math.pow(0.04, dt);
-      rotY += vel + (idle > 1.5 && !calm() ? dt * 0.45 : 0);
+      rotY += vel + (idle > 2.5 && !calm() ? dt * 0.45 : 0);
     }
     pivot.rotation.y = rotY;
     let cut = 99;
@@ -145,7 +149,7 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   const loop = (now: number) => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (visible && !document.hidden && (!calm() || dragging || printT >= 0 || Math.abs(vel) > 1e-4)) draw(dt);
+    if (visible && !document.hidden && (!calm() || dragging || printT >= 0 || faceTo !== null || Math.abs(vel) > 1e-4)) draw(dt);
     requestAnimationFrame(loop);
   };
   draw(0);
@@ -159,6 +163,19 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
     reprint(seconds = 3.2) {
       printDur = seconds;
       printT = 0;
+      idle = 0;
+    },
+    /** Change the current model (e.g. add text), then redraw. */
+    async edit(fn: (m: THREE.Object3D) => void | Promise<void>) {
+      await fn(model);
+      draw(0);
+    },
+    /** Turn the front of the model toward the viewer (the shortest way round). */
+    face() {
+      const front = -0.5;
+      const turns = Math.round((rotY - front) / (Math.PI * 2));
+      faceTo = front + turns * Math.PI * 2;
+      vel = 0;
       idle = 0;
     },
     replace(next: THREE.Object3D) {
