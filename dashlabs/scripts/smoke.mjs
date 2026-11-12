@@ -106,6 +106,20 @@ await step('cart: totals, gift wrap, remove + undo, order request dialog', async
   expect(/Order request DL-\d{6}-[A-Z0-9]{4}/.test(text) && text.includes('Gift wrap') && text.includes('"DASH"'), 'order text');
 });
 
+await step('product: choices are kept in the address and restored from a shared link', async () => {
+  await page.goto(B + '/shop/pen-launcher/');
+  await page.click('label.choice:has-text("Signal blue")');
+  expect(page.url().endsWith('?colour=blue'), `url ${page.url()}`);
+  await page.goto(B + '/shop/printed-business-cards/?qty=50&style=nfc&text=Alex');
+  expect((await page.textContent('[data-price]')) === '$90.00', 'price restored from link');
+  expect((await page.inputValue('#note')) === 'Alex', 'text restored from link');
+});
+
+await step('forms remember the name and email typed earlier', async () => {
+  await page.goto(B + '/custom/');
+  expect((await page.inputValue('#rname')) === 'Test' && (await page.inputValue('#remail')) === 'test@example.com', 'prefilled from the cart form');
+});
+
 await step('custom: quote product pre-fills the request form', async () => {
   await page.goto(B + '/shop/custom-pet-figurine/');
   await page.click('label.choice:has-text("Medium")');

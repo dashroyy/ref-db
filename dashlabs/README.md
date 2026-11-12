@@ -136,6 +136,9 @@ The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate
 - **Checks**: `.github/workflows/dashlabs.yml` runs tests, type check and build when `dashlabs/` changes.
 - **Running the shop**: `docs/EMAIL-TEMPLATES.md` has ready-to-send replies (order total, custom quote, preview,
   shipped, review request, licence refusal) that match what the site promises.
+- **Small things done right**: product choices live in the address (shareable links, Share button); the cart and
+  request form remember name and email on the device; pages print cleanly; security headers are set in
+  `netlify.toml`; a notice shows if JavaScript is off.
 - **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
   `src/components/Search.astro`, so new products are searchable automatically.
 - **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page

@@ -1049,3 +1049,74 @@ html.motion-off [data-print]::before {
     display: none;
   }
 }
+
+/* ---------- without JavaScript ---------- */
+.noscript {
+  position: relative;
+  z-index: 60;
+  margin: calc(var(--nav-h) + 8px) var(--gutter) 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--warn);
+  background: var(--panel);
+  color: var(--text);
+}
+.noscript a {
+  color: var(--hot);
+}
+
+/* ---------- print: ink on paper, no chrome ---------- */
+@media print {
+  :root,
+  :root[data-theme='light'] {
+    --ink: #fff;
+    --ink-2: #fff;
+    --panel: #fff;
+    --panel-2: #fff;
+    --panel-3: #eee;
+    --white: #000;
+    --text: #111;
+    --text-2: #222;
+    --text-3: #444;
+    --line: #ccc;
+    --line-2: #999;
+    --hot: #8a4a00;
+    --overlay-solid: #fff;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  .chamber,
+  .topbar,
+  .mobile-menu,
+  .site-footer,
+  .idea,
+  .buybar,
+  .dl-toast,
+  .skip,
+  canvas,
+  .viewer .controls,
+  .btn {
+    display: none !important;
+  }
+  main {
+    padding-top: 0;
+  }
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation: none !important;
+  }
+  html.js [data-print] {
+    clip-path: none !important;
+  }
+  details > * {
+    display: block !important;
+  }
+  a,
+  .prose a:not(.btn) {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+}

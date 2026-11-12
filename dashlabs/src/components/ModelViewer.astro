@@ -67,6 +67,8 @@ const size = p.size;
       document.querySelectorAll<HTMLInputElement>('input[name="colour"]').forEach((input) =>
         input.addEventListener('change', () => input.checked && hexes[input.value] && v.setColor(hexes[input.value])),
       );
+      const picked = document.querySelector<HTMLInputElement>('input[name="colour"]:checked');
+      if (picked && hexes[picked.value] && hexes[picked.value] !== el.dataset.color) v.setColor(hexes[picked.value]);
       el.querySelector('[data-reprint]')!.addEventListener('click', () => {
         scrub.value = '100';
         v.scrub({ cut: null, spin: true, lines: 0.14 });
@@ -104,15 +106,16 @@ const size = p.size;
       // Finish option: show the multi-colour version on the model
       const finish = document.querySelectorAll<HTMLInputElement>('input[name="finish"]');
       if (finish.length) {
-        import('../lib/three/print.ts').then(({ setFinish }) =>
-          finish.forEach((input) =>
+        import('../lib/three/print.ts').then(({ setFinish }) => {
+          if (document.querySelector<HTMLInputElement>('input[name="finish"]:checked')?.value === 'multi') v.edit((m) => setFinish(m, true, el.dataset.color!));
+          return finish.forEach((input) =>
             input.addEventListener('change', () => {
               if (!input.checked) return;
               v.face();
               v.edit((m) => setFinish(m, input.value === 'multi', el.dataset.color!));
             }),
-          ),
-        );
+          );
+        });
       }
 
       // Layer scrubber: slice through the part like a slicer preview
@@ -151,6 +154,8 @@ const size = p.size;
               v.edit((m) => setTextColor(m, textColor));
             }),
           );
+          const pickedText = document.querySelector<HTMLInputElement>('input[name="textColour"]:checked');
+          if (pickedText && textHexes[pickedText.value]) textColor = textHexes[pickedText.value];
           if (note?.value) update();
         });
       }

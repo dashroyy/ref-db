@@ -81,6 +81,12 @@ const tone = pageColor(Astro.url.pathname);
   <body>
     <div class="chamber" aria-hidden="true"></div>
     <a class="skip" href="#main">Skip to content</a>
+    <noscript>
+      <p class="noscript">
+        This shop needs JavaScript for the cart, the 3D previews and the tools. You can still read every page, or email
+        <a href={`mailto:${SITE.email}`}>{SITE.email}</a> to order.
+      </p>
+    </noscript>
     <Header />
     <main id="main">
       <slot />
@@ -137,6 +143,23 @@ const tone = pageColor(Astro.url.pathname);
       addEventListener('scroll', queue, { passive: true });
       addEventListener('resize', queue);
       check();
+
+      // Remember the name and email typed into the cart or request form (on this device only)
+      const WHO = 'dashlabs.customer.v1';
+      let who: Record<string, string> = {};
+      try {
+        who = JSON.parse(localStorage.getItem(WHO) || '{}');
+      } catch {}
+      document.querySelectorAll<HTMLInputElement>('form input[autocomplete="name"], form input[autocomplete="email"]').forEach((input) => {
+        const key = input.autocomplete;
+        if (!input.value && typeof who[key] === 'string') input.value = who[key];
+        input.addEventListener('change', () => {
+          who[key] = input.value.trim().slice(0, 200);
+          try {
+            localStorage.setItem(WHO, JSON.stringify(who));
+          } catch {}
+        });
+      });
 
       // 3D tilt on [data-tilt] cards: fine pointers only, never under Motion off
       const root = document.documentElement;
