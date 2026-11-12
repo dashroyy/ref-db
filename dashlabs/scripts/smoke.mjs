@@ -35,7 +35,11 @@ const expect = (cond, msg) => {
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
-page.on('pageerror', (e) => errors.push(`${page.url()}: ${e.message}`));
+page.on('pageerror', (e) => {
+  // The browser cancels a page cross-fade when the test navigates faster than a person could. Not a site error.
+  if (/Transition was aborted/.test(e.message)) return;
+  errors.push(`${page.url()}: ${e.message}`);
+});
 
 const PAGES = ['/', '/shop/', '/custom/', '/gifts/', '/lab/', '/learn/', '/faq/', '/policies/', '/about/', '/cart/', '/saved/'];
 await step('every main page loads with a title and one h1', async () => {
