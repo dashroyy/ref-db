@@ -112,5 +112,8 @@ const socials = Object.entries(SITE.social).filter(([, url]) => url);
     .cols {
       grid-template-columns: 1fr 1fr;
     }
+    .cols nav[aria-label='Contact'] {
+      grid-column: 1 / -1; /* room for the email address on one line */
+    }
   }
 </style>

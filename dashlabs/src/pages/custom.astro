@@ -4,6 +4,7 @@ import StlQuote from '../components/StlQuote.astro';
 import { PRODUCTS } from '../data/catalog.ts';
 import { SITE } from '../data/site.ts';
 import { money } from '../lib/money.ts';
+import { priceFor } from '../data/catalog.ts';
 
 const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 ---
@@ -76,6 +77,59 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         <button class="btn btn--primary btn--block" type="submit">Send request</button>
         <p class="muted small">Nothing is sent yet: you'll see your message ready to email, with a copy button if you use webmail.</p>
       </form>
+    </div>
+  </section>
+
+  <section class="section guide-sec">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">Price guide</h2>
+        <p class="muted">Starting prices. Your quote confirms the exact figure before any work begins.</p>
+      </div>
+      <div class="matrices">
+        {
+          quoteable.map((p) => {
+            const [rows, cols] = [p.options[0], p.options[1]];
+            return (
+              <div class="matrix panel" data-print>
+                <h3>
+                  <a href={`/shop/${p.slug}/`}>{p.name}</a>
+                </h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">{rows.label}</th>
+                      {cols.choices.map((c) => (
+                        <th scope="col">{c.label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.choices.map((r) => (
+                      <tr>
+                        <th scope="row">{r.label}</th>
+                        {cols.choices.map((c) => (
+                          <td>{money(priceFor(p, { [rows.id]: r.id, [cols.id]: c.id }))}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })
+        }
+      </div>
+
+      <ol class="next" data-print>
+        <li><span>01</span><b>You send the request</b> with photos or a file.</li>
+        <li><span>02</span><b>I reply with a quote</b> and a timeline, usually in a day or two.</li>
+        <li><span>03</span><b>You approve a 3D preview</b>. One round of changes is included.</li>
+        <li><span>04</span><b>It's printed, checked and shipped</b>, with tracking.</li>
+      </ol>
+      <p class="muted">
+        Not sure what photos to send? Read <a class="inl" href="/learn/photos-for-figurines/">Photos for a custom figurine</a>.
+      </p>
     </div>
   </section>
 
@@ -181,8 +235,89 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   .types a {
     text-decoration: none;
   }
-  .stl-sec {
+  .stl-sec,
+  .guide-sec {
     padding-top: 0;
+  }
+  .matrices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+    gap: 22px;
+  }
+  .matrix {
+    padding: 20px 22px;
+    overflow-x: auto;
+  }
+  .matrix h3 a {
+    text-decoration: none;
+  }
+  .matrix h3 a:hover {
+    color: var(--hot);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  th,
+  td {
+    padding: 10px 8px;
+    text-align: right;
+    border-bottom: 1px solid var(--line);
+  }
+  th:first-child {
+    text-align: left;
+  }
+  thead th {
+    font: 500 0.68rem var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  tbody th {
+    font-weight: 600;
+    color: var(--text);
+  }
+  td {
+    font: 600 0.95rem var(--mono);
+    color: var(--white);
+  }
+  tbody tr:last-child :is(th, td) {
+    border-bottom: 0;
+  }
+  .next {
+    list-style: none;
+    margin: 34px 0 18px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .next li {
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+    font-size: 0.92rem;
+    color: var(--text-2);
+  }
+  .next span {
+    display: block;
+    font: 700 0.8rem var(--mono);
+    color: var(--hot);
+    margin-bottom: 6px;
+  }
+  .next b {
+    color: var(--white);
+  }
+  .inl {
+    color: var(--hot);
+    font-weight: 700;
+  }
+  @media (max-width: 860px) {
+    .next {
+      grid-template-columns: 1fr 1fr;
+    }
   }
   .stl-note {
     max-width: 30rem;

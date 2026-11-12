@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "node --test tests/*.test.ts",
-    "thumbs": "node scripts/render-thumbs.mjs"
+    "thumbs": "node scripts/render-thumbs.mjs",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@astrojs/netlify": "^8.2.13",

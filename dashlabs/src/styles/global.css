@@ -166,6 +166,7 @@
 }
 
 html {
+  overflow-x: clip; /* extruded shadows and tilted bands never widen the page */
   -webkit-text-size-adjust: 100%;
   background: var(--ink);
   scroll-padding-top: calc(var(--nav-h) + 16px);

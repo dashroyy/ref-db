@@ -15,7 +15,8 @@ Requires Node.js 22+.
 cd dashlabs
 npm install
 npm run dev      # http://localhost:4321
-npm test         # catalog, pricing and cart tests
+npm test         # unit tests: catalog, pricing, cart, tools
+npm run smoke    # end-to-end customer journeys on the built site (needs Playwright)
 npm run build    # static site in dist/
 ```
 
@@ -132,6 +133,8 @@ The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate
   the lab queue; `src/lib/shipdate.ts`), "Good to know" (made to order, materials, care, returns, licence) built from
   the catalog, quick add on cards for items that need no typing, and a multi-colour preview for the Mini-Me finish.
 - **Checks**: `.github/workflows/dashlabs.yml` runs tests, type check and build when `dashlabs/` changes.
+- **Running the shop**: `docs/EMAIL-TEMPLATES.md` has ready-to-send replies (order total, custom quote, preview,
+  shipped, review request, licence refusal) that match what the site promises.
 - **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
   `src/components/Search.astro`, so new products are searchable automatically.
 - **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page
