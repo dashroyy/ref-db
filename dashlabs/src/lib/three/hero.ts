@@ -20,6 +20,7 @@ export const HERO_QUEUE: { shape: Shape; color: string; name: string }[] = [
   { shape: 'vase', color: '#9b6bff', name: 'Spiral vase' },
   { shape: 'launcher', color: '#ffab2e', name: 'Pen Launcher' },
   { shape: 'bust', color: '#ff6ec7', name: 'Mini-Me figurine' },
+  { shape: 'dog', color: '#3dffc5', name: 'Pet portrait' },
   { shape: 'dragon', color: 'rainbow', name: 'Articulated dragon' },
   { shape: 'keychain', color: '#3dffc5', name: 'Name keychain' },
 ];

@@ -46,7 +46,8 @@ tests/                Catalog rules and pricing/cart tests.
 - [ ] Set your real email in `src/data/site.ts` (orders and requests go there).
 - [ ] Set real prices in `src/data/catalog.ts`. All current prices are placeholders.
 - [ ] Add product photos: put them in `public/products/` and add `images: ['/products/pen-launcher-1.jpg']` to the
-      product. They replace the generated placeholder artwork automatically.
+      product. The product page then opens on your photos, with thumbnails underneath and a
+      "3D" button that switches to the interactive model.
 - [ ] Replace the example MakerWorld listings (dragon, vase) with models you actually hold a commercial licence for,
       with the real designer, link and licence. Many MakerWorld models are personal-use only. Selling prints of those
       isn't allowed.

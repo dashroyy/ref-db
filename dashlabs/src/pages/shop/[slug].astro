@@ -112,7 +112,26 @@ const sourceLabel =
 
       <div class="layout">
         <div class="gallery">
-          {p.images?.length ? <img class="photo" src={p.images[0]} alt={p.name} /> : <ModelViewer product={p} />}
+          {/* photos first when there are some; the 3D model is always one tap away */}
+          <div class="g-main" data-gallery>
+            {(p.images ?? []).map((src, i) => <img class="photo" data-pane={`p${i}`} src={src} alt={`${p.name}, photo ${i + 1}`} hidden={i !== 0} />)}
+            <div data-pane="3d" hidden={!!p.images?.length}><ModelViewer product={p} /></div>
+          </div>
+          {
+            !!p.images?.length && (
+              <div class="g-thumbs" role="group" aria-label="Product views">
+                {p.images.map((src, i) => (
+                  <button type="button" data-show={`p${i}`} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Photo ${i + 1}`}>
+                    <img src={src} alt="" loading="lazy" />
+                  </button>
+                ))}
+                <button type="button" class="g-3d" data-show="3d" aria-pressed="false">
+                  <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,4 35,12 20,20 5,12" fill="var(--hot-2)" /><polygon points="5,12 20,20 20,36 5,28" fill="#6c47d6" /><polygon points="20,20 35,12 35,28 20,36" fill="#4a2ca8" /></svg>
+                  3D
+                </button>
+              </div>
+            )
+          }
         </div>
 
         <div class="info">
@@ -327,6 +346,13 @@ const sourceLabel =
     if (when) when.textContent = formatWindow(shipWindow(new Date(), JSON.parse(el.dataset.lead!)));
   }
   wireSaveButtons();
+  // gallery: swap between photos and the 3D model
+  document.querySelectorAll<HTMLButtonElement>('[data-show]').forEach((b) =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll<HTMLElement>('[data-gallery] [data-pane]').forEach((pane) => (pane.hidden = pane.dataset.pane !== b.dataset.show));
+      document.querySelectorAll('[data-show]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    }),
+  );
   import { money } from '../../lib/money.ts';
 
   const form = document.querySelector<HTMLFormElement>('[data-buy]')!;
@@ -495,7 +521,42 @@ const sourceLabel =
   }
   .photo {
     width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
     border-radius: var(--r);
+    border: 1px solid var(--line-2);
+  }
+  .g-main [hidden] {
+    display: none;
+  }
+  .g-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .g-thumbs button {
+    width: 68px;
+    height: 68px;
+    padding: 0;
+    border-radius: 12px;
+    border: 2px solid var(--line-2);
+    background: var(--panel);
+    overflow: hidden;
+    cursor: pointer;
+    color: var(--text);
+    font: 700 0.7rem var(--mono);
+    display: grid;
+    place-items: center;
+  }
+  .g-thumbs img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .g-thumbs button[aria-pressed='true'] {
+    border-color: var(--hot);
+    box-shadow: 0 0 14px -4px var(--hot);
   }
   .sw {
     width: 14px;

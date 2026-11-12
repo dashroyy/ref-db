@@ -121,7 +121,7 @@ export interface Product {
   guide?: string; // slug of a related /learn/ guide
 }
 
-export type ArtShape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain';
+export type ArtShape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain' | 'dog';
 
 export const COLOURS: ProductOption = {
   id: 'colour',
@@ -230,7 +230,7 @@ export const PRODUCTS: Product[] = [
     source: { kind: 'commission' },
     featured: true,
     size: { mm: 60, axis: 'height', byOption: { option: 'size', mm: { small: 60, medium: 100, large: 150 } } },
-    art: { hue: 200, shape: 'paw' },
+    art: { hue: 320, shape: 'dog' },
   },
   {
     id: 'orig-pen-launcher',

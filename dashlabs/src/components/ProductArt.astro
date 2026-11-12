@@ -51,6 +51,24 @@ const gid = `gl-${uid}`;
       )
     }
     {
+      shape === 'dog' && (
+        <g>
+          <ellipse cx="200" cy="205" rx="62" ry="58" fill={shade} />
+          <rect x="172" y="190" width="18" height="72" rx="9" fill={fill} />
+          <rect x="210" y="190" width="18" height="72" rx="9" fill={fill} />
+          <ellipse cx="150" cy="250" rx="26" ry="13" fill={fill} />
+          <ellipse cx="250" cy="250" rx="26" ry="13" fill={fill} />
+          <circle cx="200" cy="118" r="48" fill={fill} />
+          <ellipse cx="150" cy="120" rx="15" ry="36" fill={shade} transform="rotate(14 150 120)" />
+          <ellipse cx="250" cy="120" rx="15" ry="36" fill={shade} transform="rotate(-14 250 120)" />
+          <ellipse cx="200" cy="136" rx="24" ry="18" fill={shade} />
+          <circle cx="200" cy="128" r="7" fill="#1a1422" />
+          <circle cx="182" cy="106" r="5" fill="#1a1422" />
+          <circle cx="218" cy="106" r="5" fill="#1a1422" />
+        </g>
+      )
+    }
+    {
       shape === 'paw' && (
         <g>
           <ellipse cx="200" cy="200" rx="66" ry="56" fill={fill} />

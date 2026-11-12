@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 
-export type Shape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain' | 'spool' | 'spaghetti';
+export type Shape = 'bust' | 'paw' | 'card' | 'launcher' | 'dragon' | 'vase' | 'organizer' | 'keychain' | 'spool' | 'spaghetti' | 'dog';
 
 export const LAYER_H = 0.022; // world units per printed layer
 
@@ -257,6 +257,35 @@ export function buildModel(shape: Shape, color: string): THREE.Group {
       add(hair);
       for (const s of [-1, 1]) add(mesh(new THREE.SphereGeometry(0.06, 16, 12), mat, s * 0.3, 0.95, 0)).userData.part = 'skin';
       add(mesh(new THREE.SphereGeometry(0.045, 16, 12), mat, 0, 0.95, 0.32)).userData.part = 'skin';
+      break;
+    }
+    case 'dog': {
+      // a sitting dog, facing forward: the pet-portrait stand-in
+      const dark = accent('#2b2233');
+      const ball = (r: number, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1, m: THREE.Material = mat) => {
+        const o = mesh(new THREE.SphereGeometry(r, 40, 28), m, x, y, z);
+        o.scale.set(sx, sy, sz);
+        return o;
+      };
+      const body = ball(0.4, 0, 0.52, -0.08, 1, 1.25, 1.05);
+      body.rotation.x = -0.25;
+      add(body);
+      add(ball(0.29, 0, 0.66, 0.16)); // chest
+      for (const s of [-1, 1]) {
+        add(ball(0.24, s * 0.3, 0.2, -0.02, 1, 0.85, 1.35)); // haunch
+        add(ball(0.1, s * 0.34, 0.07, 0.3, 1, 0.65, 1.5)); // hind paw
+        add(mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.56, 20), mat, s * 0.15, 0.3, 0.34)); // front leg
+        add(ball(0.1, s * 0.15, 0.07, 0.42, 1, 0.65, 1.45)); // front paw
+        const ear = ball(0.14, s * 0.27, 1.1, 0.14, 0.55, 1.35, 0.95);
+        ear.rotation.z = s * -0.35;
+        add(ear);
+        add(ball(0.036, s * 0.115, 1.2, 0.47, 1, 1, 1, dark)); // eye
+      }
+      add(ball(0.3, 0, 1.12, 0.2, 1, 0.95, 1)); // head
+      add(ball(0.15, 0, 1.04, 0.47, 1, 0.8, 1.25)); // snout
+      add(ball(0.055, 0, 1.08, 0.66, 1.2, 0.9, 1, dark)); // nose
+      const tail = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.2, -0.42), new THREE.Vector3(0.06, 0.38, -0.62), new THREE.Vector3(0.12, 0.62, -0.6), new THREE.Vector3(0.1, 0.74, -0.5)]);
+      add(new THREE.Mesh(new THREE.TubeGeometry(tail, 24, 0.05, 10), mat));
       break;
     }
     case 'paw': {
