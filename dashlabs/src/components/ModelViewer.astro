@@ -101,6 +101,20 @@ const size = p.size;
         }
       }
 
+      // Finish option: show the multi-colour version on the model
+      const finish = document.querySelectorAll<HTMLInputElement>('input[name="finish"]');
+      if (finish.length) {
+        import('../lib/three/print.ts').then(({ setFinish }) =>
+          finish.forEach((input) =>
+            input.addEventListener('change', () => {
+              if (!input.checked) return;
+              v.face();
+              v.edit((m) => setFinish(m, input.value === 'multi', el.dataset.color!));
+            }),
+          ),
+        );
+      }
+
       // Layer scrubber: slice through the part like a slicer preview
       const scrub = el.querySelector<HTMLInputElement>('[data-layer-scrub]')!;
       const read = el.querySelector<HTMLElement>('[data-layer-read]')!;

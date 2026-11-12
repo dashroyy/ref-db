@@ -44,6 +44,7 @@ import { PRODUCTS } from '../data/catalog.ts';
           <dl>
             <div class="gift-row" data-gift-row hidden><dt>Gift wrap</dt><dd>{money(GIFT_WRAP_PRICE)}</dd></div>
             <div><dt>Subtotal</dt><dd data-subtotal>—</dd></div>
+            <div><dt>Ships</dt><dd data-cart-ships>—</dd></div>
             <div><dt>Shipping</dt><dd class="muted">Calculated at checkout</dd></div>
             <div><dt>Tax</dt><dd class="muted">Calculated at checkout</dd></div>
           </dl>
@@ -100,6 +101,8 @@ import { PRODUCTS } from '../data/catalog.ts';
   import { buildOrder } from '../lib/order.ts';
   import { startCheckout } from '../lib/checkout.ts';
   import { showSendDialog } from '../lib/send.ts';
+  import { shipWindow, formatWindow, slower } from '../lib/shipdate.ts';
+  import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
   import { SITE } from '../data/site.ts';
   import { addToCart } from '../lib/cart-store.ts';
   import { money } from '../lib/money.ts';
@@ -126,6 +129,10 @@ import { PRODUCTS } from '../data/catalog.ts';
     $('[data-empty]').hidden = order.lines.length > 0;
     $('[data-full]').hidden = order.lines.length === 0;
     $('[data-subtotal]').textContent = money(order.subtotal);
+    // the whole order ships when its slowest item is ready
+    let lead = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
+    for (const l of order.lines) lead = slower(lead, productById(l.productId)?.leadTimeDays ?? SITE.defaultLeadTimeDays);
+    $('[data-cart-ships]').textContent = formatWindow(shipWindow(new Date(), lead));
 
     // Price each stored line on its own so the index stays usable for editing.
     list.innerHTML = cart

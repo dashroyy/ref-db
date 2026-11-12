@@ -24,7 +24,7 @@ interface Props {
   cta?: boolean; // the "got an idea?" band above the footer (off on pages that are already the destination)
   title?: string;
   description?: string;
-  jsonld?: Record<string, unknown>; // extra structured data for this page (e.g. a Product)
+  jsonld?: Record<string, unknown> | Record<string, unknown>[]; // extra structured data for this page (e.g. a Product)
   noindex?: boolean; // keep this page out of search results
 }
 const { title, description = SITE.description, jsonld, noindex = false, cta = true } = Astro.props;
@@ -53,7 +53,7 @@ const tone = pageColor(Astro.url.pathname);
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="sitemap" href="/sitemap.xml" />
-    <meta property="og:type" content={jsonld ? 'product' : 'website'} />
+    <meta property="og:type" content={Array.isArray(jsonld) ? 'product' : 'website'} />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={fullTitle} />

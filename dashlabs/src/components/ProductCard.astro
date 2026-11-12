@@ -17,6 +17,8 @@ const cat = categoryById(p.category);
 const image = p.images?.[0];
 const filament = cat.color;
 const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
+// one-tap add for items that need no choices typed in; it uses the first option of each
+const quick = p.purchase === 'cart' && !p.personalise?.required;
 ---
 
 <div class="card-wrap" data-category={p.category} data-product={p.id} data-price={p.price} data-name={p.name} style={`--c:${cat.color}`}>
@@ -41,12 +43,19 @@ const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
       <p>{p.summary}</p>
       <div class="foot">
         <span class="price">{p.purchase === 'quote' && <small>from </small>}{money(p.price)}</span>
-        <span class="go" aria-hidden="true">→</span>
+        {!quick && <span class="go" aria-hidden="true">→</span>}
       </div>
     </div>
     <span class="glare" aria-hidden="true"></span>
   </div>
 </a>
+{
+  quick && (
+    <button type="button" class="quick" data-quick-add={p.id} aria-label={`Add ${p.name} to cart`} title="Add to cart">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+    </button>
+  )
+}
 <button type="button" class="save" data-save={p.id} aria-pressed="false" aria-label={`Save ${p.name} for later`}>
   <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4 7.4 4c2 0 3.6 1.1 4.6 2.7C13 5.1 14.6 4 16.6 4c3.5 0 5.8 3.6 4.6 7.1-1.7 4.8-9.2 9.4-9.2 9.4z"></path></svg>
 </button>
@@ -54,7 +63,19 @@ const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
 
 <script>
   import { wireSaveButtons } from '../lib/saved-store.ts';
+  import { addToCart } from '../lib/cart-store.ts';
+  import { flyToCart, toast } from '../lib/fly.ts';
   wireSaveButtons();
+  document.querySelectorAll<HTMLButtonElement>('[data-quick-add]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const wrap = b.closest<HTMLElement>('.card-wrap')!;
+      const color = getComputedStyle(wrap).getPropertyValue('--c').trim() || '#ffab2e';
+      flyToCart(b, color).then(() => {
+        addToCart({ productId: b.dataset.quickAdd!, options: {}, qty: 1 });
+        toast(`<span class="t-cube"></span><span><b>${wrap.dataset.name}</b> added</span><a href="/cart/">View cart →</a>`);
+      });
+    }),
+  );
 </script>
 
 <style>
@@ -81,6 +102,28 @@ const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
       transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1),
       color 0.2s,
       border-color 0.2s;
+  }
+  .quick {
+    position: absolute;
+    right: 18px;
+    bottom: 16px;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    border: 0;
+    background: var(--c);
+    color: #12091a;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .quick:hover {
+    transform: scale(1.12) rotate(90deg);
+  }
+  .quick:active {
+    transform: scale(0.92);
   }
   .save svg {
     fill: none;

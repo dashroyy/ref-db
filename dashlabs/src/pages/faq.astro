@@ -36,7 +36,15 @@ const faqs = [
 ];
 ---
 
-<Base title="FAQ & policies" description="Ordering, payment, shipping, returns and licensing at DashLabs.">
+<Base
+  title="FAQ"
+  description="Ordering, payment, shipping, returns and licensing at DashLabs."
+  jsonld={{
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  }}
+>
   <section class="section top">
     <div class="wrap narrow">
       <p class="tag tag--accent">FAQ & policies</p>

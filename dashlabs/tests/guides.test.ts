@@ -72,3 +72,14 @@ test('guides: slugs are unique and every guide says where to go next', () => {
   assert.equal(new Set(GUIDES.map((g) => g.slug)).size, GUIDES.length);
   for (const g of GUIDES) assert.ok(g.cta.href.startsWith('/') && g.cta.label && g.tool, g.slug);
 });
+
+test('ship dates: working days skip weekends', async () => {
+  const { addWorkingDays, shipWindow, formatWindow, slower } = await import('../src/lib/shipdate.ts');
+  const thu = new Date(2026, 10, 12); // Thursday 12 Nov 2026
+  assert.equal(addWorkingDays(thu, 1).getDate(), 13); // Friday
+  assert.equal(addWorkingDays(thu, 2).getDate(), 16); // Monday, over the weekend
+  assert.equal(addWorkingDays(new Date(2026, 10, 14), 1).getDate(), 16); // ordered Saturday → Monday
+  assert.equal(formatWindow(shipWindow(thu, [3, 7])), 'Tue 17 – Mon 23 Nov');
+  assert.equal(formatWindow(shipWindow(new Date(2026, 10, 25), [3, 7])), 'Mon 30 Nov – Fri 4 Dec');
+  assert.deepEqual(slower([3, 7], [4, 6]), [4, 7]);
+});

@@ -128,6 +128,10 @@ The estimator doubles as your own pricing tool: set `RATES` in `src/lib/estimate
   without one is rendered in the visitor's browser, so nothing breaks if you forget.
 - **Gift finder** (`/gifts/`, logic and tags in `src/lib/gifts.ts`), **policies** (`/policies/`) and **About**
   (`/about/`).
+- **Product pages**: a "ships by" date range (working days from today, the slower of the product's lead time and
+  the lab queue; `src/lib/shipdate.ts`), "Good to know" (made to order, materials, care, returns, licence) built from
+  the catalog, quick add on cards for items that need no typing, and a multi-colour preview for the Mini-Me finish.
+- **Checks**: `.github/workflows/dashlabs.yml` runs tests, type check and build when `dashlabs/` changes.
 - **Search**: press `/` or Ctrl/⌘ K anywhere. The index (products, guides, tools, pages) is built from the catalog in
   `src/components/Search.astro`, so new products are searchable automatically.
 - **Discoverability**: every product page carries schema.org Product data (price, SKU, made to order); every page

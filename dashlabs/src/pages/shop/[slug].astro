@@ -4,6 +4,8 @@ import ModelViewer from '../../components/ModelViewer.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import LaunchLab from '../../components/LaunchLab.astro';
 import { GUIDES } from '../../data/guides.ts';
+import { LAB_STATUS, leadTimeDays } from '../../data/lab.ts';
+import { slower } from '../../lib/shipdate.ts';
 import Reviews from '../../components/Reviews.astro';
 import { reviewsFor, ratingSummary } from '../../data/reviews.ts';
 import { PRODUCTS, categoryById, productCode, type Product } from '../../data/catalog.ts';
@@ -44,6 +46,46 @@ const productLd = {
 const rating = ratingSummary(reviewsFor(p.id));
 if (rating) Object.assign(productLd, { aggregateRating: { '@type': 'AggregateRating', ratingValue: rating.average, reviewCount: rating.count } });
 const guide = GUIDES.find((g) => g.slug === p.guide);
+// the slower of this product's own lead time and the lab's current queue
+const lead = slower([lo, hi], leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers));
+const madeForYou = p.purchase === 'quote' || !!p.personalise;
+const crumbsLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Shop', item: new URL('/shop/', site).href },
+    { '@type': 'ListItem', position: 2, name: categoryById(p.category).label, item: new URL(`/shop/?c=${p.category}`, site).href },
+    { '@type': 'ListItem', position: 3, name: p.name },
+  ],
+};
+const know = [
+  {
+    q: 'Made to order',
+    a: p.purchase === 'quote'
+      ? `Nothing is pre-made. After you approve the quote and the 3D preview, it takes about ${lo}–${hi} working days to sculpt, print and finish.`
+      : `Nothing sits in stock. Yours is printed after you order, usually within ${lo}–${hi} working days, then checked and packed by hand.`,
+  },
+  {
+    q: 'Materials & finish',
+    a: 'Printed in the plastic that suits the part, PLA for most things: crisp detail and bright colour. Fine layer lines are part of the look. Need it tougher, flexible or outdoor-proof? Ask for PETG, TPU or ASA.',
+    link: { href: '/learn/materials/', label: 'Choosing a material' },
+  },
+  {
+    q: 'Care',
+    a: 'Keep it out of hot cars and direct sun. Clean with lukewarm water and a soft brush; never the dishwasher.',
+    link: { href: '/learn/where-prints-live/', label: 'Where your print can live' },
+  },
+  {
+    q: 'Returns',
+    a: madeForYou
+      ? 'Made just for you, so it can’t be returned for a change of mind. If it arrives damaged or faulty, I’ll reprint or refund it.'
+      : 'Arrived damaged or faulty? I’ll reprint or refund it. Changed your mind? Contact me within 14 days of delivery.',
+    link: { href: '/policies/#returns', label: 'Returns policy' },
+  },
+  ...(p.source.kind === 'licensed'
+    ? [{ q: 'Design & licence', a: `Designed by ${p.source.designer} and printed under licence (${p.source.licence}). The designer keeps all rights to the design.`, link: { href: p.source.url, label: 'Original design' } }]
+    : []),
+];
 const cat = categoryById(p.category);
 const siblings = PRODUCTS.filter((x) => x.category === p.category);
 const pos = PRODUCTS.indexOf(p);
@@ -56,7 +98,7 @@ const sourceLabel =
       : `Design by ${p.source.designer}`;
 ---
 
-<Base title={p.name} description={p.summary} jsonld={productLd}>
+<Base title={p.name} description={p.summary} jsonld={[productLd, crumbsLd]}>
   <section class="section top">
     <div class="wrap">
       <nav class="crumbs" aria-label="Breadcrumb">
@@ -163,6 +205,14 @@ const sourceLabel =
             </p>
           </form>
 
+          <p class="ships" data-ships data-lead={JSON.stringify(lead)}>
+            <span class="live-dot"></span>
+            <span>
+              Order today, ships <b data-ships-when>in {lead[0]}–{lead[1]} working days</b>
+              {p.purchase === 'quote' && <span class="muted"> after you approve the preview</span>}
+            </span>
+          </p>
+
           <dl class="specs">
             <div><dt class="tag">Ships in</dt><dd>{lo}–{hi} days</dd></div>
             {
@@ -229,6 +279,22 @@ const sourceLabel =
     )
   }
 
+  <section class="wrap know-wrap">
+    <h2 class="h-rule" data-print>Good to know</h2>
+    <div class="know">
+      {
+        know.map((k, i) => (
+          <details open={i === 0}>
+            <summary>{k.q}</summary>
+            <p>
+              {k.a} {k.link && <a href={k.link.href}>{k.link.label} →</a>}
+            </p>
+          </details>
+        ))
+      }
+    </div>
+  </section>
+
   <div class="buybar" data-buybar aria-hidden="true">
     <div>
       <b>{p.name}</b>
@@ -254,6 +320,12 @@ const sourceLabel =
   import { addToCart } from '../../lib/cart-store.ts';
   import { flyToCart, toast } from '../../lib/fly.ts';
   import { wireSaveButtons } from '../../lib/saved-store.ts';
+  import { shipWindow, formatWindow } from '../../lib/shipdate.ts';
+  // real dates for "ships by", from today
+  for (const el of document.querySelectorAll<HTMLElement>('[data-ships]')) {
+    const when = el.querySelector('[data-ships-when]');
+    if (when) when.textContent = formatWindow(shipWindow(new Date(), JSON.parse(el.dataset.lead!)));
+  }
   wireSaveButtons();
   import { money } from '../../lib/money.ts';
 
@@ -432,6 +504,64 @@ const sourceLabel =
     border: 1px solid rgba(255, 255, 255, 0.35);
     box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.35);
     flex: none;
+  }
+  .ships {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 22px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--mint) 35%, transparent);
+    background: color-mix(in srgb, var(--mint) 7%, transparent);
+    color: var(--text-2);
+    font-size: 0.93rem;
+  }
+  .ships b {
+    color: var(--white);
+  }
+  .know-wrap {
+    padding-bottom: clamp(40px, 6vw, 72px);
+  }
+  .know {
+    max-width: 780px;
+    margin-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .know details {
+    border-bottom: 1px solid var(--line);
+  }
+  .know summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px 36px 16px 0;
+    position: relative;
+    font: 600 1rem var(--display);
+    letter-spacing: -0.01em;
+    color: var(--white);
+  }
+  .know summary::-webkit-details-marker {
+    display: none;
+  }
+  .know summary::after {
+    content: '+';
+    position: absolute;
+    right: 4px;
+    top: 12px;
+    font: 500 1.4rem var(--mono);
+    color: var(--tone);
+  }
+  .know details[open] summary::after {
+    content: '−';
+  }
+  .know p {
+    margin: 0 0 18px;
+    color: var(--text-2);
+  }
+  .know a {
+    color: var(--tone);
+    font-weight: 700;
+    white-space: nowrap;
   }
   .buybar {
     display: none;

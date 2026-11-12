@@ -119,6 +119,30 @@ export function setLook(root: THREE.Object3D, look: { wire?: boolean; lines?: nu
   });
 }
 
+const PART_COLOURS: Record<string, string> = { clothes: '#2f7dff', skin: '#f0c4a2', hair: '#3b2a20' };
+
+/**
+ * Multi-colour finish preview: parts tagged 'clothes', 'skin' or 'hair' get
+ * their own filament; single colour puts everything back to `base`.
+ */
+export function setFinish(root: THREE.Object3D, multi: boolean, base: string) {
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    const part = mesh.userData?.part as string | undefined;
+    if (!mesh.isMesh || !part) return;
+    const m = mesh.material as PrintMaterial;
+    if (!mesh.userData.ownMat) {
+      // give the part its own material once, keeping the print uniforms working
+      const own = printMaterial(base);
+      own.side = m.side;
+      mesh.material = own;
+      mesh.userData.ownMat = true;
+    }
+    (mesh.material as PrintMaterial).color.set(multi ? PART_COLOURS[part] : base);
+    mesh.userData.accent = multi;
+  });
+}
+
 /** Set the print height cut on every material in a model. */
 export function setCut(root: THREE.Object3D, cut: number, time = 0) {
   root.traverse((o) => {
@@ -220,16 +244,19 @@ export function buildModel(shape: Shape, color: string): THREE.Group {
       }
       const shoulders = new THREE.Mesh(new THREE.LatheGeometry(sh, 64), mat);
       shoulders.scale.set(1, 1, 0.62);
+      shoulders.userData.part = 'clothes';
       add(shoulders);
-      add(mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.3, 32), mat, 0, 0.6, 0));
+      add(mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.3, 32), mat, 0, 0.6, 0)).userData.part = 'skin';
       const head = mesh(new THREE.SphereGeometry(0.33, 64, 48), mat, 0, 0.98, 0);
       head.scale.set(0.92, 1.08, 0.98);
+      head.userData.part = 'skin';
       add(head);
       const hair = mesh(new THREE.SphereGeometry(0.345, 64, 32, 0, Math.PI * 2, 0, Math.PI * 0.42), mat, 0, 1.03, -0.02);
       hair.scale.set(0.95, 1.12, 1.02);
+      hair.userData.part = 'hair';
       add(hair);
-      for (const s of [-1, 1]) add(mesh(new THREE.SphereGeometry(0.06, 16, 12), mat, s * 0.3, 0.95, 0));
-      add(mesh(new THREE.SphereGeometry(0.045, 16, 12), mat, 0, 0.95, 0.32));
+      for (const s of [-1, 1]) add(mesh(new THREE.SphereGeometry(0.06, 16, 12), mat, s * 0.3, 0.95, 0)).userData.part = 'skin';
+      add(mesh(new THREE.SphereGeometry(0.045, 16, 12), mat, 0, 0.95, 0.32)).userData.part = 'skin';
       break;
     }
     case 'paw': {

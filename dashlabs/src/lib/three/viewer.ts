@@ -135,6 +135,16 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
     rotY += vel;
     idle = 0;
   });
+  // keyboard: arrow keys turn the model
+  if (canvas.getAttribute('aria-hidden') !== 'true') canvas.tabIndex = 0; // decorative canvases stay out of the tab order
+  canvas.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    rotY += e.key === 'ArrowLeft' ? -0.25 : 0.25;
+    vel = 0;
+    idle = 0;
+    draw(0);
+  });
   const up = () => (dragging = false);
   canvas.addEventListener('pointerup', up);
   canvas.addEventListener('pointercancel', up);
