@@ -10,6 +10,7 @@
     "preview": "astro preview",
     "test": "node --test tests/*.test.ts",
     "thumbs": "node scripts/render-thumbs.mjs",
+    "og": "node scripts/render-og.ts",
     "smoke": "node scripts/smoke.mjs",
     "launch-check": "node scripts/launch-check.ts"
   },

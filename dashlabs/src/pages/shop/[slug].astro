@@ -11,6 +11,7 @@ import { reviewsFor, ratingSummary } from '../../data/reviews.ts';
 import { PRODUCTS, categoryById, productCode, type Product } from '../../data/catalog.ts';
 import { SITE } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
+import { existsSync } from 'node:fs';
 
 export function getStaticPaths() {
   return PRODUCTS.map((product) => ({ params: { slug: product.slug }, props: { product } }));
@@ -26,6 +27,8 @@ const pz = p.personalise;
 // search results: what it is, that it's made to order, and the price
 const metaDescription = `${p.summary.replace(/\.$/, '')}. 3D printed to order by DashLabs, ${p.purchase === 'quote' ? 'from ' : ''}${money(p.price)}.`;
 const site = Astro.site ?? new URL('http://localhost:4321');
+// share card from `npm run og`; falls back to the site-wide card until it's rendered
+const shareCard = existsSync(`public/og/${p.slug}.jpg`) ? `/og/${p.slug}.jpg` : '/og.png';
 const productLd = {
   '@context': 'https://schema.org',
   '@type': 'Product',
@@ -34,7 +37,7 @@ const productLd = {
   sku: `DL-${productCode(p)}`,
   category: categoryById(p.category).label,
   brand: { '@type': 'Brand', name: SITE.name },
-  image: new URL(p.images?.[0] ?? '/og.png', site).href,
+  image: new URL(p.images?.[0] ?? shareCard, site).href,
   offers: {
     '@type': 'Offer',
     url: new URL(`/shop/${p.slug}/`, site).href,
@@ -100,7 +103,7 @@ const sourceLabel =
       : `Design by ${p.source.designer}`;
 ---
 
-<Base title={p.name} description={metaDescription} jsonld={[productLd, crumbsLd]}>
+<Base title={p.name} description={metaDescription} image={shareCard} jsonld={[productLd, crumbsLd]}>
   <section class="section top">
     <div class="wrap">
       <nav class="crumbs" aria-label="Breadcrumb">

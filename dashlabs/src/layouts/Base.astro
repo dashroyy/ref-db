@@ -26,11 +26,12 @@ interface Props {
   description?: string;
   jsonld?: Record<string, unknown> | Record<string, unknown>[]; // extra structured data for this page (e.g. a Product)
   noindex?: boolean; // keep this page out of search results
+  image?: string; // share-card image for this page (defaults to /og.png)
 }
-const { title, description = SITE.description, jsonld, noindex = false, cta = true } = Astro.props;
+const { title, description = SITE.description, jsonld, noindex = false, cta = true, image = '/og.png' } = Astro.props;
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site).href;
-const ogImage = new URL('/og.png', site).href;
+const ogImage = new URL(image, site).href;
 const org = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -61,6 +62,7 @@ const tone = pageColor(Astro.url.pathname);
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title ?? SITE.name} />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonld ?? org)} />
     <meta name="theme-color" content="#08070d" />

@@ -1,7 +1,7 @@
 // What still needs doing before launch?   npm run launch-check
 // Reads the site's own data and pages and lists every placeholder left.
 // Add --strict to exit with an error while "must fix" items remain (for CI).
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { SITE, GIFT_WRAP_PRICE } from '../src/data/site.ts';
 import { PRODUCTS } from '../src/data/catalog.ts';
 import { LAB_STATUS } from '../src/data/lab.ts';
@@ -40,6 +40,9 @@ if (!process.env.SITE_URL && !process.env.URL) check.push('Build with your real 
 // ── nice to have ──
 const noPhotos = PRODUCTS.filter((p) => !p.images?.length);
 if (noPhotos.length) nice.push(`${noPhotos.length} of ${PRODUCTS.length} products have no photos yet (they show the 3D model): ${names(noPhotos)}.`);
+const noCard = PRODUCTS.filter((p) => !existsSync(`public/og/${p.slug}.jpg`));
+if (noCard.length) nice.push(`No share card for: ${names(noCard)} (links show the generic card). Run npm run og.`);
+nice.push('After changing a product name, summary, price or photos, run npm run og so link previews match.');
 if (!Object.values(SITE.social).some(Boolean)) nice.push('No social links set. → src/data/site.ts');
 if (!REVIEWS.length) nice.push('No customer reviews yet (the site says so honestly). Add real ones as they come in. → src/data/reviews.ts');
 if (!GALLERY.length) nice.push('No customer-print photos yet; the gallery on /lab/ stays hidden until there are. → src/data/reviews.ts');

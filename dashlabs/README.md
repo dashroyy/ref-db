@@ -39,7 +39,7 @@ Almost everything you'll change lives in **`src/data/`**. Edit, save, and the de
 | Change your print rates            | `src/lib/estimate.ts` (`RATES`), `src/data/materials.ts` (spool prices) | Feeds the price estimator and STL quote. |
 | Reply to a customer                | `docs/EMAIL-TEMPLATES.md`              | Order total, quote, preview, shipped, review request, licence refusal. |
 
-After adding a product or changing a category colour, run **`npm run thumbs`** to re-render the product images
+After adding a product or changing a category colour, run **`npm run thumbs`** then **`npm run og`** to re-render the product images and link-preview cards
 (it needs Playwright: `npx playwright install chromium`). If you forget, the site draws them live instead, so
 nothing breaks.
 
@@ -132,6 +132,7 @@ Principles that keep it maintainable:
 | `npm run smoke`         | Drive the built site like a customer: 12 journeys, every link, phone widths. Needs Playwright. |
 | `npm run launch-check`  | List remaining placeholders. `-- --strict` fails while any must-fix item remains. |
 | `npm run thumbs`        | Re-render product thumbnails and the home-page printer still. Needs Playwright. |
+| `npm run og`            | Re-render each product's share card (the picture in iMessage/WhatsApp/Discord link previews). Run after `thumbs`, or after changing a name, summary, price or photo. |
 | `npm run preview`       | Serve the built `dist/` locally. |
 
 GitHub runs the tests, type check and build on every change to `dashlabs/` (`.github/workflows/dashlabs.yml`).
