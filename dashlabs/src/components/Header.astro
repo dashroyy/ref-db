@@ -692,6 +692,23 @@ const inShop = path.startsWith('/shop');
       display: none; /* in the menu instead */
     }
   }
+  /* the smallest phones (320 px): pause moves to the menu too, buttons tighten up */
+  @media (max-width: 380px) {
+    .right > [data-motion-switch] {
+      display: none;
+    }
+    .right {
+      gap: 6px;
+    }
+    .bar {
+      gap: 10px;
+    }
+    .icon-btn,
+    .cart {
+      width: 40px;
+      height: 40px;
+    }
+  }
   @media (max-width: 900px) {
     .links,
     .mega {

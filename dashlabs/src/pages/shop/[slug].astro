@@ -107,7 +107,7 @@ const sourceLabel =
         <a href="/shop/">Shop</a>
         <span aria-hidden="true">/</span>
         <a href={`/shop/?c=${p.category}`} class="cat-chip"><i></i>{cat.label}</a>
-        <span aria-hidden="true">/</span>
+        <span class="sku-sep" aria-hidden="true">/</span>
         <span class="sku">SKU DL-{productCode(p)}</span>
         {siblings.length > 1 && <span class="pos">{siblings.indexOf(p) + 1} of {siblings.length}</span>}
       </nav>
@@ -411,14 +411,15 @@ const sourceLabel =
   });
   form.addEventListener('change', render);
 
-  // Phones: when the buy button scrolls away, a slim bar keeps it in reach
+  // Phones: whenever the buy button is off screen (not reached yet, or scrolled past), a slim bar keeps it in reach
   const bar = document.querySelector<HTMLElement>('[data-buybar]')!;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   // (checked on scroll: jumping straight past the button never "intersects" it)
   let barQueued = false;
   const checkBar = () => {
     barQueued = false;
-    bar.classList.toggle('show', submit.getBoundingClientRect().bottom < 0);
+    const r = submit.getBoundingClientRect();
+    bar.classList.toggle('show', r.bottom < 0 || r.top > innerHeight);
   };
   addEventListener('scroll', () => !barQueued && ((barQueued = true), requestAnimationFrame(checkBar)), { passive: true });
   checkBar();
@@ -503,9 +504,10 @@ const sourceLabel =
   }
   .title-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 14px;
+    gap: 8px 14px;
   }
   .save-big {
     flex: none;
@@ -748,7 +750,7 @@ const sourceLabel =
   }
   .layout {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); /* columns may shrink below their content */
     gap: clamp(28px, 5vw, 64px);
     align-items: start;
   }
@@ -875,6 +877,29 @@ const sourceLabel =
   }
   .guide-link:hover {
     border-color: var(--accent);
+  }
+  /* phones: a shorter 3D stage so the name, price and buy button come into view sooner;
+     Save and Share become icon buttons */
+  @media (max-width: 560px) {
+    .gallery :global(.viewer) {
+      aspect-ratio: 5 / 4;
+    }
+    .save-big {
+      margin-top: 8px;
+      padding: 9px;
+    }
+    .save-big span {
+      display: none;
+    }
+    .crumbs .pos,
+    .crumbs .sku,
+    .crumbs .sku-sep {
+      display: none;
+    }
+    /* keep the footer clear of the buy bar */
+    :global(.site-footer) {
+      padding-bottom: calc(28px + 76px + env(safe-area-inset-bottom));
+    }
   }
   @media (max-width: 820px) {
     .layout {

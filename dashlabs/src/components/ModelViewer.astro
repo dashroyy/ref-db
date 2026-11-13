@@ -286,6 +286,11 @@ const size = p.size;
     display: none;
   }
   /* small viewers (phones): one row of compact controls, a one-line label */
+  @container (max-width: 330px) {
+    .label {
+      display: none;
+    }
+  }
   @container (max-width: 400px) {
     .hint-chip {
       display: none;
