@@ -161,6 +161,25 @@ await step('search, saved items and theme are remembered', async () => {
   expect((await page.evaluate(() => document.documentElement.dataset.theme)) === 'light', 'theme remembered');
 });
 
+await step('keyboard: Shop menu and phone menu can be used without a mouse', async () => {
+  await page.goto(B + '/');
+  await page.focus('[data-mega-btn]');
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => !!document.activeElement.closest('[data-mega]')), 'focus moves into the Shop menu');
+  await page.keyboard.press('Escape');
+  expect(await page.evaluate(() => document.activeElement.matches('[data-mega-btn]')), 'Esc returns focus to Shop');
+  const m = await browser.newPage({ ...devices['iPhone 13'] });
+  await m.goto(B + '/');
+  await m.focus('[data-burger]');
+  await m.keyboard.press('Enter');
+  await m.waitForTimeout(150);
+  for (let i = 0; i < 30; i++) await m.keyboard.press('Tab');
+  expect(await m.evaluate(() => !!document.activeElement.closest('[data-mobile-menu]') || document.activeElement.matches('[data-burger]')), 'Tab stays in the open menu');
+  await m.keyboard.press('Escape');
+  expect(await m.evaluate(() => document.activeElement.matches('[data-burger]')), 'Esc returns focus to the menu button');
+  await m.close();
+});
+
 await step('phone: no page scrolls sideways', async () => {
   const m = await browser.newPage({ ...devices['iPhone 13'] });
   for (const p of [...PAGES, '/shop/pen-launcher/', '/learn/pricing/', '/learn/materials/']) {

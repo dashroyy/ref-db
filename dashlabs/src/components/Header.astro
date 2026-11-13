@@ -212,7 +212,17 @@ const inShop = path.startsWith('/shop');
     topbar.classList.toggle('mega-open', open);
     btn.setAttribute('aria-expanded', String(open));
   };
-  btn.addEventListener('click', () => setMega(!topbar.classList.contains('mega-open')));
+  btn.addEventListener('click', (e) => {
+    const open = !topbar.classList.contains('mega-open');
+    setMega(open);
+    // opened from the keyboard (Enter/Space give detail 0): take focus into the menu
+    if (open && e.detail === 0) mega.querySelector<HTMLElement>('a')?.focus();
+  });
+  // tabbing out of the end of the menu closes it
+  mega.addEventListener('focusout', (e) => {
+    const to = e.relatedTarget as Node | null;
+    if (to && !mega.contains(to) && to !== btn) setMega(false);
+  });
   if (matchMedia('(hover: hover)').matches) {
     for (const el of [btn, mega]) {
       el.addEventListener('pointerenter', () => (clearTimeout(closeT), setMega(true)));
@@ -223,13 +233,32 @@ const inShop = path.startsWith('/shop');
 
   // mobile menu
   const burger = document.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const mobile = document.querySelector<HTMLElement>('[data-mobile-menu]')!;
   const setMobile = (open: boolean) => {
+    const was = root.classList.contains('menu-open');
     root.classList.toggle('menu-open', open);
     burger.setAttribute('aria-expanded', String(open));
+    if (open && !was) setTimeout(() => mobile.querySelector<HTMLElement>('a')?.focus(), 60);
+    // closing with focus inside the menu: hand it back to the menu button
+    if (!open && was && mobile.contains(document.activeElement)) burger.focus();
   };
+  // keep Tab inside the open menu (and the menu button), like a dialog
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !root.classList.contains('menu-open')) return;
+    const items = [burger, ...mobile.querySelectorAll<HTMLElement>('a, button')].filter((x) => x.offsetParent !== null);
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
   burger.addEventListener('click', () => setMobile(!root.classList.contains('menu-open')));
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (topbar.classList.contains('mega-open') && mega.contains(document.activeElement)) btn.focus();
       setMega(false);
       setMobile(false);
     }
