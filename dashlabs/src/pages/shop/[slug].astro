@@ -22,7 +22,6 @@ interface Props {
 }
 const { product: p } = Astro.props;
 const [lo, hi] = p.leadTimeDays ?? SITE.defaultLeadTimeDays;
-const related = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
 const pz = p.personalise;
 // search results: what it is, that it's made to order, and the price
 const metaDescription = `${p.summary.replace(/\.$/, '')}. 3D printed to order by DashLabs, ${p.purchase === 'quote' ? 'from ' : ''}${money(p.price)}.`;
@@ -95,6 +94,11 @@ const cat = categoryById(p.category);
 const siblings = PRODUCTS.filter((x) => x.category === p.category);
 const pos = PRODUCTS.indexOf(p);
 const next = PRODUCTS[(pos + 1) % PRODUCTS.length];
+// "More like this": same category first, topped up from the rest (not the "next print" item below)
+const sameCat = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id);
+const others = PRODUCTS.filter((x) => x.category !== p.category && x.id !== next.id);
+const related = [...sameCat, ...others].slice(0, 3);
+const relatedTitle = sameCat.length >= 3 ? 'More like this' : 'You might also like';
 const sourceLabel =
   p.source.kind === 'original'
     ? 'Designed by DashLabs'
@@ -292,20 +296,6 @@ const sourceLabel =
     )
   }
 
-  {
-    related.length > 0 && (
-      <section class="section more">
-        <div class="wrap">
-          <h2 class="h-rule" data-print>More like this</h2>
-          <div class="grid">
-            {related.map((r) => (
-              <ProductCard product={r} />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
 
   <section class="wrap know-wrap">
     <h2 class="h-rule" data-print>Good to know</h2>
@@ -334,6 +324,21 @@ const sourceLabel =
   <section class="wrap reviews-wrap">
     <Reviews product={p} />
   </section>
+
+  {
+    related.length > 0 && (
+      <section class="section more">
+        <div class="wrap">
+          <h2 class="h-rule" data-print>{relatedTitle}</h2>
+          <div class="grid">
+            {related.map((r) => (
+              <ProductCard product={r} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   <section class="wrap next-wrap">
     <a class="next-print" href={`/shop/${next.slug}/`} style={`--c:${categoryById(next.category).color}`} data-print>
