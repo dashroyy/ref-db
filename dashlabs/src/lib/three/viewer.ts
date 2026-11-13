@@ -181,15 +181,15 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   const gov = governor(renderer);
   let owed = 0;
   const loop = (now: number) => {
+    const prevNow = last;
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     if (visible && !document.hidden && (!calm() || dragging || printT >= 0 || faceTo !== null || Math.abs(vel) > 1e-4)) {
       owed += dt;
+      gov.tick(now - prevNow);
       if (dragging || !gov.skip()) {
-        const t0 = performance.now();
         draw(Math.min(0.1, owed));
         owed = 0;
-        gov.tick(performance.now() - t0);
       }
     }
     requestAnimationFrame(loop);

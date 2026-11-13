@@ -28,6 +28,10 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
       <div class="progress"><i data-progress style="transform:scaleX(0.68)"></i></div>
     </div>
   </div>
+  <button type="button" class="play-live" data-play-live>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
+    Play live 3D
+  </button>
   <div class="queue-pick" data-pick hidden>
     <span class="tag">Pick the next print</span>
     <div class="chips">
@@ -62,7 +66,9 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
       // start once the page itself has loaded and the browser has a quiet moment
       const start = () => import('../lib/three/hero.ts').then(({ mountHero }) => {
         const jobs = [...el.querySelectorAll<HTMLButtonElement>('[data-job]')];
-        const hero = mountHero(el.querySelector('canvas')!, (s) => {
+        const hero = mountHero(
+          el.querySelector('canvas')!,
+          (s) => {
           jobs.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.job) === s.index)));
           $('[data-phase]').textContent = PH[s.phase];
           $('[data-temp]').textContent = `${s.temp}°C`;
@@ -72,8 +78,34 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
           $('[data-progress]').style.transform = `scaleX(${s.layers ? s.layer / s.layers : 0})`;
           el.dataset.state = s.phase;
           el.classList.add('live');
+          },
+          // too slow on this device: back to the still, with an offer to play anyway
+          () => {
+            el.classList.remove('live');
+            el.classList.add('resting');
+            // put the readout back to match the still image
+            $('[data-phase]').textContent = 'Paused to keep things fast';
+            $('[data-model]').textContent = 'Spiral vase';
+            $('[data-temp]').textContent = '215°C';
+            $('[data-layer]').textContent = '052';
+            $('[data-layers]').textContent = '077';
+            $('[data-progress]').style.transform = 'scaleX(0.68)';
+            jobs.forEach((b, i) => b.setAttribute('aria-pressed', String(i === 0)));
+          },
+        );
+        el.querySelector('[data-play-live]')!.addEventListener('click', () => {
+          el.classList.remove('resting');
+          hero.resume();
         });
-        jobs.forEach((b) => b.addEventListener('click', () => hero.printNow(Number(b.dataset.job))));
+        jobs.forEach((b) =>
+          b.addEventListener('click', () => {
+            if (el.classList.contains('resting')) {
+              el.classList.remove('resting');
+              hero.resume();
+            }
+            hero.printNow(Number(b.dataset.job));
+          }),
+        );
         $('[data-pick]').hidden = false;
       });
       const whenIdle = () => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 1200 }) : setTimeout(start, 300));
@@ -103,6 +135,29 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
     width: 100%;
     height: 100%;
     pointer-events: none;
+  }
+  .play-live {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--hot);
+    background: var(--overlay);
+    backdrop-filter: blur(6px);
+    color: var(--white);
+    font: 700 0.9rem var(--font);
+    cursor: pointer;
+  }
+  .resting .play-live {
+    display: inline-flex;
+  }
+  .resting canvas {
+    visibility: hidden;
   }
   /* swap instantly: fading one printer over another would show two at once */
   .live .poster,

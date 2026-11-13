@@ -47,7 +47,16 @@ try {
   // Hero poster: the home-page printer mid-print, shown instantly while the live 3D loads.
   const hp = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 });
   await hp.goto(`http://localhost:${PORT}/`);
-  await hp.waitForFunction(() => Number(document.querySelector('[data-layer]')?.textContent) >= 52, null, { timeout: 120000 });
+  // this machine may be too slow for the live hero: ask for it anyway, as a visitor could
+  await hp.waitForFunction(
+    () => {
+      const el = document.querySelector('[data-hero-printer]');
+      if (el?.classList.contains('resting')) el.querySelector('[data-play-live]').click();
+      return Number(document.querySelector('[data-layer]')?.textContent) >= 52 && el.classList.contains('live');
+    },
+    null,
+    { timeout: 180000, polling: 250 },
+  );
   await hp.evaluate(() => {
     document.querySelector('[data-hero-printer] .hud').style.visibility = 'hidden';
     for (const el of [document.documentElement, document.body, document.querySelector('.chamber'), document.querySelector('.hero-stage')]) if (el) el.style.background = 'transparent';

@@ -55,7 +55,7 @@ function gridTexture() {
   return t;
 }
 
-export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) => void) {
+export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) => void, onGiveUp?: () => void) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   // phones: fewer pixels and a smaller shadow map keep it smooth and cool
   const small = Math.min(innerWidth, innerHeight) < 700;
@@ -326,16 +326,23 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
   new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(canvas);
   const gov = governor(renderer);
   let owed = 0;
+  let stopped = false;
   const loop = (now: number) => {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    if (stopped) return;
+    const gapMs = now - last;
+    const dt = Math.min(0.05, gapMs / 1000);
     last = now;
     if (visible && !document.hidden && !calm()) {
       owed += dt;
+      if (gov.tick(gapMs) === 'give-up' && onGiveUp) {
+        // this device can't keep up: stop drawing; the page shows the still instead
+        stopped = true;
+        onGiveUp();
+        return;
+      }
       if (!gov.skip()) {
-        const t0 = performance.now();
         frame(Math.min(0.1, owed));
         owed = 0;
-        gov.tick(performance.now() - t0);
       }
     }
     requestAnimationFrame(loop);
@@ -344,6 +351,14 @@ export function mountHero(canvas: HTMLCanvasElement, onStatus?: (s: HeroStatus) 
   requestAnimationFrame(loop);
 
   return {
+    /** Restart after a give-up, because the visitor asked for it. */
+    resume() {
+      if (!stopped) return;
+      stopped = false;
+      gov.stay();
+      last = performance.now();
+      requestAnimationFrame(loop);
+    },
     /** Eject the current part and print this one next. */
     printNow(i: number) {
       if (i === idx && phase !== 'ejecting') return;
