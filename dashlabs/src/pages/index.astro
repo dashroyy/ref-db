@@ -147,7 +147,7 @@ const ticker = [
   </section>
 
   <!-- HOW CUSTOM WORKS -->
-  <section class="section">
+  <section class="section tight">
     <div class="wrap">
       <div class="head" data-print>
         <h2 class="h-rule">From a photo to your shelf</h2>
@@ -507,10 +507,22 @@ const ticker = [
     position: absolute;
     right: 14px;
     top: 4px;
-    font: 700 4.2rem/1 var(--display);
+    font: 700 3.4rem/1 var(--display);
     letter-spacing: -0.06em;
     color: transparent;
     -webkit-text-stroke: 1px rgba(255, 225, 77, 0.35);
+    pointer-events: none;
+  }
+  /* keep the label and title clear of the big outlined number */
+  .guide .tag,
+  .guide h3 {
+    padding-right: 84px;
+  }
+  @media (max-width: 560px) {
+    /* one column: the title already sits below the number */
+    .guide h3 {
+      padding-right: 0;
+    }
   }
   .guide h3 {
     margin: 10px 0 4px;
