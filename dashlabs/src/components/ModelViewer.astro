@@ -48,7 +48,7 @@ const size = p.size;
     }
     <button type="button" class="reprint" data-reprint>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
-      Watch it print
+      <span class="long">Watch it print</span><span class="short" aria-hidden="true">Print</span>
     </button>
   </div>
   <span class="label tag">Preview · not to scale · colours approximate</span>
@@ -94,7 +94,7 @@ const size = p.size;
           const word = sz.axis === 'height' ? 'tall' : 'long';
           label.textContent = on ? `${sz.placeholder ? '≈' : ''}${mm} mm ${word}` : 'Real size';
           el.querySelector<HTMLElement>('.label')!.textContent = on
-            ? `Real-size view · ruler in cm · bank card for scale${sz.placeholder ? ' · size approximate' : ''}`
+            ? `Real size · ruler in cm · bank card${sz.placeholder ? ' · approximate' : ''}`
             : 'Preview · not to scale · colours approximate';
         };
         sizeBtn.addEventListener('click', () => ((on = !on), apply()));
@@ -165,6 +165,7 @@ const size = p.size;
 
 <style>
   .viewer {
+    container-type: inline-size;
     position: relative;
     aspect-ratio: 1 / 1;
     border-radius: var(--r);
@@ -280,5 +281,45 @@ const size = p.size;
     top: 14px;
     left: 16px;
     font-size: 0.62rem;
+  }
+  .short {
+    display: none;
+  }
+  /* small viewers (phones): one row of compact controls, a one-line label */
+  @container (max-width: 400px) {
+    .hint-chip {
+      display: none;
+    }
+    .controls {
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      gap: 6px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+    }
+    .reprint {
+      padding: 7px 10px;
+      font-size: 0.74rem;
+    }
+    .long {
+      display: none;
+    }
+    .short {
+      display: inline;
+    }
+    .label {
+      top: 12px;
+      left: 12px;
+      max-width: 42%;
+      font-size: 0.56rem;
+      line-height: 1.4;
+    }
+    .scrub {
+      top: 10px;
+      right: 10px;
+      width: 46%;
+      padding: 6px 10px;
+    }
   }
 </style>
