@@ -13,8 +13,8 @@ const { slug } = Astro.props;
         {['#ffab2e', '#3dffc5', '#ff6ec7'].map((c, i) => (
           <g transform={`translate(${14 + i * 32} ${16 + (i === 1 ? -4 : 4)})`}>
             {/* a filament spool, side on: two flanges and the winding between */}
-            <rect x="0" y="0" width="6" height="58" rx="3" fill="var(--panel-3)" />
-            <rect x="24" y="0" width="6" height="58" rx="3" fill="var(--panel-3)" />
+            <rect x="0" y="0" width="6" height="58" rx="3" fill="var(--text-4)" />
+            <rect x="24" y="0" width="6" height="58" rx="3" fill="var(--text-4)" />
             <rect x="5" y="8" width="20" height="42" rx="2" fill={c} />
             {[14, 22, 30, 38].map((y) => (
               <line x1="5" y1={y} x2="25" y2={y} stroke="rgba(0,0,0,.18)" stroke-width="1.2" />
@@ -48,10 +48,10 @@ const { slug } = Astro.props;
     slug === 'pen-launcher-physics' && (
       <g>
         <line x1="8" y1="78" x2="114" y2="78" stroke="var(--line-2)" />
-        <rect x="8" y="58" width="22" height="20" rx="2" fill="var(--panel-3)" />
+        <rect x="8" y="58" width="22" height="20" rx="2" fill="var(--text-4)" />
         <path d="M24 56 Q62 -8 108 76" fill="none" stroke="var(--hot)" stroke-width="3" stroke-dasharray="5 5" />
         <circle cx="108" cy="76" r="4" fill="var(--hot)" />
-        <rect x="14" y="48" width="24" height="6" rx="3" fill="#ece6da" transform="rotate(-38 26 51)" />
+        <rect x="14" y="48" width="24" height="6" rx="3" fill="var(--text-3)" transform="rotate(-38 26 51)" />
       </g>
     )
   }
@@ -67,7 +67,7 @@ const { slug } = Astro.props;
           [85, 20],
         ].map(([x, y], i) => (
           <g>
-            <rect x={x - 8} y={y - 6} width="16" height="12" rx="3" fill={i < 3 ? 'var(--hot)' : 'var(--panel-3)'} />
+            <rect x={x - 8} y={y - 6} width="16" height="12" rx="3" fill={i < 3 ? 'var(--hot)' : 'var(--text-4)'} />
             <circle cx={x} cy={y} r="3" fill="var(--ink)" />
           </g>
         ))}
