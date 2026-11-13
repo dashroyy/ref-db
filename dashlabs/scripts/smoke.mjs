@@ -89,6 +89,18 @@ await step('product: options change the price; personalised item goes in the car
   expect(cart.some((l) => l.note === 'DASH'), 'note saved');
 });
 
+await step('add to cart survives leaving the page mid-animation', async () => {
+  await page.goto(B + '/shop/pen-launcher/');
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('dashlabs.cart.v1') || '[]').length);
+  await page.click('[data-buy] button[type="submit"]');
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('dashlabs.cart.v1') || '[]').length);
+  expect(after === before + 1, 'saved before the cube lands');
+  await page.evaluate(() => {
+    const c = JSON.parse(localStorage.getItem('dashlabs.cart.v1'));
+    localStorage.setItem('dashlabs.cart.v1', JSON.stringify(c.filter((l) => l.productId !== 'orig-pen-launcher')));
+  });
+});
+
 await step('cart: totals, gift wrap, remove + undo, order request dialog', async () => {
   await page.goto(B + '/cart/');
   expect((await page.textContent('[data-subtotal]')) === '$30.00', `subtotal ${await page.textContent('[data-subtotal]')}`);

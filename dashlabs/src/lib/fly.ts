@@ -33,7 +33,9 @@ export function flyToCart(from: Element, color = '#ffab2e'): Promise<void> {
     ],
     { duration: 850, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
   );
-  return anim.finished.then(() => el.remove()).catch(() => el.remove());
+  // never wait on an animation the browser has paused (background tab, etc.)
+  const landed = Promise.race([anim.finished, new Promise((r) => setTimeout(r, 1200))]);
+  return landed.then(() => el.remove()).catch(() => el.remove());
 }
 
 let toastTimer = 0;

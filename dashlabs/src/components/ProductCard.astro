@@ -63,15 +63,16 @@ const quick = p.purchase === 'cart' && !p.personalise?.required;
 
 <script>
   import { wireSaveButtons } from '../lib/saved-store.ts';
-  import { addToCart } from '../lib/cart-store.ts';
+  import { addToCart, announceCart } from '../lib/cart-store.ts';
   import { flyToCart, toast } from '../lib/fly.ts';
   wireSaveButtons();
   document.querySelectorAll<HTMLButtonElement>('[data-quick-add]').forEach((b) =>
     b.addEventListener('click', () => {
       const wrap = b.closest<HTMLElement>('.card-wrap')!;
       const color = getComputedStyle(wrap).getPropertyValue('--c').trim() || '#ffab2e';
+      addToCart({ productId: b.dataset.quickAdd!, options: {}, qty: 1 }, { quiet: true });
       flyToCart(b, color).then(() => {
-        addToCart({ productId: b.dataset.quickAdd!, options: {}, qty: 1 });
+        announceCart();
         toast(`<span class="t-cube"></span><span><b>${wrap.dataset.name}</b> added</span><a href="/cart/">View cart →</a>`);
       });
     }),

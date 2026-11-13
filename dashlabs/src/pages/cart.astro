@@ -45,9 +45,8 @@ import { PRODUCTS } from '../data/catalog.ts';
             <div class="gift-row" data-gift-row hidden><dt>Gift wrap</dt><dd>{money(GIFT_WRAP_PRICE)}</dd></div>
             <div><dt>Subtotal</dt><dd data-subtotal>—</dd></div>
             <div><dt>Ships</dt><dd data-cart-ships>—</dd></div>
-            <div><dt>Shipping</dt><dd class="muted">Calculated at checkout</dd></div>
-            <div><dt>Tax</dt><dd class="muted">Calculated at checkout</dd></div>
           </dl>
+          <p class="sum-note">{CHECKOUT_MODE === 'stripe' ? 'Shipping and tax are added at checkout.' : 'Shipping and tax are confirmed by email before you pay.'}</p>
 
           <form data-checkout>
             <div class="field">
@@ -319,6 +318,12 @@ import { PRODUCTS } from '../data/catalog.ts';
   .summary dd {
     margin: 0;
     font-family: var(--mono);
+    text-align: right;
+  }
+  .sum-note {
+    margin: -12px 0 24px;
+    font-size: 0.86rem;
+    color: var(--text-3);
   }
   :global(.line .rm) {
     width: 30px;

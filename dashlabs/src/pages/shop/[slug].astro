@@ -345,7 +345,7 @@ const sourceLabel =
 </Base>
 
 <script>
-  import { addToCart } from '../../lib/cart-store.ts';
+  import { addToCart, announceCart } from '../../lib/cart-store.ts';
   import { flyToCart, toast } from '../../lib/fly.ts';
   import { wireSaveButtons } from '../../lib/saved-store.ts';
   import { shipWindow, formatWindow } from '../../lib/shipdate.ts';
@@ -452,8 +452,9 @@ const sourceLabel =
     const tone = getComputedStyle(document.documentElement).getPropertyValue('--tone').trim() || '#ffab2e';
     const name = document.querySelector('h1')?.textContent?.trim() ?? 'Item';
     // the cube lands, then the cart updates (and bumps)
+    addToCart(line, { quiet: true });
     flyToCart(button, tone).then(() => {
-      addToCart(line);
+      announceCart();
       added.hidden = false;
       toast(`<span class="t-cube"></span><span><b>${name.replace(/</g, '&lt;')}</b> added to your cart</span><a href="/cart/">View cart →</a>`);
     });

@@ -16,16 +16,24 @@ export function readCart(): CartLine[] {
   }
 }
 
-function write(cart: CartLine[]) {
+function write(cart: CartLine[], quiet = false) {
   try {
     localStorage.setItem(KEY, JSON.stringify(cart));
   } catch {
     /* storage blocked (private mode etc.) — the cart just won't persist */
   }
-  window.dispatchEvent(new CustomEvent(EVENT, { detail: cart }));
+  if (!quiet) announceCart();
 }
 
-export const addToCart = (line: CartLine) => write(addLine(readCart(), line));
+/** Tell the page (header badge, cart page) the cart changed. */
+export const announceCart = () => window.dispatchEvent(new CustomEvent(EVENT, { detail: readCart() }));
+
+/**
+ * Add a line. It is saved at once; with `quiet`, the page isn't told yet, so an
+ * animation can land first and call announceCart(). Saving first means a visitor
+ * who leaves mid-animation still has the item in their cart.
+ */
+export const addToCart = (line: CartLine, { quiet = false } = {}) => write(addLine(readCart(), line), quiet);
 export const updateQty = (index: number, qty: number) => write(setQty(readCart(), index, qty));
 export const clearCart = () => write([]);
 export const cartCount = () => readCart().reduce((n, l) => n + l.qty, 0);
