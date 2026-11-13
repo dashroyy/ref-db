@@ -44,12 +44,37 @@ try {
     );
     for (const it of items) found.set(it.key, it.src);
   }
+  // Hero poster: the home-page printer mid-print, shown instantly while the live 3D loads.
+  const hp = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 });
+  await hp.goto(`http://localhost:${PORT}/`);
+  await hp.waitForFunction(() => Number(document.querySelector('[data-layer]')?.textContent) >= 52, null, { timeout: 120000 });
+  await hp.evaluate(() => {
+    document.querySelector('[data-hero-printer] .hud').style.visibility = 'hidden';
+    for (const el of [document.documentElement, document.body, document.querySelector('.chamber'), document.querySelector('.hero-stage')]) if (el) el.style.background = 'transparent';
+    document.querySelector('.chamber').style.display = 'none';
+    const st = document.createElement('style');
+    st.textContent = '.hero-stage::before{display:none!important}';
+    document.head.appendChild(st);
+  });
+  const png = await hp.locator('[data-hero-printer] canvas').screenshot({ omitBackground: true });
+  // PNG → WebP (keeping transparency) in the browser
+  const webp = await hp.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    c.getContext('2d').drawImage(img, 0, 0);
+    return c.toDataURL('image/webp', 0.82).split(',')[1];
+  }, png.toString('base64'));
+  writeFileSync('public/hero-poster.webp', Buffer.from(webp, 'base64'));
   await browser.close();
   rmSync('public/thumbs', { recursive: true, force: true });
   mkdirSync('public/thumbs', { recursive: true });
   for (const [key, src] of found) writeFileSync(`public/thumbs/${key}.webp`, Buffer.from(src.split(',')[1], 'base64'));
   writeFileSync('src/data/thumbs.json', JSON.stringify([...found.keys()].sort(), null, 2) + '\n');
-  console.log(`Rendered ${found.size} thumbnails.`);
+  console.log(`Rendered ${found.size} thumbnails and the hero poster.`);
 } finally {
   server.close();
   rmSync('dist-thumbs', { recursive: true, force: true });

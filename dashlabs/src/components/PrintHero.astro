@@ -1,15 +1,19 @@
 ---
+import { existsSync } from 'node:fs';
 import { HERO_QUEUE } from '../lib/three/hero.ts';
+// a still of the printer mid-print (made by `npm run thumbs`), shown until the live 3D draws its first frame
+const poster = existsSync('public/hero-poster.webp') && process.env.THUMBS !== 'off';
 const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d,#3dffc5,#2f7dff,#9b6bff,#ff5c7a)' : c);
 // The hero printer: a live Three.js scene printing models layer by layer, with
 // a slicer-style readout. Falls back to the drawn printer if WebGL is missing.
 ---
 
 <div class="hero-printer" data-hero-printer>
+  {poster && <img class="poster" src="/hero-poster.webp" alt="" width="1240" height="1240" fetchpriority="high" decoding="async" />}
   <canvas data-canvas aria-label="A 3D printer printing models layer by layer" role="img"></canvas>
   <div class="hud" aria-hidden="true">
     <div class="hud-top">
-      <span class="chip"><span class="live-dot"></span><span data-phase>Heating</span></span>
+      <span class="chip"><span class="live-dot"></span><span data-phase>Printing</span></span>
       <span class="chip mono" data-temp>215°C</span>
     </div>
     <div class="hud-bottom">
@@ -19,9 +23,9 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
       </div>
       <div class="right">
         <span class="k">Layer</span>
-        <span class="v mono"><span data-layer>000</span>/<span data-layers>000</span></span>
+        <span class="v mono"><span data-layer>052</span>/<span data-layers>077</span></span>
       </div>
-      <div class="progress"><i data-progress></i></div>
+      <div class="progress"><i data-progress style="transform:scaleX(0.68)"></i></div>
     </div>
   </div>
   <div class="queue-pick" data-pick hidden>
@@ -67,6 +71,7 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
           $('[data-layers]').textContent = String(s.layers).padStart(3, '0');
           $('[data-progress]').style.transform = `scaleX(${s.layers ? s.layer / s.layers : 0})`;
           el.dataset.state = s.phase;
+          el.classList.add('live');
         });
         jobs.forEach((b) => b.addEventListener('click', () => hero.printNow(Number(b.dataset.job))));
         $('[data-pick]').hidden = false;
@@ -87,9 +92,22 @@ const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d
     margin-inline: auto;
   }
   canvas {
+    position: relative;
     width: 100%;
     height: 100%;
     cursor: grab;
+  }
+  .poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  /* swap instantly: fading one printer over another would show two at once */
+  .live .poster,
+  .no-gl .poster {
+    display: none;
   }
   .hud {
     position: absolute;
