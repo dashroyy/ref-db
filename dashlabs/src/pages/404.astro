@@ -11,10 +11,19 @@ import Base from '../layouts/Base.astro';
         The nozzle lost its grip somewhere around layer 3. The page you wanted doesn't exist, or it moved. Let's get you
         back on the bed.
       </p>
+      <p class="didyou" data-didyou hidden>Were you looking for <a href="/shop/">this</a>?</p>
       <div class="actions">
-        <a class="btn btn--primary" href="/shop/">Go to the shop</a>
-        <a class="btn" href="/">Home</a>
+        <button type="button" class="btn btn--primary" data-search-open>Search the site</button>
+        <a class="btn" href="/shop/">Go to the shop</a>
       </div>
+      <nav class="popular" aria-label="Popular pages">
+        <span class="tag">Or try</span>
+        <a href="/custom/">Custom orders</a>
+        <a href="/gifts/">Gift finder</a>
+        <a href="/shop/pen-launcher/">Pen Launcher</a>
+        <a href="/learn/">Guides</a>
+        <a href="/">Home</a>
+      </nav>
     </div>
     <div class="mess" data-mess>
       <canvas aria-label="A failed 3D print: a tangle of loose filament" role="img"></canvas>
@@ -24,6 +33,20 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
+  // A mistyped product address? Suggest the closest real one.
+  import { PRODUCTS } from '../data/catalog.ts';
+  const words = location.pathname.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+  const best = PRODUCTS.map((p) => ({ p, n: words.filter((w) => `${p.slug} ${p.name}`.toLowerCase().includes(w)).length }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n)[0];
+  if (best) {
+    const hint = document.querySelector<HTMLElement>('[data-didyou]')!;
+    const a = hint.querySelector('a')!;
+    a.href = `/shop/${best.p.slug}/`;
+    a.textContent = best.p.name;
+    hint.hidden = false;
+  }
+
   import { webglOK } from '../lib/three/support.ts';
   const el = document.querySelector<HTMLElement>('[data-mess]');
   if (el && webglOK()) {
@@ -50,6 +73,29 @@ import Base from '../layouts/Base.astro';
   .dot.warn {
     background: var(--warn);
     box-shadow: 0 0 10px var(--warn);
+  }
+  .didyou {
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .didyou a {
+    color: var(--hot);
+    font-weight: 700;
+  }
+  .popular {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-top: 26px;
+  }
+  .popular a {
+    color: var(--text-2);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .popular a:hover {
+    color: var(--hot);
   }
   .actions {
     display: flex;
