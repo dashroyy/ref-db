@@ -104,7 +104,7 @@ import { PRODUCTS } from '../data/catalog.ts';
   import { shipWindow, formatWindow, slower } from '../lib/shipdate.ts';
   import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
   import { SITE } from '../data/site.ts';
-  import { addToCart } from '../lib/cart-store.ts';
+  import { addToCart, clearCart } from '../lib/cart-store.ts';
   import { money } from '../lib/money.ts';
   import { productById, categoryById } from '../data/catalog.ts';
   import { webglOK } from '../lib/three/support.ts';
@@ -212,6 +212,7 @@ import { PRODUCTS } from '../data/catalog.ts';
         subject: res.subject,
         text: res.text,
         reference: res.reference,
+        onSent: { label: 'I’ve sent it', done: 'Order request sent. Thank you!', run: () => clearCart() },
       });
     } else {
       err.textContent = res.message;

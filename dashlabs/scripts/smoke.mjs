@@ -104,6 +104,9 @@ await step('cart: totals, gift wrap, remove + undo, order request dialog', async
   await page.waitForSelector('.dl-send[open]');
   const text = await page.inputValue('.dl-send textarea');
   expect(/Order request DL-\d{6}-[A-Z0-9]{4}/.test(text) && text.includes('Gift wrap') && text.includes('"DASH"'), 'order text');
+  await page.click('.dl-send [data-sent]');
+  await page.waitForSelector('.dl-send .s-done');
+  expect((await page.textContent('[data-cart-count]')) === '0', 'cart cleared after sending');
 });
 
 await step('product: choices are kept in the address and restored from a shared link', async () => {

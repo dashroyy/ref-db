@@ -201,6 +201,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
       to: SITE.email,
       subject: `${SITE.name} custom request: ${what}`,
       text: body,
+      onSent: { label: 'I’ve sent it', done: 'Request sent. Thank you!', run: () => form.reset() },
     });
   });
 </script>

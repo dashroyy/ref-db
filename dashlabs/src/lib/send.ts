@@ -5,7 +5,16 @@
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
-export function showSendDialog(o: { title: string; lead: string; to: string; subject: string; text: string; reference?: string }) {
+export function showSendDialog(o: {
+  title: string;
+  lead: string;
+  to: string;
+  subject: string;
+  text: string;
+  reference?: string;
+  /** shown as a final 'I've sent it' button; runs when pressed */
+  onSent?: { label: string; done: string; run: () => void };
+}) {
   document.querySelector('.dl-send')?.remove();
   const d = document.createElement('dialog');
   d.className = 'dl-send';
@@ -19,7 +28,9 @@ export function showSendDialog(o: { title: string; lead: string; to: string; sub
     </ol>
     <label class="s-lbl" for="dl-send-text">Your message</label>
     <textarea id="dl-send-text" readonly rows="9">${esc(o.text)}</textarea>
-    <div class="s-foot"><span class="s-status" role="status"></span><button type="button" class="btn" data-close>Done</button></div>`;
+    <div class="s-foot"><span class="s-status" role="status"></span><span class="s-actions">${
+      o.onSent ? `<button type="button" class="btn btn--primary" data-sent>${esc(o.onSent.label)}</button>` : ''
+    }<button type="button" class="btn" data-close>${o.onSent ? 'Not yet' : 'Done'}</button></span></div>`;
   document.body.appendChild(d);
   const status = d.querySelector<HTMLElement>('.s-status')!;
   const copy = async (text: string, what: string) => {
@@ -36,6 +47,14 @@ export function showSendDialog(o: { title: string; lead: string; to: string; sub
   d.querySelector('[data-copy]')!.addEventListener('click', () => copy(o.text, 'Message'));
   d.querySelector('[data-copy-to]')!.addEventListener('click', () => copy(o.to, 'Address'));
   d.querySelector('[data-close]')!.addEventListener('click', () => d.close());
+  d.querySelector('[data-sent]')?.addEventListener('click', () => {
+    o.onSent!.run();
+    d.innerHTML = `<div class="s-done"><span class="s-cube" aria-hidden="true"></span><b>${esc(o.onSent!.done)}</b>${
+      o.reference ? `<p>Your reference is <span class="s-ref">${esc(o.reference)}</span>. Keep it handy.</p>` : ''
+    }<p>I usually reply within a day or two. No reply after three days? Check your spam folder, or email
+    <a href="mailto:${esc(o.to)}">${esc(o.to)}</a>.</p><button type="button" class="btn btn--primary" data-close>Done</button></div>`;
+    d.querySelector('[data-close]')!.addEventListener('click', () => d.close());
+  });
   d.addEventListener('click', (e) => e.target === d && d.close());
   d.addEventListener('close', () => d.remove());
   d.showModal();

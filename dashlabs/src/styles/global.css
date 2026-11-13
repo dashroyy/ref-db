@@ -962,6 +962,41 @@ html.motion-off::view-transition-new(*) {
   gap: 12px;
   margin-top: 14px;
 }
+.dl-send .s-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.dl-send .s-done {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.dl-send .s-done b {
+  font: 600 1.3rem var(--display);
+  letter-spacing: -0.02em;
+  color: var(--white);
+}
+.dl-send .s-done p {
+  margin: 0;
+}
+.dl-send .s-done a {
+  color: var(--hot);
+}
+.dl-send .s-cube {
+  width: 48px;
+  height: 48px;
+  background: conic-gradient(from 210deg, var(--hot-2) 0 33%, #6c47d6 0 66%, #4a2ca8 0);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  animation: pop-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0.3) rotate(-30deg);
+    opacity: 0;
+  }
+}
 .dl-send .s-status {
   color: var(--mint);
   font-weight: 700;
