@@ -23,6 +23,8 @@ const { product: p } = Astro.props;
 const [lo, hi] = p.leadTimeDays ?? SITE.defaultLeadTimeDays;
 const related = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
 const pz = p.personalise;
+// search results: what it is, that it's made to order, and the price
+const metaDescription = `${p.summary.replace(/\.$/, '')}. 3D printed to order by DashLabs, ${p.purchase === 'quote' ? 'from ' : ''}${money(p.price)}.`;
 const site = Astro.site ?? new URL('http://localhost:4321');
 const productLd = {
   '@context': 'https://schema.org',
@@ -98,7 +100,7 @@ const sourceLabel =
       : `Design by ${p.source.designer}`;
 ---
 
-<Base title={p.name} description={p.summary} jsonld={[productLd, crumbsLd]}>
+<Base title={p.name} description={metaDescription} jsonld={[productLd, crumbsLd]}>
   <section class="section top">
     <div class="wrap">
       <nav class="crumbs" aria-label="Breadcrumb">

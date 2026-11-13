@@ -4,8 +4,7 @@ export const SITE = {
   name: 'DashLabs',
   tagline: 'Printed to order. Built to be played with.',
   description:
-    'DashLabs is a one-person 3D printing lab: custom figurines of people and pets, printed business cards, ' +
-    'made-to-order prints and original gadgets like the Pen Launcher.',
+    'Custom 3D-printed figurines of people and pets, business cards and original gadgets like the Pen Launcher. Designed and printed to order by DashLabs.',
   // TODO: replace with your real business inbox. Quote requests and orders go here
   // until online checkout is switched on.
   email: 'hello@dashlabs.example',

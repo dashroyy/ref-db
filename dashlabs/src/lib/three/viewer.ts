@@ -180,13 +180,20 @@ export function mountModel(canvas: HTMLCanvasElement, first: THREE.Object3D) {
   };
   const gov = governor(renderer);
   let owed = 0;
+  // On a device too slow for constant animation, stop the idle spin and only
+  // draw while something is happening (dragging, printing, turning to face).
+  let still = false;
   const loop = (now: number) => {
     const prevNow = last;
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (visible && !document.hidden && (!calm() || dragging || printT >= 0 || faceTo !== null || Math.abs(vel) > 1e-4)) {
+    const busy = dragging || printT >= 0 || faceTo !== null || Math.abs(vel) > 1e-4;
+    if (visible && !document.hidden && ((!calm() && !still) || busy)) {
       owed += dt;
-      gov.tick(now - prevNow);
+      if (!still && gov.tick(now - prevNow) === 'give-up') {
+        still = true;
+        spin = false;
+      }
       if (dragging || !gov.skip()) {
         draw(Math.min(0.1, owed));
         owed = 0;
