@@ -4,8 +4,10 @@
 import { PRODUCTS, categoryById, productCode } from '../data/catalog.ts';
 import { GUIDES } from '../data/guides.ts';
 import { money } from '../lib/money.ts';
+import { FAQS } from '../data/faq.ts';
+import type { SearchItem } from '../lib/search.ts';
 
-const index = [
+const index: SearchItem[] = [
   ...PRODUCTS.map((p) => ({
     t: p.name,
     d: p.summary,
@@ -26,6 +28,16 @@ const index = [
   { t: 'Gift finder', d: 'Three questions, three gift ideas.', h: '/gifts/', k: 'TOOL', c: '#ff6ec7', x: 'Tool', s: 'gift present birthday christmas ideas finder quiz' },
   { t: 'About DashLabs', d: 'Who makes this, and how.', h: '/about/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'about maker story who contact' },
   { t: 'Cart', d: 'Your order.', h: '/cart/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'cart basket checkout order' },
+  { t: 'Saved items', d: 'Things you hearted for later.', h: '/saved/', k: 'PAGE', c: '#ff6ec7', x: 'Page', s: 'saved wishlist favourites hearts later' },
+  ...FAQS.map((f) => ({ t: f.q, d: f.a, h: `/faq/#${f.id}`, k: 'FAQ', c: '#3dffc5', x: 'FAQ', s: `${f.id.replace(/-/g, ' ')} ${f.a}` })),
+];
+// shown when nothing matches
+const popular = [
+  { t: 'Custom figurine', h: '/shop/custom-person-figurine/' },
+  { t: 'Pen Launcher', h: '/shop/pen-launcher/' },
+  { t: 'Gift finder', h: '/gifts/' },
+  { t: 'Quote a 3D file', h: '/custom/#stl' },
+  { t: 'Shipping', h: '/faq/#shipping' },
 ];
 ---
 
@@ -47,35 +59,21 @@ const index = [
   <ul id="search-results" class="results" data-search-results role="listbox"></ul>
   <p class="c-foot tag"><span>↑↓ move</span><span>↵ open</span><span>esc close</span></p>
   <script type="application/json" data-search-index set:html={JSON.stringify(index)} />
+  <script type="application/json" data-search-popular set:html={JSON.stringify(popular)} />
 </dialog>
 
 <script>
-  type Item = { t: string; d: string; h: string; k: string; c: string; x: string; s: string };
+  import { searchIndex, type SearchItem as Item } from '../lib/search.ts';
   const dlg = document.querySelector<HTMLDialogElement>('[data-search]')!;
   const input = dlg.querySelector<HTMLInputElement>('[data-search-input]')!;
   const list = dlg.querySelector<HTMLUListElement>('[data-search-results]')!;
   const index: Item[] = JSON.parse(dlg.querySelector('[data-search-index]')!.textContent || '[]');
+  const popular: { t: string; h: string }[] = JSON.parse(dlg.querySelector('[data-search-popular]')!.textContent || '[]');
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
   let hits: Item[] = [];
   let sel = 0;
 
-  // every word must appear somewhere; titles that start with the query rank first
-  const search = (q: string) => {
-    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-    if (!words.length) return index.slice(0, 8);
-    return index
-      .map((it) => {
-        const hay = `${it.t} ${it.s} ${it.k}`.toLowerCase();
-        if (!words.every((w) => hay.includes(w))) return null;
-        const t = it.t.toLowerCase();
-        const score = (t.startsWith(words[0]) ? 0 : t.includes(words[0]) ? 1 : 2) + (it.x === 'Page' ? 0.5 : 0);
-        return { it, score };
-      })
-      .filter((r): r is { it: Item; score: number } => !!r)
-      .sort((a, b) => a.score - b.score)
-      .map((r) => r.it)
-      .slice(0, 8);
-  };
+  const search = (q: string) => searchIndex(index, q);
 
   const render = () => {
     hits = search(input.value);
@@ -87,7 +85,8 @@ const index = [
               <a href="${it.h}"><span class="k">${esc(it.k)}</span><span class="t">${esc(it.t)}<small>${esc(it.d)}</small></span><span class="x">${esc(it.x)}</span></a></li>`,
           )
           .join('')
-      : `<li class="none">no match for "${esc(input.value)}" · try <a href="/custom/">a custom order</a></li>`;
+      : `<li class="none"><p>no match for "${esc(input.value)}". If you can describe it, I can probably <a href="/custom/">print it to order</a>.</p>
+          <p class="pop"><span>popular</span>${popular.map((p) => `<a href="${p.h}">${esc(p.t)}</a>`).join('')}</p></li>`;
   };
 
   const open = () => {
@@ -314,6 +313,47 @@ const index = [
     font: 500 0.9rem var(--mono);
   }
   .results :global(.none a) {
+    color: var(--hot);
+  }
+  .results :global(.none p) {
+    margin: 0;
+  }
+  .results :global(li.none a) {
+    display: inline;
+    padding: 0;
+    border-radius: 0;
+  }
+  .results :global(li.none .pop a) {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .results :global(.pop) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px !important;
+  }
+  .results :global(.pop span) {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-right: 4px;
+  }
+  .results :global(.pop a) {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: var(--panel-2);
+    color: var(--text);
+    font: 500 0.82rem var(--font);
+    text-decoration: none;
+  }
+  .results :global(.pop a:hover),
+  .results :global(.pop a:focus-visible) {
+    border-color: var(--hot);
     color: var(--hot);
   }
   .c-foot {

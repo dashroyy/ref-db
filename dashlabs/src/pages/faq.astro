@@ -1,39 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import { SITE } from '../data/site.ts';
+import { FAQS as faqs } from '../data/faq.ts';
 
-// Draft policies — review and adapt them to your situation (and local law)
-// before launch. Payment processors require visible refund and shipping policies.
-const faqs = [
-  {
-    q: 'How long does an order take?',
-    a: 'Stock designs usually ship in 3–7 days. Custom figurines take 1–2 weeks because they are modelled for you first. Each product page shows its own estimate.',
-  },
-  {
-    q: 'How do I pay?',
-    a: 'Right now, you send an order request and I email you a secure invoice you can pay by card. Instant online checkout is coming soon.',
-  },
-  {
-    q: 'What materials do you use?',
-    a: 'Mostly PLA+ for detail and colour, PETG where parts need to be tougher, and TPU for flexible bits. Prints are not food-safe unless stated.',
-  },
-  {
-    q: 'Can you print a model I found online?',
-    a: 'Only if its licence allows prints to be sold, or the designer gives permission. Many free models are licensed for personal use only — I respect that, so I check every design before printing it to sell.',
-  },
-  {
-    q: 'Returns and refunds',
-    a: 'Items arriving damaged or faulty are reprinted or refunded — send a photo within 14 days of delivery. Because custom pieces are made just for you, they can\'t be returned for change of mind once you\'ve approved the preview.',
-  },
-  {
-    q: 'Shipping',
-    a: 'Shipping is calculated on your invoice based on size and destination. Everything is packed to survive the trip.',
-  },
-  {
-    q: 'Your photos and data',
-    a: 'Photos you send for a commission are only used to make your piece. I won\'t post your custom piece online without asking you first.',
-  },
-];
 ---
 
 <Base
@@ -52,7 +21,7 @@ const faqs = [
       <div class="list">
         {
           faqs.map((f, i) => (
-            <details open={i === 0}>
+            <details id={f.id} open={i === 0}>
               <summary>{f.q}</summary>
               <p class="muted">{f.a}</p>
             </details>
@@ -65,6 +34,16 @@ const faqs = [
     </div>
   </section>
 </Base>
+
+<script>
+  // a link to /faq/#shipping opens that answer
+  const openHash = () => {
+    const d = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (d instanceof HTMLDetailsElement) d.open = true;
+  };
+  openHash();
+  addEventListener('hashchange', openHash);
+</script>
 
 <style>
   .top {

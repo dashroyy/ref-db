@@ -163,6 +163,15 @@ await step('search, saved items and theme are remembered', async () => {
   await page.keyboard.press('/');
   await page.keyboard.type('launch');
   expect((await page.locator('[data-search-results] li').first().textContent()).includes('Pen Launcher'), 'search result');
+  await page.fill('[data-search-input]', 'delivery');
+  expect((await page.locator('[data-search-results] li').first().textContent()).includes('Shipping'), 'everyday words: delivery → Shipping');
+  await page.keyboard.press('Enter');
+  await page.waitForURL('**/faq/#shipping');
+  expect(await page.evaluate(() => document.getElementById('shipping').open), 'FAQ answer opens from search');
+  await page.goto(B + '/');
+  await page.keyboard.press('/');
+  await page.keyboard.type('zzqx');
+  expect((await page.locator('.pop a').count()) > 0, 'no match offers popular links');
   await page.keyboard.press('Escape');
   await page.goto(B + '/shop/');
   await page.click('[data-save="orig-pen-launcher"]');
