@@ -3,6 +3,7 @@
 // worked example → where this stops.
 import Base from './Base.astro';
 import { GUIDES } from '../data/guides.ts';
+import { existsSync } from 'node:fs';
 
 interface Props {
   slug: string;
@@ -10,9 +11,11 @@ interface Props {
 const guide = GUIDES.find((g) => g.slug === Astro.props.slug)!;
 const i = GUIDES.indexOf(guide);
 const next = GUIDES[(i + 1) % GUIDES.length];
+// share card from `npm run og`, or the site-wide card until it's rendered
+const shareCard = existsSync(`public/og/learn-${guide.slug}.jpg`) ? `/og/learn-${guide.slug}.jpg` : undefined;
 ---
 
-<Base title={guide.title} description={guide.summary}>
+<Base title={guide.title} description={guide.summary} image={shareCard}>
   <article class="section top">
     <div class="wrap">
       <nav class="crumbs" aria-label="Breadcrumb">

@@ -1,4 +1,5 @@
-// Renders a share card (1200×630) for every product to public/og/<slug>.jpg.
+// Renders a share card (1200×630) for every product to public/og/<slug>.jpg,
+// and one for every Learn guide to public/og/learn-<slug>.jpg.
 // That's the picture people see when a product link is pasted into iMessage,
 // WhatsApp, Discord, Instagram DMs and so on.
 //   npm run og
@@ -9,6 +10,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'node
 import { createRequire } from 'node:module';
 import { PRODUCTS, categoryById, type Product } from '../src/data/catalog.ts';
 import { money } from '../src/lib/money.ts';
+import { GUIDES } from '../src/data/guides.ts';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -77,6 +79,45 @@ function card(p: Product): string {
   </body></html>`;
 }
 
+type Guide = (typeof GUIDES)[number];
+function guideCard(g: Guide, n: number): string {
+  const num = String(n).padStart(2, '0');
+  const size = g.title.length > 22 ? 58 : 70;
+  return `<!doctype html><html><head><meta charset="utf-8"><style>${FONTS}
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; background: #08070d; color: #f1ece3; font-family: M; position: relative; }
+  .bg { position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 82% 40%, rgba(255,225,77,.16), transparent 40%),
+      radial-gradient(circle at 10% 0%, rgba(155,107,255,.28), transparent 45%),
+      repeating-linear-gradient(0deg, rgba(196,168,255,.05) 0 1px, transparent 1px 6px),
+      #0d0b15; }
+  .num { position: absolute; right: 50px; top: 56px; font: 700 250px/1 U; letter-spacing: -.06em; color: transparent;
+    -webkit-text-stroke: 3px rgba(255,225,77,.55); }
+  .tool { position: absolute; right: 70px; top: 370px; font: 600 18px J; letter-spacing: .14em; text-transform: uppercase;
+    color: #ffe14d; border: 1.5px solid rgba(255,225,77,.5); border-radius: 999px; padding: 10px 18px; background: rgba(13,11,21,.7); }
+  .copy { position: absolute; left: 72px; top: 64px; width: 640px; display: flex; flex-direction: column; height: 502px; }
+  .kick { font: 600 20px J; letter-spacing: .18em; text-transform: uppercase; color: #c4a8ff; }
+  h1 { font: 700 ${size}px/1.05 U; letter-spacing: -.02em; margin-top: 26px; color: #fbf8f2; max-width: 600px;
+    text-shadow: 1px 1px 0 #7d55e6, 2px 2px 0 #6c47d6, 3px 3px 0 #7d55e6, 4px 4px 0 #5b39c2, 5px 5px 0 #6c47d6, 6px 6px 0 #4a2ca8, 7px 7px 0 #3b2290, 8px 8px 0 #3b2290, 10px 10px 24px rgba(155,107,255,.45); }
+  p { font-size: 27px; line-height: 1.4; color: #c8c1d6; margin-top: 26px; max-width: 580px; }
+  .foot { margin-top: auto; display: flex; align-items: center; gap: 12px; font: 700 26px U; }
+  .foot img { width: 44px; height: 44px; }
+  .foot b { color: #ffab2e; }
+  .foot small { font: 600 16px J; letter-spacing: .14em; text-transform: uppercase; color: #8e87a3; margin-left: 14px; }
+  </style></head><body>
+  <div class="bg"></div>
+  <div class="num">${num}</div>
+  <div class="tool">Tool · ${esc(g.tool)}</div>
+  <div class="copy">
+    <div class="kick">Learn · ${g.minutes} min read</div>
+    <h1>${esc(g.title)}</h1>
+    <p>${esc(g.summary)}</p>
+    <div class="foot"><img src="${LOGO}" alt=""><span>Dash<b>Labs</b></span><small>Guides</small></div>
+  </div>
+  </body></html>`;
+}
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 rmSync('public/og', { recursive: true, force: true });
@@ -88,6 +129,11 @@ for (const p of PRODUCTS) {
   await page.evaluate(() => document.fonts.ready);
   writeFileSync(`public/og/${p.slug}.jpg`, await page.screenshot({ type: 'jpeg', quality: 86 }));
 }
+for (const [i, g] of GUIDES.entries()) {
+  await page.setContent(guideCard(g, i + 1));
+  await page.evaluate(() => document.fonts.ready);
+  writeFileSync(`public/og/learn-${g.slug}.jpg`, await page.screenshot({ type: 'jpeg', quality: 86 }));
+}
 await browser.close();
-console.log(`Rendered ${PRODUCTS.length} share cards to public/og/.`);
+console.log(`Rendered ${PRODUCTS.length} product and ${GUIDES.length} guide share cards to public/og/.`);
 if (missing.length) console.log(`No picture yet for: ${missing.join(', ')} (run npm run thumbs, or add photos).`);
