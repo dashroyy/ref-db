@@ -30,7 +30,18 @@ const log = [
 
   <section class="section originals">
     <div class="wrap">
-      <div class="grid">{originals.map((p) => <ProductCard product={p} level={2} />)}</div>
+      <div class="grid">
+        {originals.map((p) => <ProductCard product={p} level={2} />)}
+        <a class="pitch" href="/custom/" data-tilt>
+          <span class="pitch-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="56" height="56"><polygon points="20,4 35,12 20,20 5,12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3"></polygon><polygon points="5,12 20,20 20,36 5,28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3"></polygon><polygon points="20,20 35,12 35,28 20,36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3"></polygon></svg>
+          </span>
+          <span class="tag">Next on the bench</span>
+          <h2>Your idea?</h2>
+          <p>Most gadgets here started as a small annoyance. Got one? Pitch it, and if it works it might become the next original.</p>
+          <span class="pitch-go">Pitch an idea →</span>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -71,6 +82,46 @@ const log = [
   }
   .originals {
     padding-top: 0;
+  }
+  .pitch {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    border-radius: var(--r);
+    border: 1.5px dashed color-mix(in srgb, var(--hot) 45%, transparent);
+    background: color-mix(in srgb, var(--hot) 4%, transparent);
+    color: var(--text-2);
+    text-decoration: none;
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:
+      transform 0.5s cubic-bezier(0.2, 1, 0.3, 1),
+      border-color 0.3s,
+      background 0.3s;
+  }
+  .pitch:hover,
+  .pitch:focus-visible {
+    border-color: var(--hot);
+    background: color-mix(in srgb, var(--hot) 9%, transparent);
+  }
+  .pitch-icon {
+    color: var(--hot);
+    margin: 6px 0 auto;
+  }
+  .pitch h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--white);
+  }
+  .pitch p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-3);
+  }
+  .pitch-go {
+    margin-top: 8px;
+    font-weight: 700;
+    color: var(--hot);
   }
   .log {
     list-style: none;

@@ -177,7 +177,8 @@ body {
   color: var(--text-2);
   font: 400 1rem/1.65 var(--font);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* clip, not hidden: 'hidden' makes the body a scroll box and breaks every position: sticky */
+  overflow-x: clip;
   background: transparent;
 }
 
