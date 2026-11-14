@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { CHECKOUT_MODE, GIFT_WRAP_PRICE, GIFT_NOTE_MAX } from '../data/site.ts';
+import { CHECKOUT_MODE, GIFT_WRAP_PRICE, GIFT_NOTE_MAX, ORDER_DELIVERY } from '../data/site.ts';
 import { money } from '../lib/money.ts';
 import ProductCard from '../components/ProductCard.astro';
 import { PRODUCTS } from '../data/catalog.ts';
@@ -84,8 +84,8 @@ import { PRODUCTS } from '../data/catalog.ts';
           {
             CHECKOUT_MODE === 'request' && (
               <p class="notice">
-                No payment is taken here. You send me the order by email; I confirm shipping and the total, then
-                send a secure invoice to pay by card.
+                No payment is taken here. {ORDER_DELIVERY === 'netlify-form' ? 'Your order comes straight to me' : 'You send me the order by email'};
+                I confirm shipping and the total, then send a secure invoice to pay by card.
               </p>
             )
           }
@@ -99,10 +99,10 @@ import { PRODUCTS } from '../data/catalog.ts';
   import { readCart, updateQty, onCartChange } from '../lib/cart-store.ts';
   import { buildOrder } from '../lib/order.ts';
   import { startCheckout } from '../lib/checkout.ts';
-  import { showSendDialog } from '../lib/send.ts';
+  import { sendRequest } from '../lib/send.ts';
   import { shipWindow, formatWindow, slower } from '../lib/shipdate.ts';
   import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
-  import { SITE } from '../data/site.ts';
+  import { SITE, ORDER_DELIVERY } from '../data/site.ts';
   import { addToCart, clearCart } from '../lib/cart-store.ts';
   import { money } from '../lib/money.ts';
   import { productById, categoryById } from '../data/catalog.ts';
@@ -204,15 +204,23 @@ import { PRODUCTS } from '../data/catalog.ts';
     );
     if (res.kind === 'redirect') location.href = res.url;
     else if (res.kind === 'request') {
-      showSendDialog({
-        title: 'Your order request is ready',
-        lead: 'One last step: send it to me by email. I’ll reply with shipping and the total, then a secure invoice to pay.',
-        to: SITE.email,
-        subject: res.subject,
-        text: res.text,
-        reference: res.reference,
-        onSent: { label: 'I’ve sent it', done: 'Order request sent. Thank you!', run: () => clearCart() },
-      });
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+      button.disabled = true; // no double orders while it sends
+      await sendRequest(
+        {
+          title: 'Your order request is ready',
+          lead: 'One last step: send it to me by email. I’ll reply with shipping and the total, then a secure invoice to pay.',
+          to: SITE.email,
+          subject: res.subject,
+          text: res.text,
+          reference: res.reference,
+          onSent: { label: 'I’ve sent it', done: 'Order request sent. Thank you!', run: () => clearCart() },
+        },
+        ORDER_DELIVERY === 'netlify-form'
+          ? { form: 'order', name: String(data.get('name')), email: String(data.get('email')), subject: res.subject, message: res.text, reference: res.reference }
+          : undefined,
+      );
+      button.disabled = false;
     } else {
       err.textContent = res.message;
       err.hidden = false;

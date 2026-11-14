@@ -14,6 +14,26 @@ No code changes are needed. Everything is switched on from Netlify's settings.
 
 At this point, finish the launch checklist in the README (real email, prices, photos, sizes, licences).
 
+## 1b. Receive requests without the customer's email app (recommended, free)
+
+By default a customer sends their order or custom request from their own email (the site writes the message for
+them). Some people close that window without pressing send. To have requests come straight from the site instead:
+
+1. In Netlify: **Site configuration → Environment variables → Add a variable**: `PUBLIC_ORDER_DELIVERY` =
+   `netlify-form`. Redeploy (**Deploys → Trigger deploy**).
+2. **Forms** in the Netlify menu: enable form detection if asked. After the deploy you'll see two forms, `order`
+   and `custom`.
+3. **Forms → Form notifications → Add notification → Email notification**: your shop inbox, for **Any form**.
+   Each request then arrives as an email; reply to the customer at the address in it.
+4. Test it: place an order request on the live site and check it arrives (and isn't in spam).
+
+Every request is also kept in Netlify's **Forms** page, so nothing depends on one email arriving. Customers send
+photos or files by replying to your email. If a direct send ever fails, the customer sees the email option
+instead, so no order is lost. The free plan covers 100 submissions a month; spam is filtered (a hidden honeypot
+field plus Netlify's own filter).
+
+To switch back, delete the variable and redeploy.
+
 ## 2. Take payments (Stripe test mode first)
 
 1. Create a [Stripe](https://stripe.com) account. Stay in **test mode**.

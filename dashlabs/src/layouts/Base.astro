@@ -17,7 +17,7 @@ import unbounded600 from '@fontsource/unbounded/files/unbounded-latin-600-normal
 import manrope400 from '@fontsource/manrope/files/manrope-latin-400-normal.woff2?url';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { SITE } from '../data/site.ts';
+import { SITE, ORDER_DELIVERY } from '../data/site.ts';
 import { pageColor } from '../data/nav.ts';
 
 interface Props {
@@ -193,6 +193,23 @@ const tone = pageColor(Astro.url.pathname);
         'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 1500 }) : setTimeout(go, 300);
       }
     </script>
+    {
+      ORDER_DELIVERY === 'netlify-form' && (
+        // Netlify Forms reads these at deploy time; requests are posted to them by lib/deliver.ts
+        <div hidden aria-hidden="true">
+          {['order', 'custom'].map((n) => (
+            <form name={n} data-netlify="true" netlify-honeypot="bot-field">
+              <input type="text" name="bot-field" />
+              <input type="text" name="reference" />
+              <input type="text" name="name" />
+              <input name="email" type="email" />
+              <input type="text" name="subject" />
+              <textarea name="message"></textarea>
+            </form>
+          ))}
+        </div>
+      )
+    }
   </body>
 </html>
 

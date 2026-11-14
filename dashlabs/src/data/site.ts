@@ -28,6 +28,14 @@ export const SITE = {
 const envMode = (import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_CHECKOUT_MODE;
 export const CHECKOUT_MODE: 'request' | 'stripe' = envMode === 'stripe' ? 'stripe' : 'request';
 
+// How order and custom requests reach you (works with CHECKOUT_MODE 'request').
+//   'email'        : the customer sends the prepared message from their own email (default).
+//   'netlify-form' : the site sends it straight to you through Netlify Forms; Netlify
+//                    emails it to you. Falls back to 'email' if sending fails.
+// Switched from the host's settings: PUBLIC_ORDER_DELIVERY=netlify-form (see docs/DEPLOY.md).
+const envDelivery = (import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_ORDER_DELIVERY;
+export const ORDER_DELIVERY: 'email' | 'netlify-form' = envDelivery === 'netlify-form' ? 'netlify-form' : 'email';
+
 // Gift wrap, added per order (cents). Placeholder — set your own, or 0 to make it free.
 export const GIFT_WRAP_PRICE = 300;
 export const GIFT_NOTE_MAX = 240;

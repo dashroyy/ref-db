@@ -910,6 +910,7 @@ html.motion-off::view-transition-new(*) {
   color: var(--white);
 }
 .dl-send .s-ref {
+  white-space: nowrap;
   margin-left: auto;
   font: 600 0.78rem var(--mono);
   color: var(--hot);
@@ -967,6 +968,23 @@ html.motion-off::view-transition-new(*) {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+}
+.dl-send .s-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.dl-send .s-sending .s-cube {
+  animation: s-spin 1.2s linear infinite;
+}
+@keyframes s-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .dl-send .s-done {
   display: grid;

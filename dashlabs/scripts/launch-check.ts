@@ -2,7 +2,7 @@
 // Reads the site's own data and pages and lists every placeholder left.
 // Add --strict to exit with an error while "must fix" items remain (for CI).
 import { readFileSync, existsSync } from 'node:fs';
-import { SITE, GIFT_WRAP_PRICE } from '../src/data/site.ts';
+import { SITE, GIFT_WRAP_PRICE, ORDER_DELIVERY } from '../src/data/site.ts';
 import { PRODUCTS } from '../src/data/catalog.ts';
 import { GUIDES } from '../src/data/guides.ts';
 import { LAB_STATUS } from '../src/data/lab.ts';
@@ -44,6 +44,7 @@ if (noPhotos.length) nice.push(`${noPhotos.length} of ${PRODUCTS.length} product
 const noCard = [...PRODUCTS.filter((p) => !existsSync(`public/og/${p.slug}.jpg`)).map((p) => p.name), ...GUIDES.filter((g) => !existsSync(`public/og/learn-${g.slug}.jpg`)).map((g) => g.title)];
 if (noCard.length) nice.push(`No share card for: ${noCard.join(', ')} (links show the generic card). Run npm run og.`);
 nice.push('After changing a product or guide name, summary, price or photos, run npm run og so link previews match.');
+if (ORDER_DELIVERY === 'email' && !process.env.PUBLIC_ORDER_DELIVERY) nice.push('Requests are sent from the customer\'s own email app. To receive them straight from the site, set PUBLIC_ORDER_DELIVERY=netlify-form. → docs/DEPLOY.md, step 1b');
 if (!Object.values(SITE.social).some(Boolean)) nice.push('No social links set. → src/data/site.ts');
 if (!REVIEWS.length) nice.push('No customer reviews yet (the site says so honestly). Add real ones as they come in. → src/data/reviews.ts');
 if (!GALLERY.length) nice.push('No customer-print photos yet; the gallery on /lab/ stays hidden until there are. → src/data/reviews.ts');

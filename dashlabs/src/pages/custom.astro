@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import StlQuote from '../components/StlQuote.astro';
 import { PRODUCTS } from '../data/catalog.ts';
-import { SITE } from '../data/site.ts';
+import { SITE, ORDER_DELIVERY } from '../data/site.ts';
 import { money } from '../lib/money.ts';
 import { priceFor } from '../data/catalog.ts';
 
@@ -75,7 +75,13 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         </div>
         <input type="hidden" name="options" value="" />
         <button class="btn btn--primary btn--block" type="submit">Send request</button>
-        <p class="muted small">Nothing is sent yet: you'll see your message ready to email, with a copy button if you use webmail.</p>
+        <p class="muted small">
+          {
+            ORDER_DELIVERY === 'netlify-form'
+              ? "This sends your request straight to me. I'll reply by email, and you can send photos or files in your reply."
+              : "Nothing is sent yet: you'll see your message ready to email, with a copy button if you use webmail."
+          }
+        </p>
       </form>
     </div>
   </section>
@@ -151,8 +157,8 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 </Base>
 
 <script>
-  import { SITE } from '../data/site.ts';
-  import { showSendDialog } from '../lib/send.ts';
+  import { SITE, ORDER_DELIVERY } from '../data/site.ts';
+  import { sendRequest } from '../lib/send.ts';
   import { productById, describeOptions, normaliseOptions } from '../data/catalog.ts';
 
   const form = document.querySelector<HTMLFormElement>('[data-request]')!;
@@ -176,7 +182,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   }
   kind.addEventListener('change', () => (optionsField.value = ''));
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const d = new FormData(form);
     const product = productById(String(d.get('kind')));
@@ -191,18 +197,25 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
       `Name: ${d.get('name')}`,
       `Email: ${d.get('email')}`,
       '',
-      '(Attach your photos to this email.)',
+      ORDER_DELIVERY === 'netlify-form' ? '(Photos or files to follow by email.)' : '(Attach your photos to this email.)',
     ]
       .filter((l, i, a) => l !== '' || a[i - 1] !== '')
       .join('\n');
-    showSendDialog({
-      title: 'Your request is ready',
-      lead: 'One last step: send it to me by email, with your photos or 3D file attached. I usually reply within a day or two.',
-      to: SITE.email,
-      subject: `${SITE.name} custom request: ${what}`,
-      text: body,
-      onSent: { label: 'I’ve sent it', done: 'Request sent. Thank you!', run: () => form.reset() },
-    });
+    const subject = `${SITE.name} custom request: ${what}`;
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    button.disabled = true;
+    await sendRequest(
+      {
+        title: 'Your request is ready',
+        lead: 'One last step: send it to me by email, with your photos or 3D file attached. I usually reply within a day or two.',
+        to: SITE.email,
+        subject,
+        text: body,
+        onSent: { label: 'I’ve sent it', done: 'Request sent. Thank you!', run: () => form.reset() },
+      },
+      ORDER_DELIVERY === 'netlify-form' ? { form: 'custom', name: String(d.get('name')), email: String(d.get('email')), subject, message: body } : undefined,
+    );
+    button.disabled = false;
   });
 </script>
 
