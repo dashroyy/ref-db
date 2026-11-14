@@ -158,6 +158,15 @@ await step('tools: estimator, launch lab, design check, place picker, gift finde
   expect((await page.locator('[data-gift-grid] .card-wrap:visible').count()) >= 1, 'gift picks');
 });
 
+await step('pinned sections stay on screen while scrolling', async () => {
+  await page.goto(B + '/lab/');
+  const top = await page.evaluate(() => document.querySelector('.story').getBoundingClientRect().top + scrollY);
+  await page.evaluate((y) => scrollTo(0, y + 1200), top);
+  await page.waitForTimeout(200);
+  const t = await page.evaluate(() => document.querySelector('.story .sticky').getBoundingClientRect().top);
+  expect(t >= 0 && t < 200, `lab story pinned (top ${Math.round(t)})`);
+});
+
 await step('search, saved items and theme are remembered', async () => {
   await page.goto(B + '/');
   await page.keyboard.press('/');
