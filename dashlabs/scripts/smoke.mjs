@@ -165,6 +165,7 @@ await step('pinned sections stay on screen while scrolling', async () => {
   await page.waitForTimeout(200);
   const t = await page.evaluate(() => document.querySelector('.story .sticky').getBoundingClientRect().top);
   expect(t >= 0 && t < 200, `lab story pinned (top ${Math.round(t)})`);
+  await page.evaluate(() => scrollTo(0, 0));
 });
 
 await step('search, saved items and theme are remembered', async () => {
