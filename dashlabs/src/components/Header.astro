@@ -1,0 +1,740 @@
+---
+// Top bar: wordmark, Shop mega-menu (every category and product, from the
+// catalog), main links, live queue pill, motion toggle, cart. On phones a
+// full-screen menu whose links print in one after another.
+import Logo from './Logo.astro';
+import Search from './Search.astro';
+import { MAIN_LINKS, SHOP_GROUPS, LEARN_GROUP } from '../data/nav.ts';
+import { LAB_STATUS } from '../data/lab.ts';
+import { money } from '../lib/money.ts';
+
+const path = Astro.url.pathname;
+const inShop = path.startsWith('/shop');
+---
+
+<header class="topbar" data-topbar>
+  <div class="bar">
+    <a href="/" class="brand" aria-label="DashLabs home">
+      <Logo />
+      <span class="word">Dash<b>Labs</b></span>
+    </a>
+
+    <nav class="links" aria-label="Main">
+      <button type="button" class="link shop-btn" data-mega-btn aria-expanded="false" aria-controls="mega" aria-current={inShop ? 'page' : undefined}>
+        Shop
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      {MAIN_LINKS.map((l) => <a class="link" href={l.href} aria-current={path.startsWith(l.href) ? 'page' : undefined}>{l.label}</a>)}
+    </nav>
+
+    <div class="right">
+      <Search />
+      <a class="queue" href="/#lab-status" title="Jobs in the print queue">
+        <span class="live-dot"></span>{LAB_STATUS.queuedJobs} in queue
+      </a>
+      <button type="button" class="icon-btn" data-motion-switch aria-pressed="false" title="Pause animation">
+        <svg class="i-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+        <svg class="i-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
+        <span class="sr-only" data-motion-label>Pause animation</span>
+      </button>
+      <button type="button" class="icon-btn theme-btn" data-theme-switch aria-pressed="false" title="Switch to Day shift (light)">
+        <svg class="i-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path></svg>
+        <svg class="i-moon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"></path></svg>
+        <span class="sr-only" data-theme-label>Switch to light theme</span>
+      </button>
+      <a href="/saved/" class="saved-link" title="Saved for later">
+        <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4 7.4 4c2 0 3.6 1.1 4.6 2.7C13 5.1 14.6 4 16.6 4c3.5 0 5.8 3.6 4.6 7.1-1.7 4.8-9.2 9.4-9.2 9.4z"></path></svg>
+        <span class="sr-only">Saved, </span><span class="count" data-saved-count>0</span><span class="sr-only"> items</span>
+      </a>
+      <a href="/cart/" class="cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"
+          ><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"></path><circle cx="10" cy="20.5" r="1.3"
+          ></circle><circle cx="17" cy="20.5" r="1.3"></circle></svg
+        >
+        <span class="sr-only">Cart, </span><span class="count" data-cart-count>0</span><span class="sr-only"> items</span>
+      </a>
+      <button type="button" class="icon-btn burger" data-burger aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mega" id="mega" data-mega>
+    <div class="mega-inner">
+      {
+        SHOP_GROUPS.map((g) => (
+          <section style={`--c:${g.color}`}>
+            <a class="g-head" href={g.href}>
+              <i />
+              {g.label}
+            </a>
+            <p class="g-sub">{g.sub}</p>
+            <ul>
+              {g.items.map((it) => (
+                <li>
+                  <a href={it.href}>
+                    <span class="sku">{it.sku}</span>
+                    <span class="nm">{it.label}</span>
+                    <span class="pr">
+                      {it.quote ? 'from ' : ''}
+                      {money(it.price)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+      <div class="mega-cta">
+        <span class="tag">Got an idea?</span>
+        <p>Figurines from photos, logos, one-off parts. Tell me what you want printed.</p>
+        <a class="btn btn--primary" href="/custom/">Start a custom order</a>
+        <a class="all" href="/shop/">Browse everything →</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" data-mobile-menu>
+  <nav aria-label="Mobile">
+    <a href="/shop/" style="--i:0">Shop all</a>
+    {MAIN_LINKS.map((l, i) => <a href={l.href} style={`--i:${i + 1}`}>{l.label}</a>)}
+    <a href="/saved/" style={`--i:${MAIN_LINKS.length + 1}`}>Saved</a>
+    <a href="/cart/" style={`--i:${MAIN_LINKS.length + 2}`}>Cart</a>
+  </nav>
+  <div class="m-toggles">
+    <button type="button" class="m-toggle" data-theme-switch aria-pressed="false"><svg class="i-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path></svg><svg class="i-moon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"></path></svg><span data-theme-word>Day shift</span></button>
+    <button type="button" class="m-toggle" data-motion-switch aria-pressed="false"><span data-motion-label>Pause animation</span></button>
+  </div>
+  <div class="m-groups">
+    {
+      SHOP_GROUPS.map((g, i) => (
+        <section style={`--c:${g.color};--i:${i + 6}`}>
+          <a class="g-head" href={g.href}>
+            <i />
+            {g.label}
+          </a>
+          {g.items.map((it) => (
+            <a class="m-item" href={it.href}>
+              {it.label}
+            </a>
+          ))}
+        </section>
+      ))
+    }
+    <section style={`--c:${LEARN_GROUP.color};--i:10`}>
+      <a class="g-head" href="/learn/"><i></i>{LEARN_GROUP.label}</a>
+      {LEARN_GROUP.items.map((it) => <a class="m-item" href={it.href}>{it.label}</a>)}
+    </section>
+  </div>
+</div>
+
+<script>
+  import { cartCount, onCartChange } from '../lib/cart-store.ts';
+  import { readSaved, onSavedChange } from '../lib/saved-store.ts';
+  const savedBadge = document.querySelector<HTMLElement>('[data-saved-count]')!;
+  const renderSaved = () => {
+    const n = readSaved().length;
+    savedBadge.textContent = String(n);
+    savedBadge.closest('a')!.classList.toggle('full', n > 0);
+  };
+  renderSaved();
+  onSavedChange(renderSaved);
+  const root = document.documentElement;
+
+  // cart
+  const badge = document.querySelector<HTMLElement>('[data-cart-count]')!;
+  const cart = badge.closest<HTMLElement>('.cart')!;
+  let lastN = -1;
+  const renderCart = () => {
+    const n = cartCount();
+    badge.textContent = String(n);
+    cart.classList.toggle('full', n > 0);
+    if (lastN >= 0 && n > lastN) {
+      cart.classList.remove('bump');
+      void cart.offsetWidth;
+      cart.classList.add('bump');
+    }
+    lastN = n;
+  };
+  renderCart();
+  onCartChange(renderCart);
+
+  // motion toggle (restored before paint in Base)
+  const syncMotion = () => {
+    const off = root.classList.contains('motion-off');
+    document.querySelectorAll('[data-motion-switch]').forEach((b) => b.setAttribute('aria-pressed', String(off)));
+    document.querySelectorAll('[data-motion-label]').forEach((l) => (l.textContent = off ? 'Resume animation' : 'Pause animation'));
+  };
+  document.querySelectorAll('[data-motion-switch]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const off = !root.classList.contains('motion-off');
+      root.classList.toggle('motion-off', off);
+      try {
+        localStorage.setItem('dashlabs-motion', off ? 'off' : 'on');
+      } catch {}
+      syncMotion();
+    }),
+  );
+  syncMotion();
+
+  // Day shift / Night shift theme (restored before paint in Base)
+  const syncTheme = () => {
+    const light = root.dataset.theme === 'light';
+    document.querySelectorAll('[data-theme-switch]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(light));
+      b.setAttribute('title', light ? 'Switch to Night shift (dark)' : 'Switch to Day shift (light)');
+    });
+    document.querySelectorAll('[data-theme-label]').forEach((l) => (l.textContent = light ? 'Switch to dark theme' : 'Switch to light theme'));
+    document.querySelectorAll('[data-theme-word]').forEach((l) => (l.textContent = light ? 'Night shift' : 'Day shift'));
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#f5f0e6' : '#08070d');
+  };
+  document.querySelectorAll('[data-theme-switch]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const light = root.dataset.theme !== 'light';
+      if (light) root.dataset.theme = 'light';
+      else delete root.dataset.theme;
+      try {
+        localStorage.setItem('dashlabs-theme', light ? 'light' : 'dark');
+      } catch {}
+      syncTheme();
+    }),
+  );
+  syncTheme();
+
+  // mega menu: hover on desktop pointers, click everywhere
+  const topbar = document.querySelector<HTMLElement>('[data-topbar]')!;
+  const btn = document.querySelector<HTMLButtonElement>('[data-mega-btn]')!;
+  const mega = document.querySelector<HTMLElement>('[data-mega]')!;
+  let closeT = 0;
+  const setMega = (open: boolean) => {
+    topbar.classList.toggle('mega-open', open);
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  btn.addEventListener('click', (e) => {
+    const open = !topbar.classList.contains('mega-open');
+    setMega(open);
+    // opened from the keyboard (Enter/Space give detail 0): take focus into the menu
+    if (open && e.detail === 0) mega.querySelector<HTMLElement>('a')?.focus();
+  });
+  // tabbing out of the end of the menu closes it
+  mega.addEventListener('focusout', (e) => {
+    const to = e.relatedTarget as Node | null;
+    if (to && !mega.contains(to) && to !== btn) setMega(false);
+  });
+  if (matchMedia('(hover: hover)').matches) {
+    for (const el of [btn, mega]) {
+      el.addEventListener('pointerenter', () => (clearTimeout(closeT), setMega(true)));
+      el.addEventListener('pointerleave', () => (closeT = window.setTimeout(() => setMega(false), 180)));
+    }
+  }
+  document.addEventListener('click', (e) => !topbar.contains(e.target as Node) && setMega(false));
+
+  // mobile menu
+  const burger = document.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const mobile = document.querySelector<HTMLElement>('[data-mobile-menu]')!;
+  const setMobile = (open: boolean) => {
+    const was = root.classList.contains('menu-open');
+    root.classList.toggle('menu-open', open);
+    burger.setAttribute('aria-expanded', String(open));
+    if (open && !was) setTimeout(() => mobile.querySelector<HTMLElement>('a')?.focus(), 60);
+    // closing with focus inside the menu: hand it back to the menu button
+    if (!open && was && mobile.contains(document.activeElement)) burger.focus();
+  };
+  // keep Tab inside the open menu (and the menu button), like a dialog
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !root.classList.contains('menu-open')) return;
+    const items = [burger, ...mobile.querySelectorAll<HTMLElement>('a, button')].filter((x) => x.offsetParent !== null);
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+  burger.addEventListener('click', () => setMobile(!root.classList.contains('menu-open')));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (topbar.classList.contains('mega-open') && mega.contains(document.activeElement)) btn.focus();
+      setMega(false);
+      setMobile(false);
+    }
+  });
+
+  // the bar firms up once you scroll
+  const onScroll = () => topbar.classList.toggle('scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+
+<style>
+  .topbar {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    transition:
+      background 0.25s,
+      border-color 0.25s;
+    border-bottom: 1px solid transparent;
+  }
+  .topbar.scrolled,
+  .topbar.mega-open,
+  :global(.menu-open) .topbar {
+    background: var(--bar);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom-color: var(--line);
+  }
+  .bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 20px;
+    height: var(--nav-h);
+    max-width: 1340px;
+    margin: 0 auto;
+    padding-inline: var(--gutter);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .brand :global(.mark) {
+    transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .brand:hover :global(.mark) {
+    transform: rotate(-12deg) scale(1.08);
+  }
+  .word {
+    font: 500 1.2rem var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+  .word b {
+    font-weight: 700;
+    color: var(--hot);
+  }
+
+  .links {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+  }
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 0;
+    background: none;
+    font: 600 0.93rem var(--font);
+    color: var(--text-2);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      color 0.15s,
+      background 0.15s;
+  }
+  .link:hover,
+  .link[aria-current='page'],
+  .mega-open .shop-btn {
+    color: var(--white);
+    background: rgba(196, 168, 255, 0.08);
+  }
+  .shop-btn svg {
+    transition: transform 0.2s;
+  }
+  .mega-open .shop-btn svg {
+    transform: rotate(180deg);
+  }
+
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .queue {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    font: 500 0.72rem var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--text-2);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .icon-btn,
+  .saved-link,
+  .cart {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--btn-bg);
+    color: var(--text-2);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .icon-btn:hover,
+  .saved-link:hover,
+  .cart:hover {
+    color: var(--white);
+    border-color: var(--uv-2);
+  }
+  .i-play,
+  [aria-pressed='true'] .i-pause {
+    display: none;
+  }
+  .i-moon,
+  [data-theme-switch][aria-pressed='true'] .i-sun {
+    display: none;
+  }
+  [data-theme-switch][aria-pressed='true'] .i-moon {
+    display: block;
+  }
+  .m-toggles {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: -8px 0 22px;
+  }
+  .m-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--btn-bg);
+    color: var(--text);
+    font: 700 0.9rem var(--font);
+    cursor: pointer;
+  }
+  [aria-pressed='true'] .i-play {
+    display: block;
+  }
+  .count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--panel-3);
+    color: var(--text-3);
+    font: 700 0.7rem/20px var(--mono);
+    text-align: center;
+  }
+  .saved-link svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+  .saved-link .count {
+    display: none;
+  }
+  .saved-link.full {
+    color: var(--pink);
+    border-color: color-mix(in srgb, var(--pink) 60%, transparent);
+  }
+  .saved-link.full svg {
+    fill: currentColor;
+  }
+  .saved-link.full .count {
+    display: block;
+    background: var(--pink);
+    color: #1a0612;
+  }
+  .cart.full {
+    border-color: var(--hot);
+    color: var(--hot);
+  }
+  .cart.full .count {
+    background: var(--hot);
+    color: var(--hot-ink);
+    box-shadow: 0 0 12px var(--hot);
+  }
+  .cart.bump {
+    animation: bump 0.5s cubic-bezier(0.3, 1.8, 0.5, 1);
+  }
+  @keyframes bump {
+    30% {
+      transform: scale(1.25) rotate(-8deg);
+    }
+  }
+  .burger {
+    display: none;
+    gap: 4px;
+    align-content: center;
+  }
+  .burger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform 0.25s;
+  }
+  :global(.menu-open) .burger span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+  :global(.menu-open) .burger span:nth-child(2) {
+    transform: scaleX(0);
+  }
+  :global(.menu-open) .burger span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  /* mega menu: prints down from the bar, layer by layer */
+  .mega {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--overlay-solid);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line-2);
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+    transition:
+      clip-path 0.35s steps(10, end),
+      visibility 0s 0.35s;
+  }
+  .mega-open .mega {
+    clip-path: inset(0 0 -40px 0);
+    visibility: visible;
+    transition:
+      clip-path 0.35s steps(10, end),
+      visibility 0s;
+  }
+  .mega-inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 1.1fr;
+    gap: 28px;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 28px var(--gutter) 34px;
+  }
+  .g-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font: 600 0.92rem var(--display);
+    letter-spacing: -0.01em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .g-head i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--c);
+    box-shadow: 0 0 10px var(--c);
+    transform: rotate(45deg);
+  }
+  .g-sub {
+    font-size: 0.82rem;
+    color: var(--text-3);
+    margin: 4px 0 12px;
+  }
+  .mega ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .mega li a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 10px;
+    padding: 8px 10px;
+    margin-inline: -10px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .mega li a:hover {
+    background: color-mix(in srgb, var(--c) 12%, transparent);
+  }
+  .sku {
+    grid-row: span 2;
+    font: 600 0.66rem var(--mono);
+    color: var(--c);
+    padding-top: 3px;
+  }
+  .nm {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--white);
+  }
+  .pr {
+    font: 500 0.75rem var(--mono);
+    color: var(--text-3);
+  }
+  .mega-cta {
+    padding: 20px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(255, 140, 30, 0.18), transparent 60%),
+      var(--panel);
+  }
+  .mega-cta p {
+    color: var(--text-2);
+    font-size: 0.9rem;
+    margin: 8px 0 16px;
+  }
+  .mega-cta .all {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-3);
+    text-decoration: none;
+  }
+  .mega-cta .all:hover {
+    color: var(--white);
+  }
+
+  /* mobile menu */
+  .mobile-menu {
+    position: fixed;
+    inset: var(--nav-h) 0 0 0;
+    z-index: 49;
+    overflow-y: auto;
+    padding: 18px var(--gutter) 40px;
+    background: var(--overlay-solid);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.25s,
+      visibility 0s 0.25s;
+  }
+  :global(.menu-open) .mobile-menu {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.25s;
+  }
+  .mobile-menu nav {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 26px;
+  }
+  .mobile-menu nav a,
+  .m-groups section {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.4s,
+      transform 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+    transition-delay: calc(var(--i) * 45ms);
+  }
+  :global(.menu-open) .mobile-menu nav a,
+  :global(.menu-open) .m-groups section {
+    opacity: 1;
+    transform: none;
+  }
+  .mobile-menu nav a {
+    font: 600 clamp(1.6rem, 8vw, 2.4rem) / 1.25 var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .mobile-menu nav a:hover {
+    color: var(--hot);
+  }
+  .m-groups {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 18px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .m-groups section {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+  .m-groups .g-head {
+    margin-bottom: 4px;
+  }
+  .m-item {
+    font-size: 0.92rem;
+    color: var(--text-2);
+    text-decoration: none;
+  }
+
+  @media (max-width: 1080px) {
+    .queue {
+      display: none;
+    }
+  }
+  @media (max-width: 520px) {
+    .theme-btn,
+    .saved-link {
+      display: none; /* in the menu instead */
+    }
+  }
+  /* the smallest phones (320 px): pause moves to the menu too, buttons tighten up */
+  @media (max-width: 380px) {
+    .right > [data-motion-switch] {
+      display: none;
+    }
+    .right {
+      gap: 6px;
+    }
+    .bar {
+      gap: 10px;
+    }
+    .icon-btn,
+    .cart {
+      width: 40px;
+      height: 40px;
+    }
+  }
+  @media (max-width: 900px) {
+    .links,
+    .mega {
+      display: none;
+    }
+    .burger {
+      display: inline-grid;
+    }
+    .bar {
+      grid-template-columns: auto 1fr;
+    }
+    .right {
+      justify-self: end;
+    }
+  }
+  @media (min-width: 901px) {
+    .mobile-menu {
+      display: none;
+    }
+  }
+  @media (max-width: 400px) {
+    .m-groups {
+      grid-template-columns: 1fr;
+    }
+    .word {
+      font-size: 1.05rem;
+    }
+  }
+</style>

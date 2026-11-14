@@ -1,0 +1,186 @@
+---
+import Guide from '../../layouts/Guide.astro';
+import Analogy from '../../components/Analogy.astro';
+import { PLACES, materialsFor } from '../../lib/care.ts';
+
+const table = Object.fromEntries(PLACES.map((p) => [p.id, { note: p.note, rows: materialsFor(p.id).map((r) => ({ name: r.material.name, short: r.material.short, hex: r.material.hex, fit: r.fit })) }]));
+---
+
+<Guide slug="where-prints-live">
+  <h2>Why it matters</h2>
+  <p>
+    A print doesn't wear out sitting on a shelf. What ages it is heat and sunlight: a PLA part can last decades
+    indoors and one summer afternoon in a parked car. Knowing where it will live lets me pick a plastic that will
+    still look right in five years.
+  </p>
+
+  <h2>The intuition</h2>
+  <Analogy title="A candle on a windowsill">
+    <p>
+      A candle keeps its shape for years in a drawer. Leave it in a hot, sunny window and it slowly slumps, without
+      ever melting. Printed plastic behaves the same way: well below its softening point nothing happens; near it, the
+      part <strong>slowly creeps</strong> out of shape, especially if it's carrying a load.
+    </p>
+    <p>Where it breaks down: a candle softens at about 40 °C. Even PLA, the least heat-proof filament, holds to about 55 °C.</p>
+  </Analogy>
+
+  <h2 id="try-it">Try it</h2>
+  <p>Pick where the print will live.</p>
+  <div class="wide">
+    <div class="calc" data-places data-table={JSON.stringify(table)}>
+      <div class="calc-head"><span>Place picker</span><span>guidance · ratings are judgement</span></div>
+      <div class="places" role="radiogroup" aria-label="Where will it live?">
+        {
+          PLACES.map((p, i) => (
+            <label>
+              <input type="radio" name="place" value={p.id} checked={i === 0} />
+              <span>{p.label}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class="pnote" data-note></p>
+      <ul class="fits" data-fits aria-live="polite"></ul>
+    </div>
+  </div>
+
+  <h2>Worked example: a holder for the car</h2>
+  <ol>
+    <li><strong>The place:</strong> a car needs heat resistance 4 of 5 and outdoor rating 4 of 5.</li>
+    <li><strong>ASA</strong> (heat 4, outdoor 5) meets both: <em>good</em>.</li>
+    <li><strong>PETG</strong> (heat 3, outdoor 3) is one short on each: <em>risky</em>. It may be fine in the door pocket and sag on the dashboard.</li>
+    <li><strong>PLA</strong> (heat 1, outdoor 2) is far short: <em>avoid</em>.</li>
+  </ol>
+  <p>The site's tests check this same result, and it matches the heat scale in <a href="/learn/materials/">Choosing a material</a>.</p>
+
+  <h2>Looking after a print</h2>
+  <ul>
+    <li><strong>Cleaning:</strong> lukewarm water, a drop of soap, a soft brush. Never the dishwasher.</li>
+    <li><strong>Dust:</strong> a soft paintbrush or a blast of air gets into the layer lines.</li>
+    <li><strong>Sun:</strong> bright colours fade in direct sun over months. Keep display pieces off the windowsill.</li>
+    <li><strong>Drops:</strong> PLA snaps rather than bends. Small breaks glue back cleanly with superglue.</li>
+  </ul>
+
+  <h2>Where this stops</h2>
+  <div class="stops">
+    <ul>
+      <li><strong>The ratings are my judgement,</strong> not lab tests, and brands vary. "Risky" means it may deform over time, not that it will.</li>
+      <li><strong>Load matters.</strong> A part carrying weight creeps at lower temperatures than one just sitting there.</li>
+      <li><strong>Food and drink:</strong> prints aren't food-safe by default, whatever the plastic. Layer lines trap bacteria.</li>
+    </ul>
+  </div>
+</Guide>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-places]');
+  if (root) {
+    const table: Record<string, { note: string; rows: { name: string; short: string; hex: string; fit: string }[] }> = JSON.parse(root.dataset.table!);
+    const WORD: Record<string, string> = { good: 'Good', risky: 'Risky', avoid: 'Avoid' };
+    const sw = (h: string) => (h === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d,#3dffc5,#2f7dff,#9b6bff,#ff5c7a)' : h);
+    const render = () => {
+      const id = root.querySelector<HTMLInputElement>('input[name=place]:checked')!.value;
+      const t = table[id];
+      root.querySelector('[data-note]')!.textContent = t.note;
+      root.querySelector('[data-fits]')!.innerHTML = t.rows
+        .map((r, i) => `<li class="${r.fit}" style="--i:${i}"><i style="background:${sw(r.hex)}"></i><span><b>${r.name}</b><small>${r.short}</small></span><em>${WORD[r.fit]}</em></li>`)
+        .join('');
+    };
+    root.addEventListener('change', render);
+    render();
+  }
+</script>
+
+<style>
+  .places {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 18px 18px 6px;
+  }
+  .places input {
+    position: absolute;
+    opacity: 0;
+  }
+  .places span {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--ink-2);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .places span:hover {
+    transform: translateY(-2px);
+  }
+  .places input:checked + span {
+    border-color: var(--tone);
+    color: var(--white);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+  }
+  .places input:focus-visible + span {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+  }
+  .pnote {
+    margin: 0;
+    padding: 8px 18px 0;
+    color: var(--text-2);
+  }
+  .fits {
+    list-style: none;
+    margin: 0;
+    padding: 14px 18px 18px;
+    display: grid;
+    gap: 8px;
+  }
+  .fits :global(li) {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--ink-2);
+    animation: slide 0.35s calc(var(--i) * 50ms) both cubic-bezier(0.2, 1, 0.3, 1);
+  }
+  @keyframes slide {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  .fits :global(i) {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  .fits :global(span) {
+    display: grid;
+  }
+  .fits :global(b) {
+    color: var(--white);
+  }
+  .fits :global(small) {
+    color: var(--text-3);
+  }
+  .fits :global(em) {
+    font: normal 700 0.8rem var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .fits :global(.good em) {
+    color: var(--mint);
+  }
+  .fits :global(.risky em) {
+    color: var(--warn);
+  }
+  .fits :global(.avoid em) {
+    color: var(--danger);
+  }
+</style>

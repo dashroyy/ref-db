@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { PRODUCTS } from '../data/catalog.ts';
+---
+
+<Base title="Saved for later" description="Prints you've saved for later." noindex>
+  <section class="section top">
+    <div class="wrap">
+      <p class="kicker"><span class="dot pink"></span>Saved on this device</p>
+      <h1 class="x3d">Saved for <span class="hot">later</span></h1>
+      <p class="lede" data-saved-lede>Tap the heart on anything in the shop to keep it here.</p>
+
+      <div class="empty panel" data-saved-empty hidden>
+        <svg width="64" height="64" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4 7.4 4c2 0 3.6 1.1 4.6 2.7C13 5.1 14.6 4 16.6 4c3.5 0 5.8 3.6 4.6 7.1-1.7 4.8-9.2 9.4-9.2 9.4z"></path></svg>
+        <p>Nothing saved yet.</p>
+        <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+      </div>
+
+      <div class="grid" data-saved-grid hidden>
+        {PRODUCTS.map((p) => <ProductCard product={p} level={2} />)}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { readSaved, onSavedChange } from '../lib/saved-store.ts';
+  const grid = document.querySelector<HTMLElement>('[data-saved-grid]')!;
+  const cards = [...grid.querySelectorAll<HTMLElement>('[data-product]')];
+  const render = () => {
+    const ids = readSaved();
+    // saved order, newest first; unsaving fades out on the next change
+    for (const c of cards) c.hidden = !ids.includes(c.dataset.product!);
+    ids.forEach((id) => {
+      const c = cards.find((x) => x.dataset.product === id);
+      if (c) grid.appendChild(c);
+    });
+    document.querySelector<HTMLElement>('[data-saved-empty]')!.hidden = ids.length > 0;
+    document.querySelector<HTMLElement>('[data-saved-lede]')!.textContent = ids.length
+      ? `${ids.length} ${ids.length === 1 ? 'print' : 'prints'} saved. Saved items stay on this device.`
+      : 'Tap the heart on anything in the shop to keep it here.';
+  };
+  render();
+  grid.hidden = false;
+  onSavedChange(render);
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .dot.pink {
+    background: var(--pink);
+    box-shadow: 0 0 10px var(--pink);
+  }
+  .grid {
+    margin-top: 28px;
+  }
+  .grid[hidden],
+  .grid :global([hidden]) {
+    display: none;
+  }
+  .empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 40px 20px;
+    margin-top: 28px;
+    text-align: center;
+  }
+  .empty svg {
+    fill: none;
+    stroke: var(--pink);
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 14px var(--pink));
+  }
+  .empty p {
+    color: var(--text-2);
+    font-weight: 600;
+  }
+</style>

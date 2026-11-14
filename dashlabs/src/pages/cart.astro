@@ -1,0 +1,503 @@
+---
+import Base from '../layouts/Base.astro';
+import { CHECKOUT_MODE, GIFT_WRAP_PRICE, GIFT_NOTE_MAX, ORDER_DELIVERY } from '../data/site.ts';
+import { money } from '../lib/money.ts';
+import ProductCard from '../components/ProductCard.astro';
+import { PRODUCTS } from '../data/catalog.ts';
+---
+
+<Base cta={false} title="Cart" description="Your DashLabs order." noindex>
+  <section class="section top">
+    <div class="wrap">
+      <p class="tag tag--accent">Cart</p>
+      <h1 class="x3d">Your order</h1>
+
+      <p class="notice cancelled" data-cancelled hidden>
+        Checkout was cancelled, so nothing was charged. Your cart is just as you left it.
+      </p>
+
+      <p class="notice undo" data-undo hidden>
+        <span><b data-undo-name>Item</b> removed.</span>
+        <button type="button" class="btn" data-undo-btn>Undo</button>
+      </p>
+
+      <div data-empty hidden>
+        <div class="empty panel">
+          <p class="lede">Your cart is empty. The printers are warm, though.</p>
+          <div class="empty-actions">
+            <a class="btn btn--primary" href="/shop/">Browse the shop</a>
+            <a class="btn" href="/custom/">Start a custom order</a>
+          </div>
+        </div>
+        <h2 class="h-rule sugg-h">Popular right now</h2>
+        <div class="grid">{PRODUCTS.filter((p) => p.featured).map((p) => <ProductCard product={p} />)}</div>
+      </div>
+
+      <div class="layout" data-full hidden>
+        <div>
+          <ul class="lines" data-lines></ul>
+          <a class="keep" href="/shop/">← Keep shopping</a>
+        </div>
+
+        <aside class="summary panel">
+          <h2 class="tag">Summary</h2>
+          <dl>
+            <div class="gift-row" data-gift-row hidden><dt>Gift wrap</dt><dd>{money(GIFT_WRAP_PRICE)}</dd></div>
+            <div><dt>Subtotal</dt><dd data-subtotal>—</dd></div>
+            <div><dt>Ships</dt><dd data-cart-ships>—</dd></div>
+          </dl>
+          <p class="sum-note">{CHECKOUT_MODE === 'stripe' ? 'Shipping and tax are added at checkout.' : 'Shipping and tax are confirmed by email before you pay.'}</p>
+
+          <form data-checkout>
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" required />
+            </div>
+            <div class="gift">
+              <label class="switch">
+                <input type="checkbox" name="giftWrap" data-gift />
+                <span class="track" aria-hidden="true"><span class="knob"></span></span>
+                <span class="sw-txt">
+                  <b>Make it a gift</b>
+                  <small>Gift wrap {GIFT_WRAP_PRICE ? `+${money(GIFT_WRAP_PRICE)}` : 'free'}, no prices in the box, and a printed note.</small>
+                </span>
+              </label>
+              <div class="field gift-note" data-gift-note hidden>
+                <label for="giftNote">Gift note</label>
+                <textarea id="giftNote" name="giftNote" rows="3" maxlength={GIFT_NOTE_MAX} placeholder="Happy birthday, Sam! Love, Alex"></textarea>
+              </div>
+            </div>
+            <div class="field">
+              <label for="notes">Notes (optional)</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="Shipping country, deadline…"></textarea>
+            </div>
+            <button class="btn btn--primary btn--block" type="submit">
+              {CHECKOUT_MODE === 'stripe' ? 'Checkout securely' : 'Send order request'}
+            </button>
+            <p class="error" data-error role="alert" hidden></p>
+          </form>
+
+          {
+            CHECKOUT_MODE === 'request' && (
+              <p class="notice">
+                No payment is taken here. {ORDER_DELIVERY === 'netlify-form' ? 'Your order comes straight to me' : 'You send me the order by email'};
+                I confirm shipping and the total, then send a secure invoice to pay by card.
+              </p>
+            )
+          }
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { readCart, updateQty, onCartChange } from '../lib/cart-store.ts';
+  import { buildOrder } from '../lib/order.ts';
+  import { startCheckout } from '../lib/checkout.ts';
+  import { sendRequest } from '../lib/send.ts';
+  import { shipWindow, formatWindow, slower } from '../lib/shipdate.ts';
+  import { LAB_STATUS, leadTimeDays } from '../data/lab.ts';
+  import { SITE, ORDER_DELIVERY } from '../data/site.ts';
+  import { addToCart, clearCart } from '../lib/cart-store.ts';
+  import { money } from '../lib/money.ts';
+  import { productById, categoryById } from '../data/catalog.ts';
+  import { webglOK } from '../lib/three/support.ts';
+  const gl = webglOK();
+
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const list = $('[data-lines]');
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  const giftBox = document.querySelector<HTMLInputElement>('[data-gift]')!;
+  const giftOn = () => giftBox.checked;
+  giftBox.addEventListener('change', () => {
+    $('[data-gift-note]').hidden = !giftOn();
+    render();
+  });
+  if (new URLSearchParams(location.search).get('cancelled')) $('[data-cancelled]').hidden = false;
+
+  function render() {
+    const cart = readCart();
+    const order = buildOrder(cart, undefined, undefined, { giftWrap: giftOn() });
+    $('[data-gift-row]').hidden = !order.gift.wrap;
+    $('[data-empty]').hidden = order.lines.length > 0;
+    $('[data-full]').hidden = order.lines.length === 0;
+    $('[data-subtotal]').textContent = money(order.subtotal);
+    // the whole order ships when its slowest item is ready
+    let lead = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
+    for (const l of order.lines) lead = slower(lead, productById(l.productId)?.leadTimeDays ?? SITE.defaultLeadTimeDays);
+    $('[data-cart-ships]').textContent = formatWindow(shipWindow(new Date(), lead));
+
+    // Price each stored line on its own so the index stays usable for editing.
+    list.innerHTML = cart
+      .map((raw, i) => {
+        const p = productById(raw.productId);
+        const line = buildOrder([raw]).lines[0];
+        if (!p || !line) return '';
+        // the thumbnail shows the filament colour that was chosen, when there is one
+        const chosen = p.options.find((o) => o.id === 'colour')?.choices.find((c) => c.id === line.options.colour)?.hex;
+        const tint = chosen ?? categoryById(p.category).color;
+        return `<li class="line panel">
+          <div class="dot" style="--h:${p.art.hue}" data-thumb data-shape="${p.art.shape}" data-color="${tint}"${
+            p.personalise && line.note
+              ? ` data-text="${esc(line.note)}" data-text-color="${p.options.find((o) => o.id === 'textColour')?.choices.find((c) => c.id === line.options.textColour)?.hex ?? '#ece6da'}"`
+              : ''
+          }></div>
+          <div class="meta">
+            <a href="/shop/${p.slug}/"><strong>${esc(line.name)}</strong></a>
+            <span class="muted">${esc(line.optionsText)}${line.note ? ` · “${esc(line.note)}”` : ''}</span>
+            <span class="tag">${money(line.unitPrice)} each</span>
+          </div>
+          <div class="qty">
+            <button type="button" data-i="${i}" data-d="-1" aria-label="Decrease quantity">−</button>
+            <span>${line.qty}</span>
+            <button type="button" data-i="${i}" data-d="1" aria-label="Increase quantity">+</button>
+          </div>
+          <strong class="total">${money(line.lineTotal)}</strong>
+          <button type="button" class="rm" data-i="${i}" data-remove aria-label="Remove ${esc(line.name)}">×</button>
+        </li>`;
+      })
+      .join('');
+    if (gl) import('../lib/three/viewer.ts').then((m) => m.renderThumbs(list));
+  }
+
+  let undo: ReturnType<typeof readCart>[number] | null = null;
+  list.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-i]');
+    if (!b) return;
+    const i = Number(b.dataset.i);
+    const line = readCart()[i];
+    if (b.dataset.remove !== undefined) {
+      undo = line;
+      updateQty(i, 0);
+      $('[data-undo]').hidden = false;
+      $('[data-undo-name]').textContent = productById(line.productId)?.name ?? 'Item';
+      return;
+    }
+    updateQty(i, line.qty + Number(b.dataset.d));
+  });
+  $('[data-undo-btn]').addEventListener('click', () => {
+    if (undo) addToCart(undo);
+    undo = null;
+    $('[data-undo]').hidden = true;
+  });
+
+  $('[data-checkout]').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const data = new FormData(form);
+    const err = $('[data-error]');
+    err.hidden = true;
+    const res = await startCheckout(
+      readCart(),
+      {
+        name: String(data.get('name')),
+        email: String(data.get('email')),
+        notes: String(data.get('notes') || ''),
+      },
+      { giftWrap: giftOn(), giftNote: giftOn() ? String(data.get('giftNote') || '') : undefined },
+    );
+    if (res.kind === 'redirect') {
+      // for the thank-you page: what was ordered and when it ships (this tab only)
+      try {
+        sessionStorage.setItem(
+          'dashlabs.lastOrder',
+          JSON.stringify({ ships: $('[data-cart-ships]').textContent, items: readCart().reduce((n, l) => n + l.qty, 0) }),
+        );
+      } catch {
+        /* storage blocked: the page just shows less */
+      }
+      location.href = res.url;
+    }
+    else if (res.kind === 'request') {
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+      button.disabled = true; // no double orders while it sends
+      await sendRequest(
+        {
+          title: 'Your order request is ready',
+          lead: 'One last step: send it to me by email. I’ll reply with shipping and the total, then a secure invoice to pay.',
+          to: SITE.email,
+          subject: res.subject,
+          text: res.text,
+          reference: res.reference,
+          onSent: { label: 'I’ve sent it', done: 'Order request sent. Thank you!', run: () => clearCart() },
+        },
+        ORDER_DELIVERY === 'netlify-form'
+          ? { form: 'order', name: String(data.get('name')), email: String(data.get('email')), subject: res.subject, message: res.text, reference: res.reference }
+          : undefined,
+      );
+      button.disabled = false;
+    } else {
+      err.textContent = res.message;
+      err.hidden = false;
+    }
+  });
+
+  render();
+  onCartChange(render);
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .empty {
+    padding: 32px;
+    margin-top: 24px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    align-items: start;
+    margin-top: 24px;
+  }
+  .lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  :global(.line) {
+    display: grid;
+    grid-template-columns: 72px 1fr auto auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px;
+  }
+  :global(.line .dot) {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      var(--layers),
+      hsl(var(--h) 70% 45%);
+  }
+  :global(.line .dot.thumb-ready) {
+    background: var(--ink-2);
+  }
+  :global(.line .meta) {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+  :global(.line .meta a) {
+    text-decoration: none;
+  }
+  :global(.line .meta .muted) {
+    font-size: 0.88rem;
+  }
+  :global(.line .qty) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+  }
+  :global(.line .qty button) {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+  :global(.line .total) {
+    font-family: var(--mono);
+    min-width: 72px;
+    text-align: right;
+  }
+  .summary {
+    padding: 24px;
+    position: sticky;
+    top: 88px;
+  }
+  .summary dl {
+    margin: 12px 0 24px;
+    display: grid;
+    gap: 10px;
+  }
+  .summary dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .summary dd {
+    margin: 0;
+    font-family: var(--mono);
+    text-align: right;
+  }
+  .sum-note {
+    margin: -12px 0 24px;
+    font-size: 0.86rem;
+    color: var(--text-3);
+  }
+  :global(.line .rm) {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--text-3);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  :global(.line .rm:hover) {
+    color: var(--danger);
+    border-color: var(--line-2);
+  }
+  .keep {
+    display: inline-block;
+    margin-top: 18px;
+    font-weight: 700;
+    color: var(--text-2);
+    text-decoration: none;
+  }
+  .keep:hover {
+    color: var(--hot);
+  }
+  .undo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .undo .btn {
+    min-height: 36px;
+  }
+  .empty-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .sugg-h {
+    margin: 48px 0 24px;
+    font-size: 1.4rem;
+  }
+  .gift {
+    margin: 6px 0 16px;
+    padding: 14px;
+    border: 1px dashed color-mix(in srgb, var(--pink) 45%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--pink) 6%, transparent);
+  }
+  .switch {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .switch input {
+    position: absolute;
+    opacity: 0;
+  }
+  .track {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 99px;
+    background: var(--panel-3);
+    border: 1px solid var(--line-2);
+    transition: background 0.2s;
+  }
+  .knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    background: var(--text-3);
+    transition:
+      transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1),
+      background 0.2s;
+  }
+  .switch input:checked + .track {
+    background: color-mix(in srgb, var(--pink) 40%, var(--panel-3));
+    border-color: var(--pink);
+  }
+  .switch input:checked + .track .knob {
+    transform: translateX(20px) rotate(45deg);
+    background: var(--pink);
+    box-shadow: 0 0 10px var(--pink);
+  }
+  .switch input:focus-visible + .track {
+    outline: 2px solid var(--pink);
+    outline-offset: 3px;
+  }
+  .sw-txt {
+    display: grid;
+    gap: 2px;
+  }
+  .sw-txt b {
+    color: var(--white);
+  }
+  .sw-txt small {
+    color: var(--text-3);
+    font-size: 0.84rem;
+  }
+  .gift-note {
+    margin: 14px 0 0;
+  }
+  .cancelled {
+    margin-bottom: 20px;
+  }
+  .summary [data-subtotal] {
+    font-weight: 600;
+  }
+  .error {
+    color: #ff7676;
+    margin: 12px 0 0;
+  }
+  .notice {
+    margin: 18px 0 0;
+  }
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .summary {
+      position: static;
+    }
+  }
+  @media (max-width: 520px) {
+    /* phone: picture, details and × on top; quantity and total underneath */
+    :global(.line) {
+      grid-template-columns: 64px 1fr 30px;
+      gap: 12px;
+      align-items: start;
+    }
+    :global(.line .dot) {
+      width: 64px;
+      height: 64px;
+    }
+    :global(.line .rm) {
+      grid-column: 3;
+      grid-row: 1;
+    }
+    :global(.line .qty) {
+      grid-column: 1 / 3;
+      grid-row: 2;
+    }
+    :global(.line .total) {
+      grid-column: 2 / 4;
+      grid-row: 2;
+      align-self: center;
+    }
+  }
+</style>

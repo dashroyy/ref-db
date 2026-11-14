@@ -1,0 +1,149 @@
+---
+// Reviews for one product. Shows real reviews when there are some, otherwise an
+// honest "be the first" with a link to send one. Never shows made-up reviews.
+import { reviewsFor, ratingSummary } from '../data/reviews.ts';
+import { SITE } from '../data/site.ts';
+import type { Product } from '../data/catalog.ts';
+
+interface Props {
+  product: Product;
+}
+const { product: p } = Astro.props;
+const list = reviewsFor(p.id);
+const sum = ratingSummary(list);
+const mail = `mailto:${SITE.email}?subject=${encodeURIComponent(`Review: ${p.name}`)}&body=${encodeURIComponent(
+  `Rating (1-5): \nYour review: \nName to show (e.g. Sam R.): \n\nAttach a photo of your print if you like!`,
+)}`;
+const fmt = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+---
+
+<section class="reviews" aria-labelledby="reviews-h">
+  <div class="head">
+    <h2 class="h-rule" id="reviews-h">Reviews</h2>
+    {
+      sum && (
+        <p class="sum">
+          <span class="stars" style={`--r:${sum.average}`} role="img" aria-label={`${sum.average} out of 5`} />
+          <b>{sum.average}</b> · {sum.count} {sum.count === 1 ? 'review' : 'reviews'}
+        </p>
+      )
+    }
+  </div>
+  {
+    list.length ? (
+      <ul class="list">
+        {list.map((r) => (
+          <li class="panel">
+            <div class="top">
+              <span class="stars" style={`--r:${r.rating}`} role="img" aria-label={`${r.rating} out of 5`} />
+              <span class="tag">{fmt(r.date)}</span>
+            </div>
+            <p>{r.text}</p>
+            {r.photo && <img src={r.photo} alt={`${r.name}'s ${p.name}`} loading="lazy" />}
+            <span class="who">{r.name} · verified order</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="first panel">
+        <span class="stars empty" aria-hidden="true" />
+        <p>
+          <b>No reviews yet.</b> This shop is new, and I'd rather show nothing than fake it. Bought one? Tell me how it
+          turned out.
+        </p>
+        <a class="btn" href={mail}>Write the first review</a>
+      </div>
+    )
+  }
+  {list.length > 0 && <a class="more" href={mail}>Bought one? Send your review →</a>}
+</section>
+
+<style>
+  .head {
+    align-items: center;
+  }
+  .sum {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-2);
+  }
+  .sum b {
+    color: var(--white);
+  }
+  /* five diamonds, filled to the rating */
+  .stars {
+    --r: 0;
+    display: inline-block;
+    width: 92px;
+    height: 16px;
+    background: linear-gradient(90deg, var(--hot) calc(var(--r) / 5 * 100%), var(--panel-3) 0);
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 16px, transparent 16px 19px);
+    mask: repeating-linear-gradient(90deg, #000 0 16px, transparent 16px 19px);
+    clip-path: polygon(
+      0 50%, 8.7% 0, 17.4% 50%, 8.7% 100%, 0 50%,
+      20.6% 50%, 29.3% 0, 38% 50%, 29.3% 100%, 20.6% 50%,
+      41.3% 50%, 50% 0, 58.7% 50%, 50% 100%, 41.3% 50%,
+      62% 50%, 70.7% 0, 79.4% 50%, 70.7% 100%, 62% 50%,
+      82.6% 50%, 91.3% 0, 100% 50%, 91.3% 100%, 82.6% 50%
+    );
+  }
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 22px;
+  }
+  .list li {
+    display: grid;
+    gap: 10px;
+    padding: 18px 20px;
+    align-content: start;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .list p {
+    margin: 0;
+    color: var(--text);
+  }
+  .list img {
+    width: 100%;
+    border-radius: 10px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+  .who {
+    font: 600 0.82rem var(--font);
+    color: var(--text-3);
+  }
+  .first {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 18px;
+    align-items: center;
+    padding: 20px 22px;
+  }
+  .first p {
+    margin: 0;
+  }
+  .first b {
+    color: var(--white);
+  }
+  .more {
+    display: inline-block;
+    margin-top: 18px;
+    font-weight: 700;
+    color: var(--tone);
+    text-decoration: none;
+  }
+  @media (max-width: 700px) {
+    .first {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

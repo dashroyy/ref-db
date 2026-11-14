@@ -1,0 +1,153 @@
+---
+import Base from '../layouts/Base.astro';
+import LabStatus from '../components/LabStatus.astro';
+import { PRODUCTS } from '../data/catalog.ts';
+import { MATERIALS } from '../data/materials.ts';
+import { GUIDES } from '../data/guides.ts';
+const promises = [
+  { t: 'You see it first', d: 'Every custom piece gets a 3D preview you approve before anything is printed.', c: '#ff6ec7' },
+  { t: 'Honest prices', d: 'The price tools show where the money goes. A quote is a quote; no surprises on the invoice.', c: '#ffab2e' },
+  { t: 'Only licensed designs', d: 'Community models are sold only when the designer allows it. Designers get credit on the page.', c: '#8f8cff' },
+  { t: 'Real lead times', d: 'The queue on the home page is the real queue. If I\'m busy, it says so.', c: '#3dffc5' },
+];
+---
+
+<Base title="About" description="DashLabs is a one-person 3D printing lab: custom figurines, business cards, original gadgets and made-to-order prints.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="kicker"><span class="dot"></span>About the lab</p>
+      <h1 class="x3d">One person,<br />a few printers,<br /><span class="hot">a lot of ideas.</span></h1>
+      <p class="lede">
+        DashLabs is a one-person 3D printing lab. I design original gadgets, sculpt custom figurines of people and
+        pets, print business cards people keep, and make great community designs to order. Everything is printed
+        when you order it, in the colour you choose.
+      </p>
+
+      <dl class="stats" data-print>
+        <div><dt>{PRODUCTS.length}</dt><dd>things to order</dd></div>
+        <div><dt>{MATERIALS.length}</dt><dd>filaments</dd></div>
+        <div><dt>{GUIDES.length}</dt><dd>guides with tools</dd></div>
+        <div><dt>1</dt><dd>person who answers your email</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section tight">
+    <div class="wrap">
+      <h2 class="h-rule" data-print>How I work</h2>
+      <ul class="promises">
+        {promises.map((p) => <li style={`--c:${p.c}`} data-print><i></i><h3>{p.t}</h3><p>{p.d}</p></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section tight">
+    <div class="wrap note-wrap">
+      <div class="note panel" data-print>
+        <span class="tag draft">Draft · maker's note to be written</span>
+        <h2>From the maker</h2>
+        <p class="muted">
+          This is where the story goes: how DashLabs started, the first print, why the Pen Launcher exists. A photo
+          of the workshop would sit well here too.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section tight">
+    <div class="wrap">
+      <div class="head" data-print>
+        <h2 class="h-rule">The lab right now</h2>
+        <a href="/lab/">See what I've designed →</a>
+      </div>
+      <div data-print><LabStatus /></div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .tight {
+    padding-top: 0;
+  }
+  h1 {
+    font-size: clamp(2.4rem, 6vw, 4.6rem);
+    letter-spacing: -0.045em;
+    line-height: 1;
+    margin-bottom: 1.4rem;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin: 44px 0 0;
+  }
+  .stats div {
+    padding: 20px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+  }
+  .stats dt {
+    font: 700 2.6rem/1 var(--display);
+    letter-spacing: -0.04em;
+    color: var(--hot);
+  }
+  .stats dd {
+    margin: 8px 0 0;
+    color: var(--text-2);
+  }
+  .promises {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .promises li {
+    padding: 22px;
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+  }
+  .promises i {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    transform: rotate(45deg);
+    background: var(--c);
+    box-shadow: 0 0 12px var(--c);
+    margin-bottom: 16px;
+  }
+  .promises p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--text-3);
+  }
+  .note {
+    padding: clamp(22px, 4vw, 36px);
+    max-width: 760px;
+    border-style: dashed;
+  }
+  .draft {
+    color: var(--warn);
+  }
+  .note h2 {
+    margin: 10px 0;
+  }
+  @media (max-width: 900px) {
+    .stats,
+    .promises {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .promises {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

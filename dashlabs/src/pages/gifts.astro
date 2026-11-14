@@ -1,0 +1,174 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { PRODUCTS } from '../data/catalog.ts';
+import { WHO, VIBE, BUDGET } from '../lib/gifts.ts';
+const groups = [
+  { name: 'who', q: 'Who is it for?', opts: WHO, first: 'friend' },
+  { name: 'vibe', q: 'What kind of gift?', opts: VIBE, first: 'fun' },
+  { name: 'budget', q: 'Budget?', opts: BUDGET, first: '30' },
+];
+---
+
+<Base title="Gift finder" description="Three quick questions: who it's for, what kind of gift, and your budget. Get three 3D-printed gift ideas, made to order.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="kicker"><span class="dot pink"></span>Gift finder</p>
+      <h1 class="x3d">Three questions.<br /><span class="hot">Three ideas.</span></h1>
+
+      <form class="quiz" data-quiz onsubmit="return false">
+        {
+          groups.map((g, i) => (
+            <fieldset>
+              <legend>
+                <span class="n">0{i + 1}</span>
+                {g.q}
+              </legend>
+              <div class="opts">
+                {g.opts.map((o) => (
+                  <label>
+                    <input type="radio" name={g.name} value={o.id} checked={o.id === g.first} />
+                    <span>{o.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))
+        }
+      </form>
+
+      <h2 class="h-rule res-h">My picks</h2>
+      <p class="muted" data-gift-note aria-live="polite"></p>
+      <div class="grid" data-gift-grid>
+        {PRODUCTS.map((p) => <ProductCard product={p} />)}
+      </div>
+      <p class="after muted">
+        Every gift can be <a href="/cart/">gift-wrapped with a note</a>. Want something made just for them?{' '}
+        <a href="/custom/">Start a custom order</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { suggest, type WhoId, type VibeId, type BudgetId } from '../lib/gifts.ts';
+  const form = document.querySelector<HTMLFormElement>('[data-quiz]')!;
+  const grid = document.querySelector<HTMLElement>('[data-gift-grid]')!;
+  const cards = [...grid.querySelectorAll<HTMLElement>('[data-product]')];
+  const note = document.querySelector<HTMLElement>('[data-gift-note]')!;
+  const render = () => {
+    const f = new FormData(form);
+    const picks = suggest({ who: f.get('who') as WhoId, vibe: f.get('vibe') as VibeId, budget: f.get('budget') as BudgetId });
+    for (const c of cards) c.hidden = true;
+    picks.forEach((p, i) => {
+      const c = cards.find((x) => x.dataset.product === p.product.id)!;
+      c.hidden = false;
+      c.style.animation = 'none';
+      void c.offsetWidth;
+      c.style.animation = `gift-in 0.45s ${i * 70}ms both cubic-bezier(0.2, 1.2, 0.4, 1)`;
+      grid.appendChild(c);
+    });
+    note.textContent = picks.some((p) => p.overBudget)
+      ? 'Nothing matches under that budget, so these are the closest.'
+      : picks.every((p) => p.score === 0)
+        ? 'No perfect match, but these fit the budget.'
+        : '';
+  };
+  form.addEventListener('change', render);
+  render();
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .dot.pink {
+    background: var(--pink);
+    box-shadow: 0 0 10px var(--pink);
+  }
+  .quiz {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 28px;
+  }
+  fieldset {
+    margin: 0;
+    padding: 18px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r);
+    background: var(--panel);
+    min-width: 0;
+  }
+  legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 6px;
+    font: 600 1rem var(--display);
+    letter-spacing: -0.02em;
+    color: var(--white);
+  }
+  .n {
+    font: 700 0.8rem var(--mono);
+    color: var(--hot);
+  }
+  .opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .opts input {
+    position: absolute;
+    opacity: 0;
+  }
+  .opts span {
+    display: inline-block;
+    padding: 9px 13px;
+    border-radius: 11px;
+    border: 1px solid var(--line-2);
+    background: var(--ink-2);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .opts span:hover {
+    transform: translateY(-2px);
+  }
+  .opts input:checked + span {
+    border-color: var(--hot);
+    color: var(--white);
+    background: color-mix(in srgb, var(--hot) 15%, transparent);
+  }
+  .opts input:focus-visible + span {
+    outline: 2px solid var(--hot);
+    outline-offset: 2px;
+  }
+  .res-h {
+    margin: 44px 0 20px;
+  }
+  .grid :global([hidden]) {
+    display: none;
+  }
+  @keyframes -global-gift-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.96);
+    }
+  }
+  .after {
+    margin-top: 32px;
+  }
+  .after a {
+    color: var(--hot);
+    font-weight: 700;
+  }
+  @media (max-width: 900px) {
+    .quiz {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

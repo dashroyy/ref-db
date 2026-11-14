@@ -1,0 +1,245 @@
+---
+// The page frame: the print chamber background, top bar, footer, and the
+// site-wide motion: sections printing in, 3D product thumbnails, card tilt.
+import '@fontsource/unbounded/latin-500.css';
+import '@fontsource/unbounded/latin-600.css';
+import '@fontsource/unbounded/latin-700.css';
+import '@fontsource/manrope/latin-400.css';
+import '@fontsource/manrope/latin-500.css';
+import '@fontsource/manrope/latin-600.css';
+import '@fontsource/manrope/latin-700.css';
+import '@fontsource/jetbrains-mono/latin-500.css';
+import '@fontsource/jetbrains-mono/latin-600.css';
+import '../styles/global.css';
+// Preload the latin files every page needs at once (headlines + body text)
+import unbounded700 from '@fontsource/unbounded/files/unbounded-latin-700-normal.woff2?url';
+import unbounded600 from '@fontsource/unbounded/files/unbounded-latin-600-normal.woff2?url';
+import manrope400 from '@fontsource/manrope/files/manrope-latin-400-normal.woff2?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE, ORDER_DELIVERY, CHECKOUT_MODE } from '../data/site.ts';
+import { pageColor } from '../data/nav.ts';
+
+interface Props {
+  cta?: boolean; // the "got an idea?" band above the footer (off on pages that are already the destination)
+  title?: string;
+  description?: string;
+  jsonld?: Record<string, unknown> | Record<string, unknown>[]; // extra structured data for this page (e.g. a Product)
+  noindex?: boolean; // keep this page out of search results
+  image?: string; // share-card image for this page (defaults to /og.png)
+}
+const { title, description = SITE.description, jsonld, noindex = false, cta = true, image = '/og.png' } = Astro.props;
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL(image, site).href;
+const org = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE.name,
+  url: new URL('/', site).href,
+  logo: new URL('/favicon.svg', site).href,
+  description: SITE.description,
+};
+const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+const tone = pageColor(Astro.url.pathname);
+---
+
+<!doctype html>
+<html lang="en" style={`--tone:${tone}`}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="sitemap" href="/sitemap.xml" />
+    <meta property="og:type" content={Array.isArray(jsonld) ? 'product' : 'website'} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title ?? SITE.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonld ?? org)} />
+    <meta name="theme-color" content="#08070d" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    {[unbounded700, unbounded600, manrope400].map((href) => <link rel="preload" as="font" type="font/woff2" href={href} crossorigin />)}
+    <script is:inline>
+      // Before first paint: enable print-in effects, restore Motion off. Storage can throw.
+      document.documentElement.classList.add('js');
+      try {
+        if (localStorage.getItem('dashlabs-motion') === 'off') document.documentElement.classList.add('motion-off');
+        // Night shift (dark) is the default; Day shift only when chosen
+        if (localStorage.getItem('dashlabs-theme') === 'light') document.documentElement.dataset.theme = 'light';
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="chamber" aria-hidden="true"></div>
+    <a class="skip" href="#main">Skip to content</a>
+    <noscript>
+      <p class="noscript">
+        This shop needs JavaScript for the cart, the 3D previews and the tools. You can still read every page, or email
+        <a href={`mailto:${SITE.email}`}>{SITE.email}</a> to order.
+      </p>
+    </noscript>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    {
+      cta && (
+        <aside class="wrap idea" aria-label="Custom orders" data-print>
+          <div class="idea-in">
+            <div>
+              <p class="tag">Can't find it in the shop?</p>
+              <p class="idea-t">If you can describe it, I can probably print it.</p>
+            </div>
+            <div class="idea-a">
+              <a class="btn btn--primary" href="/custom/">Start a custom order</a>
+              <a class="btn" href="/custom/#stl">Quote my 3D file</a>
+            </div>
+          </div>
+        </aside>
+      )
+    }
+    <Footer />
+
+    <script>
+      import { webglOK } from '../lib/three/support.ts';
+
+      // Print-in: [data-print] sections build up layer by layer as they enter view.
+      // (A position check, not IntersectionObserver: Chromium treats a fully
+      // clip-path'd element as never intersecting, so it would never reveal.)
+      let pending = [...document.querySelectorAll<HTMLElement>('[data-print]')];
+      let queued = false;
+      const check = () => {
+        queued = false;
+        const edge = innerHeight * 0.92;
+        pending = pending.filter((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.top < edge && r.bottom > 0) {
+            el.classList.add('printed');
+            return false;
+          }
+          // anything already scrolled past is shown without the effect
+          if (r.bottom <= 0) {
+            el.classList.add('printed');
+            return false;
+          }
+          return true;
+        });
+      };
+      const queue = () => {
+        if (!queued && pending.length) {
+          queued = true;
+          requestAnimationFrame(check);
+        }
+      };
+      addEventListener('scroll', queue, { passive: true });
+      addEventListener('resize', queue);
+      check();
+
+      // Remember the name and email typed into the cart or request form (on this device only)
+      const WHO = 'dashlabs.customer.v1';
+      let who: Record<string, string> = {};
+      try {
+        who = JSON.parse(localStorage.getItem(WHO) || '{}');
+      } catch {}
+      document.querySelectorAll<HTMLInputElement>('form input[autocomplete="name"], form input[autocomplete="email"]').forEach((input) => {
+        const key = input.autocomplete;
+        if (!input.value && typeof who[key] === 'string') input.value = who[key];
+        input.addEventListener('change', () => {
+          who[key] = input.value.trim().slice(0, 200);
+          try {
+            localStorage.setItem(WHO, JSON.stringify(who));
+          } catch {}
+        });
+      });
+
+      // 3D tilt on [data-tilt] cards: fine pointers only, never under Motion off
+      const root = document.documentElement;
+      const calm = () => root.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((el) => {
+          el.addEventListener('pointermove', (e) => {
+            if (calm()) return;
+            const r = el.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width;
+            const y = (e.clientY - r.top) / r.height;
+            el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+            el.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+            el.style.setProperty('--rx', `${((0.5 - y) * 10).toFixed(2)}deg`);
+            el.style.setProperty('--ry', `${((x - 0.5) * 12).toFixed(2)}deg`);
+            el.classList.add('tilting');
+          });
+          el.addEventListener('pointerleave', () => {
+            el.style.setProperty('--rx', '0deg');
+            el.style.setProperty('--ry', '0deg');
+            el.classList.remove('tilting');
+          });
+        });
+      }
+
+      // Real 3D renders for product thumbnails, generated in the browser once idle
+      if (document.querySelector('[data-thumb]') && webglOK()) {
+        const go = () => import('../lib/three/viewer.ts').then((m) => m.renderThumbs());
+        'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 1500 }) : setTimeout(go, 300);
+      }
+    </script>
+    {
+      (ORDER_DELIVERY === 'netlify-form' || CHECKOUT_MODE === 'stripe') && (
+        // Netlify Forms reads these at deploy time; requests are posted to them by lib/deliver.ts
+        <div hidden aria-hidden="true">
+          {[...(ORDER_DELIVERY === 'netlify-form' ? ['order', 'custom'] : []), ...(CHECKOUT_MODE === 'stripe' ? ['paid-order'] : [])].map((n) => (
+            <form name={n} data-netlify="true" netlify-honeypot="bot-field">
+              <input type="text" name="bot-field" />
+              <input type="text" name="reference" />
+              <input type="text" name="name" />
+              <input name="email" type="email" />
+              <input type="text" name="subject" />
+              <textarea name="message"></textarea>
+            </form>
+          ))}
+        </div>
+      )
+    }
+  </body>
+</html>
+
+<style>
+  .idea {
+    margin-top: 24px;
+  }
+  .idea-in {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px 32px;
+    padding: clamp(22px, 4vw, 36px);
+    border-radius: var(--r);
+    border: 1px solid var(--line-2);
+    background:
+      radial-gradient(circle at 0% 100%, var(--glow-hot), transparent 55%),
+      radial-gradient(circle at 100% 0%, var(--glow-uv), transparent 55%),
+      var(--panel);
+  }
+  .idea-t {
+    margin: 6px 0 0;
+    font: 600 clamp(1.2rem, 2.6vw, 1.7rem) var(--display);
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+  .idea-a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>

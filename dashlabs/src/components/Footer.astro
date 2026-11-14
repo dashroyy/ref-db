@@ -1,0 +1,119 @@
+---
+import Logo from './Logo.astro';
+import { SITE } from '../data/site.ts';
+import { SHOP_GROUPS, LEARN_GROUP } from '../data/nav.ts';
+const year = new Date().getFullYear();
+const socials = Object.entries(SITE.social).filter(([, url]) => url);
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="sign" data-print>
+      <p class="x3d">Dash<span class="hot">Labs</span></p>
+      <p class="muted">{SITE.tagline}</p>
+    </div>
+    <div class="cols">
+      <nav aria-label="Shop">
+        <span class="tag">Shop</span>
+        {SHOP_GROUPS.map((g) => <a href={g.href} style={`--c:${g.color}`}><i></i>{g.label}</a>)}
+      </nav>
+      <nav aria-label="Learn">
+        <span class="tag">Learn</span>
+        {LEARN_GROUP.items.map((it) => <a href={it.href}>{it.label}</a>)}
+      </nav>
+      <nav aria-label="Info">
+        <span class="tag">Info</span>
+        <a href="/custom/">Custom orders</a>
+        <a href="/lab/">The lab</a>
+        <a href="/gifts/">Gift finder</a>
+        <a href="/about/">About</a>
+        <a href="/faq/">FAQ</a>
+        <a href="/policies/">Policies</a>
+        <a href="/cart/">Cart</a>
+      </nav>
+      <nav aria-label="Contact">
+        <span class="tag">Say hi</span>
+        <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        {socials.map(([name, url]) => <a href={url}>{name}</a>)}
+      </nav>
+    </div>
+    <p class="legal">
+      <span><Logo size={18} /> © {year} DashLabs</span><span>Printed layer by layer · 0.20 mm at a time</span>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    position: relative;
+    margin-top: 40px;
+    padding: 64px 0 28px;
+    border-top: 1px solid var(--line);
+    background:
+      radial-gradient(70vw 40vh at 50% 120%, rgba(155, 107, 255, 0.18), transparent 70%),
+      linear-gradient(to bottom, transparent, var(--footer-fade) 30%);
+  }
+  .sign p:first-child {
+    font: 700 clamp(2.6rem, 9vw, 6.5rem) / 1 var(--display);
+    letter-spacing: -0.05em;
+    margin: 0 0 10px;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+    margin-top: 44px;
+  }
+  nav {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  nav .tag {
+    margin-bottom: 4px;
+  }
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 0.93rem;
+    overflow-wrap: anywhere;
+  }
+  nav a i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    transform: rotate(45deg);
+    background: var(--c);
+    box-shadow: 0 0 8px var(--c);
+  }
+  nav a:hover {
+    color: var(--white);
+  }
+  .legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 18px;
+    margin: 48px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font: 500 0.72rem var(--mono);
+    color: var(--text-3);
+  }
+  .legal span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  @media (max-width: 820px) {
+    .cols {
+      grid-template-columns: 1fr 1fr;
+    }
+    .cols nav[aria-label='Contact'] {
+      grid-column: 1 / -1; /* room for the email address on one line */
+    }
+  }
+</style>

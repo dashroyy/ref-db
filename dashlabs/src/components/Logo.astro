@@ -1,0 +1,18 @@
+---
+// The DashLabs mark: an isometric printed cube. Hot amber top face, UV violet
+// sides with layer lines, mid-print.
+interface Props {
+  size?: number;
+}
+const { size = 34 } = Astro.props;
+const lines = [0, 1, 2, 3];
+---
+
+<svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" class="mark">
+  <polygon points="20,4 35,12 20,20 5,12" fill="var(--hot)"></polygon>
+  <polygon points="5,12 20,20 20,36 5,28" fill="#6c47d6"></polygon>
+  <polygon points="20,20 35,12 35,28 20,36" fill="#4a2ca8"></polygon>
+  {lines.map((k) => <line x1="5" y1={15.5 + k * 3.6} x2="20" y2={23.5 + k * 3.6} stroke="#9b7bff" stroke-width=".9" opacity=".8" />)}
+  {lines.map((k) => <line x1="20" y1={23.5 + k * 3.6} x2="35" y2={15.5 + k * 3.6} stroke="#7d55e6" stroke-width=".9" opacity=".8" />)}
+  <polygon points="20,7.5 29,12 20,16.5 11,12" fill="none" stroke="#fff4d6" stroke-width="1" opacity=".7"></polygon>
+</svg>

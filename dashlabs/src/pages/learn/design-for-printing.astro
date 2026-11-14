@@ -1,0 +1,207 @@
+---
+import Guide from '../../layouts/Guide.astro';
+import Analogy from '../../components/Analogy.astro';
+import { DEFAULT_PART as D } from '../../lib/design.ts';
+---
+
+<Guide slug="design-for-printing">
+  <h2>Why it matters</h2>
+  <p>
+    Most failed prints fail in the design, long before the printer warms up. A shape that looks fine on screen can be
+    impossible to build from the bottom up. Four checks catch nearly all of it, and they cost nothing to fix while the
+    part is still a file.
+  </p>
+
+  <h2>The intuition</h2>
+  <Analogy title="Building with bricks, with no scaffolding">
+    <p>
+      A printer stacks layers the way a bricklayer stacks bricks. Each new brick can stick out a little past the one
+      below, but only a little; lean out too far and it falls. And you can't lay a brick in mid-air, though you can
+      lay a short lintel across a gap. That's the whole game: <strong>every bit of plastic needs something under it</strong>.
+    </p>
+    <p>
+      Where it breaks down: molten plastic is stickier than a brick, so a printer can cheat a bit. It can lean out to
+      about 45° and span small gaps in mid-air, which a bricklayer can't.
+    </p>
+  </Analogy>
+
+  <h2 id="try-it">Try it</h2>
+  <p>Set your part's four trickiest features and see what the printer will make of them.</p>
+  <div class="wide">
+    <div class="calc" data-design>
+      <div class="calc-head"><span>Printability check</span><span>rules of thumb · 0.4 mm nozzle</span></div>
+      <div class="calc-body">
+        <form data-form onsubmit="return false">
+          <div class="field">
+            <label for="d-o">Steepest overhang <span class="range-val" data-v="overhangDeg"></span></label>
+            <input id="d-o" name="overhangDeg" type="range" min="0" max="90" step="5" value={D.overhangDeg} />
+          </div>
+          <div class="field">
+            <label for="d-b">Longest bridge <span class="range-val" data-v="bridgeMm"></span></label>
+            <input id="d-b" name="bridgeMm" type="range" min="0" max="120" step="5" value={D.bridgeMm} />
+          </div>
+          <div class="field">
+            <label for="d-w">Thinnest wall <span class="range-val" data-v="wallMm"></span></label>
+            <input id="d-w" name="wallMm" type="range" min="0.4" max="3" step="0.1" value={D.wallMm} />
+          </div>
+          <div class="field">
+            <label for="d-c">Gap between moving parts <span class="range-val" data-v="clearanceMm"></span></label>
+            <input id="d-c" name="clearanceMm" type="range" min="0.05" max="1" step="0.05" value={D.clearanceMm} />
+          </div>
+          <p class="hint">Overhang is measured from vertical: 0° is a straight wall, 90° is a flat ceiling.</p>
+        </form>
+        <div class="calc-out" aria-live="polite">
+          <svg viewBox="0 0 300 170" class="demo" role="img" aria-label="Side view of the overhang and bridge">
+            <desc>A side view of a printed wall leaning out at the chosen overhang angle, and a bridge spanning two posts with sag shown when it is too long.</desc>
+            <line x1="10" y1="150" x2="290" y2="150" stroke="var(--line-2)"></line>
+            <path data-over fill="var(--hot)" opacity="0.9"></path>
+            <path data-over-sup fill="none" stroke="var(--uv-2)" stroke-dasharray="3 3"></path>
+            <rect x="170" y="90" width="12" height="60" fill="var(--hot)"></rect>
+            <rect data-post x="260" y="90" width="12" height="60" fill="var(--hot)"></rect>
+            <path data-bridge fill="none" stroke="var(--hot)" stroke-width="7" stroke-linecap="round"></path>
+            <text x="70" y="166" text-anchor="middle" class="lbl">overhang</text>
+            <text x="222" y="166" text-anchor="middle" class="lbl">bridge</text>
+          </svg>
+          <div class="overall" data-overall></div>
+          <ul class="checks" data-checks></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Worked example: a phone stand</h2>
+  <p>The default settings above are a simple phone stand. Each feature against its rule:</p>
+  <div class="math">{`Overhang    45° back rest           ≤ 45°        prints cleanly
+Bridge      20 mm cable slot        ≤ 30 mm      spans without sagging
+Wall        1.2 mm                  ≥ 1.2 mm     three nozzle passes (3 × 0.4)
+Clearance   0.30 mm hinge gap       0.25–0.5     moves freely
+
+All four pass, so the part needs no supports.`}</div>
+  <p>
+    Push the overhang to 80° and the verdict flips: it now needs supports, which cost time, plastic and a rough
+    surface where they touch. Often the fix is free: turn the part over, or split it in two flat-bottomed halves.
+  </p>
+
+  <h2>Where this stops</h2>
+  <div class="stops">
+    <ul>
+      <li><strong>They're rules of thumb.</strong> A well-tuned printer with good cooling beats them; a fast draft print falls short of them.</li>
+      <li><strong>Materials differ.</strong> PLA bridges and overhangs best. PETG and TPU sag sooner.</li>
+      <li><strong>Orientation changes everything.</strong> The same part can be easy one way up and impossible another. Layers are also the weak direction: a hook printed lying down is far stronger than one printed standing up.</li>
+      <li><strong>Not sure?</strong> Send the file. I'll check it and suggest changes before anything is printed.</li>
+    </ul>
+  </div>
+
+  <h2>References</h2>
+  <ul>
+    <li>Prusa Knowledge Base: "Modeling with 3D printing in mind".</li>
+    <li>Redwood, Schöffer &amp; Garret, <em>The 3D Printing Handbook</em> (3D Hubs, 2017), FDM design rules.</li>
+  </ul>
+</Guide>
+
+<script>
+  import { checkPart, overall, type PartInput } from '../../lib/design.ts';
+  const root = document.querySelector<HTMLElement>('[data-design]');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const $ = (s: string) => root.querySelector<SVGElement | HTMLElement>(s)!;
+    const UNIT: Record<string, (n: number) => string> = {
+      overhangDeg: (n) => `${n}°`,
+      bridgeMm: (n) => `${n} mm`,
+      wallMm: (n) => `${n.toFixed(1)} mm`,
+      clearanceMm: (n) => `${n.toFixed(2)} mm`,
+    };
+    const WORD = { good: 'Prints cleanly', care: 'Printable, with care', problem: 'Needs a rethink' };
+    const render = () => {
+      const f = new FormData(form);
+      const p = Object.fromEntries([...f.entries()].map(([k, v]) => [k, Number(v)])) as unknown as PartInput;
+      for (const el of root.querySelectorAll<HTMLElement>('[data-v]')) el.textContent = UNIT[el.dataset.v!](p[el.dataset.v as keyof PartInput]);
+      const checks = checkPart(p);
+      const all = overall(checks);
+      $('[data-overall]').className = `overall ${all}`;
+      $('[data-overall]').textContent = WORD[all];
+      $('[data-checks]').innerHTML = checks.map((c) => `<li class="${c.verdict}"><i></i><span><b>${c.title}</b>${c.note}</span></li>`).join('');
+      // overhang: a 14-wide wall leaning out from (40,150), 80 tall
+      const a = (p.overhangDeg * Math.PI) / 180;
+      const len = 80;
+      const dx = Math.min(100, Math.sin(a) * len), dy = Math.max(6, Math.cos(a) * len);
+      $('[data-over]').setAttribute('d', `M30 150 L44 150 L${44 + dx} ${150 - dy} L${30 + dx} ${150 - dy} Z`);
+      $('[data-over-sup]').setAttribute('d', p.overhangDeg > 60 ? `M${30 + dx * 0.5} 150 V${150 - dy * 0.5} M${30 + dx} 150 V${150 - dy}` : '');
+      // bridge: span scales with length, sag when long
+      const span = 20 + (p.bridgeMm / 120) * 100;
+      const x2 = 176 + span;
+      $('[data-post]').setAttribute('x', String(x2 - 6));
+      const sag = p.bridgeMm <= 30 ? 0 : p.bridgeMm <= 60 ? 8 : 22;
+      $('[data-bridge]').setAttribute('d', `M176 90 Q${(176 + x2) / 2} ${90 + sag * 2} ${x2} 90`);
+    };
+    form.addEventListener('input', render);
+    render();
+  }
+</script>
+
+<style>
+  .demo {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--ink-2);
+  }
+  .lbl {
+    font: 500 10px var(--mono);
+    fill: var(--text-3);
+  }
+  .overall {
+    font: 700 1.5rem var(--display);
+    letter-spacing: -0.03em;
+  }
+  .overall:global(.good),
+  .checks :global(.good b) {
+    color: var(--mint);
+  }
+  .overall:global(.care),
+  .checks :global(.care b) {
+    color: var(--warn);
+  }
+  .overall:global(.problem),
+  .checks :global(.problem b) {
+    color: var(--danger);
+  }
+  .checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .checks :global(li) {
+    display: grid;
+    grid-template-columns: 10px 1fr;
+    gap: 10px;
+    align-items: start;
+    font-size: 0.88rem;
+    color: var(--text-2);
+  }
+  .checks :global(i) {
+    width: 10px;
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 3px;
+    background: currentColor;
+  }
+  .checks :global(.good) {
+    color: var(--mint);
+  }
+  .checks :global(.care) {
+    color: var(--warn);
+  }
+  .checks :global(.problem) {
+    color: var(--danger);
+  }
+  .checks :global(span) {
+    color: var(--text-2);
+  }
+  .checks :global(b) {
+    display: block;
+  }
+</style>
