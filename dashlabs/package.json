@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "description": "DashLabs \u2014 3D printing portfolio and made-to-order shop.",
+  "description": "DashLabs — 3D printing portfolio and made-to-order shop.",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -12,6 +12,7 @@
     "thumbs": "node scripts/render-thumbs.mjs",
     "og": "node scripts/render-og.ts",
     "smoke": "node scripts/smoke.mjs",
+    "validate": "html-validate \"dist/**/*.html\"",
     "launch-check": "node scripts/launch-check.ts"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "three": "^0.171.0"
   },
   "devDependencies": {
-    "@types/three": "^0.187.0"
+    "@types/three": "^0.187.0",
+    "html-validate": "^9.7.1"
   }
 }

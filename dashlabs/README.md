@@ -129,7 +129,8 @@ Principles that keep it maintainable:
 | `npm run dev`           | Local site at http://localhost:4321 with live reload. |
 | `npm test`              | Unit tests (catalog rules, pricing, cart, Stripe, STL, tools). |
 | `npm run build`         | Build the static site into `dist/`. |
-| `npm run smoke`         | Drive the built site like a customer: 12 journeys, every link, phone widths. Needs Playwright. |
+| `npm run smoke`         | Drive the built site like a customer: 14 journeys, every link, phone widths. Needs Playwright. |
+| `npm run validate`      | Check every built page's HTML (run after `npm run build`; CI runs it too). |
 | `npm run launch-check`  | List remaining placeholders. `-- --strict` fails while any must-fix item remains. |
 | `npm run thumbs`        | Re-render product thumbnails and the home-page printer still. Needs Playwright. |
 | `npm run og`            | Re-render each product's share card (the picture in iMessage/WhatsApp/Discord link previews). Run after `thumbs`, or after changing a name, summary, price or photo. |

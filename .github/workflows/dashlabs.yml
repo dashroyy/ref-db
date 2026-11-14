@@ -28,3 +28,4 @@ jobs:
       - run: npm test
       - run: npx tsc --noEmit -p .
       - run: npm run build
+      - run: npm run validate
