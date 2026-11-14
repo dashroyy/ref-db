@@ -202,7 +202,18 @@ import { PRODUCTS } from '../data/catalog.ts';
       },
       { giftWrap: giftOn(), giftNote: giftOn() ? String(data.get('giftNote') || '') : undefined },
     );
-    if (res.kind === 'redirect') location.href = res.url;
+    if (res.kind === 'redirect') {
+      // for the thank-you page: what was ordered and when it ships (this tab only)
+      try {
+        sessionStorage.setItem(
+          'dashlabs.lastOrder',
+          JSON.stringify({ ships: $('[data-cart-ships]').textContent, items: readCart().reduce((n, l) => n + l.qty, 0) }),
+        );
+      } catch {
+        /* storage blocked: the page just shows less */
+      }
+      location.href = res.url;
+    }
     else if (res.kind === 'request') {
       const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
       button.disabled = true; // no double orders while it sends
