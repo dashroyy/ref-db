@@ -18,8 +18,8 @@ const next = GUIDES[(i + 1) % GUIDES.length];
       <nav class="crumbs" aria-label="Breadcrumb">
         <a href="/learn/">Learn</a>
         <span aria-hidden="true">/</span>
-        <span class="steps" aria-label={`Guide ${i + 1} of ${GUIDES.length}`}>
-          {GUIDES.map((g, k) => <a href={`/learn/${g.slug}/`} class:list={[k === i && 'here']} title={g.title}><span class="sr-only">{g.title}</span></a>)}
+        <span class="steps" role="group" aria-label={`Guide ${i + 1} of ${GUIDES.length}`}>
+          {GUIDES.map((g, k) => <a href={`/learn/${g.slug}/`} class:list={[k === i && 'here']} aria-current={k === i ? 'page' : undefined} title={g.title}><span class="sr-only">{g.title}</span></a>)}
         </span>
         <span class="count">Guide {String(i + 1).padStart(2, '0')} of {String(GUIDES.length).padStart(2, '0')}</span>
       </nav>
