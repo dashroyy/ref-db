@@ -3,7 +3,7 @@
 // the built HTML (layouts/Base.astro), stores each submission and emails it to
 // you. Nothing here needs a key.
 
-export type RequestForm = 'order' | 'custom';
+export type RequestForm = 'order' | 'custom' | 'paid-order';
 
 export interface Delivery {
   form: RequestForm;

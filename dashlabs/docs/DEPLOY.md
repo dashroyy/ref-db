@@ -49,12 +49,22 @@ To switch back, delete the variable and redeploy.
 6. In Stripe: **Settings → Branding** (logo and colours appear on checkout and invoices) and **Settings → Emails**
    (turn on "Successful payments" so you hear about every order).
 
-## 3. Order notifications (optional)
+## 3. Get an email for every paid order (recommended)
 
-In Stripe: **Developers → Webhooks → Add endpoint**, URL `https://YOUR-DOMAIN/api/stripe-webhook`, event
-`checkout.session.completed`. Copy the signing secret (`whsec_…`) into Netlify as `STRIPE_WEBHOOK_SECRET` and
-redeploy. Paid orders are then written to the function log (Netlify → Logs → Functions), ready to be extended to a
-spreadsheet or a chat message.
+Stripe emails the customer their receipt and invoice. To get the making details yourself (items, colours,
+personalised text, gift note, shipping address) in one email per paid order:
+
+1. In Stripe: **Developers → Webhooks → Add endpoint**, URL `https://YOUR-DOMAIN/api/stripe-webhook`, event
+   `checkout.session.completed`. Copy the signing secret (`whsec_…`) into Netlify as `STRIPE_WEBHOOK_SECRET` and
+   redeploy.
+2. In Netlify: **Forms → Form notifications → Add notification → Email notification**, your shop inbox, for the
+   `paid-order` form (or **Any form**, which also covers step 1b).
+3. Test it with a test-mode payment (card `4242 4242 4242 4242`, any future date, any CVC). An email titled
+   **PAID: DashLabs order DL-… — $…** should arrive within a minute.
+
+Every paid order is also kept on Netlify's **Forms** page and in the function log (**Logs → Functions**), and of
+course in Stripe itself. You can also turn on Stripe's own payment emails (Stripe → **Settings → Email
+notifications → Successful payments**); they show the amount but not the making details.
 
 ## 4. Go live
 

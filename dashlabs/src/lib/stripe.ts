@@ -114,3 +114,83 @@ export async function verifyStripeSignature(
   const expected = hex(await crypto.subtle.sign('HMAC', key, enc.encode(`${t}.${rawBody}`)));
   return sigs.some((s) => same(s, expected));
 }
+
+// ---------------------------------------------------------------------------
+// Paid-order notice for the shop owner (sent by the webhook)
+
+export interface PaidSession {
+  id: string;
+  amount_total?: number | null;
+  currency?: string | null;
+  metadata?: Record<string, string> | null;
+  customer_details?: { email?: string | null; name?: string | null; phone?: string | null } | null;
+  shipping_details?: ShippingDetails | null; // older API versions
+  collected_information?: { shipping_details?: ShippingDetails | null } | null; // newer API versions
+}
+interface ShippingDetails {
+  name?: string | null;
+  address?: { line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null;
+}
+export interface PaidLineItem {
+  description?: string | null; // the product name
+  quantity?: number | null;
+  amount_total?: number | null;
+  price?: { product?: { description?: string | null } | string | null } | null;
+}
+
+const fmtMoney = (cents: number | null | undefined, currency = 'usd') =>
+  cents == null ? '' : new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100);
+
+/** Everything needed to make and ship a paid order, as a plain-text email. */
+export function paidOrderMessage(s: PaidSession, items: PaidLineItem[] | null) {
+  const ref = s.metadata?.reference ?? s.id;
+  const cur = s.currency ?? 'usd';
+  const ship = s.collected_information?.shipping_details ?? s.shipping_details;
+  const a = ship?.address;
+  const address = a ? [ship?.name, a.line1, a.line2, [a.city, a.state, a.postal_code].filter(Boolean).join(' '), a.country].filter(Boolean) : [];
+  const lines = items
+    ? items.map((it) => {
+        const detail = typeof it.price?.product === 'object' ? it.price?.product?.description : undefined;
+        return `• ${it.quantity ?? 1} × ${it.description ?? 'Item'}${detail ? ` (${detail})` : ''} — ${fmtMoney(it.amount_total, cur)}`;
+      })
+    : ['(Items could not be loaded: see the payment in your Stripe dashboard.)'];
+  const text = [
+    `PAID order ${ref}`,
+    '',
+    ...lines,
+    '',
+    `Total paid: ${fmtMoney(s.amount_total, cur)}`,
+    '',
+    `Customer: ${s.metadata?.customer_name || s.customer_details?.name || ''}`,
+    `Email: ${s.customer_details?.email ?? ''}`,
+    s.customer_details?.phone ? `Phone: ${s.customer_details.phone}` : '',
+    '',
+    address.length ? `Ship to:\n${address.join('\n')}` : 'Ship to: (no address collected)',
+    s.metadata?.gift_note ? `\nGIFT: wrap it, no prices in the box. Note: “${s.metadata.gift_note}”` : '',
+    s.metadata?.notes ? `\nCustomer notes: ${s.metadata.notes}` : '',
+    '',
+    `Stripe payment: https://dashboard.stripe.com/payments?query=${encodeURIComponent(s.id)}`,
+  ]
+    .filter((l, i, arr) => l !== '' || arr[i - 1] !== '')
+    .join('\n');
+  return {
+    reference: ref,
+    name: s.metadata?.customer_name || s.customer_details?.name || '',
+    email: s.customer_details?.email ?? '',
+    subject: `PAID: DashLabs order ${ref} — ${fmtMoney(s.amount_total, cur)}`,
+    text,
+  };
+}
+
+/** The session's line items, with product descriptions (options, personalised text). */
+export async function fetchLineItems(sessionId: string, secretKey: string, f: typeof fetch = fetch): Promise<PaidLineItem[] | null> {
+  try {
+    const res = await f(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}/line_items?limit=100&expand[]=data.price.product`, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+    if (!res.ok) return null;
+    return ((await res.json()) as { data?: PaidLineItem[] }).data ?? null;
+  } catch {
+    return null;
+  }
+}

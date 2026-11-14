@@ -5,12 +5,14 @@
 //   https://your-domain/api/stripe-webhook   event: checkout.session.completed
 // then set STRIPE_WEBHOOK_SECRET (whsec_…) in your host's environment.
 //
-// Stripe already emails the customer their receipt and invoice, and can email
-// you on every payment (Settings → Email notifications). This hook is where to
-// add your own record keeping later: a spreadsheet row, a database, a Discord
-// ping to the print queue.
+// Stripe already emails the customer their receipt and invoice. This hook sends
+// YOU the making details (items, options, personalised text, gift note, address)
+// as a 'paid-order' Netlify Form submission, which Netlify emails to you (set up
+// a form notification; see docs/DEPLOY.md). It's also where to add your own
+// record keeping later: a spreadsheet row, a database, a Discord ping.
 import type { APIRoute } from 'astro';
-import { verifyStripeSignature } from '../../lib/stripe.ts';
+import { verifyStripeSignature, fetchLineItems, paidOrderMessage, type PaidSession } from '../../lib/stripe.ts';
+import { encodeDelivery } from '../../lib/deliver.ts';
 
 export const prerender = false;
 
@@ -22,9 +24,25 @@ export const POST: APIRoute = async ({ request }) => {
 
   const event = JSON.parse(raw) as { type: string; data: { object: Record<string, unknown> } };
   if (event.type === 'checkout.session.completed') {
-    const s = event.data.object as { id: string; amount_total?: number; metadata?: Record<string, string>; customer_details?: { email?: string } };
-    // Record the paid order. For now it goes to the host's logs.
-    console.log('PAID ORDER', s.metadata?.reference, s.id, s.amount_total, s.customer_details?.email, s.metadata?.gift_note ?? '');
+    const s = event.data.object as unknown as PaidSession;
+    const items = await fetchLineItems(s.id, env('STRIPE_SECRET_KEY') ?? '');
+    const msg = paidOrderMessage(s, items);
+    console.log('PAID ORDER', msg.reference, s.id, s.amount_total);
+    // Netlify sets URL to the site's main address; the submission becomes an email to you
+    const site = env('URL');
+    if (site) {
+      try {
+        const res = await fetch(new URL('/', site), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: encodeDelivery({ form: 'paid-order', name: msg.name, email: msg.email, subject: msg.subject, message: msg.text, reference: msg.reference }),
+        });
+        if (!res.ok) console.log('paid-order notice not stored', res.status, '\n' + msg.text);
+      } catch (e) {
+        // the payment is safe in Stripe either way; the log keeps the details
+        console.log('paid-order notice failed', String(e), '\n' + msg.text);
+      }
+    } else console.log(msg.text);
   }
   return new Response('ok');
 };

@@ -73,3 +73,41 @@ test('stripe: webhook signatures verify, and tampering, wrong secrets and replay
   // Stripe may send several v1 signatures (secret rotation): any match passes
   assert.equal(await verifyStripeSignature(body, `t=${t},v1=deadbeef,v1=${sig}`, secret, t), true);
 });
+
+test('stripe: paid-order notice has everything needed to make and ship it', async () => {
+  const { paidOrderMessage, fetchLineItems } = await import('../src/lib/stripe.ts');
+  const session = {
+    id: 'cs_test_9',
+    amount_total: 5700,
+    currency: 'usd',
+    metadata: { reference: 'DL-261114-AB12', customer_name: 'Ada', gift_note: 'Happy birthday!', notes: 'Before the 20th please' },
+    customer_details: { email: 'ada@example.com', phone: '+1 555 0100' },
+    collected_information: { shipping_details: { name: 'Ada L', address: { line1: '1 Loop Rd', city: 'Austin', state: 'TX', postal_code: '78701', country: 'US' } } },
+  };
+  let asked = '';
+  const fake = (async (url: string) => {
+    asked = url;
+    return new Response(
+      JSON.stringify({ data: [{ description: 'Name keychain', quantity: 2, amount_total: 1600, price: { product: { description: 'Filament colour: Matte black · Text: “DASH”' } } }] }),
+      { status: 200 },
+    );
+  }) as unknown as typeof fetch;
+  const items = await fetchLineItems('cs_test_9', 'sk_test_x', fake);
+  assert.match(asked, /cs_test_9\/line_items.*expand/);
+  const m = paidOrderMessage(session, items);
+  assert.equal(m.reference, 'DL-261114-AB12');
+  assert.match(m.subject, /PAID.*DL-261114-AB12.*\$57\.00/);
+  assert.match(m.text, /2 × Name keychain \(Filament colour: Matte black · Text: “DASH”\) — \$16\.00/);
+  assert.match(m.text, /Ship to:\nAda L\n1 Loop Rd\nAustin TX 78701\nUS/);
+  assert.match(m.text, /GIFT: .*Happy birthday!/);
+  assert.match(m.text, /Customer notes: Before the 20th/);
+  assert.equal(m.email, 'ada@example.com');
+});
+
+test('stripe: paid-order notice still goes out if the items cannot be loaded', async () => {
+  const { paidOrderMessage, fetchLineItems } = await import('../src/lib/stripe.ts');
+  const failing = (async () => new Response('{}', { status: 500 })) as unknown as typeof fetch;
+  const m = paidOrderMessage({ id: 'cs_1', amount_total: 2400, currency: 'usd', metadata: { reference: 'DL-1' } }, await fetchLineItems('cs_1', 'k', failing));
+  assert.match(m.text, /Items could not be loaded/);
+  assert.match(m.text, /Ship to: \(no address collected\)/);
+});
