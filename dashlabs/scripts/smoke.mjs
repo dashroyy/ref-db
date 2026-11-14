@@ -144,6 +144,10 @@ await step('custom: quote product pre-fills the request form', async () => {
   expect(await page.isVisible('[data-picked]'), 'choices summary shown');
   expect((await page.evaluate(() => document.querySelector('[data-request]').getBoundingClientRect().top)) < 200, 'lands on the form');
   expect((await page.inputValue('[name="options"]')).includes('Medium'), 'options carried over');
+  await page.goto(B + '/learn/pricing/');
+  await page.click('[data-request]');
+  await page.waitForURL(/\/custom\/\?details=/);
+  expect((await page.textContent('[data-picked]')).includes('Price estimate'), 'estimator choices shown on the form');
 });
 
 await step('tools: estimator, launch lab, design check, place picker, gift finder', async () => {

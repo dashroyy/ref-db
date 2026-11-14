@@ -171,6 +171,37 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   const kind = form.querySelector<HTMLSelectElement>('#kind')!;
   const optionsField = form.querySelector<HTMLInputElement>('[name="options"]')!;
 
+  const picked = form.querySelector<HTMLElement>('[data-picked]')!;
+  const detailsBox = form.querySelector<HTMLTextAreaElement>('#details')!;
+  /** The "Your choices" box at the top of the form, then the form brought into view. */
+  function showPicked(name: string, opts: string, price: string, back: string, scroll = true) {
+    picked.querySelector('[data-picked-name]')!.textContent = name;
+    picked.querySelector('[data-picked-opts]')!.textContent = opts ? `· ${opts}` : '';
+    picked.querySelector('[data-picked-price]')!.textContent = price;
+    picked.querySelector<HTMLAnchorElement>('[data-picked-back]')!.href = back;
+    picked.hidden = false;
+    if (!scroll) return;
+    requestAnimationFrame(() => {
+      form.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+      // on touch screens, don't pop the keyboard up uninvited
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        detailsBox.focus({ preventScroll: true });
+        detailsBox.setSelectionRange(detailsBox.value.length, detailsBox.value.length); // type after any summary
+      }
+    });
+  }
+  /** Read the summary the estimator / STL quote writes ("Title:\nline\nline\nEstimate shown: $13…"). */
+  function showFromTool(text: string, back: string, scroll = true) {
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    const est = lines.find((l) => l.startsWith('Estimate shown:'));
+    const title = /^STL quote/.test(lines[0] ?? '') ? 'Instant STL quote' : 'Price estimate';
+    const file = /^STL quote: (.+)$/.exec(lines[0] ?? '')?.[1];
+    const opts = [file, ...lines.slice(1, 3)].filter(Boolean).join(' · ');
+    const price = est ? `${est.replace('Estimate shown:', 'Estimate').replace(/ \(.*$/, '')}; your quote confirms it.` : 'Your quote confirms the price.';
+    showPicked(title, opts, price, back, scroll);
+  }
+  document.addEventListener('dashlabs:prefill', (e) => showFromTool((e as CustomEvent<string>).detail, '#stl', false));
+
   // Prefill from a product page: /custom/?product=cust-pet&size=medium
   const params = new URLSearchParams(location.search);
   const fromId = params.get('product');
@@ -180,26 +211,20 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
     params.delete('product');
     const chosen = normaliseOptions(from, Object.fromEntries(params));
     optionsField.value = describeOptions(from, chosen);
-    // show what they picked, and take them straight to the form
-    const picked = form.querySelector<HTMLElement>('[data-picked]')!;
-    picked.querySelector('[data-picked-name]')!.textContent = from.name;
-    picked.querySelector('[data-picked-opts]')!.textContent = optionsField.value ? `· ${optionsField.value.replace(/^[^:]+: /, '').replace(/ · [^:]+: /g, ' · ')}` : '';
-    picked.querySelector('[data-picked-price]')!.textContent = `From ${money(priceFor(from, chosen))}; your quote confirms it.`;
-    picked.querySelector<HTMLAnchorElement>('[data-picked-back]')!.href = `/shop/${from.slug}/?${params}`;
-    picked.hidden = false;
-    const details = form.querySelector<HTMLTextAreaElement>('#details')!;
-    requestAnimationFrame(() => {
-      form.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
-      // on touch screens, don't pop the keyboard up uninvited
-      if (matchMedia('(hover: hover) and (pointer: fine)').matches) details.focus({ preventScroll: true });
-    });
-    kind.addEventListener('change', () => (picked.hidden = kind.value === from.id ? false : true));
+    showPicked(
+      from.name,
+      optionsField.value.replace(/^[^:]+: /, '').replace(/ · [^:]+: /g, ' · '),
+      `From ${money(priceFor(from, chosen))}; your quote confirms it.`,
+      `/shop/${from.slug}/?${params}`,
+    );
+    kind.addEventListener('change', () => (picked.hidden = kind.value !== from.id));
   }
   // Prefill from the price estimator: /custom/?details=...
   const details = new URLSearchParams(location.search).get('details');
   if (details && !from) {
     kind.value = 'other';
-    form.querySelector<HTMLTextAreaElement>('#details')!.value = details.slice(0, 2000);
+    detailsBox.value = details.slice(0, 2000);
+    showFromTool(details, '/learn/pricing/#try-it');
   }
   kind.addEventListener('change', () => (optionsField.value = ''));
 

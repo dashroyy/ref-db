@@ -217,8 +217,12 @@ import { QUALITIES } from '../lib/estimate.ts';
       if (!details) return;
       if (kind) kind.value = 'other';
       details.value = root.dataset.summary ?? '';
+      document.dispatchEvent(new CustomEvent('dashlabs:prefill', { detail: details.value }));
       details.closest('form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => details.focus({ preventScroll: true }), 500);
+      setTimeout(() => {
+        details.focus({ preventScroll: true });
+        details.setSelectionRange(details.value.length, details.value.length);
+      }, 500);
     });
 
     // show the sample when the tool scrolls into view (WebGL only)
