@@ -57,7 +57,10 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
           </select>
         </div>
         <div class="field">
-          <label for="details">Describe it <span class="draft-note" data-draft-note hidden>· draft restored <button type="button" data-draft-clear>clear</button></span></label>
+          <div class="label-row">
+            <label for="details">Describe it</label>
+            <span class="draft-note" data-draft-note hidden>Draft restored · <button type="button" data-draft-clear>clear</button></span>
+          </div>
           <textarea
             id="details"
             name="details"
@@ -313,10 +316,18 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   .top {
     padding-top: clamp(40px, 6vw, 72px);
   }
+  .label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
   .draft-note {
-    text-transform: none;
-    letter-spacing: 0;
+    font-size: 0.82rem;
     color: var(--mint);
+  }
+  .draft-note[hidden] {
+    display: none;
   }
   .draft-note button {
     padding: 0;

@@ -511,6 +511,7 @@ main {
   margin-bottom: 16px;
 }
 .field > label,
+.field > .label-row > label,
 .field > legend {
   font: 500 0.7rem/1.3 var(--mono);
   letter-spacing: 0.1em;
