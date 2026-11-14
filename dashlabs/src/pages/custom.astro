@@ -43,7 +43,12 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         </p>
       </div>
 
-      <form class="panel request" data-request>
+      <form class="panel request" data-request id="request">
+        <div class="picked" data-picked hidden>
+          <span class="tag">Your choices</span>
+          <p><b data-picked-name></b> <span data-picked-opts></span></p>
+          <p class="picked-foot"><span data-picked-price></span> <a data-picked-back href="/shop/">Change</a></p>
+        </div>
         <div class="field">
           <label for="kind">What would you like?</label>
           <select id="kind" name="kind">
@@ -159,7 +164,8 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 <script>
   import { SITE, ORDER_DELIVERY } from '../data/site.ts';
   import { sendRequest } from '../lib/send.ts';
-  import { productById, describeOptions, normaliseOptions } from '../data/catalog.ts';
+  import { productById, describeOptions, normaliseOptions, priceFor } from '../data/catalog.ts';
+  import { money } from '../lib/money.ts';
 
   const form = document.querySelector<HTMLFormElement>('[data-request]')!;
   const kind = form.querySelector<HTMLSelectElement>('#kind')!;
@@ -172,7 +178,22 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   if (from) {
     kind.value = from.id;
     params.delete('product');
-    optionsField.value = describeOptions(from, normaliseOptions(from, Object.fromEntries(params)));
+    const chosen = normaliseOptions(from, Object.fromEntries(params));
+    optionsField.value = describeOptions(from, chosen);
+    // show what they picked, and take them straight to the form
+    const picked = form.querySelector<HTMLElement>('[data-picked]')!;
+    picked.querySelector('[data-picked-name]')!.textContent = from.name;
+    picked.querySelector('[data-picked-opts]')!.textContent = optionsField.value ? `· ${optionsField.value.replace(/^[^:]+: /, '').replace(/ · [^:]+: /g, ' · ')}` : '';
+    picked.querySelector('[data-picked-price]')!.textContent = `From ${money(priceFor(from, chosen))}; your quote confirms it.`;
+    picked.querySelector<HTMLAnchorElement>('[data-picked-back]')!.href = `/shop/${from.slug}/?${params}`;
+    picked.hidden = false;
+    const details = form.querySelector<HTMLTextAreaElement>('#details')!;
+    requestAnimationFrame(() => {
+      form.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+      // on touch screens, don't pop the keyboard up uninvited
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) details.focus({ preventScroll: true });
+    });
+    kind.addEventListener('change', () => (picked.hidden = kind.value === from.id ? false : true));
   }
   // Prefill from the price estimator: /custom/?details=...
   const details = new URLSearchParams(location.search).get('details');
@@ -222,6 +243,29 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 <style>
   .top {
     padding-top: clamp(40px, 6vw, 72px);
+  }
+  .picked {
+    margin: -4px 0 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--tone) 50%, transparent);
+    background: color-mix(in srgb, var(--tone) 9%, transparent);
+  }
+  .picked[hidden] {
+    display: none;
+  }
+  .picked p {
+    margin: 6px 0 0;
+  }
+  .picked b {
+    color: var(--white);
+  }
+  .picked-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: var(--text-3);
   }
   .layout {
     display: grid;

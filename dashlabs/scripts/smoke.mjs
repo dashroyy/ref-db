@@ -141,6 +141,8 @@ await step('custom: quote product pre-fills the request form', async () => {
   await page.click('[data-buy] button[type="submit"]');
   await page.waitForURL(/\/custom\//);
   expect((await page.inputValue('#kind')) === 'cust-pet', 'kind');
+  expect(await page.isVisible('[data-picked]'), 'choices summary shown');
+  expect((await page.evaluate(() => document.querySelector('[data-request]').getBoundingClientRect().top)) < 200, 'lands on the form');
   expect((await page.inputValue('[name="options"]')).includes('Medium'), 'options carried over');
 });
 
