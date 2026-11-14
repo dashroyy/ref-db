@@ -14,6 +14,7 @@ import { money } from '../../lib/money.ts';
 import { existsSync } from 'node:fs';
 import { getImage } from 'astro:assets';
 import ProductPhoto from '../../components/ProductPhoto.astro';
+import PhotoLightbox from '../../components/PhotoLightbox.astro';
 import { photosFor } from '../../lib/product-photos.ts';
 
 export function getStaticPaths() {
@@ -130,7 +131,12 @@ const sourceLabel =
           {/* photos first when there are some; the 3D model is always one tap away */}
           <div class="g-main" data-gallery>
             {photos.map((ph, i) => (
-              <ProductPhoto photo={ph} class="photo" data-pane={`p${i}`} hidden={i !== 0} loading={i === 0 ? 'eager' : 'lazy'} sizes="(max-width: 820px) calc(100vw - 32px), 55vw" />
+              <button type="button" class="photo-btn" data-pane={`p${i}`} data-zoom={i} hidden={i !== 0} aria-label={`Enlarge: ${ph.alt}`}>
+                <ProductPhoto photo={ph} class="photo" loading={i === 0 ? 'eager' : 'lazy'} sizes="(max-width: 820px) calc(100vw - 32px), 55vw" />
+                <span class="zoom-hint" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                </span>
+              </button>
             ))}
             <div data-pane="3d" hidden={photos.length > 0}><ModelViewer product={p} /></div>
           </div>
@@ -328,6 +334,8 @@ const sourceLabel =
     </div>
     <button type="button" class="btn btn--primary" data-buybar-btn tabindex="-1">{p.purchase === 'quote' ? 'Request a quote' : 'Add to cart'}</button>
   </div>
+
+  <PhotoLightbox photos={photos} name={p.name} />
 
   <section class="wrap reviews-wrap">
     <Reviews product={p} />
@@ -591,6 +599,39 @@ const sourceLabel =
   }
   .g-main [hidden] {
     display: none;
+  }
+  .photo-btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+    border-radius: var(--r);
+  }
+  .photo-btn :global(picture) {
+    display: block;
+  }
+  .zoom-hint {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--line-2);
+    background: var(--overlay);
+    color: var(--white);
+    opacity: 0.85;
+    transition: opacity 0.2s, border-color 0.2s;
+  }
+  .photo-btn:hover .zoom-hint,
+  .photo-btn:focus-visible .zoom-hint {
+    opacity: 1;
+    border-color: var(--hot);
   }
   .g-thumbs {
     display: flex;
