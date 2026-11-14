@@ -6,7 +6,7 @@
 // Uses the product's first photo when it has one, otherwise its pre-rendered 3D
 // thumbnail (run `npm run thumbs` first after adding a product). Run it again
 // after changing a product's name, summary, price or photos.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { PRODUCTS, categoryById, type Product } from '../src/data/catalog.ts';
 import { money } from '../src/lib/money.ts';
@@ -26,9 +26,22 @@ const LOGO = `data:image/svg+xml;base64,${b64('public/favicon.svg')}`;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const MIME: Record<string, string> = { webp: 'image/webp', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg' };
 
-function picture(p: Product): { src: string; photo: boolean } | undefined {
+// first photo from src/photos/products/<slug>/ (filename order), then the catalog's `images`, then the 3D thumbnail
+function firstPhotoFile(p: Product): string | undefined {
+  const dir = `src/photos/products/${p.slug}`;
+  if (existsSync(dir)) {
+    const f = readdirSync(dir)
+      .filter((n) => /\.(jpe?g|png|webp)$/i.test(n))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))[0];
+    if (f) return `${dir}/${f}`;
+  }
   const photo = p.images?.[0];
-  const file = photo ? `public${photo.startsWith('/') ? '' : '/'}${photo}` : `public/thumbs/${p.art.shape}-${categoryById(p.category).color.replace('#', '')}.webp`;
+  return photo ? `public${photo.startsWith('/') ? '' : '/'}${photo}` : undefined;
+}
+
+function picture(p: Product): { src: string; photo: boolean } | undefined {
+  const photo = firstPhotoFile(p);
+  const file = photo ?? `public/thumbs/${p.art.shape}-${categoryById(p.category).color.replace('#', '')}.webp`;
   if (!existsSync(file)) return undefined;
   return { src: `data:${MIME[file.split('.').pop()!.toLowerCase()] ?? 'image/png'};base64,${b64(file)}`, photo: Boolean(photo) };
 }

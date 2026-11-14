@@ -1,7 +1,7 @@
 // What still needs doing before launch?   npm run launch-check
 // Reads the site's own data and pages and lists every placeholder left.
 // Add --strict to exit with an error while "must fix" items remain (for CI).
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { SITE, GIFT_WRAP_PRICE, ORDER_DELIVERY } from '../src/data/site.ts';
 import { PRODUCTS } from '../src/data/catalog.ts';
 import { GUIDES } from '../src/data/guides.ts';
@@ -39,8 +39,14 @@ if (age > 14) check.push(`Lab status was last updated ${age} days ago (${LAB_STA
 if (!process.env.SITE_URL && !process.env.URL) check.push('Build with your real address (SITE_URL=https://your-domain) so share previews and the sitemap are right. Netlify sets this for you.');
 
 // ── nice to have ──
-const noPhotos = PRODUCTS.filter((p) => !p.images?.length);
-if (noPhotos.length) nice.push(`${noPhotos.length} of ${PRODUCTS.length} products have no photos yet (they show the 3D model): ${names(noPhotos)}.`);
+const hasFolderPhotos = (slug: string) => {
+  const dir = `src/photos/products/${slug}`;
+  return existsSync(dir) && readdirSync(dir).some((n) => /\.(jpe?g|png|webp|avif)$/i.test(n));
+};
+const heic = PRODUCTS.filter((p) => existsSync(`src/photos/products/${p.slug}`) && readdirSync(`src/photos/products/${p.slug}`).some((n) => /\.hei[cf]$/i.test(n)));
+if (heic.length) must.push(`HEIC photos can't be used on the web: ${names(heic)}. Export them as JPG. → src/photos/products/README.md`);
+const noPhotos = PRODUCTS.filter((p) => !p.images?.length && !hasFolderPhotos(p.slug));
+if (noPhotos.length) nice.push(`${noPhotos.length} of ${PRODUCTS.length} products have no photos yet (they show the 3D model): ${names(noPhotos)}. → src/photos/products/README.md`);
 const noCard = [...PRODUCTS.filter((p) => !existsSync(`public/og/${p.slug}.jpg`)).map((p) => p.name), ...GUIDES.filter((g) => !existsSync(`public/og/learn-${g.slug}.jpg`)).map((g) => g.title)];
 if (noCard.length) nice.push(`No share card for: ${noCard.join(', ')} (links show the generic card). Run npm run og.`);
 nice.push('After changing a product or guide name, summary, price or photos, run npm run og so link previews match.');

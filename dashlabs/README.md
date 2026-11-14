@@ -31,7 +31,7 @@ Almost everything you'll change lives in **`src/data/`**. Edit, save, and the de
 | ---------------------------------- | -------------------------------------- | ----- |
 | Change a price                     | `src/data/catalog.ts`                  | Prices are in **cents**: `2400` is $24.00. |
 | Add a product                      | `src/data/catalog.ts`                  | See [Adding a product](#adding-a-product). |
-| Add product photos                 | `public/products/` + `images` in the catalog | The page opens on the photos; a "3D" button switches to the model. |
+| Add product photos                 | `src/photos/products/<slug>/` (see the README there) | Drop in phone photos as they are: resized and compressed automatically. The page opens on the photos; a "3D" button switches to the model. |
 | Update the queue / printers        | `src/data/lab.ts`                      | Drives the header pill, home board and "ships by" dates. Change `updated` too. |
 | Add a customer review              | `src/data/reviews.ts`                  | Real reviews only, with permission. Example inside. |
 | Add a customer-print photo         | `public/gallery/` + `src/data/reviews.ts` | The gallery on /lab/ appears once there's one. |

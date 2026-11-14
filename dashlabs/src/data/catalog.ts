@@ -108,7 +108,7 @@ export interface Product {
   source: Source;
   featured?: boolean;
   art: { hue: number; shape: ArtShape }; // placeholder artwork until real photos exist
-  images?: string[]; // later: paths under /public/products/
+  images?: string[]; // extra photos in /public (prefer src/photos/products/<slug>/, which are optimised)
   stripePriceId?: string; // later: optional link to a Stripe Price
   tool?: 'launch-lab'; // an interactive tool shown on the product page
   // Real size of the part's longest dimension along `axis`, in mm, for the 3D

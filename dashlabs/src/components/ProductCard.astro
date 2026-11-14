@@ -6,6 +6,8 @@ import ProductArt from './ProductArt.astro';
 import { categoryById, productCode, type Product } from '../data/catalog.ts';
 import { money } from '../lib/money.ts';
 import { thumbSrc } from '../data/thumbs.ts';
+import ProductPhoto from './ProductPhoto.astro';
+import { photosFor } from '../lib/product-photos.ts';
 
 interface Props {
   product: Product;
@@ -14,7 +16,7 @@ interface Props {
 const { product: p, level = 3 } = Astro.props;
 const H = level === 2 ? 'h2' : 'h3';
 const cat = categoryById(p.category);
-const image = p.images?.[0];
+const image = photosFor(p)[0];
 const filament = cat.color;
 const thumb = image ? undefined : thumbSrc(p.art.shape, filament);
 // one-tap add for items that need no choices typed in; it uses the first option of each
@@ -27,7 +29,7 @@ const quick = p.purchase === 'cart' && !p.personalise?.required;
     <div class="media" data-thumb={image || thumb ? undefined : ''} data-shape={p.art.shape} data-color={filament}>
       {
         image ? (
-          <img src={image} alt={p.name} loading="lazy" />
+          <ProductPhoto photo={image} alt={p.name} class="card-photo" widths={[360, 640, 900, 1200]} sizes="(max-width: 560px) 100vw, (max-width: 1080px) 50vw, 25vw" />
         ) : thumb ? (
           <img class="thumb-3d thumb-static" src={thumb} alt="" width="640" height="480" loading="lazy" decoding="async" />
         ) : (
@@ -206,7 +208,10 @@ const quick = p.purchase === 'cart' && !p.personalise?.required;
     overflow: hidden;
   }
   .media > :global(svg),
-  .media > img {
+  .media > img,
+  .media > :global(picture),
+  .media :global(.card-photo) {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
