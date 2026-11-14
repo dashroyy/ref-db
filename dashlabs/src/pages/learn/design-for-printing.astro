@@ -1,4 +1,5 @@
 ---
+import MathSteps from '../../components/MathSteps.astro';
 import Guide from '../../layouts/Guide.astro';
 import Analogy from '../../components/Analogy.astro';
 import { DEFAULT_PART as D } from '../../lib/design.ts';
@@ -71,12 +72,16 @@ import { DEFAULT_PART as D } from '../../lib/design.ts';
 
   <h2>Worked example: a phone stand</h2>
   <p>The default settings above are a simple phone stand. Each feature against its rule:</p>
-  <div class="math">{`Overhang    45° back rest           ≤ 45°        prints cleanly
-Bridge      20 mm cable slot        ≤ 30 mm      spans without sagging
-Wall        1.2 mm                  ≥ 1.2 mm     three nozzle passes (3 × 0.4)
-Clearance   0.30 mm hinge gap       0.25–0.5     moves freely
-
-All four pass, so the part needs no supports.`}</div>
+  <MathSteps
+    label="The cable dock against the four rules"
+    rows={[
+      { k: 'Overhang', expr: '45° back rest · rule ≤ 45°', r: 'prints cleanly' },
+      { k: 'Bridge', expr: '20 mm cable slot · rule ≤ 30 mm', r: 'no sag' },
+      { k: 'Wall', expr: '1.2 mm · rule ≥ 1.2 mm (3 × 0.4 mm passes)', r: 'strong enough' },
+      { k: 'Clearance', expr: '0.30 mm hinge gap · rule 0.25–0.5 mm', r: 'moves freely' },
+    ]}
+    note="All four pass, so the part needs no supports."
+  />
   <p>
     Push the overhang to 80° and the verdict flips: it now needs supports, which cost time, plastic and a rough
     surface where they touch. Often the fix is free: turn the part over, or split it in two flat-bottomed halves.

@@ -1,4 +1,5 @@
 ---
+import MathSteps from '../../components/MathSteps.astro';
 import Guide from '../../layouts/Guide.astro';
 import Analogy from '../../components/Analogy.astro';
 import LaunchLab from '../../components/LaunchLab.astro';
@@ -61,10 +62,15 @@ import { DEFAULT_LAUNCH as D } from '../../lib/launcher.ts';
 
   <h2>The physics</h2>
   <p>Three steps:</p>
-  <div class="math">{`1. Energy in the spring   E = ½ k x²
-2. Speed of the pen        v = √(2ηE / m)
-3. Time in the air         t = (v sinθ + √((v sinθ)² + 2gh)) / g
-   Distance                range = v cosθ × t`}</div>
+  <MathSteps
+    label="The four steps of the model"
+    rows={[
+      { k: '1. Energy in the spring', r: 'E = ½ k x²' },
+      { k: '2. Speed of the pen', r: 'v = √(2ηE / m)' },
+      { k: '3. Time in the air', expr: 't = (v sinθ + √((v sinθ)² + 2gh)) / g' },
+      { k: '4. Distance', r: 'range = v cosθ × t' },
+    ]}
+  />
   <p>
     Here <strong>k</strong> is the spring's stiffness (N/m), <strong>x</strong> the pull-back (m), <strong>η</strong>
     the share of the spring's energy that reaches the pen, <strong>m</strong> the pen's mass (kg), <strong>θ</strong>
@@ -80,14 +86,19 @@ import { DEFAULT_LAUNCH as D } from '../../lib/launcher.ts';
 
   <h2>Worked example: the default launch</h2>
   <p>A {D.k} N/m spring pulled back {D.drawMm} mm, {D.efficiency * 100}% efficient, a {D.penGrams} g pen, {D.angleDeg}° from a {D.heightM} m desk:</p>
-  <div class="math">{`E      = ½ × 300 × 0.040²                     = 0.24 J
-E_pen  = 0.5 × 0.24                           = 0.12 J
-v      = √(2 × 0.12 / 0.006)                  = 6.32 m/s
-v sinθ = 6.32 × sin 35°                       = 3.63 m/s
-v cosθ = 6.32 × cos 35°                       = 5.18 m/s
-t      = (3.63 + √(3.63² + 2 × 9.81 × 0.75)) / 9.81 = 0.908 s
-range  = 5.18 × 0.908                         = 4.70 m
-peak   = 0.75 + 3.63² / (2 × 9.81)            = 1.42 m`}</div>
+  <MathSteps
+    label="The default launch, worked through"
+    rows={[
+      { k: 'E', expr: '½ × 300 × 0.040²', r: '0.24 J' },
+      { k: 'E_pen', expr: '0.5 × 0.24', r: '0.12 J' },
+      { k: 'v', expr: '√(2 × 0.12 / 0.006)', r: '6.32 m/s' },
+      { k: 'v sinθ', expr: '6.32 × sin 35°', r: '3.63 m/s' },
+      { k: 'v cosθ', expr: '6.32 × cos 35°', r: '5.18 m/s' },
+      { k: 't', expr: '(3.63 + √(3.63² + 2 × 9.81 × 0.75)) / 9.81', r: '0.908 s' },
+      { k: 'range', expr: '5.18 × 0.908', r: '4.70 m', gap: true },
+      { k: 'peak', expr: '0.75 + 3.63² / (2 × 9.81)', r: '1.42 m' },
+    ]}
+  />
   <p>The site's tests check these same numbers, so the tool and this page can't drift apart.</p>
 
   <h2>Where this stops</h2>

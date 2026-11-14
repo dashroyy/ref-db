@@ -700,7 +700,7 @@ textarea:focus {
 /* =====================================================================
    Learn pages
    ===================================================================== */
-.prose > :not(.wide, .math) {
+.prose > :not(.wide) {
   max-width: 70ch;
 }
 .prose h2 {
@@ -735,18 +735,6 @@ textarea:focus {
 }
 .prose li {
   margin-bottom: 0.4em;
-}
-.math {
-  width: fit-content;
-  max-width: 100%;
-  font: 400 0.88rem/1.75 var(--mono);
-  color: var(--white);
-  background: var(--ink-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  padding: 14px 18px;
-  overflow-x: auto;
-  white-space: pre;
 }
 .glance {
   display: grid;

@@ -20,7 +20,8 @@ import { SITE } from '../../data/site.ts';
       again when it ships.
     </p>
     <p class="ref" data-ref hidden>Order reference <b data-ref-val></b></p>
-    <ol class="next" aria-label="What happens next">
+    <h2 class="sr-only" id="next-h">What happens next</h2>
+    <ol class="next" aria-labelledby="next-h">
       <li class="on"><b>Paid</b><span>Receipt and invoice emailed by Stripe</span></li>
       <li><b>Printing</b><span>Layer by layer, in the colours you picked</span></li>
       <li><b>Checked &amp; packed</b><span>Cleaned up and packed to survive the trip</span></li>
