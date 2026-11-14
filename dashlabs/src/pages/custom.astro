@@ -57,7 +57,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
           </select>
         </div>
         <div class="field">
-          <label for="details">Describe it</label>
+          <label for="details">Describe it <span class="draft-note" data-draft-note hidden>· draft restored <button type="button" data-draft-clear>clear</button></span></label>
           <textarea
             id="details"
             name="details"
@@ -228,6 +228,50 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
   }
   kind.addEventListener('change', () => (optionsField.value = ''));
 
+  // Unsent drafts survive leaving the page (Change, a link, a reloaded tab); cleared once sent.
+  const DRAFT = 'dashlabs.customDraft.v1';
+  const budget = form.querySelector<HTMLInputElement>('#budget')!;
+  const note = form.querySelector<HTMLElement>('[data-draft-note]')!;
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT) || 'null') as { details?: string; budget?: string } | null;
+    // a summary just handed over by a tool wins; otherwise bring the draft back
+    if (d?.details && !detailsBox.value) {
+      detailsBox.value = d.details;
+      note.hidden = false;
+    }
+    if (d?.budget && !budget.value) budget.value = d.budget;
+  } catch {
+    /* storage blocked */
+  }
+  let saveT = 0;
+  const saveDraft = () => {
+    clearTimeout(saveT);
+    saveT = window.setTimeout(() => {
+      try {
+        if (detailsBox.value.trim() || budget.value.trim()) localStorage.setItem(DRAFT, JSON.stringify({ details: detailsBox.value, budget: budget.value }));
+        else localStorage.removeItem(DRAFT);
+      } catch {
+        /* storage blocked */
+      }
+    }, 300);
+  };
+  detailsBox.addEventListener('input', saveDraft);
+  budget.addEventListener('input', saveDraft);
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT);
+    } catch {
+      /* storage blocked */
+    }
+    note.hidden = true;
+  };
+  form.querySelector('[data-draft-clear]')!.addEventListener('click', () => {
+    detailsBox.value = '';
+    budget.value = '';
+    clearDraft();
+    detailsBox.focus();
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const d = new FormData(form);
@@ -257,7 +301,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         to: SITE.email,
         subject,
         text: body,
-        onSent: { label: 'I’ve sent it', done: 'Request sent. Thank you!', run: () => form.reset() },
+        onSent: { label: 'I’ve sent it', done: 'Request sent. Thank you!', run: () => (form.reset(), clearDraft()) },
       },
       ORDER_DELIVERY === 'netlify-form' ? { form: 'custom', name: String(d.get('name')), email: String(d.get('email')), subject, message: body } : undefined,
     );
@@ -268,6 +312,20 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 <style>
   .top {
     padding-top: clamp(40px, 6vw, 72px);
+  }
+  .draft-note {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--mint);
+  }
+  .draft-note button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-2);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
   }
   .picked {
     margin: -4px 0 18px;
