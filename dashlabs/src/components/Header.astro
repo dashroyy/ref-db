@@ -238,9 +238,11 @@ const inShop = path.startsWith('/shop');
     const was = root.classList.contains('menu-open');
     root.classList.toggle('menu-open', open);
     burger.setAttribute('aria-expanded', String(open));
-    if (open && !was) setTimeout(() => mobile.querySelector<HTMLElement>('a')?.focus(), 60);
-    // closing with focus inside the menu: hand it back to the menu button
-    if (!open && was && mobile.contains(document.activeElement)) burger.focus();
+    // (only if it's still open when the menu has rendered)
+    if (open && !was) setTimeout(() => root.classList.contains('menu-open') && mobile.querySelector<HTMLElement>('a')?.focus(), 60);
+    // closing with focus inside the menu, or lost to the page: hand it back to the menu button
+    const lost = !document.activeElement || document.activeElement === document.body;
+    if (!open && was && (lost || mobile.contains(document.activeElement))) burger.focus();
   };
   // keep Tab inside the open menu (and the menu button), like a dialog
   document.addEventListener('keydown', (e) => {
