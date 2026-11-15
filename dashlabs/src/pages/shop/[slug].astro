@@ -8,7 +8,7 @@ import { LAB_STATUS, leadTimeDays } from '../../data/lab.ts';
 import { slower } from '../../lib/shipdate.ts';
 import Reviews from '../../components/Reviews.astro';
 import { reviewsFor, ratingSummary } from '../../data/reviews.ts';
-import { PRODUCTS, categoryById, productCode, type Product } from '../../data/catalog.ts';
+import { PRODUCTS, categoryById, productCode, priceRange, type Product } from '../../data/catalog.ts';
 import { SITE } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
 import { existsSync } from 'node:fs';
@@ -35,6 +35,7 @@ const photos = photosFor(p);
 // first photo as a full-size JPEG for search engines
 const firstPhoto = photos[0] ? (typeof photos[0].src === 'string' ? photos[0].src : (await getImage({ src: photos[0].src, width: 1200, format: 'jpg' })).src) : undefined;
 const shareCard = existsSync(`public/og/${p.slug}.jpg`) ? `/og/${p.slug}.jpg` : '/og.png';
+const range = priceRange(p);
 const productLd = {
   '@context': 'https://schema.org',
   '@type': 'Product',
@@ -44,14 +45,27 @@ const productLd = {
   category: categoryById(p.category).label,
   brand: { '@type': 'Brand', name: SITE.name },
   image: new URL(firstPhoto ?? shareCard, site).href,
-  offers: {
-    '@type': 'Offer',
-    url: new URL(`/shop/${p.slug}/`, site).href,
-    priceCurrency: SITE.currency,
-    price: (p.price / 100).toFixed(2),
-    availability: 'https://schema.org/MadeToOrder',
-    itemCondition: 'https://schema.org/NewCondition',
-  },
+  // one price, or the range the options span (e.g. silk filament, larger sizes)
+  offers:
+    range.min === range.max
+      ? {
+          '@type': 'Offer',
+          url: new URL(`/shop/${p.slug}/`, site).href,
+          priceCurrency: SITE.currency,
+          price: (range.min / 100).toFixed(2),
+          availability: 'https://schema.org/MadeToOrder',
+          itemCondition: 'https://schema.org/NewCondition',
+        }
+      : {
+          '@type': 'AggregateOffer',
+          url: new URL(`/shop/${p.slug}/`, site).href,
+          priceCurrency: SITE.currency,
+          lowPrice: (range.min / 100).toFixed(2),
+          highPrice: (range.max / 100).toFixed(2),
+          offerCount: p.options.reduce((n, o) => n * Math.max(1, o.choices.length), 1),
+          availability: 'https://schema.org/MadeToOrder',
+          itemCondition: 'https://schema.org/NewCondition',
+        },
 };
 // star ratings in search results only once real reviews exist
 const rating = ratingSummary(reviewsFor(p.id));

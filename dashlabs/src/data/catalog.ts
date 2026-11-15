@@ -411,6 +411,19 @@ export function productCode(p: Product): string {
 
 // Price of a product with a set of chosen options (optionId → choiceId).
 // Unknown or missing choices fall back to the first choice.
+/** Cheapest and dearest a product can be, across all its options (cents). */
+export function priceRange(product: Product): { min: number; max: number } {
+  let min = product.price;
+  let max = product.price;
+  for (const opt of product.options) {
+    const deltas = opt.choices.map((c) => c.priceDelta ?? 0);
+    if (!deltas.length) continue;
+    min += Math.min(...deltas);
+    max += Math.max(...deltas);
+  }
+  return { min, max };
+}
+
 export function priceFor(product: Product, chosen: Record<string, string> = {}): number {
   let total = product.price;
   for (const opt of product.options) {

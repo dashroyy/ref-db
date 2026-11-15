@@ -149,3 +149,17 @@ test('reviews: summary maths, per-product filter, and real data only', async () 
   for (const r of REVIEWS) assert.ok(PRODUCTS.some((p) => p.id === r.productId) && r.text.trim() && r.name.trim(), `review for ${r.productId}`);
   for (const g of GALLERY) assert.ok(g.alt.trim() && g.src.startsWith('/gallery/'), `gallery ${g.src}`);
 });
+
+test('price range spans the options (for search engines)', async () => {
+  const { priceRange, productById, priceFor } = await import('../src/data/catalog.ts');
+  for (const id of ['orig-pen-launcher', 'cust-pet', 'card-business']) {
+    const p = productById(id);
+    if (!p) continue;
+    const r = priceRange(p);
+    assert.ok(r.min <= priceFor(p) && priceFor(p) <= r.max, id);
+  }
+  const pen = productById('orig-pen-launcher')!;
+  const r = priceRange(pen);
+  assert.equal(r.min, pen.price);
+  assert.equal(r.max, pen.price + 300); // silk +$3
+});
