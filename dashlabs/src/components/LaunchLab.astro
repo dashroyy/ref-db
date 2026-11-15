@@ -10,7 +10,7 @@ const { compact = false } = Astro.props;
 <div class="calc launchlab" data-launchlab>
   <div class="calc-head"><span>Launch lab</span><span>no air drag · real range is shorter</span></div>
   <div class="calc-body">
-    <form data-form onsubmit="return false">
+    <form data-form data-no-submit>
       <div class="field">
         <label for="l-a">Launch angle <span class="range-val" data-angle-val></span></label>
         <input id="l-a" name="angleDeg" type="range" min="0" max="80" step="1" value={D.angleDeg} />

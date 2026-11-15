@@ -112,6 +112,11 @@ const tone = pageColor(Astro.url.pathname);
     <Footer />
 
     <script>
+      // live tools (estimators, quizzes) are forms for their labels and keyboard use,
+      // but never submit: Enter must not reload the page
+      document.addEventListener('submit', (e) => (e.target as HTMLElement).matches('[data-no-submit]') && e.preventDefault(), true);
+    </script>
+    <script>
       import { webglOK } from '../lib/three/support.ts';
 
       // Print-in: [data-print] sections build up layer by layer as they enter view.

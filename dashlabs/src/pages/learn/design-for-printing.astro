@@ -32,7 +32,7 @@ import { DEFAULT_PART as D } from '../../lib/design.ts';
     <div class="calc" data-design>
       <div class="calc-head"><span>Printability check</span><span>rules of thumb · 0.4 mm nozzle</span></div>
       <div class="calc-body">
-        <form data-form onsubmit="return false">
+        <form data-form data-no-submit>
           <div class="field">
             <label for="d-o">Steepest overhang <span class="range-val" data-v="overhangDeg"></span></label>
             <input id="d-o" name="overhangDeg" type="range" min="0" max="90" step="5" value={D.overhangDeg} />

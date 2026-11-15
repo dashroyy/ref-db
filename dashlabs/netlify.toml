@@ -1,7 +1,7 @@
 # Netlify build settings. In Netlify, set "Base directory" to `dashlabs`
 # (this file lives there), and everything else is read from here.
 [build]
-  command = "npm test && npm run build"
+  command = "npm test && npm run build && npm run validate"
   publish = "dist"
 
 [build.environment]
@@ -17,7 +17,25 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Sensible security headers for every page
+# Pre-rendered images that keep their names when re-rendered (npm run thumbs / og):
+# cached for a day, then refreshed in the background
+[[headers]]
+  for = "/thumbs/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/og/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/hero-poster.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+# Sensible security headers for every page (the Content-Security-Policy is
+# written into each page by Astro: see security.csp in astro.config.mjs)
 [[headers]]
   for = "/*"
   [headers.values]

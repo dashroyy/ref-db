@@ -94,6 +94,7 @@ a light "Day shift" theme.
 
 **Quality.** Accessibility audit (axe) clean in both themes · Lighthouse 100 for accessibility, best practices and
 SEO · search-engine data for products, breadcrumbs and the FAQ · sitemap · share images · prints cleanly · respects
+Security · a strict Content-Security-Policy on every page (only the site's own scripts run; set in `astro.config.mjs`) plus security headers and caching in `netlify.toml`.
 "reduce motion" and has a pause button · works without WebGL (drawn artwork instead) · tells you if JavaScript is off.
 
 ## How it's built

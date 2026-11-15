@@ -7,7 +7,7 @@ import { MATERIALS } from '../data/materials.ts';
 <div class="calc estimator" data-estimator>
   <div class="calc-head"><span>Print price estimator</span><span>ballpark · ±30%</span></div>
   <div class="calc-body">
-    <form data-form onsubmit="return false">
+    <form data-form data-no-submit>
       <div class="row3">
         <div class="field"><label for="e-w">Width cm</label><input id="e-w" name="w" type="number" min="0.5" max="30" step="0.5" value={D.w} /></div>
         <div class="field"><label for="e-d">Depth cm</label><input id="e-d" name="d" type="number" min="0.5" max="30" step="0.5" value={D.d} /></div>

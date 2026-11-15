@@ -28,4 +28,22 @@ export default defineConfig({
   // Pin Vite to this project's tsconfig so it never walks up into the parent
   // repository's tsconfig while DashLabs lives in a subfolder of another project.
   vite: { tsconfig: './tsconfig.json' },
+  // Content-Security-Policy on every page: only this site's own scripts and
+  // styles run (inline ones are allowed by exact hash, added by Astro at build).
+  // Inline style="" attributes are allowed for the per-item colour variables.
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "img-src 'self' data: blob:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ],
+      scriptDirective: { resources: ["'self'"] },
+      styleDirective: { resources: ["'self'", { resource: "'unsafe-inline'", kind: 'attribute' }] },
+    },
+  },
 });

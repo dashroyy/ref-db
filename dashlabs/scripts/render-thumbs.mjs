@@ -26,7 +26,8 @@ const server = createServer((req, res) => {
 }).listen(PORT);
 try {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  // bypassCSP: this script adds a style to the page while it captures (the site's CSP would block it)
+  const page = await browser.newPage({ viewport: { width: 1400, height: 900 }, bypassCSP: true });
   const found = new Map();
   for (const path of PAGES) {
     page.on('pageerror', (e) => console.log('page error on', path, e.message));
@@ -45,7 +46,7 @@ try {
     for (const it of items) found.set(it.key, it.src);
   }
   // Hero poster: the home-page printer mid-print, shown instantly while the live 3D loads.
-  const hp = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 });
+  const hp = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2, bypassCSP: true });
   await hp.goto(`http://localhost:${PORT}/`);
   // this machine may be too slow for the live hero: ask for it anyway, as a visitor could
   await hp.waitForFunction(
