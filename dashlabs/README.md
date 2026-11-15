@@ -40,6 +40,7 @@ in Markdown) and **`src/photos/`**. Edit, save, and the dev server updates.
 | Add a customer-print photo         | `src/photos/gallery/` + `src/data/reviews.ts` | The gallery on /lab/ appears once there's one. |
 | Change contact email, gift wrap, shipping countries | `src/data/site.ts`    | |
 | Change your print rates            | `src/lib/estimate.ts` (`RATES`), `src/data/materials.ts` (spool prices) | Feeds the price estimator and STL quote. |
+| Pack an order / print a gift note  | Open **`/desk/`** on your site         | Paste the order email: prints a packing slip (never any prices) and the gift note card (A6). Not linked anywhere; hidden from search. |
 | Reply to a customer                | `docs/EMAIL-TEMPLATES.md`              | Order total, quote, preview, shipped, review request, licence refusal. |
 
 After adding a product or changing a category colour, run **`npm run thumbs`** then **`npm run og`** to re-render the product images and link-preview cards
