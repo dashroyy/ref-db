@@ -5,8 +5,8 @@
 //
 // To add a review: copy the example below into REVIEWS and fill it in.
 //   { productId: 'orig-pen-launcher', name: 'Sam R.', rating: 5, date: '2026-12-01',
-//     text: 'Flew the whole length of the office.', photo: '/gallery/sam-launcher.jpg' }
-// Photos go in public/gallery/.
+//     text: 'Flew the whole length of the office.', photo: 'sam-launcher.jpg' }
+// Photos go in src/photos/gallery/ (any size: optimised automatically); give just the file name.
 
 export interface Review {
   productId: string; // a product id from the catalog
@@ -14,15 +14,16 @@ export interface Review {
   rating: 1 | 2 | 3 | 4 | 5;
   date: string; // YYYY-MM-DD
   text: string;
-  photo?: string; // optional, under /gallery/
+  photo?: string; // optional: a file name in src/photos/gallery/
 }
 
 export const REVIEWS: Review[] = [];
 
 // Photos of finished prints for the gallery on /lab/ (with the customer's OK).
-//   { src: '/gallery/pet-portrait-1.jpg', alt: 'Golden retriever figurine in silk gold', caption: 'Pet portrait, 10 cm', productId: 'cust-pet' }
+//   { src: 'pet-portrait-1.jpg', alt: 'Golden retriever figurine in silk gold', caption: 'Pet portrait, 10 cm', productId: 'cust-pet' }
+// Photos go in src/photos/gallery/; give just the file name.
 export interface GalleryPhoto {
-  src: string;
+  src: string; // a file name in src/photos/gallery/
   alt: string; // describe the photo for people who can't see it
   caption: string;
   productId?: string; // links the photo to a product

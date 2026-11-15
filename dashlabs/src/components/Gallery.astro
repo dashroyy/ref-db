@@ -1,12 +1,17 @@
 ---
-// Customer prints gallery with a lightbox. Renders nothing until
+// Customer prints gallery (full screen via PhotoLightbox). Renders nothing until
 // GALLERY (src/data/reviews.ts) has real photos.
 import { GALLERY } from '../data/reviews.ts';
 import { productById } from '../data/catalog.ts';
+import ProductPhoto from './ProductPhoto.astro';
+import PhotoLightbox from './PhotoLightbox.astro';
+import { customerPhoto } from '../lib/writing.ts';
+
+const shots = GALLERY.map((g) => ({ g, photo: customerPhoto(g.src, g.alt, g.caption) })).filter((s) => s.photo);
 ---
 
 {
-  GALLERY.length > 0 && (
+  shots.length > 0 && (
     <section class="section gallery">
       <div class="wrap">
         <div class="head" data-print>
@@ -14,12 +19,12 @@ import { productById } from '../data/catalog.ts';
           <p class="muted">Real prints, in their new homes. Shared with permission.</p>
         </div>
         <ul class="shots">
-          {GALLERY.map((g, i) => {
+          {shots.map(({ g, photo }, i) => {
             const p = g.productId ? productById(g.productId) : undefined;
             return (
               <li>
-                <button type="button" data-shot={i} aria-label={`Enlarge: ${g.alt}`}>
-                  <img src={g.src} alt={g.alt} loading="lazy" />
+                <button type="button" data-zoom={i} aria-label={`Enlarge: ${g.alt}`}>
+                  <ProductPhoto photo={photo!} widths={[320, 640, 960]} sizes="(max-width: 560px) 100vw, 33vw" />
                 </button>
                 <span class="cap">
                   {g.caption}
@@ -30,33 +35,12 @@ import { productById } from '../data/catalog.ts';
           })}
         </ul>
       </div>
-      <dialog class="lightbox" data-lightbox>
-        <img alt="" data-lightbox-img />
-        <p data-lightbox-cap />
-        <button type="button" class="btn" data-lightbox-close>Close</button>
-      </dialog>
+      <PhotoLightbox photos={shots.map((s) => s.photo!)} name="Customer prints" />
     </section>
   )
 }
 
-<script>
-  const dlg = document.querySelector<HTMLDialogElement>('[data-lightbox]');
-  if (dlg) {
-    const img = dlg.querySelector<HTMLImageElement>('[data-lightbox-img]')!;
-    const cap = dlg.querySelector<HTMLElement>('[data-lightbox-cap]')!;
-    document.querySelectorAll<HTMLButtonElement>('[data-shot]').forEach((b) =>
-      b.addEventListener('click', () => {
-        const src = b.querySelector('img')!;
-        img.src = src.src;
-        img.alt = src.alt;
-        cap.textContent = b.parentElement!.querySelector('.cap')!.firstChild!.textContent;
-        dlg.showModal();
-      }),
-    );
-    dlg.querySelector('[data-lightbox-close]')!.addEventListener('click', () => dlg.close());
-    dlg.addEventListener('click', (e) => e.target === dlg && dlg.close());
-  }
-</script>
+<!-- full screen: PhotoLightbox (data-zoom buttons) -->
 
 <style>
   .gallery {
@@ -85,11 +69,16 @@ import { productById } from '../data/catalog.ts';
     background: none;
     cursor: zoom-in;
   }
-  .shots img {
+  .shots :global(picture),
+  .shots :global(img) {
+    display: block;
     width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
     transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
   }
-  .shots button:hover img {
+  .shots button:hover :global(img) {
     transform: scale(1.04);
   }
   .cap {
@@ -105,24 +94,5 @@ import { productById } from '../data/catalog.ts';
     font-weight: 700;
     text-decoration: none;
     white-space: nowrap;
-  }
-  .lightbox {
-    max-width: min(92vw, 1000px);
-    padding: 14px;
-    border-radius: var(--r);
-    border: 1px solid var(--line-2);
-    background: var(--overlay-solid);
-    color: var(--text);
-    text-align: center;
-  }
-  .lightbox::backdrop {
-    background: var(--scrim);
-    backdrop-filter: blur(4px);
-  }
-  .lightbox img {
-    max-width: 100%;
-    max-height: 72vh;
-    border-radius: 10px;
-    margin-inline: auto;
   }
 </style>

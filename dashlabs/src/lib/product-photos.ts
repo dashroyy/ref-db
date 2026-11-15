@@ -18,6 +18,7 @@ const files = import.meta.glob<{ default: ImageMetadata }>('/src/photos/products
 export interface ProductPhoto {
   src: ImageMetadata | string; // optimised (folder) or as-is (public path)
   alt: string;
+  caption?: string; // shown under it full screen (defaults to alt)
 }
 
 

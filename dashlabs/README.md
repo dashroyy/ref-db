@@ -37,7 +37,7 @@ in Markdown) and **`src/photos/`**. Edit, save, and the dev server updates.
 | Add a build-log entry (Lab)        | `src/writing/build-log/` (see the README there) | One Markdown file per project: date, title, a few lines, optional photos in `src/photos/build-log/`. |
 | Update the queue / printers        | `src/data/lab.ts`                      | Drives the header pill, home board and "ships by" dates. Change `updated` too: after 3 weeks without an update the site stops showing the queue as live. |
 | Add a customer review              | `src/data/reviews.ts`                  | Real reviews only, with permission. Example inside. |
-| Add a customer-print photo         | `public/gallery/` + `src/data/reviews.ts` | The gallery on /lab/ appears once there's one. |
+| Add a customer-print photo         | `src/photos/gallery/` + `src/data/reviews.ts` | The gallery on /lab/ appears once there's one. |
 | Change contact email, gift wrap, shipping countries | `src/data/site.ts`    | |
 | Change your print rates            | `src/lib/estimate.ts` (`RATES`), `src/data/materials.ts` (spool prices) | Feeds the price estimator and STL quote. |
 | Reply to a customer                | `docs/EMAIL-TEMPLATES.md`              | Order total, quote, preview, shipped, review request, licence refusal. |

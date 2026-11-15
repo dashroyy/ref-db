@@ -25,7 +25,7 @@ const { photos, name } = Astro.props;
         {photos.map((ph, i) => (
           <figure class="lb-slide" data-lb-slide={i} hidden>
             <ProductPhoto photo={ph} widths={[960, 1400, 2000]} sizes="100vw" class="lb-img" />
-            <figcaption>{ph.alt}</figcaption>
+            <figcaption>{ph.caption ?? ph.alt}</figcaption>
           </figure>
         ))}
       </div>

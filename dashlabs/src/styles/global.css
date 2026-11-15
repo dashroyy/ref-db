@@ -194,6 +194,11 @@ canvas {
   display: block;
   max-width: 100%;
 }
+/* keep proportions when an image is narrowed (its width/height attributes
+   would otherwise pin the height); components that crop set a height */
+img {
+  height: auto;
+}
 
 a {
   color: inherit;

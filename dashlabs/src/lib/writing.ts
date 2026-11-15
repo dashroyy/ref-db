@@ -7,6 +7,7 @@ import { formatLogDate } from './caption.ts';
 export { formatLogDate };
 
 const aboutPhotos = import.meta.glob<{ default: ImageMetadata }>('/src/photos/about/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG}', { eager: true });
+const galleryPhotos = import.meta.glob<{ default: ImageMetadata }>('/src/photos/gallery/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG}', { eager: true });
 const logPhotos = import.meta.glob<{ default: ImageMetadata }>('/src/photos/build-log/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG}', { eager: true });
 
 const photoIn = (set: Record<string, { default: ImageMetadata }>, dir: string, file: string, alt: string): ProductPhoto | undefined => {
@@ -57,4 +58,14 @@ export function buildLog(): LogEntry[] {
       };
     })
     .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/**
+ * A customer photo (gallery or review): a bare file name is taken from
+ * src/photos/gallery/ and optimised; a path ("/gallery/x.jpg") is used as-is.
+ */
+export function customerPhoto(src: string, alt: string, caption?: string): ProductPhoto | undefined {
+  if (src.includes('/')) return { src, alt, caption };
+  const p = photoIn(galleryPhotos, 'gallery', src, alt);
+  return p && { ...p, caption };
 }

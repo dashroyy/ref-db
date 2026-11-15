@@ -147,7 +147,11 @@ test('reviews: summary maths, per-product filter, and real data only', async () 
   assert.equal(ratingSummary([]), null);
   // whatever is published must point at real products and have alt text
   for (const r of REVIEWS) assert.ok(PRODUCTS.some((p) => p.id === r.productId) && r.text.trim() && r.name.trim(), `review for ${r.productId}`);
-  for (const g of GALLERY) assert.ok(g.alt.trim() && g.src.startsWith('/gallery/'), `gallery ${g.src}`);
+  // photos: a file in src/photos/gallery/ (by name) or a path under /public; the file must exist
+  const { existsSync } = await import('node:fs');
+  const exists = (src: string) => (src.includes('/') ? existsSync(`public${src}`) : existsSync(`src/photos/gallery/${src}`));
+  for (const g of GALLERY) assert.ok(g.alt.trim() && exists(g.src), `gallery ${g.src}`);
+  for (const r of REVIEWS) if (r.photo) assert.ok(exists(r.photo), `review photo ${r.photo}`);
 });
 
 test('price range spans the options (for search engines)', async () => {

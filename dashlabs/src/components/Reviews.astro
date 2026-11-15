@@ -3,6 +3,8 @@
 // honest "be the first" with a link to send one. Never shows made-up reviews.
 import { reviewsFor, ratingSummary } from '../data/reviews.ts';
 import { SITE } from '../data/site.ts';
+import ProductPhoto from './ProductPhoto.astro';
+import { customerPhoto } from '../lib/writing.ts';
 import type { Product } from '../data/catalog.ts';
 
 interface Props {
@@ -39,7 +41,9 @@ const fmt = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US'
               <span class="tag">{fmt(r.date)}</span>
             </div>
             <p>{r.text}</p>
-            {r.photo && <img src={r.photo} alt={`${r.name}'s ${p.name}`} loading="lazy" />}
+            {r.photo && customerPhoto(r.photo, `${r.name}'s ${p.name}`) && (
+              <ProductPhoto photo={customerPhoto(r.photo, `${r.name}'s ${p.name}`)!} class="rv-photo" widths={[240, 480]} sizes="240px" />
+            )}
             <span class="who">{r.name} · verified order</span>
           </li>
         ))}
@@ -111,8 +115,10 @@ const fmt = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US'
     margin: 0;
     color: var(--text);
   }
-  .list img {
+  .list :global(.rv-photo) {
+    display: block;
     width: 100%;
+    height: auto;
     border-radius: 10px;
     aspect-ratio: 4 / 3;
     object-fit: cover;
