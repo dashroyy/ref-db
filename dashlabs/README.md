@@ -92,10 +92,12 @@ where prints can live (place picker).
 that print in as you scroll, a live 3D printer on the home page you can pick jobs for, a scroll story on /lab/, and
 a light "Day shift" theme.
 
-**Quality.** Accessibility audit (axe) clean in both themes · Lighthouse 100 for accessibility, best practices and
+**Quality.** Accessibility audit (axe) clean in both themes, on desktop and phone · Lighthouse 100 for accessibility, best practices and
 SEO · search-engine data for products, breadcrumbs and the FAQ · sitemap · share images · prints cleanly · respects
-Security · a strict Content-Security-Policy on every page (only the site's own scripts run; set in `astro.config.mjs`) plus security headers and caching in `netlify.toml`.
 "reduce motion" and has a pause button · works without WebGL (drawn artwork instead) · tells you if JavaScript is off.
+
+**Security.** A strict Content-Security-Policy on every page: only the site's own scripts run (set in
+`astro.config.mjs`). Security headers and caching are in `netlify.toml`.
 
 ## How it's built
 
