@@ -19,6 +19,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE, ORDER_DELIVERY, CHECKOUT_MODE } from '../data/site.ts';
 import { pageColor } from '../data/nav.ts';
+import { LAB_STATUS, STALE_AFTER_DAYS } from '../data/lab.ts';
 
 interface Props {
   cta?: boolean; // the "got an idea?" band above the footer (off on pages that are already the destination)
@@ -45,7 +46,7 @@ const tone = pageColor(Astro.url.pathname);
 ---
 
 <!doctype html>
-<html lang="en" style={`--tone:${tone}`}>
+<html lang="en" style={`--tone:${tone}`} data-lab-updated={LAB_STATUS.updated} data-lab-stale-days={STALE_AFTER_DAYS}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -73,6 +74,11 @@ const tone = pageColor(Astro.url.pathname);
     <script is:inline>
       // Before first paint: enable print-in effects, restore Motion off. Storage can throw.
       document.documentElement.classList.add('js');
+      // Lab status not updated for a while (src/data/lab.ts): show it as not live (see isStale)
+      (function (h) {
+        var t = Date.parse(h.dataset.labUpdated + 'T12:00:00Z');
+        if (!(Date.now() - t <= Number(h.dataset.labStaleDays) * 86400000)) h.classList.add('lab-stale');
+      })(document.documentElement);
       try {
         if (localStorage.getItem('dashlabs-motion') === 'off') document.documentElement.classList.add('motion-off');
         // Night shift (dark) is the default; Day shift only when chosen

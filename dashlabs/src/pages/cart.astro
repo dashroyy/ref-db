@@ -129,7 +129,8 @@ import { PRODUCTS } from '../data/catalog.ts';
     $('[data-full]').hidden = order.lines.length === 0;
     $('[data-subtotal]').textContent = money(order.subtotal);
     // the whole order ships when its slowest item is ready
-    let lead = leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
+    // the live queue adds to it, unless the lab status is out of date (then: usual turnaround)
+    let lead: [number, number] = document.documentElement.classList.contains('lab-stale') ? SITE.defaultLeadTimeDays : leadTimeDays(LAB_STATUS.queuedJobs, LAB_STATUS.printers);
     for (const l of order.lines) lead = slower(lead, productById(l.productId)?.leadTimeDays ?? SITE.defaultLeadTimeDays);
     $('[data-cart-ships]').textContent = formatWindow(shipWindow(new Date(), lead));
 

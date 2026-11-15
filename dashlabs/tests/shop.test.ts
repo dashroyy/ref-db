@@ -163,3 +163,11 @@ test('price range spans the options (for search engines)', async () => {
   assert.equal(r.min, pen.price);
   assert.equal(r.max, pen.price + 300); // silk +$3
 });
+
+test('lab status goes quiet when it has not been updated for three weeks', async () => {
+  const { isStale } = await import('../src/data/lab.ts');
+  assert.equal(isStale('2026-11-09', new Date('2026-11-20T12:00:00Z')), false);
+  assert.equal(isStale('2026-11-09', new Date('2026-11-30T11:00:00Z')), false); // day 21
+  assert.equal(isStale('2026-11-09', new Date('2026-12-01T13:00:00Z')), true);
+  assert.equal(isStale('not a date', new Date()), true);
+});

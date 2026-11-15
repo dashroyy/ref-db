@@ -30,7 +30,7 @@ const inShop = path.startsWith('/shop');
     <div class="right">
       <Search />
       <a class="queue" href="/#lab-status" title="Jobs in the print queue">
-        <span class="live-dot"></span>{LAB_STATUS.queuedJobs} in queue
+        <span class="live-dot"></span><span class="q-live">{LAB_STATUS.queuedJobs} in queue</span><span class="q-stale">{LAB_STATUS.acceptingOrders ? 'Taking orders' : 'Orders paused'}</span>
       </a>
       <button type="button" class="icon-btn" data-motion-switch aria-pressed="false" title="Pause animation">
         <svg class="i-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
@@ -358,6 +358,13 @@ const inShop = path.startsWith('/shop');
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+  .q-stale,
+  :global(.lab-stale) .q-live {
+    display: none;
+  }
+  :global(.lab-stale) .q-stale {
+    display: inline;
   }
   .queue {
     display: inline-flex;

@@ -265,7 +265,7 @@ const sourceLabel =
             </p>
           </form>
 
-          <p class="ships" data-ships data-lead={JSON.stringify(lead)}>
+          <p class="ships" data-ships data-lead={JSON.stringify(lead)} data-lead-quiet={JSON.stringify([lo, hi])}>
             <span class="live-dot"></span>
             <span>
               Order today, ships <b data-ships-when>in {lead[0]}–{lead[1]} working days</b>
@@ -387,7 +387,7 @@ const sourceLabel =
   // real dates for "ships by", from today
   for (const el of document.querySelectorAll<HTMLElement>('[data-ships]')) {
     const when = el.querySelector('[data-ships-when]');
-    if (when) when.textContent = formatWindow(shipWindow(new Date(), JSON.parse(el.dataset.lead!)));
+    if (when) when.textContent = formatWindow(shipWindow(new Date(), JSON.parse(document.documentElement.classList.contains('lab-stale') ? el.dataset.leadQuiet! : el.dataset.lead!)));
   }
   wireSaveButtons();
   // gallery: swap between photos and the 3D model

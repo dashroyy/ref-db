@@ -2,6 +2,7 @@
 // Lab status: the print bays, the queue and the current lead time.
 // Data in src/data/lab.ts, updated by hand.
 import { LAB_STATUS as S, leadTimeDays } from '../data/lab.ts';
+import { SITE } from '../data/site.ts';
 const [lo, hi] = leadTimeDays(S.queuedJobs, S.printers);
 const updated = new Date(S.updated + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const LABEL = { printing: 'Printing', idle: 'Ready for your job', maintenance: 'Maintenance' };
@@ -15,16 +16,17 @@ const LABEL = { printing: 'Printing', idle: 'Ready for your job', maintenance: '
         <span class="live-dot"></span>{S.acceptingOrders ? 'Taking orders' : 'Orders paused'}
       </strong>
     </div>
-    <div class="stat">
+    <div class="stat live-only">
       <span class="tag">In the queue</span>
       <strong><span class="num">{S.queuedJobs}</span> jobs</strong>
     </div>
     <div class="stat">
       <span class="tag">Ships in</span>
-      <strong><span class="num">{lo}–{hi}</span> days</strong>
+      <strong class="live-only"><span class="num">{lo}–{hi}</span> days</strong>
+      <strong class="stale-only">usually <span class="num">{SITE.defaultLeadTimeDays[0]}–{SITE.defaultLeadTimeDays[1]}</span> days</strong>
     </div>
   </div>
-  <div class="bays">
+  <div class="bays live-only">
     {
       S.printers.map((p, i) => (
         <div class:list={['bay', p.state]}>
@@ -53,7 +55,8 @@ const LABEL = { printing: 'Printing', idle: 'Ready for your job', maintenance: '
       ))
     }
   </div>
-  <p class="foot tag">{S.note} · Updated {updated}</p>
+  <p class="foot tag live-only">{S.note} · Updated {updated}</p>
+  <p class="foot tag stale-only">Live queue not updated lately · ask for a current lead time when you order</p>
 </section>
 
 <style>
@@ -94,6 +97,16 @@ const LABEL = { printing: 'Printing', idle: 'Ready for your job', maintenance: '
   .closed .live-dot {
     background: var(--warn);
     box-shadow: 0 0 10px var(--warn);
+  }
+  .stale-only,
+  :global(.lab-stale) .live-only {
+    display: none;
+  }
+  :global(.lab-stale) .stale-only {
+    display: revert;
+  }
+  :global(.lab-stale) .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .bays {
     display: grid;
