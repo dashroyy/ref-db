@@ -59,7 +59,22 @@ const size = p.size;
   import type { Shape } from '../lib/three/print.ts';
 
   const el = document.querySelector<HTMLElement>('[data-viewer]');
-  if (el && webglOK()) {
+  // Start the 3D (~500 KB) only when the viewer is on screen or about to be: at
+  // once on a product page, on scroll for the showcase further down the home page.
+  // (A position check: IntersectionObserver misreads print-in sections' clip-path.)
+  const whenNear = (node: HTMLElement, go: () => void) => {
+    const near = () => node.getBoundingClientRect().top < innerHeight + 500;
+    if (near()) return go();
+    const check = () => {
+      if (!near()) return;
+      removeEventListener('scroll', check);
+      removeEventListener('resize', check);
+      go();
+    };
+    addEventListener('scroll', check, { passive: true });
+    addEventListener('resize', check, { passive: true });
+  };
+  if (el && webglOK()) whenNear(el, () => {
     import('../lib/three/viewer.ts').then(({ mountViewer }) => {
       const v = mountViewer(el.querySelector('canvas')!, el.dataset.shape as Shape, el.dataset.color!);
       el.classList.add('gl-ready');
@@ -160,7 +175,7 @@ const size = p.size;
         });
       }
     });
-  }
+  });
 </script>
 
 <style>
