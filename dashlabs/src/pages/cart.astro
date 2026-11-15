@@ -163,7 +163,8 @@ import { PRODUCTS } from '../data/catalog.ts';
         </li>`;
       })
       .join('');
-    if (gl) import('../lib/three/viewer.ts').then((m) => m.renderThumbs(list));
+    // the 3D code (~500 KB) only loads when there are items to draw
+    if (gl && list.querySelector('[data-thumb]')) import('../lib/three/viewer.ts').then((m) => m.renderThumbs(list));
   }
 
   let undo: ReturnType<typeof readCart>[number] | null = null;
