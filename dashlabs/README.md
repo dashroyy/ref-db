@@ -130,6 +130,7 @@ Principles that keep it maintainable:
 | `npm test`              | Unit tests (catalog rules, pricing, cart, Stripe, STL, tools). |
 | `npm run build`         | Build the static site into `dist/`. |
 | `npm run smoke`         | Drive the built site like a customer: 14 journeys, every link, phone widths. Needs Playwright. |
+| `npm run check`         | Everything before publishing: tests, type check, build and HTML validation. Stops at the first problem. |
 | `npm run validate`      | Check every built page's HTML (run after `npm run build`; CI runs it too). |
 | `npm run launch-check`  | List remaining placeholders. `-- --strict` fails while any must-fix item remains. |
 | `npm run thumbs`        | Re-render product thumbnails and the home-page printer still. Needs Playwright. |

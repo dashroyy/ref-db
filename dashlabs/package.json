@@ -13,6 +13,7 @@
     "og": "node scripts/render-og.ts",
     "smoke": "node scripts/smoke.mjs",
     "validate": "html-validate \"dist/**/*.html\"",
+    "check": "npm test && tsc --noEmit -p . && astro build && npm run validate && echo \"All checks passed\"",
     "launch-check": "node scripts/launch-check.ts"
   },
   "dependencies": {
