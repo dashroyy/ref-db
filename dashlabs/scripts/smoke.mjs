@@ -192,6 +192,7 @@ await step('search, saved items and theme are remembered', async () => {
   await page.goto(B + '/shop/');
   await page.click('[data-save="orig-pen-launcher"]');
   await page.goto(B + '/saved/');
+  expect(!(await page.isVisible('[data-saved-empty]')) && !(await page.isVisible('[data-saved-sugg]')), 'no empty state beside saved items');
   expect((await page.locator('[data-saved-grid] .card-wrap:visible').count()) === 1, 'saved page');
   await page.click('.theme-btn');
   await page.reload();

@@ -17,6 +17,12 @@ import { PRODUCTS } from '../data/catalog.ts';
         <a class="btn btn--primary" href="/shop/">Browse the shop</a>
       </div>
 
+      <div class="sugg" data-saved-sugg hidden>
+        <h2 class="h-rule">Popular right now</h2>
+        <p class="muted">Tap a heart to start your list.</p>
+        <div class="grid">{PRODUCTS.filter((p) => p.featured).map((p) => <ProductCard product={p} />)}</div>
+      </div>
+
       <div class="grid" data-saved-grid hidden>
         {PRODUCTS.map((p) => <ProductCard product={p} level={2} />)}
       </div>
@@ -28,8 +34,12 @@ import { PRODUCTS } from '../data/catalog.ts';
   import { readSaved, onSavedChange } from '../lib/saved-store.ts';
   const grid = document.querySelector<HTMLElement>('[data-saved-grid]')!;
   const cards = [...grid.querySelectorAll<HTMLElement>('[data-product]')];
+  let before = -1;
   const render = () => {
     const ids = readSaved();
+    // first save from the suggestions: they disappear, so bring the new list into view
+    const firstSave = before === 0 && ids.length > 0;
+    before = ids.length;
     // saved order, newest first; unsaving fades out on the next change
     for (const c of cards) c.hidden = !ids.includes(c.dataset.product!);
     ids.forEach((id) => {
@@ -37,9 +47,11 @@ import { PRODUCTS } from '../data/catalog.ts';
       if (c) grid.appendChild(c);
     });
     document.querySelector<HTMLElement>('[data-saved-empty]')!.hidden = ids.length > 0;
+    document.querySelector<HTMLElement>('[data-saved-sugg]')!.hidden = ids.length > 0;
     document.querySelector<HTMLElement>('[data-saved-lede]')!.textContent = ids.length
       ? `${ids.length} ${ids.length === 1 ? 'print' : 'prints'} saved. Saved items stay on this device.`
       : 'Tap the heart on anything in the shop to keep it here.';
+    if (firstSave) document.querySelector('h1')!.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
   render();
   grid.hidden = false;
@@ -56,6 +68,15 @@ import { PRODUCTS } from '../data/catalog.ts';
   }
   .grid {
     margin-top: 28px;
+  }
+  .sugg {
+    margin-top: clamp(40px, 6vw, 64px);
+  }
+  .sugg[hidden] {
+    display: none;
+  }
+  .sugg .muted {
+    margin: 0;
   }
   .grid[hidden],
   .grid :global([hidden]) {
