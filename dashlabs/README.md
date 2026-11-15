@@ -25,14 +25,17 @@ npm run launch-check   # what's still a placeholder?
 
 ## Everyday jobs
 
-Almost everything you'll change lives in **`src/data/`**. Edit, save, and the dev server updates.
+Almost everything you'll change lives in **`src/data/`** (settings and the catalog), **`src/writing/`** (your own words,
+in Markdown) and **`src/photos/`**. Edit, save, and the dev server updates.
 
 | I want to…                         | Edit                                   | Notes |
 | ---------------------------------- | -------------------------------------- | ----- |
 | Change a price                     | `src/data/catalog.ts`                  | Prices are in **cents**: `2400` is $24.00. |
 | Add a product                      | `src/data/catalog.ts`                  | See [Adding a product](#adding-a-product). |
 | Add product photos                 | `src/photos/products/<slug>/` (see the README there) | Drop in phone photos as they are: resized and compressed automatically. The page opens on the photos; a "3D" button switches to the model. |
-| Update the queue / printers        | `src/data/lab.ts`                      | Drives the header pill, home board and "ships by" dates. Change `updated` too. |
+| Write the maker's note (About)     | `src/writing/maker-note.md`            | Plain text under the `---` lines; set `draft: false` when done. Optional photo in `src/photos/about/`. |
+| Add a build-log entry (Lab)        | `src/writing/build-log/` (see the README there) | One Markdown file per project: date, title, a few lines, optional photos in `src/photos/build-log/`. |
+| Update the queue / printers        | `src/data/lab.ts`                      | Drives the header pill, home board and "ships by" dates. Change `updated` too: after 3 weeks without an update the site stops showing the queue as live. |
 | Add a customer review              | `src/data/reviews.ts`                  | Real reviews only, with permission. Example inside. |
 | Add a customer-print photo         | `public/gallery/` + `src/data/reviews.ts` | The gallery on /lab/ appears once there's one. |
 | Change contact email, gift wrap, shipping countries | `src/data/site.ts`    | |

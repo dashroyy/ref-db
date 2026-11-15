@@ -4,16 +4,13 @@ import ProductCard from '../components/ProductCard.astro';
 import PrintStory from '../components/PrintStory.astro';
 import Gallery from '../components/Gallery.astro';
 import { PRODUCTS } from '../data/catalog.ts';
+import ProductPhoto from '../components/ProductPhoto.astro';
+import { buildLog, formatLogDate } from '../lib/writing.ts';
 
 const originals = PRODUCTS.filter((p) => p.category === 'originals');
 
-// Portfolio log: past builds and experiments. Add real entries (and photos in
-// /public/lab/) as you go — these are placeholders.
-const log = [
-  { date: '2026-10', title: 'Pen Launcher', note: 'Example entry — describe a version, what changed and why.', example: true },
-  { date: '2026-09', title: 'Pet portrait commission', note: 'Example entry — replace with a real commission (with the customer\'s OK).', example: true },
-  { date: '2026-08', title: 'Business cards', note: 'Example entry — replace with a real job.', example: true },
-];
+// Build log: one Markdown file per entry in src/writing/build-log/ (see the README there).
+const log = buildLog();
 ---
 
 <Base title="The lab" description="Original 3D-printed gadgets designed at DashLabs, how a print goes from file to shelf, and the build log.">
@@ -60,12 +57,21 @@ const log = [
           log.map((e) => (
             <li>
               <span class="tag">
-                {e.date}
+                <time datetime={e.date}>{formatLogDate(e.date)}</time>
                 {e.example && <em class="ex">Example</em>}
               </span>
               <div>
                 <h3>{e.title}</h3>
-                <p class="muted">{e.note}</p>
+                <div class="log-text muted">
+                  <e.Content />
+                </div>
+                {e.photos.length > 0 && (
+                  <div class="log-photos">
+                    {e.photos.map((ph) => (
+                      <ProductPhoto photo={ph} class="log-photo" widths={[320, 640, 960]} sizes="(max-width: 560px) 100vw, 300px" />
+                    ))}
+                  </div>
+                )}
               </div>
             </li>
           ))
@@ -139,8 +145,27 @@ const log = [
   .log h3 {
     margin-bottom: 4px;
   }
-  .log p {
-    margin: 0;
+  .log-text :global(p) {
+    margin: 0 0 0.6em;
+    max-width: 68ch;
+  }
+  .log-text :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .log-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .log-photos :global(.log-photo) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line-2);
   }
   .ex {
     display: block;

@@ -22,8 +22,10 @@ const exampleLicence = PRODUCTS.filter((p) => p.source.kind === 'licensed' && /E
 if (exampleLicence.length) must.push(`Example licence details on: ${names(exampleLicence)}. Replace with designs you hold a commercial licence for, or remove them. → src/data/catalog.ts`);
 const exampleText = PRODUCTS.filter((p) => /EXAMPLE LISTING|Placeholder product/i.test(p.description.join(' ')));
 if (exampleText.length) must.push(`Placeholder descriptions on: ${names(exampleText)}. → src/data/catalog.ts`);
-if (/example: true/.test(page('lab.astro'))) must.push('The build log on /lab/ still shows "Example" entries. → src/pages/lab.astro');
-if (/maker's note to be written/i.test(page('about.astro'))) must.push('The About page still has the "maker\'s note to be written" block. → src/pages/about.astro');
+const logDir = 'src/writing/build-log';
+const exampleLog = readdirSync(logDir).filter((f) => f.endsWith('.md') && f !== 'README.md' && /^example:\s*true/m.test(readFileSync(`${logDir}/${f}`, 'utf8')));
+if (exampleLog.length) must.push(`The build log on /lab/ still has ${exampleLog.length} "Example" entries. → ${logDir}/ (see its README)`);
+if (/^draft:\s*true/m.test(readFileSync('src/writing/maker-note.md', 'utf8'))) must.push('The About page\'s maker\'s note is still a draft. Write it, then set draft: false. → src/writing/maker-note.md');
 if (/<strong>Draft\.<\/strong>/.test(page('policies.astro'))) must.push('Policies are still marked Draft. Review them, then remove the notice. → src/pages/policies.astro');
 if (LAB_STATUS.printers.some((p) => /^Printer \d+$/.test(p.name))) must.push('Lab status shows example printers ("Printer 01"). → src/data/lab.ts');
 
