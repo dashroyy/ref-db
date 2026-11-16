@@ -27,7 +27,7 @@ jobs:
           cache-dependency-path: dashlabs/package-lock.json
       - run: npm ci
       - run: npm test
-      - run: npx tsc --noEmit -p .
+      - run: npm run typecheck
       - run: npm run build
       - run: npm run validate
       - run: npm run check:modes

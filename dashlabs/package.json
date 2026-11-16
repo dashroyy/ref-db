@@ -13,7 +13,8 @@
     "og": "node scripts/render-og.ts",
     "smoke": "node scripts/smoke.mjs",
     "validate": "html-validate \"dist/**/*.html\"",
-    "check": "npm test && tsc --noEmit -p . && astro build && npm run validate && echo \"All checks passed\"",
+    "typecheck": "astro sync && tsc --noEmit -p .",
+    "check": "npm test && npm run typecheck && astro build && npm run validate && echo \"All checks passed\"",
     "verify": "npm run check && npm run check:modes && npm run smoke",
     "check:modes": "node scripts/check-modes.mjs",
     "launch-check": "node scripts/launch-check.ts"
@@ -27,6 +28,7 @@
     "three": "^0.171.0"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "@types/three": "^0.187.0",
     "html-validate": "^11.21.1",
     "playwright": "1.63.0"
