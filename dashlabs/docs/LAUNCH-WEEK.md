@@ -47,7 +47,8 @@ Phone photos straight off the camera are fine: they're resized and compressed au
 - [ ] **Build log** → `src/writing/build-log/`. One file per project (see the README there). Delete the three
       example files.
 - [ ] **Policies** → `src/pages/policies.astro`. Read them properly: they're promises to customers (returns,
-      shipping, custom work, privacy). Adjust, then remove the "Draft" notice.
+      shipping, custom work, privacy). Adjust, then remove the "Draft" notice. The returns window and your reply time
+      are set once in `src/data/site.ts` → `PROMISES`, and every page that mentions them follows.
 - [ ] **FAQ** → `src/data/faq.ts`. Check the answers still match the policies.
 - [ ] **Printers** → `src/data/lab.ts`: your real printer names, the queue, and today's date in `updated`
       (after 3 weeks without an update the site quietly stops showing the queue as live).

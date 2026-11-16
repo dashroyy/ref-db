@@ -36,6 +36,13 @@ export const CHECKOUT_MODE: 'request' | 'stripe' = envMode === 'stripe' ? 'strip
 const envDelivery = (import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_ORDER_DELIVERY;
 export const ORDER_DELIVERY: 'email' | 'netlify-form' = envDelivery === 'netlify-form' ? 'netlify-form' : 'email';
 
+// Promises shown across the site (FAQ, policies, product pages, emails). Change
+// them here and every page that mentions them follows.
+export const PROMISES = {
+  returnDays: 14, // days after delivery to report damage or (standard items) change your mind
+  replyWithin: 'a day or two', // "I usually reply within …"
+};
+
 // Gift wrap, added per order (cents). Placeholder — set your own, or 0 to make it free.
 export const GIFT_WRAP_PRICE = 300;
 export const GIFT_NOTE_MAX = 240;

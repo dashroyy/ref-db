@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { SITE, SHIP_TO } from '../data/site.ts';
+import { SITE, SHIP_TO, PROMISES } from '../data/site.ts';
 const sections = [
   { id: 'shipping', t: 'Shipping' },
   { id: 'returns', t: 'Returns & refunds' },
@@ -35,8 +35,8 @@ const sections = [
 
         <h2 id="returns">Returns &amp; refunds</h2>
         <ul>
-          <li><strong>Damaged or faulty:</strong> send a photo within 14 days of delivery and I'll reprint it or refund you, your choice.</li>
-          <li><strong>Changed your mind (standard items):</strong> contact me within 14 days of delivery. Return it unused and I'll refund the item; return postage is yours.</li>
+          <li><strong>Damaged or faulty:</strong> send a photo within {PROMISES.returnDays} days of delivery and I'll reprint it or refund you, your choice.</li>
+          <li><strong>Changed your mind (standard items):</strong> contact me within {PROMISES.returnDays} days of delivery. Return it unused and I'll refund the item; return postage is yours.</li>
           <li><strong>Custom and personalised items</strong> (figurines, name keychains, business cards, anything made to your text, photos or file) can't be returned for a change of mind, because they can't be sold to anyone else. Faulty ones are always put right.</li>
           <li><strong>Cancelling:</strong> free until printing starts. After that, see above.</li>
         </ul>

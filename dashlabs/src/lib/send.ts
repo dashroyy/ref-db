@@ -5,6 +5,7 @@
 // With ORDER_DELIVERY 'netlify-form', sendRequest() posts it straight to you
 // instead and only falls back to this dialog if that fails.
 import { deliver, type Delivery } from './deliver.ts';
+import { PROMISES } from '../data/site.ts';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -34,7 +35,7 @@ function newDialog(): HTMLDialogElement {
 function showDone(d: HTMLDialogElement, done: string, to: string, reference?: string) {
   d.innerHTML = `<div class="s-done"><span class="s-cube" aria-hidden="true"></span><b>${esc(done)}</b>${
     reference ? `<p>Your reference is <span class="s-ref">${esc(reference)}</span>. Keep it handy.</p>` : ''
-  }<p>I usually reply within a day or two. No reply after three days? Check your spam folder, or email
+  }<p>I usually reply within ${esc(PROMISES.replyWithin)}. No reply after three days? Check your spam folder, or email
   <a href="mailto:${esc(to)}">${esc(to)}</a>.</p><button type="button" class="btn btn--primary" data-close>Done</button></div>`;
   d.querySelector<HTMLButtonElement>('[data-close]')!.addEventListener('click', () => d.close());
   if (!d.open) d.showModal();

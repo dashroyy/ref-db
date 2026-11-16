@@ -9,7 +9,7 @@ import { slower } from '../../lib/shipdate.ts';
 import Reviews from '../../components/Reviews.astro';
 import { reviewsFor, ratingSummary } from '../../data/reviews.ts';
 import { PRODUCTS, categoryById, productCode, priceRange, type Product } from '../../data/catalog.ts';
-import { SITE } from '../../data/site.ts';
+import { SITE, PROMISES } from '../../data/site.ts';
 import { money } from '../../lib/money.ts';
 import { existsSync } from 'node:fs';
 import { getImage } from 'astro:assets';
@@ -104,7 +104,7 @@ const know = [
     q: 'Returns',
     a: madeForYou
       ? 'Made just for you, so it can’t be returned for a change of mind. If it arrives damaged or faulty, I’ll reprint or refund it.'
-      : 'Arrived damaged or faulty? I’ll reprint or refund it. Changed your mind? Contact me within 14 days of delivery.',
+      : `Arrived damaged or faulty? I’ll reprint or refund it. Changed your mind? Contact me within ${PROMISES.returnDays} days of delivery.`,
     link: { href: '/policies/#returns', label: 'Returns policy' },
   },
   ...(p.source.kind === 'licensed'

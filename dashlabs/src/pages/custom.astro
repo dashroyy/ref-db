@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import StlQuote from '../components/StlQuote.astro';
 import { PRODUCTS } from '../data/catalog.ts';
-import { SITE, ORDER_DELIVERY } from '../data/site.ts';
+import { SITE, ORDER_DELIVERY, PROMISES } from '../data/site.ts';
 import { money } from '../lib/money.ts';
 import { priceFor } from '../data/catalog.ts';
 
@@ -20,7 +20,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
         <h1 class="x3d">Tell me what you want printed.</h1>
         <p class="lede">
           A mini version of your best friend, your dog, your logo or something you sketched on a napkin. Describe it
-          below and I'll reply with a quote, usually within a day or two.
+          below and I'll reply with a quote, usually within {PROMISES.replyWithin}.
         </p>
 
         <ul class="types">
@@ -165,7 +165,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
 </Base>
 
 <script>
-  import { SITE, ORDER_DELIVERY } from '../data/site.ts';
+  import { SITE, ORDER_DELIVERY, PROMISES } from '../data/site.ts';
   import { sendRequest } from '../lib/send.ts';
   import { productById, describeOptions, normaliseOptions, priceFor } from '../data/catalog.ts';
   import { money } from '../lib/money.ts';
@@ -300,7 +300,7 @@ const quoteable = PRODUCTS.filter((p) => p.purchase === 'quote');
     await sendRequest(
       {
         title: 'Your request is ready',
-        lead: 'One last step: send it to me by email, with your photos or 3D file attached. I usually reply within a day or two.',
+        lead: `One last step: send it to me by email, with your photos or 3D file attached. I usually reply within ${PROMISES.replyWithin}.`,
         to: SITE.email,
         subject,
         text: body,

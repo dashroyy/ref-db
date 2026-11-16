@@ -1,3 +1,5 @@
+import { PROMISES } from '../data/site.ts';
+
 // Order desk helpers (pure; tested in tests/desk.test.ts). Reads the text of an
 // order email (the customer's order request, or the "PAID order" notice) back
 // into what a packing slip and gift card need.
@@ -129,7 +131,7 @@ export function replyDraft(kind: ReplyKind, o: ParsedOrder, x: ReplyExtras = {})
         '',
         'A few care tips: keep it out of hot cars and direct sun, and clean it with lukewarm water and a soft brush.',
         '',
-        "If anything arrives damaged, send me a photo within 14 days and I'll put it right.",
+        `If anything arrives damaged, send me a photo within ${PROMISES.returnDays} days and I'll put it right.`,
         '',
         sign,
       ].join('\n'),
