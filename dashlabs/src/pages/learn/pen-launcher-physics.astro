@@ -3,7 +3,13 @@ import MathSteps from '../../components/MathSteps.astro';
 import Guide from '../../layouts/Guide.astro';
 import Analogy from '../../components/Analogy.astro';
 import LaunchLab from '../../components/LaunchLab.astro';
-import { DEFAULT_LAUNCH as D } from '../../lib/launcher.ts';
+import { DEFAULT_LAUNCH as D, launch, G } from '../../lib/launcher.ts';
+// the worked example, from the same code as the launch lab
+const W = launch(D);
+const rad = (D.angleDeg * Math.PI) / 180;
+const vx = W.speed * Math.cos(rad);
+const vy = W.speed * Math.sin(rad);
+const f = (n: number, dp: number) => n.toFixed(dp);
 ---
 
 <Guide slug="pen-launcher-physics">
@@ -89,17 +95,17 @@ import { DEFAULT_LAUNCH as D } from '../../lib/launcher.ts';
   <MathSteps
     label="The default launch, worked through"
     rows={[
-      { k: 'E', expr: '½ × 300 × 0.040²', r: '0.24 J' },
-      { k: 'E_pen', expr: '0.5 × 0.24', r: '0.12 J' },
-      { k: 'v', expr: '√(2 × 0.12 / 0.006)', r: '6.32 m/s' },
-      { k: 'v sinθ', expr: '6.32 × sin 35°', r: '3.63 m/s' },
-      { k: 'v cosθ', expr: '6.32 × cos 35°', r: '5.18 m/s' },
-      { k: 't', expr: '(3.63 + √(3.63² + 2 × 9.81 × 0.75)) / 9.81', r: '0.908 s' },
-      { k: 'range', expr: '5.18 × 0.908', r: '4.70 m', gap: true },
-      { k: 'peak', expr: '0.75 + 3.63² / (2 × 9.81)', r: '1.42 m' },
+      { k: 'E', expr: `½ × ${D.k} × ${f(D.drawMm / 1000, 3)}²`, r: `${f(W.springJ, 2)} J` },
+      { k: 'E_pen', expr: `${D.efficiency} × ${f(W.springJ, 2)}`, r: `${f(W.penJ, 2)} J` },
+      { k: 'v', expr: `√(2 × ${f(W.penJ, 2)} / ${f(D.penGrams / 1000, 3)})`, r: `${f(W.speed, 2)} m/s` },
+      { k: 'v sinθ', expr: `${f(W.speed, 2)} × sin ${D.angleDeg}°`, r: `${f(vy, 2)} m/s` },
+      { k: 'v cosθ', expr: `${f(W.speed, 2)} × cos ${D.angleDeg}°`, r: `${f(vx, 2)} m/s` },
+      { k: 't', expr: `(${f(vy, 2)} + √(${f(vy, 2)}² + 2 × ${G} × ${D.heightM})) / ${G}`, r: `${f(W.flightS, 3)} s` },
+      { k: 'range', expr: `${f(vx, 2)} × ${f(W.flightS, 3)}`, r: `${f(W.range, 2)} m`, gap: true },
+      { k: 'peak', expr: `${D.heightM} + ${f(vy, 2)}² / (2 × ${G})`, r: `${f(W.peak, 2)} m` },
     ]}
   />
-  <p>The site's tests check these same numbers, so the tool and this page can't drift apart.</p>
+  <p>These numbers are worked out from the same code as the launch lab above, so the tool and this page always agree.</p>
 
   <h2>Where this stops</h2>
   <div class="stops">

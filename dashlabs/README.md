@@ -65,6 +65,8 @@ Then `npm test`: it checks ids, slugs, prices, sizes, licences and gift tags.
 
 ## Before you launch
 
+**Start here next week: [docs/LAUNCH-WEEK.md](docs/LAUNCH-WEEK.md)**, a step-by-step checklist from placeholders to live.
+
 `npm run launch-check` lists what's left, from the site's own data. Today it reports:
 
 - **Must fix:** contact email; the example MakerWorld listings (dragon, vase) and the cable dock's placeholder text;
@@ -115,7 +117,7 @@ src/server-routes/ Stripe checkout and webhook (added automatically on Netlify b
 public/            images, thumbnails (thumbs/), the hero still, fonts, icons
 scripts/           thumbnail renderer, launch check, smoke test
 tests/             unit tests
-docs/              DEPLOY (go live), SHOP-ROADMAP (payments plan), EMAIL-TEMPLATES
+docs/              LAUNCH-WEEK (your checklist), DEPLOY (go live), SHOP-ROADMAP (payments plan), EMAIL-TEMPLATES
 ```
 
 Principles that keep it maintainable:

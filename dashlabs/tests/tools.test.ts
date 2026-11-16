@@ -45,8 +45,9 @@ test('estimate: tiny parts hit the minimum; skin never exceeds the part', () => 
   assert.equal(estimate({ ...DEFAULT_INPUT, w: 0 }).grams, 0);
 });
 
-test('launcher worked example: 300 N/m spring, 40 mm draw, 50%, 6 g pen, 35°, desk height', () => {
-  const r = launch(DEFAULT_LAUNCH);
+test('launcher physics: 300 N/m spring, 40 mm draw, 50%, 6 g pen, 35°, desk height', () => {
+  // fixed inputs (not DEFAULT_LAUNCH, which you can tune to your own launcher)
+  const r = launch({ k: 300, drawMm: 40, efficiency: 0.5, penGrams: 6, angleDeg: 35, heightM: 0.75 });
   near(r.springJ, 0.24, 1e-12, 'E = ½·300·0.04²');
   near(r.penJ, 0.12, 1e-12);
   near(r.speed, 6.32, 0.005, 'v = √(2·0.12/0.006)');

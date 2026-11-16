@@ -1,6 +1,7 @@
 // Pen Launcher physics: spring → launch speed → trajectory. Pure functions;
-// tested in tests/launcher.test.ts. The worked example on
-// /learn/pen-launcher-physics/ uses DEFAULT_LAUNCH and is asserted in the test.
+// tested in tests/tools.test.ts. DEFAULT_LAUNCH sets the launch lab's starting
+// values and the worked example on /learn/pen-launcher-physics/, which is
+// computed from it, so measure your launcher and change these freely.
 //
 // Model: a spring of stiffness k pulled back x stores ½kx². Only a fraction η
 // (efficiency) reaches the pen as kinetic energy — the rest goes into the
