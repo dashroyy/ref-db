@@ -64,13 +64,37 @@ import { SITE } from '../data/site.ts';
           <p class="muted small">Prints at A6 size (105 × 148 mm) with corner marks: cut along them, or fold.</p>
           <button type="button" class="btn btn--primary" data-print="card">Print gift card</button>
         </div>
+        <div class="panel tool">
+          <span class="tag">4 · Reply to the customer</span>
+          <div class="seg" role="radiogroup" aria-label="Which reply">
+            <label><input type="radio" name="reply" value="total" checked /> Order total</label>
+            <label><input type="radio" name="reply" value="shipped" /> Shipped</label>
+            <label><input type="radio" name="reply" value="review" /> Review request</label>
+          </div>
+          <div class="row3" data-for="total">
+            <div class="field"><label for="r-ship">Shipping ($)</label><input id="r-ship" type="text" inputmode="decimal" placeholder="6.50" data-r="ship" /></div>
+            <div class="field"><label for="r-by">Ships by</label><input id="r-by" type="text" placeholder="Fri 21 Nov" data-r="by" /></div>
+          </div>
+          <div class="field" data-for="shipped" hidden><label for="r-track">Tracking</label><input id="r-track" type="text" placeholder="Link or number" data-r="track" /></div>
+          <div class="field"><label for="r-sign">Your name</label><input id="r-sign" type="text" autocomplete="name" data-r="sign" /></div>
+          <div class="field">
+            <label for="r-body">Draft <span class="muted" data-r-subject></span></label>
+            <textarea id="r-body" rows="12" data-r-body></textarea>
+          </div>
+          <div class="reply-actions">
+            <a class="btn btn--primary" data-r-mail href="#">Open in email</a>
+            <button type="button" class="btn" data-r-copy>Copy text</button>
+            <span class="muted small" role="status" data-r-status></span>
+          </div>
+          <p class="muted small">Edit the draft freely before sending. Anything still in [brackets] needs filling in.</p>
+        </div>
       </div>
     </div>
   </section>
 </Base>
 
 <script>
-  import { parseOrderText } from '../lib/desk.ts';
+  import { parseOrderText, replyDraft, type ReplyKind } from '../lib/desk.ts';
   const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
   const orderBox = $<HTMLTextAreaElement>('[data-order]');
@@ -90,7 +114,58 @@ import { SITE } from '../data/site.ts';
       : 'Nothing pasted yet.';
     if (o.giftNote && !g('note').value) g('note').value = o.giftNote;
     renderCard();
+    renderReply();
   };
+  // reply drafts (docs/EMAIL-TEMPLATES.md); your name is remembered on this device
+  const r = (k: string) => $<HTMLInputElement>(`[data-r="${k}"]`);
+  const body = $<HTMLTextAreaElement>('[data-r-body]');
+  const SIGN = 'dashlabs.desk.sign';
+  try {
+    r('sign').value = localStorage.getItem(SIGN) ?? '';
+  } catch {
+    /* storage blocked */
+  }
+  let subject = '';
+  const renderReply = () => {
+    const kind = (document.querySelector<HTMLInputElement>('input[name="reply"]:checked')?.value ?? 'total') as ReplyKind;
+    document.querySelectorAll<HTMLElement>('[data-for]').forEach((el) => (el.hidden = el.dataset.for !== kind));
+    const o = parseOrderText(orderBox.value);
+    const ship = parseFloat(r('ship').value.replace(/[^\d.]/g, ''));
+    const d = replyDraft(kind, o, {
+      shipping: Number.isFinite(ship) ? Math.round(ship * 100) : undefined,
+      shipBy: r('by').value,
+      tracking: r('track').value,
+      signOff: r('sign').value,
+    });
+    subject = d.subject;
+    body.value = d.body;
+    $('[data-r-subject]').textContent = `· ${d.subject}`;
+    $<HTMLAnchorElement>('[data-r-mail]').href = `mailto:${encodeURIComponent(o.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(d.body)}`;
+  };
+  // edits to the draft go into the email link too
+  body.addEventListener('input', () => {
+    const o = parseOrderText(orderBox.value);
+    $<HTMLAnchorElement>('[data-r-mail]').href = `mailto:${encodeURIComponent(o.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.value)}`;
+  });
+  document.querySelectorAll('input[name="reply"]').forEach((x) => x.addEventListener('change', renderReply));
+  ['ship', 'by', 'track', 'sign'].forEach((k) => r(k).addEventListener('input', renderReply));
+  r('sign').addEventListener('change', () => {
+    try {
+      localStorage.setItem(SIGN, r('sign').value);
+    } catch {
+      /* storage blocked */
+    }
+  });
+  $('[data-r-copy]').addEventListener('click', async () => {
+    const status = $('[data-r-status]');
+    try {
+      await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body.value}`);
+      status.textContent = 'Copied';
+    } catch {
+      body.select();
+      status.textContent = 'Press Ctrl/⌘ C to copy';
+    }
+  });
   const renderCard = () => {
     const to = g('to').value.trim();
     const from = g('from').value.trim();
@@ -102,6 +177,7 @@ import { SITE } from '../data/site.ts';
     $('[data-card-note]').textContent = note || 'Your note will appear here.';
   };
   orderBox.addEventListener('input', renderSlip);
+  renderReply();
   ['to', 'from', 'note'].forEach((k) => g(k).addEventListener('input', renderCard));
 
   // print only the chosen sheet
@@ -145,6 +221,31 @@ import { SITE } from '../data/site.ts';
   }
   .row3 .field {
     margin: 0;
+  }
+  .seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .seg label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+  .seg label:has(input:checked) {
+    border-color: var(--hot);
+    color: var(--white);
+  }
+  .reply-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
   }
   .sheet-wrap {
     padding: 14px;

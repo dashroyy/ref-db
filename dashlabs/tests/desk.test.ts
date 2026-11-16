@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseOrderText } from '../src/lib/desk.ts';
+import { parseOrderText, replyDraft } from '../src/lib/desk.ts';
 import { buildOrder } from '../src/lib/order.ts';
 import { orderRequestText } from '../src/lib/checkout.ts';
 import { paidOrderMessage } from '../src/lib/stripe.ts';
@@ -58,4 +58,37 @@ test('desk copes with text that is not an order', () => {
   const o = parseOrderText('hello there');
   assert.deepEqual(o.items, []);
   assert.equal(o.gift, false);
+});
+
+test('reply drafts: order total adds shipping to the subtotal', () => {
+  const order = buildOrder([{ productId: 'orig-pen-launcher', options: { colour: 'silk' }, qty: 2 }]);
+  const o = parseOrderText(orderRequestText(order, { name: 'Ada Lovelace', email: 'ada@example.com', notes: '' }));
+  assert.equal(o.email, 'ada@example.com');
+  assert.equal(o.subtotal, 5400);
+  const r = replyDraft('total', o, { shipping: 650, shipBy: 'Fri 21 Nov', signOff: 'Dash' });
+  assert.equal(r.subject, `Your DashLabs order ${order.reference}`);
+  assert.match(r.body, /^Hi Ada,/);
+  assert.match(r.body, /- 2 × Pen Launcher \(Filament colour: Silk rainbow\)/);
+  assert.match(r.body, /Subtotal: \$54\.00\n- Shipping: \$6\.50\n- Total: \$60\.50/);
+  assert.match(r.body, /ship by Fri 21 Nov/);
+  assert.match(r.body, /Dash, DashLabs$/);
+});
+
+test('reply drafts: blanks stay as [brackets] until filled', () => {
+  const o = parseOrderText('Order request DL-261115-AAAA\n\n• 1 × Pen Launcher — $24.00\n\nSubtotal: $24.00\n\nName: Sam\nEmail: s@x.co');
+  const r = replyDraft('total', o);
+  assert.match(r.body, /Shipping: \$\[x\]/);
+  assert.match(r.body, /\[your name\], DashLabs/);
+  assert.match(replyDraft('shipped', o, { tracking: '1Z999' }).body, /The Pen Launcher is printed.*Tracking: 1Z999/);
+  assert.match(replyDraft('review', o).body, /I hope the Pen Launcher arrived safely/);
+});
+
+test('reply drafts read naturally for several items', async () => {
+  const order = buildOrder([
+    { productId: 'orig-pen-launcher', options: {}, qty: 1 },
+    { productId: 'mto-keychain', options: {}, qty: 1, note: 'A' },
+  ]);
+  const o = parseOrderText(orderRequestText(order, { name: 'Ada', email: 'a@b.co', notes: '' }));
+  assert.match(replyDraft('shipped', o).body, /Your order is printed/);
+  assert.match(replyDraft('review', o).body, /I hope your order arrived safely/);
 });

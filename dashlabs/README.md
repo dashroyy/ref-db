@@ -40,7 +40,7 @@ in Markdown) and **`src/photos/`**. Edit, save, and the dev server updates.
 | Add a customer-print photo         | `src/photos/gallery/` + `src/data/reviews.ts` | The gallery on /lab/ appears once there's one. |
 | Change contact email, gift wrap, shipping countries | `src/data/site.ts`    | |
 | Change your print rates            | `src/lib/estimate.ts` (`RATES`), `src/data/materials.ts` (spool prices) | Feeds the price estimator and STL quote. |
-| Pack an order / print a gift note  | Open **`/desk/`** on your site         | Paste the order email: prints a packing slip (never any prices) and the gift note card (A6). Not linked anywhere; hidden from search. |
+| Pack an order / print a gift note  | Open **`/desk/`** on your site         | Paste the order email: prints a packing slip (never any prices) and the gift note card (A6), and drafts your reply (order total with shipping, shipped, review request) ready to send. Not linked anywhere; hidden from search. |
 | Reply to a customer                | `docs/EMAIL-TEMPLATES.md`              | Order total, quote, preview, shipped, review request, licence refusal. |
 
 After adding a product or changing a category colour, run **`npm run thumbs`** then **`npm run og`** to re-render the product images and link-preview cards
@@ -138,6 +138,7 @@ Principles that keep it maintainable:
 | `npm run build`         | Build the static site into `dist/`. |
 | `npm run smoke`         | Drive the built site like a customer: 14 journeys, every link, phone widths. Needs Playwright. |
 | `npm run check`         | Everything before publishing: tests, type check, build and HTML validation. Stops at the first problem. |
+| `npm run verify`        | `check` plus the customer journeys (needs Playwright). The full pre-publish run. |
 | `npm run validate`      | Check every built page's HTML (run after `npm run build`; CI runs it too). |
 | `npm run launch-check`  | List remaining placeholders. `-- --strict` fails while any must-fix item remains. |
 | `npm run thumbs`        | Re-render product thumbnails and the home-page printer still. Needs Playwright. |
