@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { SITE, SHIP_TO, PROMISES } from '../data/site.ts';
+import { SITE, SHIP_TO, PROMISES, CHECKOUT_MODE, ORDER_DELIVERY } from '../data/site.ts';
 const sections = [
   { id: 'shipping', t: 'Shipping' },
   { id: 'returns', t: 'Returns & refunds' },
@@ -55,8 +55,22 @@ const sections = [
           <li><strong>What I collect:</strong> only what you send me to make and deliver your order: name, email, address, and any photos, text or files for custom work.</li>
           <li><strong>What it's used for:</strong> your order, and nothing else. No marketing emails unless you ask for them.</li>
           <li><strong>Photos</strong> for a commission are used only to make your piece, and I won't show your piece publicly without asking you.</li>
-          <li><strong>On this website:</strong> your cart, saved items, theme choice, and the name and email you type into the order forms are stored in your own browser, not on a server. There is no tracking or advertising. The STL quote tool reads your file on your device; it is not uploaded.</li>
-          <li><strong>Payments</strong> are handled by Stripe. I never see or store your card number.</li>
+          <li><strong>On this website:</strong> your cart, saved items, theme choice, the name and email you type into the order forms, and any unsent custom-request draft are stored in your own browser, not on a server. There is no tracking or advertising. The STL quote tool reads your file on your device; it is not uploaded.</li>
+          {
+            (ORDER_DELIVERY === 'netlify-form' || CHECKOUT_MODE === 'stripe') && (
+              <li>
+                <strong>Order details</strong>
+                {ORDER_DELIVERY === 'netlify-form' ? ' and requests you send from this site' : ' of paid orders'} reach me through Netlify (the site's host),
+                which stores them so none go missing. They are used only to reply to you and make your order.
+              </li>
+            )
+          }
+          <li>
+            <strong>Payments</strong>
+            {CHECKOUT_MODE === 'stripe'
+              ? ' are handled by Stripe, on its secure checkout page. I never see or store your card number.'
+              : ' are made on the secure page of the invoice you receive. I never see or store your card number.'}
+          </li>
           <li><strong>Your say:</strong> ask me any time to see or delete what I hold about you: <a href={`mailto:${SITE.email}`}>{SITE.email}</a>.</li>
         </ul>
 
