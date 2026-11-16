@@ -44,7 +44,7 @@ in Markdown) and **`src/photos/`**. Edit, save, and the dev server updates.
 | Reply to a customer                | `docs/EMAIL-TEMPLATES.md`              | Order total, quote, preview, shipped, review request, licence refusal. |
 
 After adding a product or changing a category colour, run **`npm run thumbs`** then **`npm run og`** to re-render the product images and link-preview cards
-(it needs Playwright: `npx playwright install chromium`). If you forget, the site draws them live instead, so
+(the first time on a computer, run `npx playwright install chromium` once to download the browser it uses). If you forget, the site draws them live instead, so
 nothing breaks.
 
 ### Adding a product
@@ -138,13 +138,13 @@ Principles that keep it maintainable:
 | `npm run dev`           | Local site at http://localhost:4321 with live reload. |
 | `npm test`              | Unit tests (catalog rules, pricing, cart, Stripe, STL, tools). |
 | `npm run build`         | Build the static site into `dist/`. |
-| `npm run smoke`         | Drive the built site like a customer: 14 journeys, every link, phone widths. Needs Playwright. |
+| `npm run smoke`         | Drive the built site like a customer: 15 journeys, every link, phone widths, in a real browser (first time: `npx playwright install chromium`). CI runs it too. |
 | `npm run check`         | Everything before publishing: tests, type check, build and HTML validation. Stops at the first problem. |
 | `npm run check:modes`   | Builds and checks every setup you can switch on (direct delivery, card checkout, the Netlify payment routes). CI runs it too. |
-| `npm run verify`        | `check`, `check:modes` and the customer journeys (needs Playwright). The full pre-publish run. |
+| `npm run verify`        | `check`, `check:modes` and the customer journeys. The full pre-publish run. |
 | `npm run validate`      | Check every built page's HTML (run after `npm run build`; CI runs it too). |
 | `npm run launch-check`  | List remaining placeholders. `-- --strict` fails while any must-fix item remains. |
-| `npm run thumbs`        | Re-render product thumbnails and the home-page printer still. Needs Playwright. |
+| `npm run thumbs`        | Re-render product thumbnails and the home-page printer still (uses the same browser as `smoke`). |
 | `npm run og`            | Re-render each product's share card (the picture in iMessage/WhatsApp/Discord link previews). Run after `thumbs`, or after changing a name, summary, price or photo. |
 | `npm run preview`       | Serve the built `dist/` locally. |
 

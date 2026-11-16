@@ -1,7 +1,8 @@
 // Pre-renders the 3D product thumbnails to public/thumbs/*.webp.
 //   npm run thumbs
 // It builds the site with static thumbnails switched off, opens it in a
-// headless browser (Playwright must be installed: `npx playwright install chromium`),
+// headless browser (Playwright comes with the project; the first time on a
+// computer run `npx playwright install chromium` to download its browser),
 // lets the site's own 3D code draw every thumbnail, and saves the results.
 // Run it after adding a product or changing a model or category colour.
 import { execSync } from 'node:child_process';

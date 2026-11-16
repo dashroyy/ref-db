@@ -1,4 +1,5 @@
-# Checks the DashLabs site (dashlabs/) whenever it changes: tests, type check, build.
+# Checks the DashLabs site (dashlabs/) whenever it changes: tests, type check, build,
+# HTML, every switchable setup, and the customer journeys in a real browser.
 # Separate from the REF·DB deploy workflow; it never deploys anything.
 name: DashLabs checks
 
@@ -30,3 +31,5 @@ jobs:
       - run: npm run build
       - run: npm run validate
       - run: npm run check:modes
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke
