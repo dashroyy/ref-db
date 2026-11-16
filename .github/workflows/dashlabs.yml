@@ -29,3 +29,4 @@ jobs:
       - run: npx tsc --noEmit -p .
       - run: npm run build
       - run: npm run validate
+      - run: npm run check:modes

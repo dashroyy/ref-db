@@ -140,7 +140,8 @@ Principles that keep it maintainable:
 | `npm run build`         | Build the static site into `dist/`. |
 | `npm run smoke`         | Drive the built site like a customer: 14 journeys, every link, phone widths. Needs Playwright. |
 | `npm run check`         | Everything before publishing: tests, type check, build and HTML validation. Stops at the first problem. |
-| `npm run verify`        | `check` plus the customer journeys (needs Playwright). The full pre-publish run. |
+| `npm run check:modes`   | Builds and checks every setup you can switch on (direct delivery, card checkout, the Netlify payment routes). CI runs it too. |
+| `npm run verify`        | `check`, `check:modes` and the customer journeys (needs Playwright). The full pre-publish run. |
 | `npm run validate`      | Check every built page's HTML (run after `npm run build`; CI runs it too). |
 | `npm run launch-check`  | List remaining placeholders. `-- --strict` fails while any must-fix item remains. |
 | `npm run thumbs`        | Re-render product thumbnails and the home-page printer still. Needs Playwright. |

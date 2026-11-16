@@ -14,7 +14,8 @@
     "smoke": "node scripts/smoke.mjs",
     "validate": "html-validate \"dist/**/*.html\"",
     "check": "npm test && tsc --noEmit -p . && astro build && npm run validate && echo \"All checks passed\"",
-    "verify": "npm run check && npm run smoke",
+    "verify": "npm run check && npm run check:modes && npm run smoke",
+    "check:modes": "node scripts/check-modes.mjs",
     "launch-check": "node scripts/launch-check.ts"
   },
   "dependencies": {
