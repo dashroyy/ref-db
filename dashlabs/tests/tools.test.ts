@@ -2,7 +2,7 @@
 // These tests assert the same numbers the pages show, step by step.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { estimate, DEFAULT_INPUT, formatHours, RATES } from '../src/lib/estimate.ts';
+import { estimate, DEFAULT_INPUT, formatHours, RATES, type EstimateInput } from '../src/lib/estimate.ts';
 import { launch, trajectory, bestAngle, DEFAULT_LAUNCH } from '../src/lib/launcher.ts';
 import { MATERIALS } from '../src/data/materials.ts';
 import { leadTimeDays } from '../src/data/lab.ts';
@@ -10,18 +10,33 @@ import { leadTimeDays } from '../src/data/lab.ts';
 const near = (a: number, b: number, tol: number, msg?: string) =>
   assert.ok(Math.abs(a - b) <= tol, `${msg ?? ''} expected ${b} ± ${tol}, got ${a}`);
 
-test('estimate worked example: 8×8×10 cm organic figurine in PLA, 15% infill, standard', () => {
-  const r = estimate(DEFAULT_INPUT);
+test('estimate maths: 8×8×10 cm organic figurine in PLA, 15% infill, standard', async () => {
+  // fixed rates (not RATES, which you set to your own) and the material's own data,
+  // so this checks the maths without breaking when you change your prices
+  const { materialById } = await import('../src/data/materials.ts');
+  const { QUALITIES } = await import('../src/lib/estimate.ts');
+  const pla = materialById('pla')!;
+  const std = QUALITIES.find((q) => q.id === 'standard')!;
+  const rates = { machinePerHour: 1, handling: 3, margin: 0.4, wallMm: 1.2, flexSlowdown: 0.5, minimum: 5 };
+  const input: EstimateInput = { w: 8, d: 8, h: 10, shape: 'organic', material: 'pla', infill: 0.15, quality: 'standard', qty: 1 };
+  const r = estimate(input, rates);
   near(r.volume, 224, 1e-9, 'volume = 8·8·10·0.35');
   near(r.shell, 26.56, 0.01, 'skin = 6·224^(2/3)·0.12');
   near(r.material, 56.17, 0.01, 'material = 26.56 + 0.15·(224 − 26.56)');
-  near(r.grams, 69.65, 0.01, 'grams = 56.17 · 1.24');
-  near(r.hours, 4.644, 0.001, 'hours = 69.65 / 15');
-  assert.equal(formatHours(r.hours), '4 h 39 min');
-  near(r.cost.filament, 1.39, 0.005);
-  near(r.cost.machine, 4.64, 0.005);
-  near(r.each, 12.65, 0.005);
-  assert.equal(r.total, 13);
+  near(r.grams, r.material * pla.density, 1e-9, 'grams = material · density');
+  near(r.hours, r.grams / std.gramsPerHour, 1e-9, 'hours = grams / speed');
+  near(r.cost.filament, (r.grams / 1000) * pla.pricePerKg, 1e-9);
+  near(r.cost.machine, r.hours * 1, 1e-9);
+  const base = r.cost.filament + r.cost.machine + 3;
+  near(r.cost.margin, base * 0.4, 1e-9);
+  near(r.each, base * 1.4, 1e-9);
+  assert.equal(r.total, Math.max(5, Math.ceil(r.each)));
+  // with today's PLA data (1.24 g/cm³, $20/kg, 15 g/h) this is the example on /learn/pricing/
+  if (pla.density === 1.24 && pla.pricePerKg === 20 && std.gramsPerHour === 15) {
+    assert.equal(formatHours(r.hours), '4 h 39 min');
+    near(r.each, 12.65, 0.005);
+    assert.equal(r.total, 13);
+  }
 });
 
 test('estimate: handling is charged once per job, not per part', () => {
@@ -39,8 +54,10 @@ test('estimate: more infill, finer layers and TPU all cost more', () => {
 });
 
 test('estimate: tiny parts hit the minimum; skin never exceeds the part', () => {
-  const r = estimate({ ...DEFAULT_INPUT, w: 1, d: 1, h: 1 });
-  assert.equal(r.total, RATES.minimum);
+  // a minimum well above any tiny part's cost, whatever your RATES are
+  const r = estimate({ ...DEFAULT_INPUT, w: 1, d: 1, h: 1 }, { ...RATES, minimum: 50 });
+  assert.equal(r.total, 50);
+  assert.ok(estimate({ ...DEFAULT_INPUT, w: 1, d: 1, h: 1 }).total >= RATES.minimum);
   assert.ok(r.shell <= r.volume);
   assert.equal(estimate({ ...DEFAULT_INPUT, w: 0 }).grams, 0);
 });

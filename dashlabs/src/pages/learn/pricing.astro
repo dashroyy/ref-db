@@ -3,17 +3,27 @@ import MathSteps from '../../components/MathSteps.astro';
 import Guide from '../../layouts/Guide.astro';
 import Analogy from '../../components/Analogy.astro';
 import QuoteEstimator from '../../components/QuoteEstimator.astro';
-import { RATES, QUALITIES } from '../../lib/estimate.ts';
+import { RATES, QUALITIES, SHAPES, DEFAULT_INPUT as IN, estimate, formatHours } from '../../lib/estimate.ts';
 import { materialById } from '../../data/materials.ts';
 const pla = materialById('pla')!;
 const std = QUALITIES.find((q) => q.id === 'standard')!;
+// The worked example and the numbers in the text are computed from the
+// estimator itself, so they follow your RATES and spool prices.
+const W = estimate(IN);
+const shape = SHAPES.find((x) => x.id === IN.shape)!;
+const n1 = (v: number) => v.toFixed(1);
+const usd = (v: number) => `$${v.toFixed(2)}`;
+const base = W.cost.filament + W.cost.machine + W.cost.handling;
+const filamentShare = Math.round((W.cost.filament / W.each) * 100);
+const draftSaving = Math.round((1 - estimate({ ...IN, quality: 'draft' }).hours / W.hours) * 100);
+const extraGrams = Math.round(estimate({ ...IN, infill: 0.5 }).grams - W.grams);
 ---
 
 <Guide slug="pricing">
   <h2>Why it matters</h2>
   <p>
-    People are often surprised that a palm-sized print costs more than the plastic in it. A 70 g figurine uses about
-    $1.40 of filament, yet it ties up a printer for over four hours. Knowing where the cost goes helps you ask for the
+    People are often surprised that a palm-sized print costs more than the plastic in it. A {Math.round(W.grams)} g figurine uses about
+    {usd(W.cost.filament)} of filament, yet it ties up a printer for {formatHours(W.hours)}. Knowing where the cost goes helps you ask for the
     right thing: a hollower part, a coarser layer, or a smaller size can halve the price.
   </p>
 
@@ -69,25 +79,25 @@ const std = QUALITIES.find((q) => q.id === 'standard')!;
   <div class="wide"><QuoteEstimator /></div>
 
   <h2>Worked example: an 8 × 8 × 10 cm figurine</h2>
-  <p>These are the estimator's default inputs, solved by hand (the site's tests check the same numbers):</p>
+  <p>These are the estimator's default inputs, worked through step by step with the same code as the estimator above, so the two always agree:</p>
   <MathSteps
     label="Price of an 8 × 8 × 10 cm figurine, step by step"
     rows={[
-      { k: 'Object volume', expr: '8 × 8 × 10 cm × 0.35 (organic shape)', r: '224 cm³' },
-      { k: 'Skin', expr: '6 × 224^(2/3) cm² × 0.12 cm', r: '26.6 cm³' },
-      { k: 'Infill', expr: '15% × (224 − 26.6) cm³', r: '29.6 cm³' },
-      { k: 'Plastic', expr: `26.6 + 29.6 = 56.2 cm³ × ${pla.density} g/cm³`, r: '69.7 g' },
-      { k: 'Print time', expr: `69.7 g ÷ ${std.gramsPerHour} g/h (standard, 0.20 mm)`, r: '4 h 39 min' },
-      { k: 'Filament', expr: `0.0697 kg × $${pla.pricePerKg}/kg`, r: '$1.39', gap: true },
-      { k: 'Machine', expr: `4.64 h × $${RATES.machinePerHour.toFixed(2)}/h`, r: '$4.64' },
-      { k: 'Handling', r: '$3.00' },
-      { k: 'Margin', expr: `${RATES.margin * 100}% × $9.03`, r: '$3.61' },
-      { k: 'Price', expr: '$12.65 → rounded up', r: '$13', gap: true },
+      { k: 'Object volume', expr: `${IN.w} × ${IN.d} × ${IN.h} cm × ${shape.factor} (${IN.shape} shape)`, r: `${Math.round(W.volume)} cm³` },
+      { k: 'Skin', expr: `6 × ${Math.round(W.volume)}^(2/3) cm² × ${RATES.wallMm / 10} cm`, r: `${n1(W.shell)} cm³` },
+      { k: 'Infill', expr: `${Math.round(IN.infill * 100)}% × (${Math.round(W.volume)} − ${n1(W.shell)}) cm³`, r: `${n1(W.material - W.shell)} cm³` },
+      { k: 'Plastic', expr: `${n1(W.shell)} + ${n1(W.material - W.shell)} = ${n1(W.material)} cm³ × ${pla.density} g/cm³`, r: `${n1(W.grams)} g` },
+      { k: 'Print time', expr: `${n1(W.grams)} g ÷ ${std.gramsPerHour} g/h (standard, 0.20 mm)`, r: formatHours(W.hours) },
+      { k: 'Filament', expr: `${(W.grams / 1000).toFixed(4)} kg × $${pla.pricePerKg}/kg`, r: usd(W.cost.filament), gap: true },
+      { k: 'Machine', expr: `${W.hours.toFixed(2)} h × $${RATES.machinePerHour.toFixed(2)}/h`, r: usd(W.cost.machine) },
+      { k: 'Handling', r: usd(W.cost.handling) },
+      { k: 'Margin', expr: `${Math.round(RATES.margin * 100)}% × ${usd(base)}`, r: usd(W.cost.margin) },
+      { k: 'Price', expr: `${usd(W.each)} → rounded up`, r: `$${W.total}`, gap: true },
     ]}
   />
   <p>
-    Notice the filament is only about a tenth of the price. Dropping to draft layers cuts the machine time by about
-    40%. Raising infill to 50% adds about 50 g of plastic, and the hours to print it.
+    Notice the filament is only about {filamentShare}% of the price. Dropping to draft layers cuts the machine time by
+    about {draftSaving}%. Raising infill to 50% adds about {extraGrams} g of plastic, and the hours to print it.
   </p>
 
   <h2>Where this stops</h2>

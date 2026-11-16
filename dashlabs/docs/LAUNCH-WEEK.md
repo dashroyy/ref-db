@@ -15,7 +15,8 @@ soon as you save.
       automatically.
 - [ ] **Gift wrap price.** `src/data/site.ts` → `GIFT_WRAP_PRICE` (cents; `0` makes it free).
 - [ ] **Your print rates.** `src/lib/estimate.ts` → `RATES` (machine $/hour, handling, margin) and
-      `src/data/materials.ts` (spool prices). These drive the price estimator and the instant STL quote.
+      `src/data/materials.ts` (spool prices). These drive the price estimator and the instant STL quote, and the price guide's worked example recalculates
+      itself to match.
 
 ## 2. Make the catalogue real (1–2 hours)
 
