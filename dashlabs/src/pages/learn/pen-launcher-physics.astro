@@ -1,0 +1,142 @@
+---
+import MathSteps from '../../components/MathSteps.astro';
+import Guide from '../../layouts/Guide.astro';
+import Analogy from '../../components/Analogy.astro';
+import LaunchLab from '../../components/LaunchLab.astro';
+import { DEFAULT_LAUNCH as D, launch, G } from '../../lib/launcher.ts';
+// the worked example, from the same code as the launch lab
+const W = launch(D);
+const rad = (D.angleDeg * Math.PI) / 180;
+const vx = W.speed * Math.cos(rad);
+const vy = W.speed * Math.sin(rad);
+const f = (n: number, dp: number) => n.toFixed(dp);
+---
+
+<Guide slug="pen-launcher-physics">
+  <h2>Why it matters</h2>
+  <p>
+    The Pen Launcher went through many prototypes. The physics below is what decided the spring, the pull-back
+    distance and the angle of the barrel. It's also the fastest way to win the office distance contest.
+  </p>
+
+  <h2>The intuition</h2>
+  <Analogy title="A bow and arrow">
+    <p>
+      Pulling back the plunger is like drawing a bow: you store energy in the spring, and releasing it pours that energy
+      into the pen. Pull back twice as far and you store <strong>four times</strong> the energy, because the spring
+      pushes harder the further it's stretched.
+    </p>
+    <p>
+      Where it breaks down: a bow's string is very light, so most of the energy reaches the arrow. The launcher's
+      plunger is heavier, and some energy is lost to friction, so only about half of it reaches the pen.
+    </p>
+  </Analogy>
+
+  <figure class="panel dia">
+    <svg viewBox="0 0 560 200" role="img" aria-label="Pen Launcher: spring, plunger, pen and launch angle">
+      <desc>
+        A side view of the launcher. A spring of stiffness k is compressed by the pull-back distance x behind a plunger.
+        The pen sits in a barrel angled at theta above horizontal, at height h above the floor, and leaves at speed v.
+      </desc>
+      <line x1="20" y1="185" x2="540" y2="185" stroke="var(--line-2)"></line>
+      <rect x="40" y="150" width="200" height="35" fill="var(--panel-2)" stroke="var(--line-2)"></rect>
+      <text x="140" y="172" text-anchor="middle" class="lbl">desk</text>
+      <g transform="rotate(-25 80 140)">
+        <rect x="60" y="122" width="230" height="30" rx="6" fill="none" stroke="var(--accent)" stroke-width="2"></rect>
+        <path d="M68 137 l8 -9 l8 18 l8 -18 l8 18 l8 -18 l8 18 l8 -9" fill="none" stroke="var(--text-2)" stroke-width="2"></path>
+        <rect x="132" y="126" width="12" height="22" fill="var(--accent)"></rect>
+        <rect x="146" y="132" width="130" height="10" rx="5" fill="var(--text)"></rect>
+        <path d="M276 132 l14 5 l-14 5z" fill="var(--text-3)"></path>
+        <text x="98" y="116" class="lbl">k, x</text>
+        <path d="M300 137 h60" stroke="var(--accent)" stroke-width="2" marker-end="url(#arr)"></path>
+        <text x="330" y="128" class="lbl">v</text>
+      </g>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0L10 5L0 10z" fill="var(--accent)"></path>
+        </marker>
+      </defs>
+      <path d="M90 140 h70" stroke="var(--text-3)" stroke-dasharray="3 3"></path>
+      <path d="M140 140 A50 50 0 0 0 135 119" fill="none" stroke="var(--text-2)"></path>
+      <text x="146" y="134" class="lbl">θ</text>
+      <path d="M260 150 v35" stroke="var(--text-2)"></path>
+      <text x="266" y="172" class="lbl">h</text>
+      <path d="M420 60 Q480 70 520 185" fill="none" stroke="var(--accent)" stroke-dasharray="4 4"></path>
+    </svg>
+    <figcaption class="hint">Schematic, not to scale.</figcaption>
+  </figure>
+
+  <h2>The physics</h2>
+  <p>Three steps:</p>
+  <MathSteps
+    label="The four steps of the model"
+    rows={[
+      { k: '1. Energy in the spring', r: 'E = ½ k x²' },
+      { k: '2. Speed of the pen', r: 'v = √(2ηE / m)' },
+      { k: '3. Time in the air', expr: 't = (v sinθ + √((v sinθ)² + 2gh)) / g' },
+      { k: '4. Distance', r: 'range = v cosθ × t' },
+    ]}
+  />
+  <p>
+    Here <strong>k</strong> is the spring's stiffness (N/m), <strong>x</strong> the pull-back (m), <strong>η</strong>
+    the share of the spring's energy that reaches the pen, <strong>m</strong> the pen's mass (kg), <strong>θ</strong>
+    the launch angle, <strong>h</strong> the launch height (m) and <strong>g</strong> = 9.81 m/s².
+  </p>
+  <p>
+    On flat ground, 45° goes furthest. Launching from a desk changes that: the pen already has height to fall, so a
+    flatter angle that keeps more speed going forward wins. From desk height the best angle is around 40°.
+  </p>
+
+  <h2>Try it</h2>
+  <div class="wide"><LaunchLab /></div>
+
+  <h2>Worked example: the default launch</h2>
+  <p>A {D.k} N/m spring pulled back {D.drawMm} mm, {D.efficiency * 100}% efficient, a {D.penGrams} g pen, {D.angleDeg}° from a {D.heightM} m desk:</p>
+  <MathSteps
+    label="The default launch, worked through"
+    rows={[
+      { k: 'E', expr: `½ × ${D.k} × ${f(D.drawMm / 1000, 3)}²`, r: `${f(W.springJ, 2)} J` },
+      { k: 'E_pen', expr: `${D.efficiency} × ${f(W.springJ, 2)}`, r: `${f(W.penJ, 2)} J` },
+      { k: 'v', expr: `√(2 × ${f(W.penJ, 2)} / ${f(D.penGrams / 1000, 3)})`, r: `${f(W.speed, 2)} m/s` },
+      { k: 'v sinθ', expr: `${f(W.speed, 2)} × sin ${D.angleDeg}°`, r: `${f(vy, 2)} m/s` },
+      { k: 'v cosθ', expr: `${f(W.speed, 2)} × cos ${D.angleDeg}°`, r: `${f(vx, 2)} m/s` },
+      { k: 't', expr: `(${f(vy, 2)} + √(${f(vy, 2)}² + 2 × ${G} × ${D.heightM})) / ${G}`, r: `${f(W.flightS, 3)} s` },
+      { k: 'range', expr: `${f(vx, 2)} × ${f(W.flightS, 3)}`, r: `${f(W.range, 2)} m`, gap: true },
+      { k: 'peak', expr: `${D.heightM} + ${f(vy, 2)}² / (2 × ${G})`, r: `${f(W.peak, 2)} m` },
+    ]}
+  />
+  <p>These numbers are worked out from the same code as the launch lab above, so the tool and this page always agree.</p>
+
+  <h2>Where this stops</h2>
+  <div class="stops">
+    <ul>
+      <li><strong>No air drag.</strong> A light pen at 6 m/s loses noticeable speed to the air, and a tumbling pen loses more. Expect real ranges 10–30% shorter.</li>
+      <li><strong>Efficiency is an estimate.</strong> The 50% default is illustrative. Measure your range and adjust it until the tool matches.</li>
+      <li><strong>The spring constant is illustrative.</strong> Springs vary. To measure yours, hang a known weight from it and divide the force by the stretch.</li>
+      <li><strong>Safety:</strong> aim at targets, never at people, pets or faces. Don't fit stronger springs than the design was made for.</li>
+    </ul>
+  </div>
+
+  <h2>References</h2>
+  <ul>
+    <li>Any introductory mechanics text on spring potential energy and projectile motion, e.g. Halliday, Resnick &amp; Walker, <em>Fundamentals of Physics</em>, chapters 4 and 8.</li>
+  </ul>
+</Guide>
+
+<style>
+  .dia {
+    margin: 20px 0;
+    padding: 16px;
+  }
+  .dia svg {
+    width: 100%;
+    height: auto;
+  }
+  .lbl {
+    font: 500 12px var(--mono);
+    fill: var(--text-2);
+  }
+  figcaption {
+    margin-top: 6px;
+  }
+</style>

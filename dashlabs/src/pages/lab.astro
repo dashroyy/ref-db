@@ -1,0 +1,182 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import PrintStory from '../components/PrintStory.astro';
+import Gallery from '../components/Gallery.astro';
+import { PRODUCTS } from '../data/catalog.ts';
+import ProductPhoto from '../components/ProductPhoto.astro';
+import { buildLog, formatLogDate } from '../lib/writing.ts';
+
+const originals = PRODUCTS.filter((p) => p.category === 'originals');
+
+// Build log: one Markdown file per entry in src/writing/build-log/ (see the README there).
+const log = buildLog();
+---
+
+<Base title="The lab" description="Original 3D-printed gadgets designed at DashLabs, how a print goes from file to shelf, and the build log.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="tag tag--accent">The lab</p>
+      <h1 class="x3d">Things I designed myself.</h1>
+      <p class="lede">
+        DashLabs originals are designed, prototyped and tested here. Every one went through a pile of failed prints
+        before it was good enough to sell.
+      </p>
+    </div>
+  </section>
+
+  <section class="section originals">
+    <div class="wrap">
+      <div class="grid">
+        {originals.map((p) => <ProductCard product={p} level={2} />)}
+        <a class="pitch" href="/custom/" data-tilt>
+          <span class="pitch-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="56" height="56"><polygon points="20,4 35,12 20,20 5,12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3"></polygon><polygon points="5,12 20,20 20,36 5,28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3"></polygon><polygon points="20,20 35,12 35,28 20,36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3"></polygon></svg>
+          </span>
+          <span class="tag">Next on the bench</span>
+          <h2>Your idea?</h2>
+          <p>Most gadgets here started as a small annoyance. Got one? Pitch it, and if it works it might become the next original.</p>
+          <span class="pitch-go">Pitch an idea →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><PrintStory /></div>
+
+  <Gallery />
+
+  <section class="section">
+    <div class="wrap">
+      <div class="head">
+        <h2>Build log</h2>
+        <p class="muted">Recent projects and commissions.</p>
+      </div>
+      <ol class="log">
+        {
+          log.map((e) => (
+            <li>
+              <span class="tag">
+                <time datetime={e.date}>{formatLogDate(e.date)}</time>
+                {e.example && <em class="ex">Example</em>}
+              </span>
+              <div>
+                <h3>{e.title}</h3>
+                <div class="log-text muted">
+                  <e.Content />
+                </div>
+                {e.photos.length > 0 && (
+                  <div class="log-photos">
+                    {e.photos.map((ph) => (
+                      <ProductPhoto photo={ph} class="log-photo" widths={[320, 640, 960]} sizes="(max-width: 560px) 100vw, 300px" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+    padding-bottom: 32px;
+  }
+  .originals {
+    padding-top: 0;
+  }
+  .pitch {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    border-radius: var(--r);
+    border: 1.5px dashed color-mix(in srgb, var(--hot) 45%, transparent);
+    background: color-mix(in srgb, var(--hot) 4%, transparent);
+    color: var(--text-2);
+    text-decoration: none;
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:
+      transform 0.5s cubic-bezier(0.2, 1, 0.3, 1),
+      border-color 0.3s,
+      background 0.3s;
+  }
+  .pitch:hover,
+  .pitch:focus-visible {
+    border-color: var(--hot);
+    background: color-mix(in srgb, var(--hot) 9%, transparent);
+  }
+  .pitch-icon {
+    color: var(--hot);
+    margin: 6px 0 auto;
+  }
+  .pitch h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--white);
+  }
+  .pitch p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-3);
+  }
+  .pitch-go {
+    margin-top: 8px;
+    font-weight: 700;
+    color: var(--hot);
+  }
+  .log {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .log li {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 24px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .log h3 {
+    margin-bottom: 4px;
+  }
+  .log-text :global(p) {
+    margin: 0 0 0.6em;
+    max-width: 68ch;
+  }
+  .log-text :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .log-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .log-photos :global(.log-photo) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line-2);
+  }
+  .ex {
+    display: block;
+    margin-top: 8px;
+    font-style: normal;
+    color: var(--warn);
+  }
+  @media (max-width: 560px) {
+    .log li {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
+</style>

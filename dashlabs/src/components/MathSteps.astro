@@ -1,0 +1,129 @@
+---
+// A worked calculation, one step per row: label · working · result.
+// Wide screens: three aligned columns. Phones: label and result on one line,
+// the working underneath, so nothing runs off the edge of the screen.
+interface Row {
+  k: string; // the step ("Skin", "E", "1. Energy in the spring")
+  expr?: string; // the working
+  r?: string; // the result
+  gap?: boolean; // a little space above this row (starts a new group)
+}
+interface Props {
+  rows: Row[];
+  note?: string; // a closing line under the table
+  label?: string; // accessible name
+}
+const { rows, note, label = 'Worked calculation' } = Astro.props;
+---
+
+<figure class="msteps">
+  <table aria-label={label}>
+    <tbody>
+      {
+        rows.map((row) => (
+          <tr class:list={[row.gap && 'gap']}>
+            <th scope="row">{row.k}</th>
+            <td class="expr">{row.expr}</td>
+            <td class="r">{row.r && (row.expr ? `= ${row.r}` : row.r)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  {note && <figcaption>{note}</figcaption>}
+</figure>
+
+<style>
+  .msteps {
+    margin: 1.2em 0;
+    max-width: 100%;
+    width: fit-content;
+    padding: 14px 18px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-sm);
+    background: var(--ink-2);
+    font: 400 0.88rem/1.6 var(--mono);
+    color: var(--white);
+  }
+  table {
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    padding: 3px 0;
+    vertical-align: baseline;
+    text-align: left;
+  }
+  th {
+    font-weight: 600;
+    color: var(--hot);
+    padding-right: 22px;
+    white-space: nowrap;
+  }
+  .expr {
+    color: var(--text-2);
+    padding-right: 22px;
+  }
+  .r {
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  tr.gap > * {
+    padding-top: 14px;
+  }
+  figcaption {
+    margin-top: 10px;
+    color: var(--text-2);
+    font-family: var(--font);
+  }
+  @media (max-width: 640px) {
+    .msteps {
+      width: auto;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+    }
+    table,
+    tbody {
+      display: block;
+    }
+    tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      column-gap: 12px;
+      padding: 7px 0;
+      border-top: 1px solid var(--line);
+    }
+    tr:first-child {
+      border-top: 0;
+    }
+    tr.gap {
+      margin-top: 8px;
+      border-top-color: var(--line-2);
+    }
+    tr.gap > * {
+      padding-top: 0;
+    }
+    th,
+    td {
+      padding: 0;
+    }
+    th {
+      grid-column: 1;
+      white-space: normal;
+    }
+    .r {
+      grid-column: 2;
+      grid-row: 1;
+      text-align: right;
+    }
+    .expr {
+      grid-column: 1 / -1;
+      font-size: 0.78rem;
+      color: var(--text-3);
+      overflow-wrap: anywhere;
+    }
+    .expr:empty {
+      display: none;
+    }
+  }
+</style>

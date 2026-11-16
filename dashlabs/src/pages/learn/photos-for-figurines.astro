@@ -1,0 +1,243 @@
+---
+import Guide from '../../layouts/Guide.astro';
+import Analogy from '../../components/Analogy.astro';
+import { PHOTO_ITEMS } from '../../lib/photos.ts';
+
+// Camera positions around the subject, for the diagram (angle in degrees, 0 = front)
+const cams = [
+  { a: 0, label: 'Front', req: true },
+  { a: 45, label: '¾', req: false },
+  { a: 90, label: 'Side', req: true },
+  { a: 180, label: 'Back', req: true },
+];
+const pos = (a: number, r = 92) => ({ x: 150 + r * Math.sin((a * Math.PI) / 180), y: 120 + r * Math.cos((a * Math.PI) / 180) });
+---
+
+<Guide slug="photos-for-figurines">
+  <h2>Why it matters</h2>
+  <p>
+    A figurine is sculpted by hand from your photos. Whatever the photos don't show, I have to guess, and guesses are
+    where a likeness goes wrong: the back of a haircut, the curl of a tail, how far a nose sticks out. Ten minutes
+    taking the right photos saves a round of revisions.
+  </p>
+
+  <h2>The intuition</h2>
+  <Analogy title="Describing a house to an architect">
+    <p>
+      One photo of the front of a house tells you about the front door. It tells you nothing about how deep the house
+      is or what the garden side looks like. A sculptor has the same problem with a face: a front photo is flat. The
+      <strong>side view</strong> is what gives it depth.
+    </p>
+    <p>Where it breaks down: a house holds still. Pets don't, so for them, take lots and send the best.</p>
+  </Analogy>
+
+  <figure class="panel dia">
+    <svg viewBox="0 0 300 240" role="img" aria-label="Camera positions around the subject">
+      <desc>
+        A top-down view of a person in the centre with camera positions around them: front, three-quarter, side and
+        back. Front, side and back are marked as required.
+      </desc>
+      <circle cx="150" cy="120" r="92" fill="none" stroke="var(--line-2)" stroke-dasharray="3 5"></circle>
+      <ellipse cx="150" cy="120" rx="26" ry="20" fill="var(--panel-3)" stroke="var(--line-2)"></ellipse>
+      <circle cx="150" cy="120" r="13" fill="var(--pink)"></circle>
+      <path d="M150 136 l-5 9 h10z" fill="var(--pink)"></path>
+      <text x="150" y="98" text-anchor="middle" class="lbl">top view</text>
+      {
+        cams.map((c) => {
+          const p = pos(c.a);
+          return (
+            <g>
+              <line x1={p.x} y1={p.y} x2={150 + (p.x - 150) * 0.38} y2={120 + (p.y - 120) * 0.38} stroke={c.req ? 'var(--hot)' : 'var(--text-3)'} stroke-dasharray="2 4" />
+              <rect x={p.x - 12} y={p.y - 9} width="24" height="18" rx="4" fill={c.req ? 'var(--hot)' : 'var(--panel-3)'} stroke="var(--line-2)" />
+              <circle cx={p.x} cy={p.y} r="4.5" fill="var(--ink)" />
+              <text x={p.x + (c.a === 90 ? 20 : 0)} y={p.y + (c.a === 180 ? -16 : c.a === 90 ? 4 : 26)} text-anchor={c.a === 90 ? 'start' : 'middle'} class="lbl strong">
+                {c.label}
+              </text>
+            </g>
+          );
+        })
+      }
+    </svg>
+    <figcaption class="hint">Orange cameras are the must-haves. The subject faces down the page. Not to scale.</figcaption>
+  </figure>
+
+  <h2 id="try-it">The checklist</h2>
+  <p>Tick what you have. When the required shots are covered, you're ready to send.</p>
+  <div class="wide">
+    <div class="calc" data-photos data-items={JSON.stringify(PHOTO_ITEMS.map((i) => ({ id: i.id, label: i.label, required: i.required })))}>
+      <div class="calc-head"><span>Photo checklist</span><span data-count>0 of {PHOTO_ITEMS.length}</span></div>
+      <ul class="items">
+        {
+          PHOTO_ITEMS.map((i) => (
+            <li>
+              <label>
+                <input type="checkbox" value={i.id} />
+                <span class="box" aria-hidden="true" />
+                <span class="txt">
+                  <b>{i.label}</b> {i.required && <em>required</em>}
+                  <small>{i.why}</small>
+                </span>
+              </label>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="result" aria-live="polite">
+        <p data-status>Tick the shots you have.</p>
+        <a class="btn btn--primary" data-go href="/custom/" hidden>Use this in my request</a>
+      </div>
+    </div>
+  </div>
+
+  <h2>Worked example: a dog who won't sit still</h2>
+  <ol>
+    <li><strong>Go outside or near a window.</strong> Daylight, no flash: flash flattens fur and makes eyes glow.</li>
+    <li><strong>Get down to their eye level.</strong> A photo from above makes the head huge and the legs tiny.</li>
+    <li><strong>Have someone hold a treat</strong> in front, then to the side, then walk behind. That's front, side and back in a minute.</li>
+    <li><strong>Add the details:</strong> collar and tag, any markings, the way one ear folds.</li>
+    <li><strong>Send more than you think.</strong> Ten slightly different photos beat three perfect ones.</li>
+  </ol>
+
+  <h2>Where this stops</h2>
+  <div class="stops">
+    <ul>
+      <li><strong>The classic mistake:</strong> only sending selfies. A phone held at arm's length stretches the nose and shrinks the ears. Have someone else take it from two metres away.</li>
+      <li><strong>Filters and beauty modes</strong> change face shapes. Turn them off.</li>
+      <li><strong>Memorial pieces:</strong> if old photos are all there is, send every one you have. I'll tell you honestly what I can and can't do from them.</li>
+      <li><strong>Other people's photos:</strong> only send photos you're allowed to share, and get the person's OK if it's a surprise for someone else.</li>
+    </ul>
+  </div>
+</Guide>
+
+<script>
+  import { readiness } from '../../lib/photos.ts';
+  const root = document.querySelector<HTMLElement>('[data-photos]');
+  if (root) {
+    const items: { id: string; label: string; required: boolean }[] = JSON.parse(root.dataset.items!);
+    const boxes = [...root.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
+    const status = root.querySelector<HTMLElement>('[data-status]')!;
+    const go = root.querySelector<HTMLAnchorElement>('[data-go]')!;
+    const render = () => {
+      const checked = boxes.filter((b) => b.checked).map((b) => b.value);
+      const r = readiness(checked);
+      root.querySelector('[data-count]')!.textContent = `${r.done} of ${r.total}`;
+      root.classList.toggle('ready', r.ready);
+      status.textContent = r.ready
+        ? r.done === r.total
+          ? 'Perfect set. That’s everything I could ask for.'
+          : 'Ready to send. The extras help, but these will do.'
+        : `Still needed: ${r.missing.map((m) => m.label.toLowerCase()).join(', ')}.`;
+      go.hidden = !r.ready;
+      const have = items.filter((i) => checked.includes(i.id)).map((i) => `- ${i.label}`);
+      go.href = `/custom/?${new URLSearchParams({ details: `Photos I have ready:\n${have.join('\n')}\n\nWho or what it is, pose, size:` })}`;
+    };
+    boxes.forEach((b) => b.addEventListener('change', render));
+    render();
+  }
+</script>
+
+<style>
+  .dia {
+    margin: 20px 0;
+    padding: 16px;
+    max-width: 420px;
+  }
+  .dia svg {
+    width: 100%;
+    height: auto;
+  }
+  .lbl {
+    font: 500 10px var(--mono);
+    fill: var(--text-3);
+  }
+  .lbl.strong {
+    font: 700 11px var(--font);
+    fill: var(--text);
+  }
+  .items {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+  .items label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .items label:hover {
+    background: color-mix(in srgb, var(--tone) 7%, transparent);
+  }
+  .items input {
+    position: absolute;
+    opacity: 0;
+  }
+  .box {
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+    border-radius: 7px;
+    border: 2px solid var(--line-2);
+    display: grid;
+    place-items: center;
+    transition:
+      background 0.2s,
+      transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .items input:checked + .box {
+    background: var(--mint);
+    border-color: var(--mint);
+    transform: scale(1.1);
+  }
+  .items input:checked + .box::after {
+    content: '';
+    width: 6px;
+    height: 11px;
+    border: solid var(--ink);
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+  .items input:focus-visible + .box {
+    outline: 2px solid var(--tone);
+    outline-offset: 3px;
+  }
+  .txt {
+    display: grid;
+    gap: 2px;
+  }
+  .txt b {
+    color: var(--white);
+  }
+  .txt em {
+    font: normal 600 0.66rem var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tone);
+    margin-left: 6px;
+  }
+  .txt small {
+    font-size: 0.86rem;
+    color: var(--text-3);
+  }
+  .result {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--line);
+  }
+  .result p {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .ready .result p {
+    color: var(--mint);
+  }
+</style>

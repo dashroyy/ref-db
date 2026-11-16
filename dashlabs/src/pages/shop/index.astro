@@ -1,0 +1,164 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { CATEGORIES, PRODUCTS } from '../../data/catalog.ts';
+---
+
+<Base title="Shop" description="Custom figurines, printed business cards, DashLabs originals and made-to-order prints.">
+  <section class="section top">
+    <div class="wrap">
+      <p class="kicker"><span class="dot"></span>Printed to order · {PRODUCTS.length} items</p>
+      <h1 class="x3d">Everything <span class="hot">I print</span></h1>
+      <p class="lede">
+        Every item is printed to order in the colour you choose, so nothing sits in a warehouse. Custom pieces start
+        with a quote.
+      </p>
+
+      <div class="bar">
+      <div class="filters" role="group" aria-label="Filter by category">
+        <button type="button" data-filter="all" aria-pressed="true" style="--c:var(--hot-2)"><i></i>All <span>{PRODUCTS.length}</span></button>
+        {
+          CATEGORIES.map((c) => (
+            <button type="button" data-filter={c.id} aria-pressed="false" style={`--c:${c.color}`}>
+              <i />
+              {c.label} <span>{PRODUCTS.filter((p) => p.category === c.id).length}</span>
+            </button>
+          ))
+        }
+      </div>
+      <label class="sort">Sort
+        <select data-sort>
+          <option value="featured">Featured</option>
+          <option value="low">Price: low to high</option>
+          <option value="high">Price: high to low</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+      </div>
+
+      <div class="grid" data-grid>
+        {PRODUCTS.map((p) => <ProductCard product={p} level={2} />)}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-grid] [data-category]')];
+
+  function apply(id: string) {
+    if (!buttons.some((b) => b.dataset.filter === id)) id = 'all';
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === id)));
+    cards.forEach((c) => (c.hidden = id !== 'all' && c.dataset.category !== id));
+    const url = new URL(location.href);
+    if (id === 'all') url.searchParams.delete('c');
+    else url.searchParams.set('c', id);
+    history.replaceState(null, '', url);
+  }
+
+  buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+
+  // Sorting: reorder the cards in place; "featured" is the catalog order
+  const grid = document.querySelector<HTMLElement>('[data-grid]')!;
+  const original = [...cards];
+  const sort = document.querySelector<HTMLSelectElement>('[data-sort]')!;
+  sort.addEventListener('change', () => {
+    const by = sort.value;
+    const list =
+      by === 'low' ? [...cards].sort((a, b) => Number(a.dataset.price) - Number(b.dataset.price))
+      : by === 'high' ? [...cards].sort((a, b) => Number(b.dataset.price) - Number(a.dataset.price))
+      : by === 'name' ? [...cards].sort((a, b) => a.dataset.name!.localeCompare(b.dataset.name!))
+      : original;
+    list.forEach((c) => grid.appendChild(c));
+  });
+  apply(new URLSearchParams(location.search).get('c') ?? 'all');
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 20px;
+    margin: 32px 0 28px;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: 500 0.7rem var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .sort select {
+    width: auto;
+    min-height: 42px;
+  }
+  .filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+    color: var(--text-2);
+    font: 600 0.9rem var(--font);
+    cursor: pointer;
+    transition:
+      transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1),
+      background 0.2s,
+      border-color 0.2s;
+  }
+  .filters button:hover {
+    transform: translateY(-2px);
+  }
+  .filters button i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    transform: rotate(45deg);
+    background: var(--c);
+    box-shadow: 0 0 6px var(--c);
+  }
+  .filters button:hover {
+    border-color: var(--c);
+    color: var(--white);
+  }
+  .filters button span {
+    font: 500 0.75rem var(--mono);
+    color: var(--text-3);
+    margin-left: 4px;
+  }
+  .filters button[aria-pressed='true'] {
+    background: var(--c);
+    border-color: var(--c);
+    color: #05080f;
+    font-weight: 600;
+    box-shadow: 0 0 14px -4px var(--c);
+  }
+  .filters button[aria-pressed='true'] span,
+  .filters button[aria-pressed='true'] i {
+    color: #05080f;
+    background: #05080f;
+    box-shadow: none;
+  }
+  .filters button[aria-pressed='true'] span {
+    background: none;
+  }
+  :global([data-grid] > [hidden]) {
+    display: none;
+  }
+</style>

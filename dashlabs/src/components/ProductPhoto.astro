@@ -1,0 +1,35 @@
+---
+// One product photo: optimised, responsive and sized (no layout jump) when it
+// comes from src/photos/; a plain image when it's a /public path.
+import { Picture } from 'astro:assets';
+import type { ProductPhoto } from '../lib/product-photos.ts';
+
+interface Props {
+  photo: ProductPhoto;
+  sizes: string; // how wide it shows, e.g. "(max-width: 820px) 100vw, 55vw"
+  widths?: number[];
+  class?: string;
+  alt?: string; // override (thumbnails use "")
+  loading?: 'lazy' | 'eager';
+  [key: string]: unknown; // data-pane, hidden…
+}
+const { photo, sizes, widths = [360, 640, 960, 1400], class: cls, alt = photo.alt, loading = 'lazy', ...rest } = Astro.props;
+---
+
+{
+  typeof photo.src === 'string' ? (
+    <img src={photo.src} alt={alt} class={cls} loading={loading} decoding="async" {...rest} />
+  ) : (
+    <Picture
+      src={photo.src}
+      alt={alt}
+      widths={widths.filter((w) => w <= (photo.src as { width: number }).width)}
+      sizes={sizes}
+      formats={['avif', 'webp']}
+      class={cls}
+      loading={loading}
+      decoding="async"
+      {...rest}
+    />
+  )
+}

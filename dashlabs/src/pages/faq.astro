@@ -1,0 +1,90 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site.ts';
+import { FAQS as faqs } from '../data/faq.ts';
+
+---
+
+<Base
+  title="FAQ"
+  description="Ordering, payment, shipping, returns and licensing at DashLabs."
+  jsonld={{
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  }}
+>
+  <section class="section top">
+    <div class="wrap narrow">
+      <p class="tag tag--accent">FAQ</p>
+      <h1 class="x3d">Good questions.</h1>
+      <div class="list">
+        {
+          faqs.map((f, i) => (
+            <details id={f.id} open={i === 0}>
+              <summary>{f.q}</summary>
+              <p class="muted">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+      <p class="muted">
+        The full detail is in the <a href="/policies/">policies</a>. Something else? Email <a href={`mailto:${SITE.email}`}>{SITE.email}</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // a link to /faq/#shipping opens that answer
+  const openHash = () => {
+    const d = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (d instanceof HTMLDetailsElement) d.open = true;
+  };
+  openHash();
+  addEventListener('hashchange', openHash);
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .narrow {
+    max-width: 780px;
+  }
+  .list {
+    margin: 32px 0;
+    border-top: 1px solid var(--line);
+  }
+  details {
+    border-bottom: 1px solid var(--line);
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 20px 40px 20px 0;
+    font-weight: 500;
+    font-size: 1.1rem;
+    position: relative;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary::after {
+    content: '+';
+    position: absolute;
+    right: 4px;
+    top: 16px;
+    font: 400 1.5rem var(--mono);
+    color: var(--accent);
+  }
+  details[open] summary::after {
+    content: '−';
+  }
+  details p {
+    margin: 0 0 20px;
+  }
+  a {
+    color: var(--accent);
+  }
+</style>

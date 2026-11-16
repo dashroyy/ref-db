@@ -1,0 +1,377 @@
+---
+// Quick search, styled as the printer's console: press / or Ctrl/⌘ K anywhere.
+// The index is built at build time from the catalog, guides and pages.
+import { PRODUCTS, categoryById, productCode } from '../data/catalog.ts';
+import { GUIDES } from '../data/guides.ts';
+import { money } from '../lib/money.ts';
+import { FAQS } from '../data/faq.ts';
+import type { SearchItem } from '../lib/search.ts';
+
+const index: SearchItem[] = [
+  ...PRODUCTS.map((p) => ({
+    t: p.name,
+    d: p.summary,
+    h: `/shop/${p.slug}/`,
+    k: `DL-${productCode(p)}`,
+    c: categoryById(p.category).color,
+    x: `${p.purchase === 'quote' ? 'from ' : ''}${money(p.price)}`,
+    s: `${p.name} ${p.summary} ${categoryById(p.category).label} ${p.art.shape} ${productCode(p)}`,
+  })),
+  ...GUIDES.map((g, i) => ({ t: g.title, d: g.summary, h: `/learn/${g.slug}/`, k: `L0${i + 1}`, c: '#ffe14d', x: 'Guide', s: `${g.title} ${g.summary} ${g.tool} learn guide` })),
+  { t: 'Instant STL quote', d: 'Drop a 3D file, get a price from its real volume.', h: '/custom/#stl', k: 'TOOL', c: '#9b6bff', x: 'Tool', s: 'stl upload file quote price 3d model' },
+  { t: 'Price estimator', d: 'Ballpark a print from its size, material and infill.', h: '/learn/pricing/#try-it', k: 'TOOL', c: '#9b6bff', x: 'Tool', s: 'price cost estimate calculator infill' },
+  { t: 'Custom orders', d: 'Figurines from photos, logos, one-off parts.', h: '/custom/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'custom commission figurine photo request quote' },
+  { t: 'Shop everything', d: 'Every item, printed to order.', h: '/shop/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'shop all products store' },
+  { t: 'The lab', d: 'DashLabs originals and the build log.', h: '/lab/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'lab originals build log portfolio' },
+  { t: 'FAQ', d: 'Ordering, payment, materials and licensing.', h: '/faq/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'faq questions payment licence help' },
+  { t: 'Policies', d: 'Shipping, returns, custom work, privacy and terms.', h: '/policies/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'policy shipping returns refund privacy terms delivery cancel' },
+  { t: 'Gift finder', d: 'Three questions, three gift ideas.', h: '/gifts/', k: 'TOOL', c: '#ff6ec7', x: 'Tool', s: 'gift present birthday christmas ideas finder quiz' },
+  { t: 'About DashLabs', d: 'Who makes this, and how.', h: '/about/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'about maker story who contact' },
+  { t: 'Cart', d: 'Your order.', h: '/cart/', k: 'PAGE', c: '#ffab2e', x: 'Page', s: 'cart basket checkout order' },
+  { t: 'Saved items', d: 'Things you hearted for later.', h: '/saved/', k: 'PAGE', c: '#ff6ec7', x: 'Page', s: 'saved wishlist favourites hearts later' },
+  ...FAQS.map((f) => ({ t: f.q, d: f.a, h: `/faq/#${f.id}`, k: 'FAQ', c: '#3dffc5', x: 'FAQ', s: `${f.id.replace(/-/g, ' ')} ${f.a}` })),
+];
+// shown when nothing matches
+const popular = [
+  { t: 'Custom figurine', h: '/shop/custom-person-figurine/' },
+  { t: 'Pen Launcher', h: '/shop/pen-launcher/' },
+  { t: 'Gift finder', h: '/gifts/' },
+  { t: 'Quote a 3D file', h: '/custom/#stl' },
+  { t: 'Shipping', h: '/faq/#shipping' },
+];
+---
+
+<button type="button" class="search-btn" data-search-open aria-label="Search (press /)">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+  <span class="lbl">Search</span><kbd>/</kbd>
+</button>
+
+<dialog class="console" data-search aria-label="Search">
+  <div class="c-head">
+    <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="tag">dashlabs://search</span>
+    <button type="button" class="esc" data-search-close>esc</button>
+  </div>
+  <label class="prompt">
+    <span class="caret" aria-hidden="true">&gt;</span>
+    <input type="search" data-search-input placeholder="search the lab_" autocomplete="off" spellcheck="false" aria-controls="search-results" />
+  </label>
+  <ul id="search-results" class="results" data-search-results role="listbox"></ul>
+  <p class="c-foot tag"><span>↑↓ move</span><span>↵ open</span><span>esc close</span></p>
+  <script type="application/json" data-search-index set:html={JSON.stringify(index)} />
+  <script type="application/json" data-search-popular set:html={JSON.stringify(popular)} />
+</dialog>
+
+<script>
+  import { searchIndex, type SearchItem as Item } from '../lib/search.ts';
+  const dlg = document.querySelector<HTMLDialogElement>('[data-search]')!;
+  const input = dlg.querySelector<HTMLInputElement>('[data-search-input]')!;
+  const list = dlg.querySelector<HTMLUListElement>('[data-search-results]')!;
+  const index: Item[] = JSON.parse(dlg.querySelector('[data-search-index]')!.textContent || '[]');
+  const popular: { t: string; h: string }[] = JSON.parse(dlg.querySelector('[data-search-popular]')!.textContent || '[]');
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+  let hits: Item[] = [];
+  let sel = 0;
+
+  const search = (q: string) => searchIndex(index, q);
+
+  const render = () => {
+    hits = search(input.value);
+    sel = Math.min(sel, Math.max(0, hits.length - 1));
+    list.innerHTML = hits.length
+      ? hits
+          .map(
+            (it, i) => `<li role="option" aria-selected="${i === sel}" style="--c:${it.c}">
+              <a href="${it.h}"><span class="k">${esc(it.k)}</span><span class="t">${esc(it.t)}<small>${esc(it.d)}</small></span><span class="x">${esc(it.x)}</span></a></li>`,
+          )
+          .join('')
+      : `<li class="none"><p>no match for "${esc(input.value)}". If you can describe it, I can probably <a href="/custom/">print it to order</a>.</p>
+          <p class="pop"><span>popular</span>${popular.map((p) => `<a href="${p.h}">${esc(p.t)}</a>`).join('')}</p></li>`;
+  };
+
+  const open = () => {
+    if (dlg.open) return;
+    dlg.showModal();
+    input.value = '';
+    sel = 0;
+    render();
+    input.focus();
+  };
+  const close = () => dlg.open && dlg.close();
+
+  document.querySelectorAll('[data-search-open]').forEach((b) => b.addEventListener('click', open));
+  dlg.querySelector('[data-search-close]')!.addEventListener('click', close);
+  dlg.addEventListener('click', (e) => e.target === dlg && close()); // backdrop
+  input.addEventListener('input', () => ((sel = 0), render()));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + hits.length) % Math.max(1, hits.length);
+      render();
+      list.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Escape') {
+      // a search field would eat the first Esc to clear itself; one press closes the console
+      e.preventDefault();
+      close();
+    } else if (e.key === 'Enter' && hits[sel]) {
+      e.preventDefault();
+      location.href = hits[sel].h;
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    const typing = (e.target as HTMLElement).closest('input, textarea, select, [contenteditable]');
+    if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+      e.preventDefault();
+      open();
+    }
+  });
+</script>
+
+<style>
+  .search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 8px 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--btn-bg);
+    color: var(--text-2);
+    font: 600 0.85rem var(--font);
+    cursor: pointer;
+  }
+  .search-btn:hover {
+    color: var(--white);
+    border-color: var(--uv-2);
+  }
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--panel-3);
+    font: 600 0.72rem var(--mono);
+    color: var(--text-3);
+  }
+  @media (max-width: 1180px) {
+    .search-btn .lbl,
+    .search-btn kbd {
+      display: none;
+    }
+    .search-btn {
+      width: 42px;
+      padding: 0;
+      justify-content: center;
+    }
+  }
+
+  .console {
+    width: min(640px, calc(100vw - 24px));
+    margin: 12vh auto auto;
+    padding: 0;
+    border-radius: 16px;
+    border: 1px solid var(--line-2);
+    background: var(--overlay-solid);
+    color: var(--text);
+    box-shadow:
+      2px 2px 0 -1px var(--panel-3),
+      4px 4px 0 -1px var(--panel-2),
+      6px 6px 0 -1px var(--panel-3),
+      8px 8px 0 -1px var(--ink-2),
+      0 40px 120px -20px rgba(155, 107, 255, 0.45);
+  }
+  .console[open] {
+    animation: drop-in 0.3s steps(8, end);
+  }
+  @keyframes drop-in {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  .console::backdrop {
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+  }
+  .c-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .dots {
+    display: inline-flex;
+    gap: 6px;
+  }
+  .dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--hot);
+  }
+  .dots i:nth-child(2) {
+    background: var(--uv);
+  }
+  .dots i:nth-child(3) {
+    background: var(--mint);
+  }
+  .esc {
+    margin-left: auto;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line-2);
+    background: none;
+    color: var(--text-3);
+    font: 600 0.7rem var(--mono);
+    cursor: pointer;
+  }
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .caret {
+    font: 700 1.2rem var(--mono);
+    color: var(--hot);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.3;
+    }
+  }
+  .prompt input {
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: 500 1.1rem var(--mono);
+    color: var(--white);
+    box-shadow: none;
+  }
+  .prompt input:focus {
+    box-shadow: none;
+  }
+  .prompt input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .results {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    max-height: min(52vh, 440px);
+    overflow-y: auto;
+  }
+  .results :global(li a) {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .results :global(li[aria-selected='true'] a),
+  .results :global(li a:hover) {
+    background: color-mix(in srgb, var(--c) 13%, transparent);
+    box-shadow: inset 3px 0 0 var(--c);
+  }
+  .results :global(.k) {
+    font: 600 0.68rem var(--mono);
+    color: var(--c);
+  }
+  .results :global(.t) {
+    display: grid;
+    font-weight: 700;
+    color: var(--white);
+    min-width: 0;
+  }
+  .results :global(.t small) {
+    font-weight: 500;
+    font-size: 0.82rem;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .results :global(.x) {
+    font: 500 0.75rem var(--mono);
+    color: var(--text-3);
+  }
+  .results :global(.none) {
+    padding: 14px;
+    color: var(--text-3);
+    font: 500 0.9rem var(--mono);
+  }
+  .results :global(.none a) {
+    color: var(--hot);
+  }
+  .results :global(.none p) {
+    margin: 0;
+  }
+  .results :global(li.none a) {
+    display: inline;
+    padding: 0;
+    border-radius: 0;
+  }
+  .results :global(li.none .pop a) {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .results :global(.pop) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px !important;
+  }
+  .results :global(.pop span) {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-right: 4px;
+  }
+  .results :global(.pop a) {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: var(--panel-2);
+    color: var(--text);
+    font: 500 0.82rem var(--font);
+    text-decoration: none;
+  }
+  .results :global(.pop a:hover),
+  .results :global(.pop a:focus-visible) {
+    border-color: var(--hot);
+    color: var(--hot);
+  }
+  .c-foot {
+    display: flex;
+    gap: 18px;
+    margin: 0;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+  }
+  @media (max-width: 520px) {
+    .results :global(li a) {
+      grid-template-columns: 1fr auto;
+    }
+    .results :global(.k) {
+      display: none;
+    }
+    .c-foot {
+      display: none;
+    }
+  }
+</style>

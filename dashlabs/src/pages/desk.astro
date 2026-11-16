@@ -1,0 +1,416 @@
+---
+// The order desk: for you, not customers. Paste an order email and print a
+// packing slip (never any prices) and, for gifts, the printed note card.
+// Not linked anywhere, kept out of search engines and the sitemap.
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site.ts';
+---
+
+<Base title="Order desk" description="Packing slips and gift cards for DashLabs orders." noindex cta={false}>
+  <section class="section top">
+    <div class="wrap">
+      <p class="kicker"><span class="dot"></span>Order desk · just for you</p>
+      <h1 class="x3d">Pack it, <span class="hot">print it.</span></h1>
+      <p class="lede">
+        Paste an order email (the customer's request or the PAID notice) and print what goes in the box. Nothing you paste
+        leaves this page.
+      </p>
+
+      <div class="desk">
+        <div class="panel tool">
+          <label class="tag" for="order-text">1 · Paste the order email</label>
+          <textarea id="order-text" rows="10" placeholder="Order request DL-… or PAID order DL-… (the whole email is fine)" data-order></textarea>
+          <p class="muted small" data-parsed>Nothing pasted yet.</p>
+        </div>
+
+        <div class="panel tool">
+          <span class="tag">2 · Packing slip</span>
+          <p class="muted small">No prices, ever, so it's safe for gifts. Tick items off as you pack.</p>
+          <div class="sheet-wrap">
+            <article class="slip" data-slip>
+              <header>
+                <span class="brand"><span class="cube" aria-hidden="true"></span><span>Dash<b>Labs</b></span></span>
+                <span class="ref" data-slip-ref>DL-······-····</span>
+              </header>
+              <div class="slip-to" data-slip-to hidden></div>
+              <ol class="slip-items" data-slip-items><li class="muted">Items appear here.</li></ol>
+              <p class="slip-thanks">
+                Printed to order, layer by layer, and checked by hand. Questions or something not right? {SITE.email}
+              </p>
+            </article>
+          </div>
+          <button type="button" class="btn btn--primary" data-print="slip">Print packing slip</button>
+        </div>
+
+        <div class="panel tool">
+          <span class="tag">3 · Gift note card</span>
+          <div class="row3">
+            <div class="field"><label for="g-to">To (optional)</label><input id="g-to" type="text" data-g="to" /></div>
+            <div class="field"><label for="g-from">From (optional)</label><input id="g-from" type="text" data-g="from" /></div>
+          </div>
+          <div class="field">
+            <label for="g-note">Note</label>
+            <textarea id="g-note" rows="3" maxlength="240" data-g="note" placeholder="Filled in from a gift order, or type one"></textarea>
+          </div>
+          <div class="sheet-wrap">
+            <article class="card" data-card>
+              <span class="card-cube" aria-hidden="true"></span>
+              <p class="card-to" data-card-to hidden></p>
+              <p class="card-note" data-card-note>Your note will appear here.</p>
+              <p class="card-from" data-card-from hidden></p>
+              <p class="card-foot">Printed for you, layer by layer · DashLabs</p>
+            </article>
+          </div>
+          <p class="muted small">Prints at A6 size (105 × 148 mm) with corner marks: cut along them, or fold.</p>
+          <button type="button" class="btn btn--primary" data-print="card">Print gift card</button>
+        </div>
+        <div class="panel tool">
+          <span class="tag">4 · Reply to the customer</span>
+          <div class="seg" role="radiogroup" aria-label="Which reply">
+            <label><input type="radio" name="reply" value="total" checked /> Order total</label>
+            <label><input type="radio" name="reply" value="shipped" /> Shipped</label>
+            <label><input type="radio" name="reply" value="review" /> Review request</label>
+          </div>
+          <div class="row3" data-for="total">
+            <div class="field"><label for="r-ship">Shipping ($)</label><input id="r-ship" type="text" inputmode="decimal" placeholder="6.50" data-r="ship" /></div>
+            <div class="field"><label for="r-by">Ships by</label><input id="r-by" type="text" placeholder="Fri 21 Nov" data-r="by" /></div>
+          </div>
+          <div class="field" data-for="shipped" hidden><label for="r-track">Tracking</label><input id="r-track" type="text" placeholder="Link or number" data-r="track" /></div>
+          <div class="field"><label for="r-sign">Your name</label><input id="r-sign" type="text" autocomplete="name" data-r="sign" /></div>
+          <div class="field">
+            <label for="r-body">Draft <span class="muted" data-r-subject></span></label>
+            <textarea id="r-body" rows="12" data-r-body></textarea>
+          </div>
+          <div class="reply-actions">
+            <a class="btn btn--primary" data-r-mail href="#">Open in email</a>
+            <button type="button" class="btn" data-r-copy>Copy text</button>
+            <span class="muted small" role="status" data-r-status></span>
+          </div>
+          <p class="muted small">Edit the draft freely before sending. Anything still in [brackets] needs filling in.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { parseOrderText, replyDraft, type ReplyKind } from '../lib/desk.ts';
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+  const orderBox = $<HTMLTextAreaElement>('[data-order]');
+  const g = (k: string) => $<HTMLInputElement>(`[data-g="${k}"]`);
+
+  const renderSlip = () => {
+    const o = parseOrderText(orderBox.value);
+    $('[data-slip-ref]').textContent = o.reference || 'DL-······-····';
+    $('[data-slip-items]').innerHTML = o.items.length
+      ? o.items.map((i) => `<li><span class="box" aria-hidden="true"></span><b>${i.qty} ×</b> ${esc(i.name)}${i.detail ? `<small>${esc(i.detail)}</small>` : ''}</li>`).join('')
+      : '<li class="muted">Items appear here.</li>';
+    const to = $('[data-slip-to]');
+    to.hidden = !o.shipTo.length && !o.name;
+    to.innerHTML = o.shipTo.length ? o.shipTo.map(esc).join('<br />') : esc(o.name);
+    $('[data-parsed]').textContent = orderBox.value.trim()
+      ? `${o.items.length} item ${o.items.length === 1 ? 'line' : 'lines'}${o.reference ? ` · ${o.reference}` : ''}${o.gift ? ' · gift: no prices in the box' : ''}${o.giftNote ? ' · gift note copied below' : ''}`
+      : 'Nothing pasted yet.';
+    if (o.giftNote && !g('note').value) g('note').value = o.giftNote;
+    renderCard();
+    renderReply();
+  };
+  // reply drafts (docs/EMAIL-TEMPLATES.md); your name is remembered on this device
+  const r = (k: string) => $<HTMLInputElement>(`[data-r="${k}"]`);
+  const body = $<HTMLTextAreaElement>('[data-r-body]');
+  const SIGN = 'dashlabs.desk.sign';
+  try {
+    r('sign').value = localStorage.getItem(SIGN) ?? '';
+  } catch {
+    /* storage blocked */
+  }
+  let subject = '';
+  const renderReply = () => {
+    const kind = (document.querySelector<HTMLInputElement>('input[name="reply"]:checked')?.value ?? 'total') as ReplyKind;
+    document.querySelectorAll<HTMLElement>('[data-for]').forEach((el) => (el.hidden = el.dataset.for !== kind));
+    const o = parseOrderText(orderBox.value);
+    const ship = parseFloat(r('ship').value.replace(/[^\d.]/g, ''));
+    const d = replyDraft(kind, o, {
+      shipping: Number.isFinite(ship) ? Math.round(ship * 100) : undefined,
+      shipBy: r('by').value,
+      tracking: r('track').value,
+      signOff: r('sign').value,
+    });
+    subject = d.subject;
+    body.value = d.body;
+    $('[data-r-subject]').textContent = `· ${d.subject}`;
+    $<HTMLAnchorElement>('[data-r-mail]').href = `mailto:${encodeURIComponent(o.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(d.body)}`;
+  };
+  // edits to the draft go into the email link too
+  body.addEventListener('input', () => {
+    const o = parseOrderText(orderBox.value);
+    $<HTMLAnchorElement>('[data-r-mail]').href = `mailto:${encodeURIComponent(o.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.value)}`;
+  });
+  document.querySelectorAll('input[name="reply"]').forEach((x) => x.addEventListener('change', renderReply));
+  ['ship', 'by', 'track', 'sign'].forEach((k) => r(k).addEventListener('input', renderReply));
+  r('sign').addEventListener('change', () => {
+    try {
+      localStorage.setItem(SIGN, r('sign').value);
+    } catch {
+      /* storage blocked */
+    }
+  });
+  $('[data-r-copy]').addEventListener('click', async () => {
+    const status = $('[data-r-status]');
+    try {
+      await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body.value}`);
+      status.textContent = 'Copied';
+    } catch {
+      body.select();
+      status.textContent = 'Press Ctrl/⌘ C to copy';
+    }
+  });
+  const renderCard = () => {
+    const to = g('to').value.trim();
+    const from = g('from').value.trim();
+    const note = g('note').value.trim();
+    $('[data-card-to]').hidden = !to;
+    $('[data-card-to]').textContent = to ? `For ${to}` : '';
+    $('[data-card-from]').hidden = !from;
+    $('[data-card-from]').textContent = from ? `— ${from}` : '';
+    $('[data-card-note]').textContent = note || 'Your note will appear here.';
+  };
+  orderBox.addEventListener('input', renderSlip);
+  renderReply();
+  ['to', 'from', 'note'].forEach((k) => g(k).addEventListener('input', renderCard));
+
+  // print only the chosen sheet
+  document.querySelectorAll<HTMLButtonElement>('[data-print]').forEach((b) =>
+    b.addEventListener('click', () => {
+      document.documentElement.dataset.printing = b.dataset.print;
+      window.print();
+    }),
+  );
+  addEventListener('afterprint', () => delete document.documentElement.dataset.printing);
+</script>
+
+<style>
+  .top {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+  .desk {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: 20px;
+    margin-top: 28px;
+    align-items: start;
+  }
+  .tool {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+  }
+  .tool textarea,
+  .tool input {
+    width: 100%;
+  }
+  .small {
+    font-size: 0.85rem;
+    margin: 0;
+  }
+  .row3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .row3 .field {
+    margin: 0;
+  }
+  .seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .seg label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+  .seg label:has(input:checked) {
+    border-color: var(--hot);
+    color: var(--white);
+  }
+  .reply-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .sheet-wrap {
+    padding: 14px;
+    border-radius: 12px;
+    background: #e9e4da;
+    overflow: auto;
+  }
+
+  /* --- the printed sheets: paper colours in every theme --- */
+  .slip,
+  .card {
+    background: #fffdf8;
+    color: #1b1724;
+    font-family: var(--font);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  }
+  .slip {
+    padding: 18px 20px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  .slip header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #1b1724;
+    padding-bottom: 8px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: 700 1.1rem var(--display);
+  }
+  .brand b {
+    color: #a85800; /* deep enough to read on paper (4.9:1) */
+  }
+  .cube,
+  .card-cube {
+    width: 22px;
+    height: 22px;
+    background: conic-gradient(from 210deg, #ffab2e 0 33%, #6c47d6 0 66%, #4a2ca8 0);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+  .ref {
+    font: 600 0.85rem var(--mono);
+  }
+  .slip-to {
+    margin: 12px 0 0;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+  .slip-items {
+    list-style: none;
+    margin: 14px 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .slip-items :global(li) {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 4px 8px;
+    align-items: baseline;
+  }
+  .slip-items :global(.box) {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid #1b1724;
+    border-radius: 2px;
+  }
+  .slip-items :global(small) {
+    grid-column: 3;
+    color: #555;
+  }
+  .slip-items :global(li.muted) {
+    display: block;
+    color: #777;
+  }
+  .slip-thanks {
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px dashed #aaa;
+    font-size: 0.8rem;
+    color: #555;
+  }
+  .card {
+    position: relative;
+    width: 105mm;
+    height: 148mm;
+    max-width: 100%;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 14mm 12mm;
+    text-align: center;
+    background:
+      repeating-linear-gradient(0deg, rgba(108, 71, 214, 0.06) 0 1px, transparent 1px 5px),
+      #fffdf8;
+  }
+  .card-cube {
+    position: absolute;
+    top: 10mm;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    transform: translateX(-50%);
+  }
+  .card-to {
+    margin: 0;
+    font: 600 0.95rem var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6c47d6;
+  }
+  .card-note {
+    margin: 0;
+    font: 600 1.35rem/1.35 var(--display);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  .card-from {
+    margin: 0;
+    font-size: 1rem;
+    color: #444;
+  }
+  .card-foot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 9mm;
+    margin: 0;
+    font: 500 0.62rem var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a8398;
+  }
+
+  @media print {
+    :global(html[data-printing]) :global(body) :global(*) {
+      visibility: hidden !important;
+    }
+    :global(html[data-printing='slip']) .slip,
+    :global(html[data-printing='slip']) .slip :global(*),
+    :global(html[data-printing='card']) .card,
+    :global(html[data-printing='card']) .card :global(*) {
+      visibility: visible !important;
+    }
+    :global(html[data-printing]) .slip,
+    :global(html[data-printing]) .card {
+      position: fixed;
+      top: 12mm;
+      left: 12mm;
+      box-shadow: none;
+    }
+    :global(html[data-printing]) .slip {
+      right: 12mm;
+    }
+    /* corner marks to cut the card out */
+    :global(html[data-printing='card']) .card {
+      max-width: none;
+      outline: 0.2mm dashed #bbb;
+      outline-offset: 0;
+    }
+  }
+</style>

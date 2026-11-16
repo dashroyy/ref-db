@@ -1,0 +1,302 @@
+---
+import { existsSync } from 'node:fs';
+import { HERO_QUEUE } from '../lib/three/hero.ts';
+// a still of the printer mid-print (made by `npm run thumbs`), shown until the live 3D draws its first frame
+const poster = existsSync('public/hero-poster.webp') && process.env.THUMBS !== 'off';
+const swatch = (c: string) => (c === 'rainbow' ? 'conic-gradient(#ff5c7a,#ffd84d,#3dffc5,#2f7dff,#9b6bff,#ff5c7a)' : c);
+// The hero printer: a live Three.js scene printing models layer by layer, with
+// a slicer-style readout. Falls back to the drawn printer if WebGL is missing.
+---
+
+<div class="hero-printer" data-hero-printer>
+  {poster && <img class="poster" src="/hero-poster.webp" alt="" width="1240" height="1240" fetchpriority="high" decoding="async" />}
+  <canvas data-canvas aria-label="A 3D printer printing models layer by layer" role="img"></canvas>
+  <div class="hud" aria-hidden="true">
+    <div class="hud-top">
+      <span class="chip"><span class="live-dot"></span><span data-phase>Printing</span></span>
+      <span class="chip mono" data-temp>215°C</span>
+    </div>
+    <div class="hud-bottom">
+      <div>
+        <span class="k">Now printing</span>
+        <span class="v" data-model>Spiral vase</span>
+      </div>
+      <div class="right">
+        <span class="k">Layer</span>
+        <span class="v mono"><span data-layer>052</span>/<span data-layers>077</span></span>
+      </div>
+      <div class="progress"><i data-progress style="transform:scaleX(0.68)"></i></div>
+    </div>
+  </div>
+  <button type="button" class="play-live" data-play-live>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>
+    Play live 3D
+  </button>
+  <div class="queue-pick" data-pick hidden>
+    <span class="tag">Pick the next print</span>
+    <div class="chips">
+      {
+        HERO_QUEUE.map((q, i) => (
+          <button type="button" data-job={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+            <i style={`background:${swatch(q.color)}`} />
+            {q.name}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+  <div class="fallback" data-fallback hidden>
+    <svg viewBox="0 0 200 160"><rect x="20" y="120" width="160" height="8" rx="2" fill="#2a2540"></rect>{
+      Array.from({ length: 10 }, (_, i) => <rect x={70 - i} y={112 - i * 8} width={60 + i * 2} height="7" rx="2" fill={i % 2 ? '#ffab2e' : '#ffc766'} />)
+    }</svg>
+  </div>
+</div>
+
+<script>
+  import { webglOK } from '../lib/three/support.ts';
+
+  const el = document.querySelector<HTMLElement>('[data-hero-printer]');
+  if (el) {
+    const $ = (s: string) => el.querySelector<HTMLElement>(s)!;
+    const PH = { heating: 'Heating nozzle', printing: 'Printing', done: 'Print complete', ejecting: 'Ejecting part' };
+    if (!webglOK()) {
+      $('[data-fallback]').hidden = false;
+      el.classList.add('no-gl');
+    } else {
+      // start once the page itself has loaded and the browser has a quiet moment
+      const start = () => import('../lib/three/hero.ts').then(({ mountHero }) => {
+        const jobs = [...el.querySelectorAll<HTMLButtonElement>('[data-job]')];
+        const hero = mountHero(
+          el.querySelector('canvas')!,
+          (s) => {
+          jobs.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.job) === s.index)));
+          $('[data-phase]').textContent = PH[s.phase];
+          $('[data-temp]').textContent = `${s.temp}°C`;
+          $('[data-model]').textContent = s.model;
+          $('[data-layer]').textContent = String(s.layer).padStart(3, '0');
+          $('[data-layers]').textContent = String(s.layers).padStart(3, '0');
+          $('[data-progress]').style.transform = `scaleX(${s.layers ? s.layer / s.layers : 0})`;
+          el.dataset.state = s.phase;
+          el.classList.add('live');
+          },
+          // too slow on this device: back to the still, with an offer to play anyway
+          () => {
+            el.classList.remove('live');
+            el.classList.add('resting');
+            // put the readout back to match the still image
+            $('[data-phase]').textContent = 'Paused to keep things fast';
+            $('[data-model]').textContent = 'Spiral vase';
+            $('[data-temp]').textContent = '215°C';
+            $('[data-layer]').textContent = '052';
+            $('[data-layers]').textContent = '077';
+            $('[data-progress]').style.transform = 'scaleX(0.68)';
+            jobs.forEach((b, i) => b.setAttribute('aria-pressed', String(i === 0)));
+          },
+        );
+        el.querySelector('[data-play-live]')!.addEventListener('click', () => {
+          el.classList.remove('resting');
+          hero.resume();
+        });
+        jobs.forEach((b) =>
+          b.addEventListener('click', () => {
+            if (el.classList.contains('resting')) {
+              el.classList.remove('resting');
+              hero.resume();
+            }
+            hero.printNow(Number(b.dataset.job));
+          }),
+        );
+        $('[data-pick]').hidden = false;
+      });
+      const whenIdle = () => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 1200 }) : setTimeout(start, 300));
+      if (document.readyState === 'complete') whenIdle();
+      else addEventListener('load', whenIdle, { once: true });
+    }
+  }
+</script>
+
+<style>
+  .hero-printer {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 620px;
+    margin-inline: auto;
+  }
+  canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  .poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .play-live {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--hot);
+    background: var(--overlay);
+    backdrop-filter: blur(6px);
+    color: var(--white);
+    font: 700 0.9rem var(--font);
+    cursor: pointer;
+  }
+  .resting .play-live {
+    display: inline-flex;
+  }
+  .resting canvas {
+    visibility: hidden;
+  }
+  /* swap instantly: fading one printer over another would show two at once */
+  .live .poster,
+  .no-gl .poster {
+    display: none;
+  }
+  .hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6%;
+  }
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: var(--overlay);
+    backdrop-filter: blur(6px);
+    font: 600 0.72rem var(--font);
+    color: var(--white);
+  }
+  .mono,
+  .chip.mono {
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+  [data-state='printing'] .chip.mono {
+    color: var(--hot);
+    border-color: color-mix(in srgb, var(--hot) 50%, transparent);
+  }
+  .hud-bottom {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 16px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line-2);
+    background: var(--overlay);
+    backdrop-filter: blur(8px);
+  }
+  .hud-bottom div {
+    display: grid;
+    gap: 2px;
+  }
+  .right {
+    text-align: right;
+  }
+  .k {
+    font: 500 0.64rem var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .v {
+    font: 600 0.95rem var(--display);
+    letter-spacing: -0.02em;
+    color: var(--white);
+  }
+  .v.mono {
+    font: 600 0.95rem var(--mono);
+    letter-spacing: 0;
+  }
+  .progress {
+    grid-column: 1 / -1;
+    height: 5px;
+    border-radius: 5px;
+    background: var(--panel-3);
+    overflow: hidden;
+  }
+  .progress i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--uv), var(--hot));
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    box-shadow: 0 0 12px var(--hot);
+  }
+  .fallback {
+    position: absolute;
+    inset: 15%;
+  }
+  .queue-pick {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin-top: 6px;
+    display: grid;
+    gap: 8px;
+    justify-items: center;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  .chips button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: var(--overlay);
+    color: var(--text-2);
+    font: 600 0.76rem var(--font);
+    cursor: pointer;
+    transition:
+      transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1),
+      border-color 0.2s,
+      color 0.2s;
+  }
+  .chips button:hover {
+    transform: translateY(-2px);
+    color: var(--white);
+  }
+  .chips button[aria-pressed='true'] {
+    color: var(--white);
+    border-color: var(--hot);
+    box-shadow: 0 0 14px -6px var(--hot);
+  }
+  .chips i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .no-gl canvas {
+    display: none;
+  }
+</style>
