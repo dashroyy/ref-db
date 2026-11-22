@@ -1,0 +1,294 @@
+---
+// Handling and transport: the motor as a beam on cradles, Zick's local stresses in the case at a cradle, a two-point
+// lift on slings, and the shock response of a part to the drop pulse. The calculations live in src/lib/handling.ts
+// (unit-tested); this file is UI only.
+import MaterialSelect from './MaterialSelect.astro';
+import { withProps, DEFAULTS as D } from '../lib/materials';
+
+const metals = withProps(['E', 'nu', 'Fty'], ['metal']);
+const MATS = Object.fromEntries(metals.map((m) => [m.key, { E: m.E!, nu: m.nu!, y: m.Fty! }]));
+---
+
+<div class="calc hdcalc" data-hdcalc>
+  <div class="calc-head">
+    <span>Handling and transport: cradles, lifts and shock</span>
+    <span class="head-btns">
+      <span>beam · Zick · half-sine SRS</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="cradle" aria-selected="true">Cradles and lifting</button>
+    <button type="button" role="tab" class="chip" data-tab="shock" aria-selected="false">Shock response</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Motor</legend>
+        <div class="row2">
+          <label>Mass (kg)<input name="m" type="number" min="0.1" step="any" value="137.8" /></label>
+          <label>Overall length (mm)<input name="L" type="number" min="1" step="any" value="1150" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="cradle">
+        <legend>Supports and case</legend>
+        <div class="row2">
+          <label>Support from each end (mm)<input name="A" type="number" min="0" step="any" value="240" /></label>
+          <label>Load factor (g)<input name="n" type="number" min="0" step="any" value="3" /></label>
+          <label>Case mean radius (mm)<input name="R" type="number" min="1" step="any" value="150.69" /></label>
+          <label>Case wall (mm)<input name="t" type="number" min="0.01" step="any" value="1.377" /></label>
+          <label>Cradle contact angle (°)<input name="th" type="number" min="60" max="180" step="any" value="120" /></label>
+          <label>Cradle width (mm)<input name="b" type="number" min="1" step="any" value="50" /></label>
+          <label>Sling angle from horizontal (°)<input name="sa" type="number" min="15" max="90" step="any" value="60" /></label>
+        </div>
+        <label>Case material<MaterialSelect name="cm" list={metals} selected={D.caseSteel} /></label>
+        <p class="hint">Two cradles, or two lift points, each at the same distance from its end. The load factor is the vertical acceleration of the transport or handling case that you check, in g. The case is taken as empty: a bonded grain stiffens it.</p>
+      </fieldset>
+      <fieldset data-panel="shock" hidden>
+        <legend>Drop and the part</legend>
+        <div class="row2">
+          <label>Drop height (m)<input name="h" type="number" min="0" step="any" value="0.3" /></label>
+          <label>Pulse duration (ms)<input name="tau" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Rebound coefficient<input name="e" type="number" min="0" max="1" step="any" value="0.5" /></label>
+          <label>Part natural frequency (Hz)<input name="fn" type="number" min="0.1" step="any" value="80" /></label>
+          <label>Part damping (%)<input name="z" type="number" min="0" max="50" step="any" value="0" /></label>
+        </div>
+        <p class="hint">A hard floor stops a part in a few milliseconds; a cushion or a sprung cradle in tens. A linear cushion of frequency f gives a pulse of 1/(2f). The part is anything on the motor that moves on its own mount: a bracket, an instrument, the nozzle on its joint, or the motor on its cradle pads.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Your criteria</legend>
+        <div class="row2">
+          <label>Factor on yield<input name="yf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Lift dynamic factor<input name="df" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Handling limit of the part (g)<input name="gl" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">From your programme: the factor from your design rules, the dynamic factor from your lifting standard, the handling limit from the qualification of the part. Not from this site.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="hd-out">
+      <div data-out="cradle">
+        <dl class="readouts">
+          <div class="readout primary" data-govbox><dt>Case at the cradles</dt><dd data-r="gov">—</dd></div>
+          <div class="readout"><dt>Each support carries</dt><dd data-r="q">—</dd></div>
+          <div class="readout"><dt>Bending moment</dt><dd data-r="mom">—</dd></div>
+          <div class="readout"><dt>Longitudinal stress</dt><dd data-r="lon">—</dd></div>
+          <div class="readout"><dt>Shear at the cradle</dt><dd data-r="sh">—</dd></div>
+          <div class="readout"><dt>Ring stress at the horn</dt><dd data-r="horn">—</dd></div>
+          <div class="readout"><dt>Lift on slings</dt><dd data-r="lift">—</dd></div>
+        </dl>
+        <figure class="hd-fig">
+          <svg data-bchart role="img" aria-label="The motor on its two supports, and the bending moment along it"></svg>
+          <figcaption>The motor on its two supports, and the bending moment along it under the load factor. Over the supports the case hogs; between them it sags. Supports at 0.207 of the length from each end make the two equal.</figcaption>
+        </figure>
+      </div>
+      <div data-out="shock" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-partbox><dt>Peak on the part</dt><dd data-r="part">—</dd></div>
+          <div class="readout"><dt>The drop pulse</dt><dd data-r="pulse">—</dd></div>
+          <div class="readout"><dt>Load on the supports</dt><dd data-r="sup">—</dd></div>
+          <div class="readout"><dt>Isolated below</dt><dd data-r="iso">—</dd></div>
+        </dl>
+        <figure class="hd-fig">
+          <svg data-schart role="img" aria-label="Shock response spectrum of the half-sine pulse, with the part's natural frequency"></svg>
+          <figcaption>The shock response spectrum of the pulse: the peak acceleration of a part, divided by the peak of the pulse, against the natural frequency of the part. The dot is your part. Above the line at 1 the mount amplifies the shock; below it the mount isolates.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. The motor is a uniform beam on two supports. The local stresses at a cradle
+    follow Zick's analysis of a thin horizontal cylinder on saddles, for an empty shell with no ring at the cradle: a
+    bonded grain stiffens the case, and a cradle near a dome is stiffened by it, so these values are upper bounds there.
+    The shock response is a single-degree-of-freedom system on a half-sine pulse. Not included: wear plates and rings,
+    the stresses in the grain and its bond under the cradle, cradle friction, the nozzle as a mass at the end, and
+    shapes of pulse other than the half-sine.
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(MATS)}></script>
+</div>
+
+<style is:global>
+  .hd-out { min-width: 0; }
+  .hd-out > div > * { min-width: 0; }
+  .hd-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { beamOnSupports, bestOverhang, cradleStresses, slings, halfSineResponse, shockSpectrum, drop } from '../lib/handling';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const G = 9.80665;
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const ms = (v: number) => (Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : '−'}${f(Math.abs(v), 2)}`);
+  const msClass = (v: number) => (v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+
+  document.querySelectorAll<HTMLElement>('[data-hdcalc]').forEach((root) => {
+    const MATS: Record<string, { E: number; nu: number; y: number }> = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'cradle';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+
+    function run() {
+      const notes: [string, string][] = [];
+      if (!(num('m') > 0 && num('L') > 0)) { clear('Enter the mass and the length of the motor.'); return; }
+      if (mode === 'cradle') runCradle(notes); else runShock(notes);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function runCradle(notes: [string, string][]) {
+      const L = num('L'), A = num('A'), n = num('n'), R = num('R'), t = num('t'), th = num('th'), b = num('b'), sa = num('sa');
+      const mat = MATS[field('cm').value];
+      if (!(A >= 0 && 2 * A < L && n >= 0 && R > t && t > 0 && th >= 60 && th <= 180 && b > 0 && sa >= 15 && sa <= 90 && mat)) {
+        const msg = 'Check the inputs: the supports inside the length, a radius larger than the wall, a contact angle from 60° to 180°, and a sling angle from 15° to 90°.'; clear(msg); notes.push(['bad', msg]); return;
+      }
+      const beam = beamOnSupports({ mass: num('m'), L, A, n });
+      const s = cradleStresses(beam, { R, t, theta: th, b, E: mat.E, nu: mat.nu }, L, A);
+      const yf = readFactor(field('yf').value), df = readFactor(field('df').value);
+      const best = bestOverhang(L);
+      r('q').innerHTML = `${f(beam.Q / 1000, 2)} kN <small>at ${f(n, 1)} g · supports that balance the moments: ${f(best, 0)} mm from each end (0.207 L)</small>`;
+      r('mom').innerHTML = `${f(beam.Mmax / 1e6, 3)} kN·m <small>${f(beam.Msup / 1e6, 3)} over each support (hogging) · ${f(beam.Mmid / 1e6, 3)} at midspan (${beam.Mmid >= 0 ? 'sagging' : 'hogging'})</small>`;
+      r('lon').innerHTML = `${f(Math.max(s.mid, s.saddle), 1)} MPa <small>${f(s.mid, 1)} at midspan on the full section · ${f(s.saddle, 1)} over the cradle, where only ${f(s.K1 * 100, 1)}% of the section works (Zick K1)</small>`;
+      r('sh').innerHTML = `${f(s.shear, 1)} MPa <small>K2 = ${f(s.K2, 3)}: the shear gathers near the horns of the cradle</small>`;
+      r('horn').innerHTML = `${f(s.horn, 0)} MPa <small>compression: ${f(s.direct, 1)} direct over ${f(s.eff, 0)} mm + ${f(s.ring, 0)} ring bending (K6 = ${f(s.K6, 4)}, ${L >= 8 * R ? 'L ≥ 8R' : 'L < 8R'})</small>`;
+      const sl = slings((num('m') * G * (df ?? 1)) / 2, sa);
+      r('lift').innerHTML = `${f(sl.tension / 1000, 2)} kN per leg <small>at 1 g${df !== null ? ` × ${f(df, 2)}` : ', no dynamic factor'}, slings at ${f(sa, 0)}° · the slings push ${f(sl.axial / 1000, 2)} kN along the motor${sa >= 89.5 ? ' (none: vertical slings or a spreader beam)' : ''}</small>`;
+      if (yf !== null) {
+        const y = mat.y / yf;
+        const rows: [string, number][] = [
+          ['ring bending at the horn', y / s.horn - 1],
+          ['longitudinal stress over the cradle', Math.min(y, s.buckle / yf) / s.saddle - 1],
+          ['longitudinal stress at midspan', Math.min(y, s.buckle / yf) / s.mid - 1],
+          ['shear at the cradle', (0.577 * y) / s.shear - 1],
+        ];
+        const g = rows.reduce((a, c) => (c[1] < a[1] ? c : a));
+        r('gov').innerHTML = `MS ${ms(g[1])} <small>${g[0]}, against the yield of ${f(mat.y, 0)} MPa ÷ ${f(yf, 2)}${s.buckle < mat.y ? ` and bending buckling at ${f(s.buckle, 0)} MPa` : ''}</small>`;
+        $('[data-govbox]').className = `readout primary ${msClass(g[1])}`;
+        if (g[1] < 0) notes.push(['bad', 'The case is over its allowable at the cradles. A wider contact angle, a wider cradle, a ring or a wear plate at the cradle, or cradles near the domes lower the local stresses. A sprung cradle or a cushion lowers the load factor.']);
+      } else {
+        r('gov').innerHTML = `${f(s.horn, 0)} MPa <small>ring bending at the horn, the largest stress · ${f((s.horn / mat.y) * 100, 0)}% of the yield</small>`;
+        $('[data-govbox]').className = 'readout primary';
+        notes.push(['warn', `The stresses are shown. ${awaitingMessage(['factor on yield'], 'the margins')}`]);
+      }
+      notes.push(['', `The case as a beam is not the problem: ${f(s.mid, 1)} MPa at midspan. The local ring bending at the horn of the cradle is ${f(s.horn / Math.max(1e-9, s.mid), 0)} times larger. A thin case designed for pressure is weak against a load on a small area.`]);
+      if (s.nearEnd) notes.push(['', `The cradle is less than one radius from the end, where the dome stiffens the shell. Zick then gives lower stresses than these, so the values here are conservative.`]);
+      notes.push(['', 'For a loaded motor, the bonded grain resists the ovalisation of the case, so the ring bending is lower than this empty-shell value. The load then goes through the grain and its bond. Give the cradle a rubber pad, a wide angle and a smooth edge.']);
+      if (sa < 89.5) notes.push(['', `Slings at an angle push the two lift points together with ${f(sl.axial / 1000, 2)} kN. Check the lugs and the skirts for this load as well (<a href="../../fundamentals/hand-calcs/#lugs-and-pins">Hand calcs</a>), or use a spreader beam.`]);
+      drawBeam(L, A, beam);
+    }
+
+    function runShock(notes: [string, string][]) {
+      const h = num('h'), tau = num('tau') / 1000, e = num('e'), fn = num('fn'), z = num('z') / 100;
+      if (!(h >= 0 && tau > 0 && e >= 0 && e <= 1 && fn > 0 && z >= 0 && z < 0.5)) { const msg = 'Check the inputs: a height of zero or more, a pulse above zero, a rebound coefficient from 0 to 1, a natural frequency above zero and a damping below 50%.'; clear(msg); notes.push(['bad', msg]); return; }
+      const d = drop({ h, tau, e, mass: num('m') });
+      const ratio = halfSineResponse(fn, tau, z), part = ratio * d.g, gl = readFactor(field('gl').value, 1e-6);
+      r('pulse').innerHTML = `${f(d.g, 1)} g <small>for ${f(num('tau'), 1)} ms · impact at ${f(d.v, 2)} m/s, a velocity change of ${f(d.dv, 2)} m/s</small>`;
+      r('sup').innerHTML = `${f(d.F / 1000, 1)} kN <small>the motor as a rigid body: its mass × the peak</small>`;
+      // the frequency below which the mount isolates: the first crossing of a ratio of 1
+      let lo = 0.01 / tau, hi = 0.8 / tau;
+      for (let i = 0; i < 40; i++) { const mid = Math.sqrt(lo * hi); if (halfSineResponse(mid, tau, z) < 1) lo = mid; else hi = mid; }
+      r('iso').innerHTML = `${f(lo, 0)} Hz <small>a part with a lower natural frequency sees less than the pulse (f·τ = ${f(lo * tau, 2)})</small>`;
+      if (gl !== null) {
+        const m = gl / part - 1;
+        r('part').innerHTML = `${f(part, 1)} g <small>${f(ratio, 2)} × the pulse at ${f(fn, 0)} Hz (f·τ = ${f(fn * tau, 2)}) · handling limit ${f(gl, 1)} g: MS ${ms(m)}</small>`;
+        $('[data-partbox]').className = `readout primary ${msClass(m)}`;
+        if (m < 0) notes.push(['bad', `The part sees more than its handling limit. Lengthen the pulse with a cushion or a sprung cradle, move the natural frequency of the mount well below ${f(lo, 0)} Hz to isolate the part, or qualify the part to a higher level.`]);
+      } else {
+        r('part').innerHTML = `${f(part, 1)} g <small>${f(ratio, 2)} × the pulse at ${f(fn, 0)} Hz (f·τ = ${f(fn * tau, 2)}) · enter the handling limit of the part to see the margin</small>`;
+        $('[data-partbox]').className = 'readout primary';
+      }
+      notes.push(['', `A part whose natural frequency is near 0.8/τ (${f(0.8 / tau, 0)} Hz here) sees up to 1.77 times the pulse with no damping. A stiff part sees the pulse itself, and a part on a soft mount below ${f(lo, 0)} Hz sees less.`]);
+      notes.push(['', 'The peak of the pulse depends on its duration as much as on the drop height. The cushion that lengthens the pulse also moves its frequencies down: check the parts near the new 0.8/τ.']);
+      drawSpectrum(tau, z, fn, ratio);
+    }
+
+    // the motor on its supports, and the bending moment along it
+    function drawBeam(L: number, A: number, beam: ReturnType<typeof beamOnSupports>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-bchart]')!;
+      const W = width(svg), Lm = 14, Rm = 14, H = 220, axisY = 122, top = 26;
+      const X = (x: number) => Lm + (x / L) * (W - Lm - Rm);
+      const M = (x: number) => { const xs = Math.min(x, L - x); return -(beam.w * xs * xs) / 2 + (xs > A ? beam.Q * (xs - A) : 0); };
+      const mMax = Math.max(beam.Msup, Math.abs(beam.Mmid), 1e-9), sc = 44 / mMax;
+      const Y = (m: number) => axisY - m * sc;
+      const out: string[] = [];
+      // the motor and its supports
+      out.push(`<rect x="${X(0)}" y="${top}" width="${X(L) - X(0)}" height="26" rx="13" fill="var(--rd-steel)" fill-opacity="0.45" stroke="var(--rd-muted)"/>`);
+      for (const x of [A, L - A]) out.push(`<path d="M${X(x).toFixed(1)},${top + 26} l-9,15 h18 z" fill="var(--rd-ink)"/>`);
+      // the moment diagram: sagging up, hogging down
+      const pts = Array.from({ length: 201 }, (_, k) => (L * k) / 200).map((x) => `${X(x).toFixed(1)},${Y(M(x)).toFixed(1)}`);
+      out.push(`<line x1="${X(0)}" x2="${X(L)}" y1="${axisY}" y2="${axisY}" stroke="var(--rd-muted)"/>`);
+      out.push(`<path d="M${X(0)},${axisY} L${pts.join(' L')} L${X(L)},${axisY} Z" fill="var(--rd-accent)" fill-opacity="0.2" stroke="var(--rd-accent)" stroke-width="2"/>`);
+      out.push(`<text x="${X(A)}" y="${(Y(-beam.Msup) + 14).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--rd-ink)" ${halo}>${f(-beam.Msup / 1e6, 3)}</text>`);
+      out.push(`<text x="${X(L / 2)}" y="${(Math.min(Y(beam.Mmid), axisY) - 6).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--rd-ink)" ${halo}>${f(beam.Mmid / 1e6, 3)} kN·m</text>`);
+      out.push(`<text x="${X(A)}" y="${top - 8}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(A, 0)} mm</text><text x="${X(L / 2)}" y="${top - 8}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(beam.span, 0)} mm between</text>`);
+      out.push(`<text x="${(X(0) + X(L)) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">bending moment, kN·m: sagging up, hogging down</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // the shock response spectrum of the pulse, with the part
+    function drawSpectrum(tau: number, z: number, fn: number, ratio: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-schart]')!;
+      const W = width(svg), L = 40, R = 14, T = 26, B = 34, H = 226;
+      const f0 = 0.05 / tau, f1 = 50 / tau, sp = shockSpectrum(tau, z, f0, f1, 70);
+      const yMax = 2;
+      const X = (fq: number) => L + (Math.log(fq / f0) / Math.log(f1 / f0)) * (W - L - R), Y = (v: number) => T + (1 - Math.min(v, yMax) / yMax) * (H - T - B);
+      const out: string[] = [];
+      for (const v of [0, 0.5, 1, 1.5, 2]) out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${v === 1 ? 'var(--rd-muted)' : 'var(--rd-line)'}"${v === 1 ? ' stroke-dasharray="5 3"' : ''}/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(1)}</text>`);
+      const dec = [1, 2, 5].flatMap((m) => [1, 10, 100, 1000, 10000, 100000].map((p) => m * p)).filter((v) => v >= f0 && v <= f1).sort((a, b) => a - b);
+      const labs = dec.filter((v) => [1, 10, 100, 1000, 10000, 100000].includes(v) || W > 420);
+      for (const v of labs) out.push(`<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-line)"/><text x="${X(v).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v >= 1000 ? `${v / 1000}k` : v}</text>`);
+      out.push(`<polyline points="${sp.map((p) => `${X(p.f).toFixed(1)},${Y(p.r).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      if (fn >= f0 && fn <= f1) out.push(`<line x1="${X(fn).toFixed(1)}" x2="${X(fn).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-blue)" stroke-dasharray="4 3"/><circle cx="${X(fn).toFixed(1)}" cy="${Y(ratio).toFixed(1)}" r="5" fill="var(--rd-blue)"/>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">natural frequency of the part, Hz</text><text x="4" y="11" font-size="10" fill="var(--rd-ink)">× pulse</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['yf', 'df', 'gl'],
+      note: 'Worked-example criteria loaded: factor 1.10 on yield, lift dynamic factor 1.3, handling limit of the part 100 g',
+      values: { m: '137.8', L: '1150', A: '240', n: '3', R: '150.69', t: '1.377', th: '120', b: '50', sa: '60', h: '0.3', tau: '10', e: '0.5', fn: '80', z: '0', yf: '1.10', df: '1.3', gl: '100' },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.hd-out')!);
+    }
+    run();
+  });
+</script>

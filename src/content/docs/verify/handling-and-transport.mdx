@@ -1,0 +1,213 @@
+---
+title: Handling and transport
+description: The loads on a motor before it flies. The motor as a beam on its cradles, the local stresses in a thin case at a cradle by Zick's analysis, lifts on slings, drops and the shock response of the parts on the motor, and the grain in transport, with a calculator and a worked example.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CradleLift from '../../../components/CradleLift.astro';
+import HandlingCalc from '../../../components/HandlingCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A case designed for pressure is weak against a load on a small area. Size the cradles, the lift points and the shock path for the loads before flight: they are often larger than the flight loads, and they come from other directions.</div>
+  <div><b>Before this</b><a href="../../fundamentals/duty-cycle/#handling-transport-and-shock">Duty cycle: handling, transport and shock</a></div>
+  <div><b>Leads to</b><a href="../storage-ageing/">Storage &amp; ageing</a>, for the years between the lifts</div>
+</div>
+
+## Why this matters
+
+A motor spends almost all of its life on the ground. It is lifted, put in cradles, driven, flown, shipped, stored for
+years and lifted again, and sometimes it is dropped. The [duty cycle](../../fundamentals/duty-cycle/) lists these
+events. Their loads are often larger than the loads in flight, and they act in directions that the flight does not
+load: down on the side of the case, along the case from a rail coupling, and into the lift points at an angle.
+
+The case is designed for pressure, which loads its thin wall evenly. A cradle loads it on a small area. For the 300 mm
+motor at 3 g, the case as a beam has 1 MPa of bending stress; at the edge of a narrow cradle, the ring bending in the
+same case is 94 MPa. In a drop it can yield the case. A dropped motor is also a safety event: inspect it, or scrap it.
+
+## The intuition: a drinks can
+
+<Analogy title="A drinks can">
+  A full can of a fizzy drink holds several bar of pressure, which is a large load on its thin wall. But you can dent
+  it with your thumb. The wall is strong when the pressure pulls it evenly in every direction, and weak against a load
+  on a small area, because that load bends it. A motor case is the same: designed for pressure, it needs wide cradles,
+  rings or pads to carry its own weight on a few points.
+</Analogy>
+
+## The loads before flight
+
+| Event | The load | What it loads |
+| --- | --- | --- |
+| Lifts | The weight times a dynamic factor, at the lift points, with the angle of the slings | The lugs, the skirts, the case between the lift points |
+| Cradles, in storage and in transport | The weight times the vertical, lateral and longitudinal load factors | The case at the cradles; the grain and its bond |
+| Road, rail, air and sea | Vibration for long durations, and shocks: rail couplings, potholes, landings | Fatigue of brackets and joints; preload; the grain |
+| Drops and impacts in handling | Short pulses of tens of g | The case at its supports, and the parts that ride on mounts |
+
+The levels come from your programme and its environment specifications, for example MIL-STD-810 (Method 514 for the
+vibration of transport, Method 516 for shock). This page does not give them.
+
+## The motor as a beam
+
+On two supports, each at a distance $A$ from its end, a motor of mass $m$ and length $L$ under $n$ g carries
+$w = n\,m\,g/L$ along its length. Each support takes $Q = n\,m\,g/2$, and
+
+$$
+M_\text{support} = \frac{w A^2}{2}\ \text{(hogging)}
+\qquad
+M_\text{mid} = \frac{w\,(L - 2A)^2}{8} - \frac{w A^2}{2}\ \text{(sagging)}
+$$
+
+The two are equal when $A = (\sqrt{2} - 1)\,L/2 = 0.207\,L$. The stress in the case is $M/(\pi R^2 t)$, and the
+compression side must not buckle in bending ([Shell buckling](../shell-buckling/)). For a motor, these stresses are
+usually small: the [hand calcs](../../fundamentals/hand-calcs/) find 5 MPa for the 300 mm motor at 3 g. The problem is
+local, at the supports.
+
+## Cradles: the local problem
+
+<CradleLift />
+
+Zick analysed a thin horizontal cylinder on two saddles, and his method is still the standard for pressure vessels. At
+a saddle of contact angle $\theta$ and width $b$, three stresses matter in a shell with no ring:
+
+$$
+\sigma_\text{long} = \frac{M_\text{support}}{K_1\,\pi R^2 t}
+\qquad
+\tau = \frac{K_2\,V}{R\,t}
+\qquad
+\sigma_\text{horn} = \frac{Q}{4t\,(b + 1.56\sqrt{Rt})} + \frac{3K_6\,Q}{2t^2}
+$$
+
+The last term is $12K_6\,Q\,R/(L\,t^2)$ when $L < 8R$. $V$ is the shear force just inside the saddle.
+
+| Contact angle $\theta$ | $K_1$: the part of the section that still works in bending | $K_2$: the shear, gathered near the horns | $K_6$: the ring bending at the horn |
+| --- | --- | --- | --- |
+| 120° | 0.107 | 1.171 | 0.0528 |
+| 150° | 0.161 | 0.799 | 0.0317 |
+
+- **The ring bending at the horn governs a thin case.** It grows as $1/t^2$, and the wall that the pressure sizes is
+  thin. Over the saddle, the case also flattens, and only an arc at the top still carries the beam bending.
+- **The levers:** a wider contact angle (150° or more), a wider cradle, a wear plate or a ring at the cradle, and
+  cradles within about half a radius of a dome, where the dome stiffens the shell. A rubber pad on the cradle spreads
+  the load and protects the surface.
+- **A loaded motor is different from an empty case.** The bonded grain resists the ovalisation of the case, so the
+  ring bending in the case is lower than Zick's value for an empty shell. The load then goes through the grain in
+  compression, and at the edges of the cradle the bond sees shear. Give the pad a smooth, rounded edge. An empty case,
+  in manufacture or after a proof test, has only its wall.
+
+## Lifts
+
+- **Lift points** go on the skirts, on a handling ring or on the closures, never on the thin membrane of the case.
+  Proof-load each lifting feature to your lifting standard, and mark it. Check each lug as a lug
+  ([Hand calcs](../../fundamentals/hand-calcs/#lugs-and-pins)).
+- **Slings at an angle** $\beta$ from the horizontal carry $T = Q/\sin\beta$ in each leg, and they push the two lift
+  points together with $Q/\tan\beta$. At 30°, the push is 1.7 times the lift-point load. A spreader beam keeps the
+  legs vertical and removes the push.
+- **The hook must be above the centre of gravity,** or the motor tilts in the slings. Mark the centre of gravity on the
+  motor and on its drawing.
+- **The dynamic factor** for the crane and the lift comes from your lifting standard.
+
+## Drops and the shock response
+
+The [duty cycle](../../fundamentals/duty-cycle/#handling-transport-and-shock) gives the peak of a drop: a half-sine
+pulse of duration $\tau$ with the peak $\pi (1 + e)\,v/(2\tau)$. That is the acceleration of the motor as a rigid body.
+A part that rides on its own mount, such as a bracket, an instrument, or the nozzle on its joint, responds to the pulse
+like a mass on a spring:
+
+- **Near $f_n = 0.8/\tau$** the part sees up to 1.77 times the pulse, with no damping. For a 10 ms pulse, that is a
+  part near 80 Hz.
+- **Stiff parts** ($f_n \gg 1/\tau$) see the pulse itself.
+- **Parts on soft mounts** ($f_n < 0.27/\tau$) see less than the pulse: the mount isolates them.
+
+This is the **shock response spectrum** of the pulse. A cushion or a sprung cradle lengthens the pulse and lowers its
+peak, but it also moves $0.8/\tau$ down. Check the parts whose frequencies are near the new value.
+
+## The grain in transport
+
+- **The bond carries the weight of the grain** in every direction: $\rho\,n\,g\,(b^2 - a^2)/(2b)$, the same as along
+  the axis ([Bondlines](../../motor/bondlines/#the-bond-in-the-long-cylinder)). In long horizontal storage, the bore
+  slumps sideways under the weight of the web.
+- **Vibration:** the grain is heavy and well damped. It adds mass to the case and to its supports
+  ([Random vibration](../random-vibration/)).
+- **Temperature:** an unheated truck or aircraft hold can set the coldest day of the life of the grain, and with it the
+  bond and bore strains ([Propellant grain](../../motor/propellant-grain/#cool-down-why-the-bore-cracks)).
+
+## Calculator
+
+<HandlingCalc />
+
+The first tab checks the case as a beam and at the cradles, and the slings of a lift. The second tab gives the shock
+response of a part to the drop pulse. The criteria start blank: enter the values of your programme, or push **Load
+worked example**.
+
+## Worked example: the 300 mm motor in its cradles, in a lift and in a drop
+
+The loaded motor has a mass of 137.8 kg. It is 1150 mm long: the 1000 mm cylinder and its domes, without the nozzle.
+It sits in two cradles 240 mm from each end; for this length, 238 mm balances the moments. The case is D6AC with a mean
+radius of 150.69 mm and a 1.377 mm wall. The cradles touch it over 120° and are 50 mm wide. The load factor of 3 g is
+the one in the hand calcs. The criteria (a factor of 1.10 on yield, a lift dynamic factor of 1.3, and a handling limit
+of 100 g for a part on the motor) are **for this example only**. Push **Load worked example**.
+
+1. **The beam.** Each cradle carries 2.03 kN. The moment is 0.10 kN·m over the cradles and at midspan, which gives
+   1.0 MPa at midspan.
+2. **The cradle, at 3 g.** Over the cradle, only 10.7% of the section works, so the longitudinal stress is 9.7 MPa.
+   The shear is 6.7 MPa. The ring stress at the horn is **94 MPa**, of which 89 MPa is ring bending: 96 times the beam
+   stress. MS = $1318 / 93.9 - 1 = +13.0$ against the yield of 1450 MPa ÷ 1.10.
+3. **The lift.** Slings at 60° from the horizontal, at the cradle positions, with the dynamic factor of 1.3: each leg
+   carries 1.01 kN, and the slings push the lift points together with 0.51 kN.
+4. **The drop.** The [duty-cycle drop](../../fundamentals/duty-cycle/#worked-example-the-life-of-the-300-mm-motors-case) gives
+   58.3 g for 10 ms. Set the load factor to 58.3: the ring stress at the horn is **1825 MPa**, more than the yield.
+   MS = −0.28. The narrow cradle dents the empty-shell model of the case.
+5. **A better cradle.** Make it 150° and 100 mm wide: 1093 MPa at the horn, MS = +0.21. A cushion that lengthens the
+   pulse to 19.4 ms also works: it halves the peak (see the duty-cycle example).
+6. **A part on the motor.** On the **Shock response** tab, a part at 80 Hz sits at $f_n\tau = 0.8$. It sees 1.77 times
+   the pulse: **103 g**, over its 100 g limit (MS = −0.03). With 5% damping in its mount it sees 96 g (MS = +0.04). A
+   mount below 27 Hz would isolate it.
+
+<Aside type="tip" title="What the example shows">
+  At 3 g, nothing is close. The drop is twenty times larger, and it finds the weak point of a thin case: ring bending
+  at the horn of a narrow cradle. A wider cradle fixes the case. The part on its mount needs its own check, because
+  the mount can amplify the shock that the motor feels.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="Screening values">
+  These are first-order checks for the layout of cradles, lifts and mounts. The real loads come from your environment
+  specifications, and the real stresses from FEA and tests.
+</Aside>
+
+- **Zick's analysis** here is for an empty shell with no ring at the saddle. It does not include the grain, the bond
+  under the cradle, wear plates or rings (Zick and Moss give the last two).
+- **Lateral and longitudinal loads,** such as rail couplings, which load the skirts and the restraints of the motor.
+- **The restraint of the motor** in its cradles: straps, friction and the stops.
+- **Other pulse shapes,** and parts with more than one mode. The spectrum gives the peak, not the history.
+- **Fatigue from transport vibration** of brackets and joints ([Random vibration](../random-vibration/)).
+
+## On the drawing and in the specifications
+
+- **The lift points:** their proof load, their marking, and the centre of gravity of the motor.
+- **The cradle interfaces:** the support positions, the contact angle and width, the pad material, and the zones of
+  the case where no support may go.
+- **The handling limits** in g for the motor and for its parts, and the temperature limits of transport and storage.
+- **The transport environment:** the vibration and shock levels and their durations.
+- **The inspection after a drop** or an impact above the limits, and who decides whether the motor can still be used.
+
+## References and further reading
+
+- L. P. Zick, "Stresses in large horizontal cylindrical pressure vessels on two saddle supports", *Welding Journal
+  Research Supplement* 30 (1951).
+- D. R. Moss & M. M. Basic, *Pressure Vessel Design Manual*, 4th ed., Butterworth-Heinemann (2013) (Zick's method,
+  with rings and wear plates).
+- A. G. Piersol & T. L. Paez (eds.), *Harris' Shock and Vibration Handbook*, 6th ed., McGraw-Hill (2010) (shock
+  response spectra).
+- MIL-STD-810H, *Environmental Engineering Considerations and Laboratory Tests* (Method 514, vibration; Method 516,
+  shock).
+- NASA SP-8007, *Buckling of Thin-Walled Circular Cylinders* (1968) (free on NTRS).
+- E. F. Bruhn, *Analysis and Design of Flight Vehicle Structures*, Jacobs Publishing (1973) (lugs).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, its environment specifications and
+  the approval of the responsible stress and safety authorities control the real design.
+</Aside>

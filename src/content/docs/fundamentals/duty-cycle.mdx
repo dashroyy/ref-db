@@ -125,6 +125,8 @@ The peak depends on the pulse duration as much as on the height. A hard floor gi
 accelerations; a cushion or a sprung cradle gives tens of milliseconds. Specify the handling limit (in g) that the
 motor, its grain and its igniter accept, and design the cradles and containers to keep inside it. MIL-STD-810 Method
 516 gives shock tests, and Method 514 vibration for transport ([Random vibration](../../verify/random-vibration/)).
+[Handling and transport](../../verify/handling-and-transport/) sizes the cradles and the lifts, and the response of
+the parts on mounts.
 
 ## Calculator
 
@@ -168,7 +170,7 @@ against it.
 - **One S–N slope** and no endurance limit. Real curves bend, and the slope changes with the detail.
 - **Rainflow without mean stress.** Apply a mean-stress correction to each cycle where it matters.
 - **A rigid body on a half-sine pulse** for the drop. A part on a flexible mount can amplify the shock; use a shock
-  response spectrum for components.
+  response spectrum for components ([Handling and transport](../../verify/handling-and-transport/#drops-and-the-shock-response)).
 - **Fatigue is not fracture.** For few cycles at high stress, the life comes from crack growth from the largest flaw
   that inspection can miss ([Leak before break](../../verify/leak-before-break/)).
 

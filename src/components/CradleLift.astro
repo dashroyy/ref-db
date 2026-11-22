@@ -1,0 +1,76 @@
+---
+// Two views of the handling loads. Left: a section through a thin case on a cradle: the contact angle θ, the horns
+// where the ring bending peaks, the shear gathering near them, the case flattening (dashed, exaggerated), and Zick's
+// effective arc at the top that carries the beam bending over the cradle. Right: a two-point lift on slings at β, with
+// the tension in a leg and the push that the slings put into the motor. Schematic.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-accent)', steel = 'var(--rd-steel)', blue = 'var(--rd-blue)';
+const C = { x: 112, y: 122 }, R = 76, TH = 120; // ring centre, radius, contact angle
+const rad = (d: number) => (d * Math.PI) / 180;
+const P = (r: number, a: number) => [C.x + r * Math.cos(rad(a)), C.y - r * Math.sin(rad(a))] as const; // a from +x, anticlockwise
+const pt = (p: readonly [number, number]) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+const h1 = 270 - TH / 2, h2 = 270 + TH / 2; // the horns, in degrees
+const saddle = `M${pt(P(R + 2, h1))} A${R + 2} ${R + 2} 0 0 0 ${pt(P(R + 2, h2))} L${pt(P(R + 2, h2))} L${C.x + 70},${C.y + 96} L${C.x - 70},${C.y + 96} Z`;
+const D = 30 + (5 * TH) / 12; // Zick's half-angle of the effective arc, from the top (80° for 120°)
+const arc = `M${pt(P(R, 90 + D))} A${R} ${R} 0 0 1 ${pt(P(R, 90 - D))}`;
+const thetaArc = `M${pt(P(R - 16, h1))} A${R - 16} ${R - 16} 0 0 0 ${pt(P(R - 16, h2))}`;
+// the lift
+const hook = [336, 54] as const, lugA = [286, 196] as const, lugB = [386, 196] as const;
+const beta = (Math.atan2(lugA[1] - hook[1], hook[0] - lugA[0]) * 180) / Math.PI;
+---
+
+<figure class="viz cdl">
+  <p class="viz-title">At the cradle, and in a lift</p>
+  <svg viewBox="0 0 440 264" role="img" aria-labelledby="cdl-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="cdl-desc">
+      Left: a section through a thin motor case resting on a cradle that touches it over an angle theta at the bottom.
+      The ends of the contact are the horns. There the ring bending in the case is highest, and the shear in the wall
+      gathers near them. Dashed, exaggerated: the case flattens on the cradle and bulges at the sides. At the top, an arc
+      marks the part of the section that still carries the beam bending over the cradle. Right: a motor lifted at two
+      lugs by two slings from one hook, at an angle beta to the horizontal. Each leg carries the lug load divided by the
+      sine of beta, and the slings push the two lugs together with the lug load divided by the tangent of beta.
+    </desc>
+    <defs>
+      <marker id="cdl-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={hot}></path></marker>
+      <marker id="cdl-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={ink}></path></marker>
+    </defs>
+    <!-- section at the cradle -->
+    <path d={saddle} fill={steel} fill-opacity="0.35" stroke={muted}></path>
+    <ellipse cx={C.x} cy={C.y + 3} rx={R + 7} ry={R - 6} fill="none" stroke={muted} stroke-dasharray="4 3"></ellipse>
+    <circle cx={C.x} cy={C.y} r={R} fill="var(--rd-propellant)" fill-opacity="0.18" stroke={ink} stroke-width="3"></circle>
+    <path d={arc} fill="none" stroke={blue} stroke-width="5" stroke-opacity="0.8"></path>
+    <path d={thetaArc} fill="none" stroke={hot} stroke-width="1.4"></path>
+    <text x={C.x} y={C.y + R - 22} text-anchor="middle" font-size="13" fill={hot}>θ</text>
+    {[h1, h2].map((a) => <circle cx={P(R, a)[0]} cy={P(R, a)[1]} r="4.5" fill={hot}></circle>)}
+    {[h1 + 14, h2 - 14].map((a, k) => (
+      <line x1={P(R + 10, a + (k ? 10 : -10))[0]} y1={P(R + 10, a + (k ? 10 : -10))[1]} x2={P(R + 10, a)[0]} y2={P(R + 10, a)[1]} stroke={hot} stroke-width="1.8" marker-end="url(#cdl-a)"></line>
+    ))}
+    <text x="6" y="16" font-size="11" fill={blue}>top arc: carries the</text>
+    <text x="6" y="30" font-size="11" fill={blue}>bending over the cradle</text>
+    <line x1="16" y1="232" x2={P(R, h1)[0] - 3} y2={P(R, h1)[1] + 3} stroke={muted}></line>
+    <text x="6" y="244" font-size="11" fill={hot}>horn: the ring bending</text>
+    <text x="6" y="258" font-size="11" fill={hot}>and the shear peak here</text>
+    <!-- the lift -->
+    <rect x="246" y="186" width="180" height="22" rx="11" fill={steel} fill-opacity="0.45" stroke={muted}></rect>
+    <line x1={hook[0]} y1={hook[1] - 26} x2={hook[0]} y2={hook[1]} stroke={ink} stroke-width="2"></line>
+    <circle cx={hook[0]} cy={hook[1]} r="4" fill={ink}></circle>
+    <line x1={hook[0]} y1={hook[1]} x2={lugA[0]} y2={lugA[1]} stroke={ink} stroke-width="1.6"></line>
+    <line x1={hook[0]} y1={hook[1]} x2={lugB[0]} y2={lugB[1]} stroke={ink} stroke-width="1.6"></line>
+    {[lugA, lugB].map((l) => <circle cx={l[0]} cy={l[1] - 10} r="4" fill="var(--rd-panel)" stroke={ink} stroke-width="1.5"></circle>)}
+    <path d={`M${lugB[0] - 28},${lugB[1] - 10} A28 28 0 0 1 ${(lugB[0] - 28 * Math.cos(rad(beta))).toFixed(1)},${(lugB[1] - 10 - 28 * Math.sin(rad(beta))).toFixed(1)}`} fill="none" stroke={muted}></path>
+    <text x={lugB[0] - 42} y={lugB[1] - 18} font-size="12" fill={ink}>β</text>
+    <line x1={lugA[0] + 4} y1={lugA[1] + 24} x2={lugA[0] + 34} y2={lugA[1] + 24} stroke={hot} stroke-width="2" marker-end="url(#cdl-a)"></line>
+    <line x1={lugB[0] - 4} y1={lugB[1] + 24} x2={lugB[0] - 34} y2={lugB[1] + 24} stroke={hot} stroke-width="2" marker-end="url(#cdl-a)"></line>
+    <text x="336" y="236" text-anchor="middle" font-size="11" fill={hot}>push Q/tan β</text>
+    <line x1={(hook[0] + lugA[0]) / 2 - 18} y1={(hook[1] + lugA[1]) / 2 + 6} x2={(hook[0] + lugA[0]) / 2 + 4} y2={(hook[1] + lugA[1]) / 2 - 56} stroke={ink} stroke-width="1.8" marker-end="url(#cdl-b)"></line>
+    <text x="252" y="106" font-size="11" fill={ink}>T = Q/sin β</text>
+    <text x="436" y="16" text-anchor="end" font-size="11" fill={muted}>a spreader beam</text>
+    <text x="436" y="30" text-anchor="end" font-size="11" fill={muted}>makes the legs vertical:</text>
+    <text x="436" y="44" text-anchor="end" font-size="11" fill={muted}>no push</text>
+  </svg>
+  <figcaption>
+    Left: a thin case on a cradle. The direct load is small; the ring bending at the horns, the ends of the contact, is
+    large, and the wall shear gathers there too. Only the top of the section, Zick's effective arc, still carries the
+    beam bending over the cradle. Right: slings at an angle β carry more than the weight, and they push the lift points
+    together. Schematic; the flattening of the case is exaggerated.
+  </figcaption>
+</figure>

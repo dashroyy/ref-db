@@ -131,6 +131,7 @@ export const PRIMERS = [
   { key: 'primer-nozzle', phase: 'size', after: 'ablative', slug: 'motor/nozzle', label: 'NOZZLE DESIGN', ico: '✦' },
   { key: 'primer-tvc', phase: 'size', after: 'ablative', slug: 'motor/thrust-vector-control', label: 'THRUST VECTOR CONTROL', ico: '✦' },
   { key: 'primer-heating', phase: 'size', after: 'thermal', slug: 'motor/external-heating', label: 'EXTERNAL HEATING', ico: '✦' },
+  { key: 'primer-handling', phase: 'verify', after: 'vibration', slug: 'verify/handling-and-transport', label: 'HANDLING & TRANSPORT', ico: '✦' },
   { key: 'primer-firing', phase: 'verify', after: 'proof', slug: 'verify/static-firing', label: 'STATIC FIRING', ico: '✦' },
 ];
 
