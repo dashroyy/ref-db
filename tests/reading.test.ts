@@ -45,12 +45,21 @@ test('citations are found in the text of the pages that cite them', () => {
   assert.ok(pages('parker').includes('seals/o-ring-design'));
   assert.ok(pages('vdi2230').includes('joints/bolted-joints'));
   assert.ok(pages('rubinstein').includes('fundamentals/molecular-sandbox'));
+  // the sources of the primers find the pages that cite them
+  const cited: [string, string][] = [
+    ['vasiliev', 'motor/composite-cases'], ['vasmorozov', 'motor/composite-cases'], ['s081', 'motor/composite-cases'],
+    ['culick', 'motor/combustion-instability'], ['deluca', 'motor/combustion-instability'], ['blomshield', 'motor/combustion-instability'],
+    ['bartz', 'motor/nozzle'], ['summerfield', 'motor/nozzle'], ['huzel', 'motor/nozzle'],
+    ['eckert', 'motor/external-heating'], ['andersonhyp', 'motor/external-heating'], ['ussa', 'motor/external-heating'],
+    ['hdbk310', 'motor/external-heating'], ['incropera', 'motor/transient-thermal'], ['ptc191', 'verify/static-firing'], ['gum', 'verify/static-firing'],
+  ];
+  for (const [id, page] of cited) assert.ok(pages(id).includes(page), `${id} on ${page}`);
   // no pattern is so loose that it finds a source on most pages
   for (const s of SOURCES) assert.ok(citedBy(s, docs).length <= docs.length * 0.5, `${s.id}: cited on ${citedBy(s, docs).length} of ${docs.length} pages`);
 });
 
 test('the numbers that the page states', () => {
-  assert.equal(SOURCES.length, 75, 'the page says 75 sources');
+  assert.equal(SOURCES.length, 90, 'the page says 90 sources');
   assert.equal(CATS.length, 10, 'in ten subjects');
   assert.equal(SOURCES.filter((s) => s.start && s.free).length, 2, 'two of the start set are free');
   const casePath = PATHS.find((p) => p.key === 'case')!;
