@@ -1,0 +1,257 @@
+---
+// Combustion instability screen: the acoustic modes of the chamber and the port across the burn, against the band
+// where the propellant responds most, and the damping by particles. Calculations live in src/lib/instability.ts
+// (unit-tested); this file is UI only.
+---
+
+<div class="calc iscalc" data-iscalc>
+  <div class="calc-head">
+    <span>Combustion instability: mode map and particle damping</span>
+    <span class="head-btns">
+      <span>acoustic modes · linear screen</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="map" aria-selected="true">Mode map</button>
+    <button type="button" role="tab" class="chip" data-tab="damp" aria-selected="false">Particle damping</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Chamber and port</legend>
+        <div class="row2">
+          <label>Speed of sound in the gas (m/s)<input name="a" type="number" min="100" step="any" value="1100" /></label>
+          <label>Acoustic length of the chamber (mm)<input name="L" type="number" min="1" step="any" value="1200" /></label>
+          <label>Port ⌀ at ignition (mm)<input name="D0" type="number" min="1" step="any" value="100" /></label>
+          <label>Port ⌀ at burnout (mm)<input name="D1" type="number" min="1" step="any" value="300" /></label>
+        </div>
+        <p class="hint">a = √(γRT/M) of the chamber gas, from your propellant's thermochemistry: usually 1000–1200 m/s. For a port that is not round, use the diameter of a circle with the same area.</p>
+      </fieldset>
+      <fieldset data-panel="map">
+        <legend>Propellant response</legend>
+        <div class="row2">
+          <label>Response band from (Hz)<input name="fl" type="number" min="1" step="any" value="1500" /></label>
+          <label>to (Hz)<input name="fh" type="number" min="1" step="any" value="3500" /></label>
+        </div>
+        <p class="hint">The frequencies where the burn rate of your propellant responds most to pressure, from T-burner tests at the operating pressure. 1.5–3.5 kHz is illustrative.</p>
+      </fieldset>
+      <fieldset data-panel="damp" hidden>
+        <legend>Gas and particles</legend>
+        <div class="row2">
+          <label>Frequency (Hz)<input name="f" type="number" min="1" step="any" value="2149" /></label>
+          <label>Gas viscosity (Pa·s)<input name="mu" type="number" min="1e-6" step="any" value="0.00009" /></label>
+          <label>Particle density (kg/m³)<input name="rp" type="number" min="1" step="any" value="3000" /></label>
+          <label>γ<input name="g" type="number" min="1.05" max="1.67" step="0.01" value="1.2" /></label>
+          <label>c<sub>m</sub>/c<sub>p</sub> (particle / gas)<input name="cr" type="number" min="0" step="any" value="0.7" /></label>
+          <label>Prandtl number<input name="pr" type="number" min="0.1" step="any" value="0.6" /></label>
+        </div>
+        <p class="hint">Illustrative properties of a hot combustion gas and of liquid oxide particles. The damping is per unit mass loading (particle mass ÷ gas mass), so no composition is implied.</p>
+      </fieldset>
+    </form>
+
+    <div class="is-out">
+      <div data-out="map">
+        <dl class="readouts">
+          <div class="readout primary" data-risk><dt>In the response band</dt><dd data-r="risk">—</dd></div>
+          <div class="readout"><dt>Longitudinal modes</dt><dd data-r="long">—</dd></div>
+          <div class="readout"><dt>First tangential (1T)</dt><dd data-r="t1">—</dd></div>
+          <div class="readout"><dt>Higher transverse modes</dt><dd data-r="tx">—</dd></div>
+        </dl>
+        <figure class="is-fig">
+          <svg data-map role="img" aria-label="Frequency of each acoustic mode against the web burned, with the response band of the propellant"></svg>
+          <figcaption>Frequencies of the modes as the port burns out (log scale). The transverse modes fall as the port grows; the longitudinal modes (dashed) stay almost fixed. The shaded band is where the propellant responds most: a mode is drawn thick where it is inside it.</figcaption>
+        </figure>
+      </div>
+      <div data-out="damp" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>Particle size that damps best</dt><dd data-r="dopt">—</dd></div>
+          <div class="readout"><dt>Damping at that size</dt><dd data-r="peak">—</dd></div>
+          <div class="readout"><dt>Sizes that give at least half</dt><dd data-r="span">—</dd></div>
+        </dl>
+        <figure class="is-fig">
+          <svg data-damp role="img" aria-label="Particle damping per unit mass loading against particle diameter for three frequencies"></svg>
+          <figcaption>Damping rate per unit particle mass loading against the particle diameter (log scale), for the frequency above (red) and for the first longitudinal and first tangential modes of the mode map. Each frequency has its own best size.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Linear acoustics of a rigid chamber: longitudinal modes of a closed pipe, transverse modes of a circular port
+    (roots of J′<sub>m</sub>), with no mean flow. A mode in the response band is a risk to look at, not a prediction of
+    instability: that needs the full balance of driving and damping (pressure and velocity coupling, nozzle, particles,
+    flow turning, structure) and pulsed firings. Particle damping after Temkin and Dobbins, for one particle size.
+  </div>
+</div>
+
+<style is:global>
+  .is-out { min-width: 0; }
+  .is-out > div > * { min-width: 0; }
+  .is-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { modeMap, longitudinal, transverse, particleDamping, optimumDiameter } from '../lib/instability';
+
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const hz = (v: number) => (v >= 1000 ? `${f(v / 1000, 2)} kHz` : `${f(v, 0)} Hz`);
+  const EXAMPLE: Record<string, string> = { a: '1100', L: '1200', D0: '100', D1: '300', fl: '1500', fh: '3500', f: '2149', mu: '0.00009', rp: '3000', g: '1.2', cr: '0.7', pr: '0.6' };
+  const COL: Record<string, string> = { '1T': 'var(--rd-accent)', '2T': 'var(--rd-warn)', '1R': 'var(--rd-blue)', '3T': 'var(--rd-ok)' };
+
+  document.querySelectorAll<HTMLElement>('[data-iscalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => +field(n).value;
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'map';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+
+    function run() {
+      const notes: [string, string][] = [];
+      const a = num('a'), L = num('L'), D0 = num('D0'), D1 = num('D1');
+      if (!(a > 0 && L > 0 && D0 > 0 && D1 > D0)) {
+        root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+        root.querySelectorAll<SVGSVGElement>('svg').forEach((s) => (s.innerHTML = ''));
+        $('[data-notes]').innerHTML = '<li class="bad">Enter the speed of sound and the chamber length, and a port that grows: the diameter at burnout must be larger than at ignition.</li>';
+        return;
+      }
+      if (mode === 'map') runMap(notes, a, L, D0, D1); else runDamp(notes, a, L, D0);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function runMap(notes: [string, string][], a: number, L: number, D0: number, D1: number) {
+      const band: [number, number] | undefined = num('fh') > num('fl') && num('fl') > 0 ? [num('fl'), num('fh')] : undefined;
+      const m = modeMap({ a, L, D0, D1, band });
+      const hit = m.trans.filter((t) => t.w);
+      const hitL = m.longi.filter((l) => l.inBand);
+      const pct = (w: number) => `${f(w * 100, 0)}%`;
+      const port = (w: number) => `${f(D0 + (D1 - D0) * w, 0)} mm`;
+      r('risk').innerHTML = hit.length || hitL.length
+        ? `${[...hit.map((t) => t.key), ...hitL.map((l) => l.key)].join(', ')} <small>${hit.map((t) => `${t.key} from ${pct(t.w![0])} of the web (port ${port(t.w![0])}) to ${t.w![1] >= 1 ? 'burnout' : `${pct(t.w![1])} (port ${port(t.w![1])})`}`).concat(hitL.map((l) => `${l.key} at ${hz(l.f)} for the whole burn`)).join('; ')}</small>`
+        : `none <small>${band ? 'no mode is inside the band during the burn' : 'enter a response band'}</small>`;
+      $('[data-risk]').className = `readout primary ${hit.length || hitL.length ? 'warn' : band ? 'ok' : ''}`;
+      r('long').innerHTML = `${m.longi.map((l) => hz(l.f)).join(' · ')} <small>${m.longi.map((l) => l.key).join(', ')}: n·a/2L, for a ${f(L, 0)} mm chamber</small>`;
+      const t1 = m.trans[0];
+      r('t1').innerHTML = `${hz(t1.f0)} → ${hz(t1.f1)} <small>1.84·a/(πD), from a ${f(D0, 0)} mm port to ${f(D1, 0)} mm</small>`;
+      r('tx').innerHTML = `${m.trans.slice(1).map((t) => `${t.key} ${hz(t.f0)} → ${hz(t.f1)}`).join('<br>')}`;
+      drawMap(m, band, D0, D1, a, L);
+      if (hit.length) notes.push(['warn', `${hit.map((t) => t.key).join(' and ')} ${hit.length > 1 ? 'pass' : 'passes'} through the band during the burn. That is the time to look at: break the symmetry of the port there (radial slots, uneven star points or slots), shorten the time the port spends at that size, add damping (rods or baffles in the port, or particles through the propellant designer), and show with a stability analysis and pulsed firings that the damping wins.`]);
+      if (hitL.length) notes.push(['warn', 'A longitudinal mode is in the band for the whole burn. The nozzle is the main damping of longitudinal modes; look also for steps, inhibitors or slots that shed vortices at that frequency.']);
+      notes.push(['', 'Transverse modes in a small port are kilohertz; longitudinal modes of a long chamber are hundreds of hertz. The transverse frequencies fall as the port burns out, so a mode can enter the response band part of the way through the burn and the instability starts then.']);
+    }
+
+    function runDamp(notes: [string, string][], a: number, L: number, D0: number) {
+      const P = { rhoP: num('rp'), mu: num('mu'), g: num('g'), cmCp: num('cr'), Pr: num('pr') };
+      const fr = num('f');
+      if (!(fr > 0 && P.rhoP > 0 && P.mu > 0)) { notes.push(['bad', 'Enter the frequency, the gas viscosity and the particle density.']); return; }
+      const dOpt = optimumDiameter(fr, P.rhoP, P.mu);
+      const peak = particleDamping({ ...P, f: fr, dUm: dOpt });
+      r('dopt').innerHTML = `${f(dOpt, 1)} µm <small>where ωτ<sub>v</sub> = 1 at ${hz(fr)}: d = √(18μ/ρ<sub>p</sub>ω)</small>`;
+      r('peak').innerHTML = `${f(peak.alphaPerCm, 0)} 1/s <small>per unit mass loading: ${f(peak.viscous, 0)} from drag and ${f(peak.thermal, 0)} from heat exchange</small>`;
+      r('span').innerHTML = `${f(dOpt * Math.sqrt(2 - Math.sqrt(3)), 1)}–${f(dOpt * Math.sqrt(2 + Math.sqrt(3)), 1)} µm <small>for the drag part: a factor of about 2 either side of the best size</small>`;
+      drawDamp(P, [longitudinal(1, a, L), fr, transverse(1.8412, a, D0)]);
+      notes.push(['', `Each frequency has its own best particle size, and it scales as 1/√f: ${f(optimumDiameter(longitudinal(1, a, L), P.rhoP, P.mu), 0)} µm for the 1L mode at ${hz(longitudinal(1, a, L))}, ${f(optimumDiameter(transverse(1.8412, a, D0), P.rhoP, P.mu), 1)} µm for the 1T mode at ignition. Particles far from the best size do little.`]);
+      notes.push(['', 'A double-base or smokeless propellant has almost no particles in its gas, so this damping is close to zero: that is why these motors are prone to high-frequency instability. A metallised propellant has a large mass loading of oxide particles, of many sizes, and much more damping.']);
+    }
+
+    function drawMap(m: ReturnType<typeof modeMap>, band: [number, number] | undefined, D0: number, D1: number, a: number, L: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-map]')!;
+      const W = width(svg), H = 250, Lm = 50, Rm = 42, T = 16, B = 40;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const fMin = Math.min(m.longi[0].f, ...m.trans.map((t) => t.f1)) / 1.6, fMax = Math.max(...m.trans.map((t) => t.f0)) * 1.25;
+      const X = (w: number) => Lm + w * (W - Lm - Rm), Y = (fq: number) => T + (H - T - B) * (1 - Math.log(fq / fMin) / Math.log(fMax / fMin));
+      const out: string[] = [];
+      if (band) {
+        const y1 = Math.max(T, Y(Math.min(band[1], fMax))), y2 = Math.min(H - B, Y(Math.max(band[0], fMin)));
+        if (y2 > y1) out.push(`<rect x="${Lm}" y="${y1.toFixed(1)}" width="${W - Lm - Rm}" height="${(y2 - y1).toFixed(1)}" fill="var(--rd-warn)" fill-opacity="0.12"/><text x="${W - Rm - 4}" y="${(y1 + 12).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-warn)">response band</text>`);
+      }
+      for (const fq of [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]) {
+        if (fq < fMin || fq > fMax) continue;
+        out.push(`<line x1="${Lm}" x2="${W - Rm}" y1="${Y(fq).toFixed(1)}" y2="${Y(fq).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(fq) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${fq >= 1000 ? `${fq / 1000}k` : fq}</text>`);
+      }
+      for (const w of [0, 0.25, 0.5, 0.75, 1]) out.push(`<text x="${X(w).toFixed(1)}" y="${H - B + 14}" text-anchor="${w === 0 ? 'start' : w === 1 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-muted)">${f(w * 100, 0)}%</text>`);
+      out.push(`<text x="${(Lm + W - Rm) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">web burned (port ${f(D0, 0)} → ${f(D1, 0)} mm)</text><text x="4" y="11" font-size="10" fill="var(--rd-ink)">Hz</text>`);
+      // labels at the right edge, moved apart where two modes end close together
+      const labels: { y: number; t: string; c: string }[] = [];
+      for (const l of m.longi) {
+        if (l.f < fMin || l.f > fMax) continue;
+        out.push(`<line x1="${Lm}" x2="${W - Rm}" y1="${Y(l.f).toFixed(1)}" y2="${Y(l.f).toFixed(1)}" stroke="var(--rd-ink)" stroke-dasharray="6 4" stroke-width="${l.inBand ? 2.6 : 1.2}"/>`);
+        labels.push({ y: Y(l.f) + 3, t: l.key, c: 'var(--rd-ink)' });
+      }
+      const ws = Array.from({ length: 101 }, (_, k) => k / 100);
+      for (const t of m.trans) {
+        const pts = ws.map((w) => `${X(w).toFixed(1)},${Y(m.freq(t.alpha, w)).toFixed(1)}`);
+        out.push(`<path d="M${pts.join(' L')}" fill="none" stroke="${COL[t.key]}" stroke-width="1.6" stroke-opacity="0.8"/>`);
+        if (t.w) {
+          const seg = ws.filter((w) => w >= t.w![0] - 1e-9 && w <= t.w![1] + 1e-9).map((w) => `${X(w).toFixed(1)},${Y(m.freq(t.alpha, w)).toFixed(1)}`);
+          if (seg.length > 1) out.push(`<path d="M${seg.join(' L')}" fill="none" stroke="${COL[t.key]}" stroke-width="4.5"/>`);
+        }
+        labels.push({ y: Y(t.f1) + 3, t: t.key, c: COL[t.key] });
+      }
+      labels.sort((p, q) => p.y - q.y);
+      for (let k = 1; k < labels.length; k++) if (labels[k].y - labels[k - 1].y < 13) labels[k].y = labels[k - 1].y + 13;
+      for (const l of labels) out.push(`<text x="${W - Rm + 4}" y="${l.y.toFixed(1)}" font-size="10" fill="${l.c}">${l.t}</text>`);
+      svg.innerHTML = out.join('');
+    }
+
+    function drawDamp(P: { rhoP: number; mu: number; g: number; cmCp: number; Pr: number }, freqs: number[]) {
+      const svg = root.querySelector<SVGSVGElement>('[data-damp]')!;
+      // on a narrow chart the legend goes under the plot, where it cannot cover a peak
+      const W = width(svg), narrow = W < 460, H = narrow ? 280 : 230, Lm = 52, Rm = 14, T = 16, B = narrow ? 86 : 36;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const d0 = 0.3, d1 = 100;
+      const ds = Array.from({ length: 161 }, (_, k) => d0 * (d1 / d0) ** (k / 160));
+      const curves = freqs.map((fq) => ds.map((d) => particleDamping({ ...P, f: fq, dUm: d }).alphaPerCm));
+      const yMax = Math.max(...curves.flat()) * 1.12;
+      const X = (d: number) => Lm + (Math.log(d / d0) / Math.log(d1 / d0)) * (W - Lm - Rm), Y = (v: number) => T + (H - T - B) * (1 - v / yMax);
+      const out: string[] = [];
+      const step = [100, 200, 500, 1000, 2000, 5000, 10000].find((s) => yMax / s <= 6) ?? 20000;
+      for (let v = 0; v <= yMax; v += step) out.push(`<line x1="${Lm}" x2="${W - Rm}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${f(v, 0)}</text>`);
+      for (const d of [0.3, 1, 3, 10, 30, 100]) out.push(`<text x="${X(d).toFixed(1)}" y="${H - B + 14}" text-anchor="${d === d0 ? 'start' : d === d1 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-muted)">${d}</text>`);
+      out.push(`<text x="${(Lm + W - Rm) / 2}" y="${H - B + 30}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">particle diameter, µm (log scale)</text><text x="4" y="11" font-size="10" fill="var(--rd-ink)">α/C<tspan dy="2" font-size="8">m</tspan><tspan dy="-2">, 1/s</tspan></text>`);
+      const cols = ['var(--rd-blue)', 'var(--rd-accent)', 'var(--rd-warn)'];
+      const names = [`1L, ${hz(freqs[0])}`, `your frequency, ${hz(freqs[1])}`, `1T at ignition, ${hz(freqs[2])}`];
+      curves.forEach((c, j) => {
+        out.push(`<path d="M${ds.map((d, k) => `${X(d).toFixed(1)},${Y(c[k]).toFixed(1)}`).join(' L')}" fill="none" stroke="${cols[j]}" stroke-width="${j === 1 ? 2.6 : 1.6}"/>`);
+        // legend at the top right, where the curves are low
+        const ly = narrow ? H - B + 48 + j * 15 : T + 10 + j * 15, lx = narrow ? Lm : W - Rm - 172;
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${cols[j]}" stroke-width="${j === 1 ? 2.6 : 1.6}"/><text x="${lx + 21}" y="${ly}" font-size="10" fill="var(--rd-muted)">${names[j]}</text>`);
+      });
+      const dOpt = optimumDiameter(freqs[1], P.rhoP, P.mu);
+      if (dOpt > d0 && dOpt < d1) out.push(`<line x1="${X(dOpt).toFixed(1)}" x2="${X(dOpt).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-accent)" stroke-dasharray="3 3"/>`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => { for (const [k, v] of Object.entries(EXAMPLE)) field(k).value = v; run(); });
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.is-out')!);
+    }
+    run();
+  });
+</script>

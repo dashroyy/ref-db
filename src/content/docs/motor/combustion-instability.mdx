@@ -1,0 +1,222 @@
+---
+title: Combustion instability
+description: Why the pressure in a solid motor can oscillate. The acoustic modes of the chamber and the port, the feedback between the waves and the burning surface, why double-base and smokeless motors are prone to it, vortex-driven oscillations in large motors, the mitigations (uneven slots, rods, particles, the nozzle), and how a design is shown to be stable, with a mode-map calculator and a worked example.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import AcousticModes from '../../../components/AcousticModes.astro';
+import InstabilityCalc from '../../../components/InstabilityCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>The chamber is an organ pipe and the burning surface can amplify its notes: check every mode against the propellant's response through the burn, and design in enough damping to win.</div>
+  <div><b>Before this</b><a href="../propellant-grain/">Propellant grain</a></div>
+  <div><b>Leads to</b><a href="../../verify/static-firing/">Static test firing</a>, where instability is found or ruled out</div>
+</div>
+
+## Why this matters
+
+In an unstable motor, the chamber pressure oscillates at one of the acoustic frequencies of the chamber. The
+oscillation can grow to a large fraction of the mean pressure in a fraction of a second. For the hardware:
+
+- **Vibration.** Kilohertz oscillations shake the motor and everything on it: guidance, electronics, the nozzle and its
+  steering. The levels can be far above the vibration specification ([Random vibration](../../verify/random-vibration/)).
+- **A rise in the mean pressure.** A large oscillation usually raises the mean pressure too (a "DC shift"). The case
+  then sees more than the stable prediction, so the margin to MEOP shrinks or disappears
+  ([Propellant](../propellant/#building-meop)).
+- **Heat and erosion.** The oscillating flow thins the boundary layer, so the insulation and the nozzle get more heat
+  and erode faster.
+- **Thrust oscillation,** which goes into the vehicle structure.
+
+Instability is also hard to find late. It can appear in some firings and not others, at one temperature and not
+another, or only after the motor is disturbed. Thus it is part of the grain design, from the start.
+
+## The intuition: feedback howl
+
+<Analogy title="A microphone too close to its loudspeaker">
+  Put a microphone near the loudspeaker that it feeds, and a loud howl starts. The room picks the note: it is one of
+  the frequencies at which the room resonates. The amplifier supplies the energy. The howl grows until the amplifier
+  can give no more. To stop it, you can move the microphone, turn the gain down at that frequency, or put soft material
+  in the room to absorb the sound. In a motor, the chamber is the room, the burning surface is the microphone and the
+  amplifier, and the particles in the gas are the soft material.
+</Analogy>
+
+## The modes of a motor
+
+The chamber is a cavity full of hot gas with a speed of sound $a$ of about 1000 to 1200 m/s. It has two families of
+modes:
+
+$$
+f_{nL} = \frac{n\,a}{2L}
+\qquad\qquad
+f_T = \frac{\alpha_{mn}\,a}{\pi D}
+$$
+
+- **Longitudinal modes** run along the chamber, of acoustic length $L$. For long motors they are tens to hundreds of
+  hertz, and they hardly change during the burn.
+- **Transverse modes** run across the port, of diameter $D$: tangential modes around it and radial modes in and out.
+  $\alpha_{mn}$ is a root of the derivative of a Bessel function: 1.84 for the first tangential mode (1T), 3.05 for 2T
+  and 3.83 for the first radial mode (1R). For a small port they are kilohertz, and **they fall as the port burns out.**
+
+<AcousticModes />
+
+Thus a mode can sweep into the range where the propellant responds most, part of the way through the burn. Many
+instabilities start at a definite time in the burn, for this reason.
+
+## What drives the oscillation, and what damps it
+
+**Rayleigh's criterion:** a heat release that rises and falls in phase with the pressure adds energy to the wave. In a
+motor, two couplings do this:
+
+- **Pressure coupling.** The burn rate responds to the pressure oscillation. The response function
+  $R_p = (r'/\bar r)/(p'/\bar p)$ depends on the frequency, with a peak that is usually in the hundreds of hertz to
+  kilohertz range. It is measured in a T-burner.
+- **Velocity coupling.** The oscillating gas flow along the burning surface changes the burn rate, as erosive burning
+  does.
+
+The losses work against them:
+
+- **The nozzle** carries acoustic energy out with the flow. This is the main loss for longitudinal modes.
+- **Particles** in the gas lag the gas motion, and the drag and the heat exchange take energy from the wave.
+- **Flow turning:** the gas from the burning surface leaves it at right angles and must be accelerated by the wave.
+- **The structure and the viscous boundary layers** take a little more.
+
+The linear growth rate of a mode is the sum: $\alpha = \alpha_{\text{driving}} - \alpha_{\text{losses}}$. If it is
+positive, the oscillation grows exponentially until non-linear effects limit it, at a **limit cycle** that can be a
+large fraction of the mean pressure. A motor that is stable to small waves can still be **triggered** by a large
+disturbance, for example a piece of insulation that goes out through the nozzle. This is why stable designs are also
+tested with deliberate pulses.
+
+## Why double-base motors are prone to it
+
+Most composite propellants have aluminium. It burns to droplets of aluminium oxide, a mass of particles in the gas
+comparable to a large fraction of the gas itself. Particles damp a wave best when their size suits its frequency:
+
+$$
+d_\text{best} = \sqrt{\frac{18\,\mu}{\rho_p\,\omega}}
+$$
+
+where $\mu$ is the gas viscosity, $\rho_p$ the particle density and $\omega = 2\pi f$. Small particles damp high
+frequencies, and large ones low frequencies. The oxide in a metallised propellant has a wide range of sizes, so it damps
+most of the kilohertz transverse modes.
+
+**Double-base, CMDB without aluminium and other smokeless propellants have almost no particles.** The same transverse
+modes then have little damping, and small tactical motors with these propellants have a long history of
+high-frequency instability. The low smoke that these propellants are chosen for is the reason
+([Propellant](../propellant/#double-base-propellants-forms-and-properties)).
+
+## Vortex-driven oscillations in large motors
+
+Large motors have a different problem. Gas flowing past a step, an inhibitor ring or a slot sheds vortices. When the
+shedding frequency matches a longitudinal mode, the vortices hitting the nozzle drive it. The Space Shuttle boosters
+and the Ariane 5 boosters both had low-frequency pressure and thrust oscillations of this kind. Aluminium does not cure
+it, because the frequencies are low. The cures are in the geometry: the size, shape and stiffness of the inhibitors,
+and the shape of the steps in the port.
+
+## Mitigation
+
+- **Break the symmetry of the port.** A tangential mode needs a round, symmetrical port. Radial slots, star points or
+  slots at **uneven angles and of uneven length**, and slots at different positions along the grain give it no clean
+  shape to settle in. They also add losses where the gas turns, and they move the frequencies. Do it in the part of the
+  burn where the port is the size that puts a mode in the response band.
+- **Spend less time in the band.** Shape the burn so that the port passes quickly through the dangerous sizes.
+- **Rods or baffles in the port** (often called resonance rods) break up the transverse waves mechanically.
+- **Particles.** The propellant designer can change the response of the propellant or add a small amount of particles
+  for damping, at a cost in smoke and performance. Formulation is outside the scope of this site.
+- **The nozzle and the cavities.** The ratio of the port to the throat area, and a submerged nozzle and its cavity,
+  change the damping of the longitudinal modes.
+- **The operating point.** The response of a propellant changes with the pressure and the temperature. A change of
+  MEOP or of the firing temperature range can move a motor into or out of trouble.
+
+Each geometric fix also changes the ballistics and the strain in the grain. Slot tips and star points concentrate
+strain ([Propellant grain](../propellant-grain/#ignition-the-case-stretches-the-bore-stretches-more)): repeat the
+burn-back and the structural screen after every change.
+
+## How a design is shown to be stable
+
+- **Propellant response:** T-burner tests give the response function at the operating pressures.
+- **Analysis:** for each mode and each time in the burn, an acoustic energy balance adds the driving and the losses.
+  Standard stability prediction programs do this. A positive growth rate is a finding to fix, not to argue with.
+- **Firings:** sub-scale and full-scale firings with flush-mounted, high-frequency pressure transducers sampled at tens
+  of kilohertz. The grease-filled ports used for performance cannot follow kilohertz oscillations
+  ([Static test firing](../../verify/static-firing/#what-a-firing-measures)).
+- **Pulsed firings:** deliberate disturbances during the burn show whether an oscillation dies out. Fire at the hot and
+  the cold temperature limits too.
+
+## Calculator
+
+<InstabilityCalc />
+
+The **Mode map** tab draws the longitudinal and transverse modes across the burn against the response band of the
+propellant, and gives the part of the burn in which each mode is inside it. The **Particle damping** tab gives the
+particle size that damps a frequency best, and how the damping falls away from it.
+
+## Worked example: a smokeless version of the 300 mm motor
+
+Take the 300 mm motor with a smokeless propellant in a tube grain: a 100 mm port that burns out to 300 mm, a chamber
+of about 1.2 m acoustic length, and a speed of sound of 1100 m/s. Assume that T-burner tests show the strongest
+response between 1.5 and 3.5 kHz (an illustrative band). Push **Load worked example**.
+
+1. **Longitudinal modes.** $1100 / (2 \times 1.2) = 458$ Hz for 1L, then 917 Hz and 1375 Hz. All are below the band.
+2. **First tangential.** $1.84 \times 1100 / (\pi \times 0.100) = 6.45$ kHz at ignition, falling to 2.15 kHz at
+   burnout. It enters the band at 3.5 kHz when the port is 184 mm, which is **42% of the way through the web**, and it
+   stays in the band until burnout.
+3. **Higher transverse modes.** 2T falls from 10.7 to 3.56 kHz and just misses the band. 1R (13.4 to 4.47 kHz) and 3T
+   stay above it.
+4. **Particle damping.** The 1T mode in the band would be damped best by particles of 5.0 µm (at 3.5 kHz) to 6.3 µm
+   (at 2.15 kHz), and the 1L mode by 14 µm particles. A smokeless propellant has almost none. The composite propellant
+   of the other pages, with its oxide particles, would damp these modes strongly.
+5. **What to do.** In a tube grain the port is round for the whole burn, so the 1T mode has a clean shape when it
+   enters the band. The options: keep the port non-round in the second half of the burn (slots or fins at uneven angles
+   in part of the grain), add rods or baffles in the port, or ask the propellant designer to move the response band or
+   add damping. Then show with a stability analysis and pulsed firings that the damping wins.
+
+<Aside type="tip" title="What the example shows">
+  The danger is not at ignition, where the transverse modes are far above the band, but in the second half of the
+  burn, when the port has grown. A screen of the modes against the response band, across the whole burn, finds this in
+  minutes. The full stability analysis and the firings then decide it.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A screen, not a stability prediction">
+  The calculator finds the modes that can be driven. It does not calculate the driving or the losses, so it cannot say
+  whether a mode will grow.
+</Aside>
+
+- **Real geometry.** Ports that are not round, a chamber with domes, slots, a submerged nozzle and the mean flow all
+  shift the frequencies. Use an acoustic finite-element model of the cavity at several times in the burn.
+- **The energy balance.** Pressure and velocity coupling, nozzle damping, particle damping and flow turning need the
+  response data of the propellant and a stability analysis.
+- **Non-linear behaviour.** The limit cycle, the DC shift and triggering need non-linear analysis and pulsed firings.
+- **Particle damping** is for one particle size in this tool. Real oxide has a distribution of sizes, which changes
+  along the motor.
+- **Vortex shedding** needs a flow analysis of the port and of the inhibitors.
+
+## In the specifications
+
+- **A stability requirement:** the largest pressure oscillation allowed, usually as a fraction of the mean pressure,
+  with the frequency range and the instrumentation that measures it.
+- **The pulse test:** when, how large and how many, and the decay that passes.
+- **The propellant response data** to be supplied, at the pressures and temperatures of the motor.
+- **The grain features that control stability** (slot angles and sizes, star points, rods) as critical
+  characteristics on the drawing.
+
+## References and further reading
+
+- F. E. C. Culick, *Unsteady Motions in Combustion Chambers for Propulsion Systems*, AGARDograph RTO-AG-AVT-039,
+  NATO RTO (2006) (the full theory; free online).
+- L. De Luca, E. W. Price & M. Summerfield (eds.), *Nonsteady Burning and Combustion Stability of Solid Propellants*,
+  Progress in Astronautics and Aeronautics 143, AIAA (1992).
+- F. S. Blomshield, "Historical perspective of combustion instability in motors: case studies", AIAA 2001-3875 (2001).
+- S. Temkin & R. A. Dobbins, "Attenuation and dispersion of sound by particulate-relaxation processes",
+  *J. Acoust. Soc. Am.* 40 (1966) 317–324 (particle damping).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017) (combustion instability in solid
+  motors).
+
+<Aside type="note">
+  These are screening methods for early design and for learning. The stability of a real motor is shown by analysis
+  and by firings, to the requirements of your programme.
+</Aside>

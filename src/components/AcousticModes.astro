@@ -1,0 +1,94 @@
+---
+// The acoustic modes of a solid motor, schematic: the first longitudinal mode along the chamber, and the first
+// tangential, second tangential and first radial modes in the cross-section of the port, with their nodal lines; and a
+// port with uneven slots, which breaks the symmetry that a tangential mode needs. Red is pressure above the mean and
+// blue below it, half a cycle later the colours change places.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', pos = 'var(--rd-accent)', neg = 'var(--rd-blue)';
+const R = 40, cy = 172, xs = [56, 166, 276, 386];
+const node = 2.4048 / 3.8317; // the nodal circle of the 1R mode: the first zero of J0
+// four quarter sectors for the 2T mode, centred on the axes
+const sector = (cx: number, a0: number, a1: number) => {
+  const p = (a: number) => `${(cx + R * Math.cos(a)).toFixed(2)},${(cy + R * Math.sin(a)).toFixed(2)}`;
+  return `M${cx},${cy} L${p(a0)} A${R},${R} 0 0 1 ${p(a1)} Z`;
+};
+const d = Math.PI / 180;
+// a port with three uneven radial slots
+const slots = [[18, 0.95], [146, 0.75], [248, 1.05]].map(([ang, len]) => {
+  const a = ang * d, w = 0.09, r0 = 0.55 * R, r1 = len * R * 0.98;
+  const p = (r: number, s: number) => `${(xs[3] + r * Math.cos(a + s)).toFixed(2)},${(cy + r * Math.sin(a + s)).toFixed(2)}`;
+  return `M${p(r0, -w * 1.6)} L${p(r1, -w)} L${p(r1, w)} L${p(r0, w * 1.6)} Z`;
+});
+---
+
+<figure class="viz acoustic-modes">
+  <p class="viz-title">The acoustic modes of a motor</p>
+  <svg viewBox="0 0 440 258" role="img" aria-labelledby="am-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="am-desc">
+      Top: the first longitudinal mode along the chamber, with high pressure at one end, low pressure at the other, and a
+      node in the middle. Below, the cross-section of the port: the first tangential mode has one nodal diameter, high
+      pressure on one side and low on the other; the second tangential mode has two nodal diameters and four lobes; the
+      first radial mode has a nodal circle, with high pressure in the centre and low pressure at the wall. Last, a port
+      with three uneven slots: its shape has no symmetry for a tangential mode to use.
+    </desc>
+    <defs>
+      <linearGradient id="am-long" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="var(--rd-accent)" stop-opacity="0.85"></stop>
+        <stop offset="0.5" stop-color="var(--rd-accent)" stop-opacity="0"></stop>
+        <stop offset="0.5" stop-color="var(--rd-blue)" stop-opacity="0"></stop>
+        <stop offset="1" stop-color="var(--rd-blue)" stop-opacity="0.85"></stop>
+      </linearGradient>
+      <linearGradient id="am-1t" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="var(--rd-accent)" stop-opacity="0.85"></stop>
+        <stop offset="0.5" stop-color="var(--rd-accent)" stop-opacity="0"></stop>
+        <stop offset="0.5" stop-color="var(--rd-blue)" stop-opacity="0"></stop>
+        <stop offset="1" stop-color="var(--rd-blue)" stop-opacity="0.85"></stop>
+      </linearGradient>
+      <radialGradient id="am-pos-out" gradientUnits="userSpaceOnUse" cx={xs[1]} cy={cy} r={R}><stop offset="0" stop-color="var(--rd-accent)" stop-opacity="0"></stop><stop offset="1" stop-color="var(--rd-accent)" stop-opacity="0.85"></stop></radialGradient>
+      <radialGradient id="am-neg-out" gradientUnits="userSpaceOnUse" cx={xs[1]} cy={cy} r={R}><stop offset="0" stop-color="var(--rd-blue)" stop-opacity="0"></stop><stop offset="1" stop-color="var(--rd-blue)" stop-opacity="0.85"></stop></radialGradient>
+      <radialGradient id="am-1r">
+        <stop offset="0" stop-color="var(--rd-accent)" stop-opacity="0.85"></stop>
+        <stop offset={node} stop-color="var(--rd-accent)" stop-opacity="0"></stop>
+        <stop offset={node} stop-color="var(--rd-blue)" stop-opacity="0"></stop>
+        <stop offset="1" stop-color="var(--rd-blue)" stop-opacity="0.45"></stop>
+      </radialGradient>
+    </defs>
+    <!-- 1L along the chamber -->
+    <text x="220" y="16" font-size="11" font-weight="700" fill={ink} text-anchor="middle">1L: along the chamber, f = a / 2L</text>
+    <rect x="30" y="30" width="380" height="56" rx="26" fill="url(#am-long)" stroke={muted}></rect>
+    <line x1="220" x2="220" y1="26" y2="90" stroke={ink} stroke-dasharray="4 3"></line>
+    <text x="220" y="102" font-size="10" fill={muted} text-anchor="middle">node</text>
+    <text x="46" y="62" font-size="10.5" fill={ink}>head end</text>
+    <text x="394" y="62" font-size="10.5" fill={ink} text-anchor="end">nozzle end</text>
+    <!-- transverse modes -->
+    <circle cx={xs[0]} cy={cy} r={R} fill="url(#am-1t)" stroke={muted}></circle>
+    <line x1={xs[0]} x2={xs[0]} y1={cy - R - 4} y2={cy + R + 4} stroke={ink} stroke-dasharray="4 3"></line>
+    {[[-45, 45, 'pos'], [45, 135, 'neg'], [135, 225, 'pos'], [225, 315, 'neg']].map(([a0, a1, s]) => (
+      <path d={sector(xs[1], (a0 as number) * d, (a1 as number) * d)} fill={`url(#am-${s}-out)`}></path>
+    ))}
+    <circle cx={xs[1]} cy={cy} r={R} fill="none" stroke={muted}></circle>
+    {[45, 135].map((a) => (
+      <line x1={xs[1] - (R + 4) * Math.cos(a * d)} x2={xs[1] + (R + 4) * Math.cos(a * d)} y1={cy - (R + 4) * Math.sin(a * d)} y2={cy + (R + 4) * Math.sin(a * d)} stroke={ink} stroke-dasharray="4 3"></line>
+    ))}
+    <circle cx={xs[2]} cy={cy} r={R} fill="url(#am-1r)" stroke={muted}></circle>
+    <circle cx={xs[2]} cy={cy} r={R * node} fill="none" stroke={ink} stroke-dasharray="4 3"></circle>
+    <circle cx={xs[3]} cy={cy} r={R * 0.55} fill="var(--rd-panel2)" stroke={muted}></circle>
+    {slots.map((s) => <path d={s} fill="var(--rd-panel2)" stroke={muted}></path>)}
+    <circle cx={xs[3]} cy={cy} r={R * 0.55 - 1} fill="var(--rd-panel2)"></circle>
+    <circle cx={xs[3]} cy={cy} r={R * 1.12} fill="none" stroke={muted} stroke-dasharray="2 3"></circle>
+    {[
+      ['1T', 'f = 1.84 a / πD'], ['2T', 'f = 3.05 a / πD'], ['1R', 'f = 3.83 a / πD'], ['uneven slots', 'no clean 1T'],
+    ].map(([t, s], k) => (
+      <g>
+        <text x={xs[k]} y={cy + R + 22} font-size="11" font-weight="700" fill={ink} text-anchor="middle">{t}</text>
+        <text x={xs[k]} y={cy + R + 37} font-size="10" fill={muted} text-anchor="middle">{s}</text>
+      </g>
+    ))}
+    <text x="220" y="124" font-size="10.5" fill={ink} text-anchor="middle">across the port: red above the mean, blue below, dashed = node</text>
+  </svg>
+  <figcaption>
+    Each mode is a standing wave: half a cycle later, red and blue change places. The longitudinal modes of a long
+    chamber are hundreds of hertz; the transverse modes of a port are kilohertz, and they fall as the port burns out.
+    A tangential mode needs a round, symmetrical port. Slots at uneven angles and of uneven length give it no clean shape
+    to settle in, and they add losses where the gas turns.
+  </figcaption>
+</figure>
