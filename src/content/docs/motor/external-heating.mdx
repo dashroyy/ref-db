@@ -1,0 +1,206 @@
+---
+title: External heating and thermal protection
+description: How the case of a solid motor heats from the outside. Aerodynamic heating in flight (the recovery temperature and the heat transfer coefficient), how fast a bare case heats, the limits of the case and its bonds, external insulation, base and plume heating, sun and fire, with a calculator that sizes the external insulation over a flight and a worked example.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import HeatSources from '../../../components/HeatSources.astro';
+import HeatingCalc from '../../../components/HeatingCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>In supersonic flight the boundary layer heats the case toward the recovery temperature, hundreds of degrees above the air; a thin case gets there in seconds, so a composite case needs a few millimetres of external insulation.</div>
+  <div><b>Before this</b><a href="../transient-thermal/">Transient thermal</a></div>
+  <div><b>Leads to</b><a href="../composite-cases/">Composite cases</a>, whose resin sets the limit</div>
+</div>
+
+## Why this matters
+
+The [internal insulation](../insulation/) protects the case from the combustion gas. The outside of the case also
+heats. In flight, the air that the boundary layer brings to rest heats up by friction and compression. At Mach 3 and
+10 km the air is at −50 °C, but a wall that loses no heat would reach about 300 °C. The heat flux into a cooler wall is
+of the order of 100 kW/m².
+
+- **A composite case** has a resin that softens at approximately 120 to 200 °C ([Composite cases](../composite-cases/#temperature-moisture-and-the-resin)).
+  A bare case of 1.2 mm gets to that temperature in seconds.
+- **A metal case** carries the pressure while it heats, and its strength falls with its temperature.
+- **The bond lines** (of the external insulation to the case, and of the case to the internal insulation) and the
+  grain next to the wall have their own limits.
+
+Thus the outside of the case is designed with a flight: how fast, how high, for how long.
+
+## The intuition: a bicycle pump
+
+<Analogy title="The end of a bicycle pump gets hot">
+  Pump a tyre hard and the end of the pump gets warm. Squeezing air heats it. A body flying at Mach 3 squeezes and
+  shears the air next to its surface in the same way: the boundary layer brings the air to rest against the skin, and
+  its kinetic energy becomes heat. The skin cannot be colder than that air for long, unless something stops the heat
+  getting in.
+</Analogy>
+
+## The recovery temperature
+
+A wall that loses no heat reaches the **recovery temperature**:
+
+$$
+T_r = T_\infty\left(1 + r\,\frac{\gamma - 1}{2}\,M^2\right)
+$$
+
+$T_\infty$ is the temperature of the air, $M$ the Mach number, and $r$ the recovery factor: approximately
+$Pr^{1/3} = 0.89$ for a turbulent boundary layer and $Pr^{1/2} = 0.84$ for a laminar one. It is a little below the
+stagnation temperature ($r = 1$). At 10 km, where the air is at −50 °C, the recovery temperature is 109 °C at Mach 2,
+308 °C at Mach 3, 587 °C at Mach 4 and 945 °C at Mach 5. It rises with the square of the speed.
+
+<HeatSources />
+
+## How much heat flows in
+
+The heat flux into a wall at $T_w$ is $q = h\,(T_r - T_w)$. On the body of a vehicle, the flat-plate correlations give
+$h$ at a distance $x$ from the nose. **Eckert's reference temperature** makes them work at high speed: evaluate the
+density and viscosity of the air at
+
+$$
+T^* = T_\infty + 0.5\,(T_w - T_\infty) + 0.22\,(T_r - T_\infty)
+$$
+
+and use $St = 0.0296\,Re_x^{*\,-0.2}\,Pr^{-2/3}$ for a turbulent boundary layer (or $0.332\,Re_x^{*\,-0.5}\,Pr^{-2/3}$
+for a laminar one), with $h = St\,\rho^* u\,c_p$.
+
+- **Turbulent heating is several times laminar heating.** Boundary layers on vehicle bodies are usually turbulent
+  away from the nose. Assume turbulent unless you have evidence.
+- **$h$ falls slowly along the body,** as $x^{-0.2}$. The front of the motor heats a little more than the back.
+- **Pressure matters.** At the same Mach number, $h$ is lower at altitude, where the air is thin.
+- **Some places heat far more:** the nose and the leading edges of fins (stagnation-point heating), and places where a
+  shock hits the body. These need their own analysis.
+
+## How fast the case heats
+
+For a thin wall, the time constant is $\tau = \rho c_p t / h$ ([Transient thermal](../transient-thermal/#lumped-capacitance-one-temperature)).
+With $h$ = 469 W/m²K (Mach 2.5 at 6 km, 1.5 m from the nose):
+
+- **The 1.38 mm D6AC case:** $\tau = 7850 \times 480 \times 0.00138 / 469 = 11$ s. Its conductivity is high, so it
+  heats almost uniformly.
+- **The 1.20 mm carbon/epoxy case:** $\tau = 1570 \times 1000 \times 0.0012 / 469 = 4$ s. The conductivity through its
+  thickness is low (a Biot number of 0.7), so its outer surface heats faster still.
+
+A flight lasts tens of seconds, so both cases get close to the recovery temperature. The steel can take it, with the
+right allowables. The resin cannot.
+
+## Limits of the case and its bonds
+
+- **Composite resin:** the case allowables fall well before the glass transition, and absorbed moisture lowers it.
+  Use the hot and wet allowables of your laminate, below its glass transition with a margin.
+- **The bond of the external insulation** is at the hot face of the case, so its adhesive needs the same limit, or a
+  higher one.
+- **Metal cases:** use the allowables at the temperature of the case while it carries pressure
+  ([Allowables](../../materials/allowables/)). The heat also makes the case grow, which matters for the joints.
+- **The grain** next to the case wall has its own temperature limits; most of the heat is taken by the case and the
+  internal insulation first.
+
+## External thermal protection
+
+A few millimetres of a material with a low conductivity and a low density take most of the temperature drop.
+
+| Material class | Examples | Gives | Watch for |
+| --- | --- | --- | --- |
+| Cork composites | Cork phenolic sheet, cork in silicone | Low conductivity and density; easy to bond and form; chars and swells rather than spalling | Moisture; bond to the case; a char layer at high heat flux |
+| Filled silicones | Silica-filled silicone sheet or coating | Flexible over a wide temperature range; makes a silica char | Higher density; needs special primers to bond |
+| Low-density ablators | Sprayed or gunned epoxy-novolac or silicone systems | Fills complex shapes; good at high heat flux | Process control; thickness inspection |
+| Intumescent coatings | Paints that swell when heated | Thin; mostly for fire | Little help at the heat fluxes of fast flight |
+
+- **Size it for the whole flight**, from the hottest starting temperature, and to the case limit at its peak, which
+  can come after the motor burns out.
+- **Include the bond:** surface preparation, primer, adhesive and cure. A disbond lets the hot surface reach the case.
+- **Rain and particles** erode the surface in flight, and handling damages it on the ground. A finish coat protects
+  it.
+- **The mass is small:** a few millimetres of cork is under 1 kg/m², much less than what a composite case saves.
+
+## Other external heat
+
+- **The base and the plume.** At the aft end, the hot particles in the plume radiate onto the nozzle, the skirt and
+  any steering actuators, and hot gas can flow back into the base region, more so at altitude where the plume
+  expands. Aft skirts and actuators often carry their own insulation or shields.
+- **On the ground.** A motor in the sun runs much hotter than the air: MIL-HDBK-310 gives a hot-dry design day with
+  air at about 49 °C and sunshine of about 1120 W/m². A light-coloured finish with a low solar absorptance helps. The
+  grain temperature follows the daily cycle ([Transient thermal](../transient-thermal/#1-a-thin-case-follows-the-weather)),
+  and it sets the hot-day MEOP.
+- **In a fire.** External insulation slows the heating of the case in a fuel fire, which changes the response of the
+  motor to fast cook-off ([Designing the case to fail gently](../hardware/#designing-the-case-to-fail-gently)).
+
+## Calculator
+
+<HeatingCalc />
+
+The **Aeroheating** tab gives the recovery temperature, the heat transfer coefficient and the heat flux at one flight
+condition, and the heat flux against the Mach number at four altitudes. The **Case and insulation** tab heats the case
+through up to three flight phases, with or without external insulation, and finds the insulation thickness that keeps
+the case at its limit.
+
+## Worked example: the 300 mm motor as a booster
+
+The 300 mm motor is the booster of a tactical vehicle. It burns for 9 s, at an average of Mach 2.5 at 6 km, and the
+vehicle then coasts for 20 s at Mach 3 and 12 km. The motor case starts 1.5 m behind the nose, and the boundary layer
+is turbulent. The case starts at 20 °C, and its inner face is taken as adiabatic. Push **Load worked example**.
+
+1. **Heating.** In the burn, $h$ = 469 W/m²K and $T_r$ = 254 °C: 110 kW/m² into a 20 °C wall. In the coast, the air is
+   thinner: 252 W/m²K, but $T_r$ = 291 °C.
+2. **The bare D6AC case** (1.377 mm) is at 150 °C at burnout and 238 °C at the end of the coast. That is within its
+   service limit, but the case carries pressure at up to 150 °C: use its allowables at that temperature.
+3. **The bare carbon/epoxy case** (1.196 mm) passes its 120 °C limit after **1.7 s** and reaches 285 °C. It cannot fly
+   without protection.
+4. **Cork phenolic:** 1.62 mm keeps the case at 120 °C. It is 0.76 kg/m², or 0.72 kg on the 300 × 1000 mm cylinder.
+   From a hot-day start at 50 °C it needs 1.96 mm. A cork/silicone ablator does it with 1.65 mm and 0.43 kg/m².
+5. **With 2 mm of cork phenolic,** the case is at 35 °C at burnout, and reaches 98 °C at the end of the coast. The cork
+   surface gets to 258 °C.
+
+<Aside type="tip" title="What the example shows">
+  The wound case saves 9.8 kg on this motor ([Composite cases](../composite-cases/#worked-example)). A bare wound
+  case would not survive its first two seconds of flight. Less than 1 kg of cork keeps it below its limit for the whole
+  flight. The protection is part of the composite case, not an extra: size them together. The case peaks at the end
+  of the coast, after the motor has burned out, so the flight after burnout belongs in the analysis too.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="Flat-plate heating, conduction only">
+  The calculator gives a first size. The design needs the heating along the real trajectory and shape, and the
+  thermal response of the insulation as it chars.
+</Aside>
+
+- **The real trajectory and shape:** heating changes continuously with the Mach number and the altitude. The nose,
+  the fin leading edges, protuberances and shock interactions heat far more than the flat-plate value.
+- **Transition** from laminar to turbulent flow is not predicted. The tool uses what you choose.
+- **Charring and ablation.** At high heat flux the insulation chars, gives off gas and recedes. The conduction model
+  includes none of this.
+- **Real gas and radiation.** Air is taken as a perfect gas. Radiation from the hot surface, which cools it, and
+  radiation from the plume, which heats the aft end, are not included.
+- **The inner face** is adiabatic. Real cases lose a little heat inward, and gain heat from the combustion gas late in
+  the burn, through the internal insulation.
+
+## On the drawing
+
+- **The external insulation:** material specification, thickness and tolerance, and the zones where it goes (the
+  cylinder, the domes, the skirts, around the joints).
+- **The bond:** surface preparation of the case, primer, adhesive and cure, and the inspection of the bond.
+- **The finish:** a protective coat and its colour or solar absorptance.
+- **Repair:** the damage that is acceptable, and the repair method.
+- **The temperature limits** of the case and the adhesive, in the thermal requirements of the motor.
+
+## References and further reading
+
+- E. R. G. Eckert, "Engineering relations for friction and heat transfer to surfaces in high velocity flow",
+  *Journal of the Aeronautical Sciences* 22 (1955) 585–587 (the reference temperature method).
+- J. D. Anderson, *Hypersonic and High-Temperature Gas Dynamics*, 2nd ed., AIAA (2006).
+- J. A. Fay & F. R. Riddell, "Theory of stagnation point heat transfer in dissociated air", *Journal of the
+  Aeronautical Sciences* 25 (1958) 73–85 (the nose).
+- *U.S. Standard Atmosphere, 1976*, NOAA, NASA and USAF.
+- MIL-HDBK-310, *Global Climatic Data for Developing Military Products*.
+- F. P. Incropera, D. P. DeWitt, T. L. Bergman & A. S. Lavine, *Fundamentals of Heat and Mass Transfer*, 7th ed.,
+  Wiley (2011).
+
+<Aside type="note">
+  These are screening values for early design. The thermal requirements of your programme and the qualification of
+  the protection by test control the real design.
+</Aside>

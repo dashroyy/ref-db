@@ -1,0 +1,271 @@
+---
+// External heating of a motor case: aerodynamic heating at a flight condition, and the case temperature under external
+// insulation over a flight, with the insulation thickness that keeps the case below its limit. Calculations live in
+// src/lib/aeroheating.ts and src/lib/thermal.ts (unit-tested); this file is UI only.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS as D } from '../lib/materials';
+
+// Case walls: metals and the wound case, with the through-thickness conductivity where the library gives one.
+const CASES = MATERIALS.filter((m) => (['steel', 'ss', 'ti', 'al'].includes(m.family) || m.key === D.cfrpCase) && m.k && m.rho && m.cp)
+  .map((m) => ({ key: m.key, name: m.name, family: m.family, k: m.kz ?? m.k!, rho: m.rho!, cp: m.cp!, maxT: m.maxT ?? 120 }));
+// External insulation: the library's materials, with an illustrative specific heat where the library has none.
+const TPS = ([['cork-phenolic-norcoat-type', 1700], ['sla-561v-cork-silicone', 1200], ['silicone-insulation-silica-filled', 0]] as const)
+  .map(([key, cpIll]) => { const m = MATERIALS.find((x) => x.key === key); return m && m.k && m.rho ? { key, name: m.name, k: m.kz ?? m.k, rho: m.rho, cp: m.cp ?? cpIll, cpIll: m.cp === undefined, maxT: m.maxT ?? 300 } : null; })
+  .filter((x): x is NonNullable<typeof x> => x !== null);
+---
+
+<div class="calc htcalc" data-htcalc>
+  <div class="calc-head">
+    <span>External heating: aeroheating and case insulation</span>
+    <span class="head-btns">
+      <span>flat plate · reference temperature</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="aero" aria-selected="true">Aeroheating</button>
+    <button type="button" role="tab" class="chip" data-tab="case" aria-selected="false">Case and insulation</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Body</legend>
+        <div class="row2">
+          <label>Distance from the nose (m)<input name="x" type="number" min="0.01" step="any" value="1.5" /></label>
+          <label>Boundary layer
+            <select name="bl"><option value="t">Turbulent</option><option value="l">Laminar</option></select>
+          </label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="aero">
+        <legend>Flight condition</legend>
+        <div class="row2">
+          <label>Mach number<input name="M" type="number" min="0" max="8" step="any" value="3" /></label>
+          <label>Altitude (km)<input name="hk" type="number" min="0" max="47" step="any" value="10" /></label>
+          <label>Wall temperature (°C)<input name="tw" type="number" step="any" value="20" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="case" hidden>
+        <legend>Flight</legend>
+        <div class="ht-phases">
+          <span></span><span>Time (s)</span><span>Mach</span><span>Altitude (km)</span>
+          {[1, 2, 3].map((k) => (
+            <>
+              <span>Phase {k}</span>
+              <input name={`d${k}`} type="number" min="0" step="any" value={k === 1 ? '9' : k === 2 ? '20' : '0'} aria-label={`Phase ${k} time`} />
+              <input name={`m${k}`} type="number" min="0" max="8" step="any" value={k === 1 ? '2.5' : k === 2 ? '3' : '0'} aria-label={`Phase ${k} Mach number`} />
+              <input name={`a${k}`} type="number" min="0" max="47" step="any" value={k === 1 ? '6' : k === 2 ? '12' : '0'} aria-label={`Phase ${k} altitude`} />
+            </>
+          ))}
+        </div>
+        <p class="hint">Each phase uses one Mach number and altitude: take a representative value, or split the flight into more steps.</p>
+      </fieldset>
+      <fieldset data-panel="case" hidden>
+        <legend>Case and insulation</legend>
+        <label>Case material<MaterialSelect name="cm" list={CASES} selected={D.cfrpCase} /></label>
+        <div class="row2">
+          <label>Case wall (mm)<input name="cw" type="number" min="0.1" step="any" value="1.196" /></label>
+          <label>Case limit (°C)<input name="lim" type="number" step="any" value="120" /></label>
+          <label>Start temperature (°C)<input name="t0" type="number" step="any" value="20" /></label>
+        </div>
+        <label>External insulation
+          <select name="tm"><option value="">None: bare case</option>{TPS.map((t) => <option value={t.key}>{t.name}</option>)}</select>
+        </label>
+        <label>Insulation thickness (mm)<input name="tt" type="number" min="0" step="any" value="0" /></label>
+        <p class="hint" data-matinfo></p>
+      </fieldset>
+    </form>
+
+    <div class="ht-out">
+      <div data-out="aero">
+        <dl class="readouts">
+          <div class="readout primary"><dt>Recovery temperature</dt><dd data-r="tr">—</dd></div>
+          <div class="readout"><dt>Heat transfer coefficient</dt><dd data-r="h">—</dd></div>
+          <div class="readout"><dt>Heat flux to a wall at the temperature above</dt><dd data-r="q">—</dd></div>
+          <div class="readout"><dt>Free stream</dt><dd data-r="fs">—</dd></div>
+        </dl>
+        <figure class="ht-fig">
+          <svg data-qchart role="img" aria-label="Heat flux against Mach number at four altitudes"></svg>
+          <figcaption>Heat flux to a wall at the temperature above, against the Mach number, at this distance from the nose, for four altitudes. The dot is the condition above. The flux rises roughly with the cube of the speed and falls with altitude.</figcaption>
+        </figure>
+      </div>
+      <div data-out="case" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-peak><dt>Peak case temperature</dt><dd data-r="peak">—</dd></div>
+          <div class="readout"><dt>Outer surface</dt><dd data-r="surf">—</dd></div>
+          <div class="readout"><dt>Heating in each phase</dt><dd data-r="ph">—</dd></div>
+          <div class="readout"><dt>Insulation that keeps the case at its limit</dt><dd data-r="need">—</dd></div>
+        </dl>
+        <figure class="ht-fig">
+          <svg data-tchart role="img" aria-label="Temperatures of the outer surface and the case against time over the flight"></svg>
+          <figcaption>The outer surface (dashed), the hot face of the case (red) and its inner face (blue) over the flight, with the case limit. The inner face is taken as adiabatic: the internal insulation and the grain take little heat in this time.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Standard atmosphere (1976) to 47 km; flat-plate heating by Eckert's reference temperature, with a cold wall for h
+    (which slightly overstates it); recovery factor ∛Pr turbulent, √Pr laminar; air as a perfect gas. Conduction in one
+    dimension through the insulation and the case, without charring, ablation or the heat of pyrolysis. No nose,
+    fin or shock-interaction heating, no radiation from the plume, and no transition prediction. Screening only.
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify({ CASES, TPS })}></script>
+</div>
+
+<style is:global>
+  .ht-out { min-width: 0; }
+  .ht-out > div > * { min-width: 0; }
+  .ht-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .ht-phases { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 0.4rem 0.5rem; align-items: center; font-size: 0.78rem; color: var(--rd-muted); }
+  .ht-phases input { min-width: 0; width: 100%; }
+</style>
+
+<script>
+  import { aeroHeating, caseHeating, tpsNeeded } from '../lib/aeroheating';
+
+  const f = (v: number, d = 0) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const EXAMPLE: Record<string, string> = { x: '1.5', bl: 't', M: '3', hk: '10', tw: '20', d1: '9', m1: '2.5', a1: '6', d2: '20', m2: '3', a2: '12', d3: '0', m3: '0', a3: '0', cw: '1.196', lim: '120', t0: '20', tm: 'cork-phenolic-norcoat-type', tt: '2' };
+
+  document.querySelectorAll<HTMLElement>('[data-htcalc]').forEach((root) => {
+    const { CASES, TPS } = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => +field(n).value;
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'aero';
+    EXAMPLE.cm = CASES.find((c: any) => c.name.startsWith('Carbon/epoxy'))?.key ?? CASES[0].key;
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const caseMat = () => CASES.find((c: any) => c.key === field('cm').value) ?? CASES[0];
+    const tpsMat = () => TPS.find((t: any) => t.key === field('tm').value) ?? null;
+
+    function run() {
+      const notes: [string, string][] = [];
+      if (!(num('x') > 0)) { $('[data-notes]').innerHTML = '<li class="bad">Enter the distance from the nose.</li>'; return; }
+      if (mode === 'aero') runAero(notes); else runCase(notes);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function runAero(notes: [string, string][]) {
+      const lam = field('bl').value === 'l', Tw = num('tw') + 273.15;
+      const e = aeroHeating({ mach: num('M'), hKm: num('hk'), x: num('x'), Tw, laminar: lam });
+      r('tr').innerHTML = `${f(e.Tr - 273.15, 0)} °C <small>the temperature of an insulated wall; stagnation ${f(e.T0 - 273.15, 0)} °C, recovery factor ${f(e.r, 3)}</small>`;
+      r('h').innerHTML = `${f(e.h, 0)} W/m²K <small>${lam ? 'laminar' : 'turbulent'}, Re<sub>x</sub> = ${e.Re.toExponential(2)} at ${f(num('x'), 2)} m; reference temperature ${f(e.Ts - 273.15, 0)} °C</small>`;
+      r('q').innerHTML = `${f(e.q / 1000, 1)} kW/m² <small>h·(T<sub>r</sub> − T<sub>w</sub>) at a ${f(num('tw'), 0)} °C wall</small>`;
+      r('fs').innerHTML = `${f(e.u, 0)} m/s <small>air at ${f(e.T - 273.15, 0)} °C, ${f(e.p / 1000, 1)} kPa, ${f(e.rho, 3)} kg/m³</small>`;
+      drawQ(lam, Tw, num('M'), num('hk'), e.q);
+      if (lam && e.Re > 1e6) notes.push(['warn', `Re<sub>x</sub> = ${e.Re.toExponential(1)}: a boundary layer this far from the nose is usually turbulent, and turbulent heating is several times higher. Use turbulent unless you have evidence.`]);
+      if (e.Tr - 273.15 > 120) notes.push(['warn', `The recovery temperature (${f(e.Tr - 273.15, 0)} °C) is above the limit of a composite case resin. A thin case approaches it within seconds: check the case on the second tab.`]);
+      notes.push(['', 'The nose, fin leading edges and places where shocks hit the body heat far more than this flat-plate value. The aft end also gets radiation from the plume. Treat those separately.']);
+    }
+
+    function runCase(notes: [string, string][]) {
+      const cm = caseMat(), tm = tpsMat(), lam = field('bl').value === 'l';
+      const phases = [1, 2, 3].map((k) => ({ duration: num(`d${k}`), mach: num(`m${k}`), hKm: num(`a${k}`) })).filter((p) => p.duration > 0);
+      $('[data-matinfo]').innerHTML = `Case: k ${f(cm.k, 2)} W/m·K through the wall, ρ ${f(cm.rho, 0)} kg/m³, c<sub>p</sub> ${f(cm.cp, 0)} J/kg·K, library service limit ${f(cm.maxT, 0)} °C.${tm ? ` Insulation: k ${f(tm.k, 2)}, ρ ${f(tm.rho, 0)}, c<sub>p</sub> ${f(tm.cp, 0)}${tm.cpIll ? ' (illustrative)' : ''}, service limit ${f(tm.maxT, 0)} °C.` : ''}`;
+      if (!phases.length || !(num('cw') > 0)) {
+        root.querySelectorAll<HTMLElement>('[data-out="case"] [data-r]').forEach((el) => (el.textContent = '—'));
+        root.querySelector<SVGSVGElement>('[data-tchart]')!.innerHTML = '';
+        notes.push(['bad', 'Enter at least one phase with a time, and the case wall.']);
+        return;
+      }
+      const wall = { mat: { k: cm.k, rho: cm.rho, cp: cm.cp }, thickness: num('cw') / 1000 };
+      const tps = tm && num('tt') > 0 ? { mat: { k: tm.k, rho: tm.rho, cp: tm.cp }, thickness: num('tt') / 1000 } : null;
+      const lim = num('lim'), t0 = num('t0');
+      const res = caseHeating({ phases, x: num('x'), laminar: lam, tps, wall, t0, limit: lim });
+      r('peak').innerHTML = `${f(res.maxCase, 0)} °C <small>at ${f(res.tMax, 1)} s${res.tCross !== null ? `; it passes the ${f(lim, 0)} °C limit at ${f(res.tCross, 1)} s` : `; limit ${f(lim, 0)} °C`}</small>`;
+      $('[data-peak]').className = `readout primary ${res.maxCase > lim ? 'bad' : res.maxCase > lim - 15 ? 'warn' : 'ok'}`;
+      r('surf').innerHTML = `${f(res.maxSurface, 0)} °C <small>${tps ? `insulation surface; its service limit is ${f(tm!.maxT, 0)} °C` : 'the bare case is the surface'}</small>`;
+      r('ph').innerHTML = res.phases.map((p, k) => `${k + 1}: h ${f(p.h, 0)} W/m²K, T<sub>r</sub> ${f(p.tEnv, 0)} °C`).join('<br>');
+      const needMat = tm ?? TPS[0];
+      const need = tpsNeeded({ phases, x: num('x'), laminar: lam, wall, t0, tpsMat: { k: needMat.k, rho: needMat.rho, cp: needMat.cp }, limit: lim });
+      r('need').innerHTML = need === null
+        ? `more than 30 mm <small>of ${needMat.name}</small>`
+        : need === 0 ? `none <small>the bare case stays below ${f(lim, 0)} °C</small>`
+        : `${f(need * 1000, 2)} mm <small>of ${needMat.name}: ${f(need * needMat.rho, 2)} kg/m², ${f(need * needMat.rho * Math.PI * 0.3 * 1.0, 2)} kg on a 300 × 1000 mm cylinder</small>`;
+      drawT(res, lim, !!tps);
+      if (res.maxCase > lim) notes.push(['bad', `The case passes its limit${res.tCross !== null ? ` after ${f(res.tCross, 1)} s` : ''}. ${need ? `About ${f(need * 1000, 1)} mm of ${needMat.name} keeps it there; add margin for the bond, thickness tolerance and the hot-day start.` : 'Add external insulation.'}`]);
+      if (tm && res.maxSurface > tm.maxT) notes.push(['warn', 'The insulation surface goes above its service limit: it will char or ablate, which this conduction model does not include.']);
+      notes.push(['', 'The hot face of the case is also the bond line of the insulation, so the adhesive needs the same limit. A metal case is strong when cold but loses strength as it heats: use its allowables at the temperature it reaches while it carries pressure (<a href="../../materials/allowables/">Allowables</a>).']);
+    }
+
+    function drawQ(lam: boolean, Tw: number, M0: number, h0: number, q0: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-qchart]')!;
+      const W = width(svg), H = 230, L = 48, R = 12, T = 16, B = 36;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const alts = [0, 5, 10, 20], ms = Array.from({ length: 91 }, (_, k) => 0.5 + (k / 90) * 4.5);
+      const qs = alts.map((hk) => ms.map((m) => Math.max(0, aeroHeating({ mach: m, hKm: hk, x: num('x'), Tw, laminar: lam }).q / 1000)));
+      const yMax = Math.max(...qs.flat(), q0 / 1000) * 1.1 || 1;
+      const X = (m: number) => L + ((m - 0.5) / 4.5) * (W - L - R), Y = (v: number) => T + (H - T - B) * (1 - v / yMax);
+      const out: string[] = [];
+      const step = [10, 20, 50, 100, 200, 500, 1000, 2000].find((s) => yMax / s <= 6) ?? 5000;
+      for (let v = 0; v <= yMax; v += step) out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      for (const m of [1, 2, 3, 4, 5]) out.push(`<text x="${X(m).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${m}</text>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">Mach number</text><text x="4" y="11" font-size="10" fill="var(--rd-ink)">kW/m²</text>`);
+      const cols = ['var(--rd-accent)', 'var(--rd-warn)', 'var(--rd-blue)', 'var(--rd-ok)'];
+      qs.forEach((q, j) => {
+        out.push(`<path d="M${ms.map((m, k) => `${X(m).toFixed(1)},${Y(q[k]).toFixed(1)}`).join(' L')}" fill="none" stroke="${cols[j]}" stroke-width="1.8"/>`);
+        out.push(`<text x="${(X(5) - 4).toFixed(1)}" y="${(Y(q[q.length - 1]) - 5).toFixed(1)}" text-anchor="end" font-size="10" fill="${cols[j]}">${alts[j]} km</text>`);
+      });
+      if (M0 >= 0.5 && M0 <= 5) out.push(`<circle cx="${X(M0).toFixed(1)}" cy="${Y(q0 / 1000).toFixed(1)}" r="5" fill="var(--rd-panel)" stroke="var(--rd-ink)" stroke-width="2"/>`);
+      svg.innerHTML = out.join('');
+    }
+
+    function drawT(res: ReturnType<typeof caseHeating>, lim: number, hasTps: boolean) {
+      const svg = root.querySelector<SVGSVGElement>('[data-tchart]')!;
+      const W = width(svg), H = 230, L = 44, R = 12, T = 16, B = 36;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const tMax = res.t[res.t.length - 1] || 1;
+      const yTop = Math.max(...res.surface, lim) * 1.1, yBot = Math.min(...res.caseInner, num('t0')) - 5;
+      const X = (t: number) => L + (t / tMax) * (W - L - R), Y = (v: number) => T + (H - T - B) * (1 - (v - yBot) / (yTop - yBot));
+      const out: string[] = [];
+      const step = [10, 20, 50, 100, 200].find((s) => (yTop - yBot) / s <= 6) ?? 500;
+      for (let v = Math.ceil(yBot / step) * step; v <= yTop; v += step) out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      const ts = [1, 2, 5, 10, 20, 50].find((s) => tMax / s <= 7) ?? 100;
+      for (let v = 0; v <= tMax + 1e-9; v += ts) out.push(`<text x="${X(v).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">time, s</text><text x="4" y="11" font-size="10" fill="var(--rd-ink)">°C</text>`);
+      let acc = 0;
+      for (const p of res.phases.slice(0, -1)) { acc += p.duration; out.push(`<line x1="${X(acc).toFixed(1)}" x2="${X(acc).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-muted)" stroke-dasharray="2 3"/>`); }
+      out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(lim).toFixed(1)}" y2="${Y(lim).toFixed(1)}" stroke="var(--rd-accent)" stroke-dasharray="6 4"/><text x="${W - R - 4}" y="${(Y(lim) - 4).toFixed(1)}" font-size="10" fill="var(--rd-accent)" text-anchor="end">case limit ${f(lim, 0)} °C</text>`);
+      const step2 = Math.max(1, Math.floor(res.t.length / 400));
+      const path = (y: number[]) => { const s: string[] = []; for (let k = 0; k < res.t.length; k += step2) s.push(`${s.length ? 'L' : 'M'}${X(res.t[k]).toFixed(1)},${Y(y[k]).toFixed(1)}`); return s.join(''); };
+      if (hasTps) out.push(`<path d="${path(res.surface)}" fill="none" stroke="var(--rd-hot)" stroke-width="1.6" stroke-dasharray="5 3"/>`);
+      out.push(`<path d="${path(res.caseInner)}" fill="none" stroke="var(--rd-blue)" stroke-width="1.8"/>`);
+      out.push(`<path d="${path(res.caseHot)}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      svg.innerHTML = out.join('');
+    }
+
+    field('cm').addEventListener('change', () => { field('lim').value = String(caseMat().maxT); });
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    let pending = 0;
+    form.addEventListener('input', () => { window.clearTimeout(pending); pending = window.setTimeout(run, 120); });
+    form.addEventListener('change', run);
+    root.querySelector('[data-load-example]')!.addEventListener('click', () => { for (const [k, v] of Object.entries(EXAMPLE)) { const el = field(k); if (el) el.value = v; } run(); });
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.ht-out')!);
+    }
+    run();
+  });
+</script>

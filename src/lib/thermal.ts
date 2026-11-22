@@ -98,7 +98,15 @@ export function solve(inp: ThermalInputs) {
   };
 
   const tau = timeConstant(g, inp.layers.filter((l) => l.thickness > 0), Math.max(1e-9, inp.phases[0].h));
-  const out = { t: [0] as number[], surface: [inp.t0] as number[], back: [inp.t0] as number[], mean: [inp.t0] as number[], lumped: [inp.t0] as number[] };
+  const out = { t: [0] as number[], surface: [inp.t0] as number[], back: [inp.t0] as number[], mean: [inp.t0] as number[], lumped: [inp.t0] as number[], ifc: [inp.t0] as number[] };
+  // the joint between the first two layers of a slab: the conductance-weighted mean of the two cells beside it
+  const iA = layers.length > 1 ? nPer - 1 : -1;
+  const ifcT = (x: number[]) => {
+    if (iA < 0) return NaN;
+    const ca = cells[iA], cb = cells[iA + 1];
+    const ga = ca.mat.k / (ca.s1 - ca.c), gb = cb.mat.k / (cb.c - cb.s0);
+    return (ga * x[iA] + gb * x[iA + 1]) / (ga + gb);
+  };
   let time = 0, lumpedT = inp.t0, peak = { T: inp.t0, t: 0 }, tLimit: number | null = null;
   const profiles: { label: string; t: number; s: number[]; T: number[] }[] = [];
   const snap = (label: string) => profiles.push({ label, t: time, s: cells.map((c) => c.c), T: [...T] });
@@ -126,7 +134,7 @@ export function solve(inp: ThermalInputs) {
       time += dt;
       lumpedT = ph.tEnv + (lumpedT - ph.tEnv) * Math.exp(-dt / tauPh);
       const tb = backT(T);
-      out.t.push(time); out.surface.push(surfaceT(T, ph)); out.back.push(tb); out.mean.push(meanT(T)); out.lumped.push(lumpedT);
+      out.t.push(time); out.surface.push(surfaceT(T, ph)); out.back.push(tb); out.mean.push(meanT(T)); out.lumped.push(lumpedT); out.ifc.push(ifcT(T));
       if (tb > peak.T) { peak = { T: tb, t: time }; peakProfile = [...T]; }
       if (tLimit === null && inp.limit !== undefined && tb >= inp.limit) tLimit = time;
       while (pending.length && time >= pending[0] * (1 - 1e-9)) { pending.shift(); extra.push({ label: 'snapshot', t: time, s: cells.map((c) => c.c), T: [...T] }); }

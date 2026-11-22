@@ -1,0 +1,74 @@
+---
+// Where the external heat on a motor comes from, and the wall that it goes into: a vehicle in flight with its heat
+// sources, and a section through the wall (boundary layer, external insulation, case, internal insulation,
+// propellant) with the temperature through it. Schematic.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-hot)';
+const cy = 78, r = 20, xN = 24, xB = 92, xE = 352; // vehicle axis, body radius, nose tip, nose/body joint, end of body
+const nose = `M${xN},${cy} Q${(xN + xB) / 2},${cy - r - 2} ${xB},${cy - r} L${xB},${cy + r} Q${(xN + xB) / 2},${cy + r + 2} ${xN},${cy} Z`;
+// the wall section: layer boundaries (x) and the temperature through it
+const S = { y0: 192, y1: 274 };
+const X = { bl: 22, tps: 92, cs: 146, ci: 162, ins: 222, end: 418 };
+const Tline = `M${X.bl},202 C${X.bl + 40},203 ${X.tps - 20},210 ${X.tps},212 L${X.cs},252 L${X.ci},253 L${X.ins},258 L${X.end},258`;
+---
+
+<figure class="viz heat-sources">
+  <p class="viz-title">Where the external heat comes from, and where it goes</p>
+  <svg viewBox="0 0 440 306" role="img" aria-labelledby="hs-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="hs-desc">
+      Top: a vehicle in flight. The nose has stagnation heating, the body has a boundary layer at close to the recovery
+      temperature, the fin leading edges heat strongly, and the aft end gets radiation from the plume and hot gas that
+      flows back at the base. The motor section carries a thin layer of external insulation. Bottom: a section through
+      the wall, from the hot boundary layer through the external insulation, the case, the internal insulation and the
+      propellant. The temperature falls steeply through the external insulation, so the case stays below its limit.
+    </desc>
+    <!-- vehicle -->
+    <path d={nose} fill="var(--rd-panel2)" stroke={muted}></path>
+    <rect x={xB} y={cy - r} width={xE - xB} height={2 * r} fill="var(--rd-panel2)" stroke={muted}></rect>
+    <rect x="150" y={cy - r - 4} width={xE - 150} height="4" fill="var(--rd-propellant)" fill-opacity="0.9"></rect>
+    <rect x="150" y={cy + r} width={xE - 150} height="4" fill="var(--rd-propellant)" fill-opacity="0.9"></rect>
+    <path d={`M${xE - 44},${cy - r} L${xE},${cy - r - 22} L${xE},${cy - r} Z M${xE - 44},${cy + r} L${xE},${cy + r + 22} L${xE},${cy + r} Z`} fill="var(--rd-steel)" stroke={muted}></path>
+    <path d={`M${xE},${cy - 10} L${xE + 16},${cy - 15} L${xE + 16},${cy + 15} L${xE},${cy + 10} Z`} fill="var(--rd-steel)"></path>
+    <path d={`M${xE + 16},${cy - 14} Q${xE + 50},${cy - 12} ${xE + 80},${cy} Q${xE + 50},${cy + 12} ${xE + 16},${cy + 14} Z`} fill={hot} fill-opacity="0.45"></path>
+    {[170, 210, 250, 290].map((x) => <path d={`M${x},${cy - r - 18} L${x},${cy - r - 7} M${x - 3},${cy - r - 11} L${x},${cy - r - 7} L${x + 3},${cy - r - 11}`} fill="none" stroke={hot} stroke-width="1.4"></path>)}
+    <path d={`M${xE + 34},${cy + 18} Q${xE + 14},${cy + 30} ${xE - 2},${cy + 24}`} fill="none" stroke={hot} stroke-width="1.4" stroke-dasharray="3 2"></path>
+    <!-- labels -->
+    <line x1={xN + 2} x2="40" y1={cy - 2} y2="34" stroke={muted}></line>
+    <text x="42" y="30" font-size="10.5" fill={ink}>nose: stagnation</text>
+    <text x="160" y="22" font-size="10.5" fill={ink}>boundary layer near T<tspan dy="2" font-size="8">r</tspan></text>
+    <line x1="200" x2="200" y1={cy + r + 6} y2="122" stroke={muted}></line>
+    <text x="200" y="134" font-size="10.5" fill={ink} text-anchor="middle">external insulation on the motor</text>
+    <line x1={xE - 8} x2={xE - 30} y1={cy + r + 18} y2="138" stroke={muted}></line>
+    <text x={xE - 30} y="150" font-size="10.5" fill={ink} text-anchor="middle">fin leading edges</text>
+    <text x="436" y="13" font-size="10.5" fill={ink} text-anchor="end">base: plume</text>
+    <text x="436" y="27" font-size="10.5" fill={ink} text-anchor="end">radiation and</text>
+    <text x="436" y="41" font-size="10.5" fill={ink} text-anchor="end">hot back-flow</text>
+    <!-- wall section -->
+    <text x="220" y="166" font-size="11" font-weight="700" fill={ink} text-anchor="middle">A section through the wall of the motor</text>
+    <rect x={X.bl} y={S.y0} width={X.tps - X.bl} height={S.y1 - S.y0} fill={hot} fill-opacity="0.12"></rect>
+    <rect x={X.tps} y={S.y0} width={X.cs - X.tps} height={S.y1 - S.y0} fill="var(--rd-propellant)" fill-opacity="0.55"></rect>
+    <rect x={X.cs} y={S.y0} width={X.ci - X.cs} height={S.y1 - S.y0} fill="var(--rd-blue)" fill-opacity="0.6"></rect>
+    <rect x={X.ci} y={S.y0} width={X.ins - X.ci} height={S.y1 - S.y0} fill="var(--rd-insul)" fill-opacity="0.7"></rect>
+    <rect x={X.ins} y={S.y0} width={X.end - X.ins} height={S.y1 - S.y0} fill="var(--rd-propellant)" fill-opacity="0.3"></rect>
+    <line x1={X.bl} x2={X.end} y1="232" y2="232" stroke="var(--rd-accent)" stroke-dasharray="5 4"></line>
+    <text x={X.end - 2} y="228" font-size="10" fill="var(--rd-accent)" text-anchor="end">limit of the case</text>
+    <path d={Tline} fill="none" stroke={ink} stroke-width="2.2"></path>
+    <text x={X.bl + 4} y="214" font-size="10" fill={ink}>T</text>
+    {[
+      [(X.bl + X.tps) / 2, 'boundary', 'layer'], [(X.tps + X.cs) / 2, 'external', 'insulation'],
+      [(X.ci + X.ins) / 2, 'internal', 'insulation'], [(X.ins + X.end) / 2, 'propellant', ''],
+    ].map(([x, t1, t2]) => (
+      <g>
+        <text x={x} y={S.y1 + 13} font-size="10" fill={muted} text-anchor="middle">{t1}</text>
+        <text x={x} y={S.y1 + 26} font-size="10" fill={muted} text-anchor="middle">{t2}</text>
+      </g>
+    ))}
+    <line x1={(X.cs + X.ci) / 2} x2={(X.cs + X.ci) / 2} y1={S.y0 - 2} y2={S.y0 - 6} stroke={muted}></line>
+    <text x={(X.cs + X.ci) / 2} y={S.y0 - 8} font-size="10" fill={muted} text-anchor="middle">case</text>
+  </svg>
+  <figcaption>
+    In flight the air that the boundary layer brings to rest heats up to near the recovery temperature, and the heat
+    flows into the wall. A few millimetres of external insulation with a low conductivity take most of the temperature
+    drop, so the case behind it stays below its limit for the flight. The internal insulation protects the case from the
+    combustion gas on the other side. Schematic.
+  </figcaption>
+</figure>

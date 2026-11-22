@@ -128,6 +128,7 @@ export const PRIMERS = [
   { key: 'primer-closures', phase: 'size', after: 'pv', slug: 'motor/closures', label: 'CASE CLOSURES', ico: '✦' },
   { key: 'primer-instability', phase: 'size', after: 'grain', slug: 'motor/combustion-instability', label: 'COMBUSTION INSTABILITY', ico: '✦' },
   { key: 'primer-nozzle', phase: 'size', after: 'ablative', slug: 'motor/nozzle', label: 'NOZZLE DESIGN', ico: '✦' },
+  { key: 'primer-heating', phase: 'size', after: 'thermal', slug: 'motor/external-heating', label: 'EXTERNAL HEATING', ico: '✦' },
   { key: 'primer-firing', phase: 'verify', after: 'proof', slug: 'verify/static-firing', label: 'STATIC FIRING', ico: '✦' },
 ];
 
