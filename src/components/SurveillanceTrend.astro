@@ -56,7 +56,7 @@ const lifePred = (100 - LIMIT) / 2, lifeTrend = (100 - LIMIT) / 1.5;
     <line x1={X(lifePred)} x2={X(lifePred)} y1={Y(LIMIT)} y2={H - B} stroke="var(--rd-blue)" stroke-dasharray="3 3"></line>
     <line x1={X(lifeTrend)} x2={X(lifeTrend)} y1={Y(LIMIT)} y2={H - B} stroke="var(--rd-ok)" stroke-dasharray="3 3"></line>
     <text x={X(lifePred) - 4} y={H - B - 8} text-anchor="end" font-size="12" fill="var(--rd-blue)">predicted life</text>
-    <text x={X(lifeTrend) + 4} y={H - B - 22} font-size="12" fill="var(--rd-ok)">supported</text>
+    <text x={X(lifeTrend) + 4} y={H - B - 24} font-size="12" fill="var(--rd-ok)">supported</text>
     <text x={X(lifeTrend) + 4} y={H - B - 8} font-size="12" fill="var(--rd-ok)">by data</text>
     {[12, 14].map((t) => <path d={`M${X(t) - 6},${T - 14} l12,0 l-6,10 z`} fill="var(--rd-muted)"></path>)}
     <text x={X(13)} y={T - 20} text-anchor="middle" font-size="11" fill="var(--rd-muted)">next withdrawals</text>

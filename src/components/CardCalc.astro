@@ -260,8 +260,8 @@ const TABS = [
         { dt: '<span class="nc">ν</span>', dd: val(c.nu, '') + fam('nu'), cls: c.nu === undefined ? 'warn' : '' },
         { dt: '<span class="nc">ρ</span>', dd: val(c.rho, u.density), cls: c.rho === undefined ? 'warn' : '' },
         { dt: '<span class="nc">α</span>, secant', dd: val(c.alpha, '/K', ` <small>from ${deg(tref)} °C</small>`) },
-        { dt: 'k', dd: val(c.k, u.kUnit, m.kIsZ ? ' <small>through the thickness</small>' : '') },
-        { dt: 'c<sub>p</sub>', dd: val(c.cp, u.cpUnit) + fam('cp') },
+        { dt: '<span class="nc">k</span>', dd: val(c.k, u.kUnit, m.kIsZ ? ' <small>through the thickness</small>' : '') },
+        { dt: '<span class="nc">c</span><sub>p</sub>', dd: val(c.cp, u.cpUnit) + fam('cp') },
       );
       if (c.E !== undefined && c.rho !== undefined) rows.push({ dt: 'Wave speed <span class="nc">√(E/ρ)</span>', dd: `${g3(cardUnits(units, c.E, c.rho).wave)} m/s <small>units check</small>` });
       if (pt) rows.push({ dt: 'Plastic table', dd: `${pt.table.length} rows <small>n = ${f(pt.n, 1)}, to ${g3(pt.table[pt.table.length - 1].trueStress)} MPa true stress at necking</small>` });

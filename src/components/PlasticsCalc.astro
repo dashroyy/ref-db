@@ -172,7 +172,7 @@ const TABS = [{ key: 'select', name: 'Select' }, { key: 'fit', name: 'In a metal
         <div class="readout primary ${pass.length ? 'ok' : 'bad'}"><dt>Pass the screen</dt><dd>${pass.length} of ${shown.length} <small>${pass.slice(0, 6).map((x) => x.p.a).join(', ')}${pass.length > 6 ? '…' : ''}</small></dd></div>
         <div class="readout ${r.tmin === undefined || r.tmax === undefined ? 'warn' : ''}"><dt>Service window</dt><dd>${r.tmin ?? '?'} to ${r.tmax ?? '?'} °C <small>${r.tmin === undefined || r.tmax === undefined ? 'enter the programme window' : 'continuous service'}</small></dd></div>`;
       $('[data-vis]').innerHTML = shown.length ? `<p class="pl-h">Service range and Tg (│). Select a row</p>${rangeChart(shown, r)}
-        <div class="pl-scroll"><table class="pl-table"><thead><tr><th>Polymer</th><th>°C</th><th>Tg</th><th>H₂O %</th><th>μ</th><th>Outgas</th><th>Result</th></tr></thead><tbody>${shown.map(({ p, fails }) => `<tr data-a="${esc(p.a)}" class="${fails.length ? 'fail' : ''} ${p.a === picked ? 'sel' : ''}"><td><b>${esc(p.a)}</b></td><td>${p.tmin} to ${p.tmax}</td><td>${p.tg}</td><td>${p.wabs}</td><td>${p.cof}</td><td>${p.outgas}</td><td class="why">${fails.length ? esc(fails.join('; ')) : '<span class="pl-ok">pass</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="pl-h">No polymer matches the search.</p>';
+        <div class="pl-scroll"><table class="pl-table"><thead><tr><th>Polymer</th><th>°C</th><th><span class="nc">Tg</span></th><th>H₂O %</th><th><span class="nc">μ</span></th><th>Outgas</th><th>Result</th></tr></thead><tbody>${shown.map(({ p, fails }) => `<tr data-a="${esc(p.a)}" class="${fails.length ? 'fail' : ''} ${p.a === picked ? 'sel' : ''}"><td><b>${esc(p.a)}</b></td><td>${p.tmin} to ${p.tmax}</td><td>${p.tg}</td><td>${p.wabs}</td><td>${p.cof}</td><td>${p.outgas}</td><td class="why">${fails.length ? esc(fails.join('; ')) : '<span class="pl-ok">pass</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="pl-h">No polymer matches the search.</p>';
       const p = polymer(picked);
       $('[data-detail]').innerHTML = p ? card(p, r) : '';
       const notes: [string, string][] = [];
@@ -184,22 +184,22 @@ const TABS = [{ key: 'select', name: 'Select' }, { key: 'fit', name: 'In a metal
     }
 
     function fitChart(f: FitInput, lo: number, hi: number, r: Req) {
-      const W = width(), H = 210, L = 52, R = 14, T = 14, B = 30, pts = fitSweep(f, lo, hi, 60);
+      const W = width(), H = 216, L = 52, R = 14, T = 14, B = 34, pts = fitSweep(f, lo, hi, 60);
       const ys = pts.map((x) => x.delta * 1000), ymin = Math.min(0, ...ys) - 10, ymax = Math.max(0, ...ys) + 10;
       const X = (t: number) => L + ((t - lo) / (hi - lo)) * (W - L - R), Y = (v: number) => T + ((ymax - v) / (ymax - ymin)) * (H - T - B);
       const s: string[] = [`<rect x="${L}" y="${Y(0)}" width="${W - L - R}" height="${Math.max(0, Y(ymin) - Y(0))}" fill="var(--rd-accent)" fill-opacity="0.1"/><text x="${W - R - 4}" y="${Y(0) + 13}" text-anchor="end" font-size="10" fill="var(--rd-accent)">clearance: ${f.arrangement === 'bush' ? 'the bush is loose' : 'the ring is loose'}</text>`,
         `<line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--rd-muted)"/>`];
       if (r.tmin !== undefined && r.tmax !== undefined) s.push(`<rect x="${X(r.tmin)}" y="${T}" width="${X(r.tmax) - X(r.tmin)}" height="${H - T - B}" fill="var(--rd-ink)" fill-opacity="0.05" stroke="var(--rd-line)" stroke-dasharray="4 3"/>`);
       const step = (hi - lo) > 200 ? 50 : 20;
-      for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) s.push(`<text x="${X(t)}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t}</text>`);
+      for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) s.push(`<text x="${X(t)}" y="${H - 18}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t}</text>`);
       const yStep = (ymax - ymin) > 300 ? 100 : (ymax - ymin) > 120 ? 50 : 20;
       for (let v = Math.ceil(ymin / yStep) * yStep; v <= ymax; v += yStep) s.push(`<line x1="${L - 4}" x2="${L}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rd-muted)"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
-      s.push(`<text x="${L}" y="${H - 1}" font-size="10" fill="var(--rd-muted)">°C</text><text x="4" y="${T + 4}" font-size="10" fill="var(--rd-muted)">µm</text>`);
+      s.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">temperature (°C)</text><text x="4" y="${T + 4}" font-size="10" fill="var(--rd-muted)">µm</text>`);
       s.push(`<polyline fill="none" stroke="var(--rd-ink)" stroke-width="2.2" points="${pts.map((x) => `${X(x.T).toFixed(1)},${Y(x.delta * 1000).toFixed(1)}`).join(' ')}"/>`);
       for (const t of [lo, 20, hi]) {
         if (t < lo || t > hi) continue;
         const v = fitAt(f, t).delta * 1000;
-        s.push(`<circle cx="${X(t)}" cy="${Y(v)}" r="4" fill="${v >= 0 ? 'var(--rd-ok)' : 'var(--rd-accent)'}"/><text x="${X(t) + (t === hi ? -6 : 6)}" y="${Y(v) - 7}" text-anchor="${t === hi ? 'end' : 'start'}" font-size="10.5" fill="var(--rd-ink)">${v >= 0 ? '+' : ''}${v.toFixed(0)} µm</text>`);
+        s.push(`<circle cx="${X(t)}" cy="${Y(v)}" r="4" fill="${v >= 0 ? 'var(--rd-ok)' : 'var(--rd-accent)'}"/><text x="${X(t) + (t === hi ? -6 : 6)}" y="${Y(v) - 7}" text-anchor="${t === hi ? 'end' : 'start'}" font-size="10.5" fill="var(--rd-ink)" stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${Math.round(v) > 0 ? '+' : Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))} µm</text>`);
       }
       return `<svg class="pl-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Fit against temperature">${s.join('')}</svg>`;
     }

@@ -87,7 +87,7 @@ const ROWS = [
       <p class="pv-sub">From coupon to part</p>
       <dl class="readouts">
         <div class="readout"><dt>Corrected endurance S<sub>e</sub></dt><dd data-r="se">—</dd></div>
-        <div class="readout"><dt>Notch: q · K<sub>f</sub></dt><dd data-r="kf">—</dd></div>
+        <div class="readout"><dt>Notch: <span class="nc">q</span> · K<sub>f</sub></dt><dd data-r="kf">—</dd></div>
         <div class="readout"><dt>Worst block vs S<sub>e</sub></dt><dd data-r="worst">—</dd></div>
       </dl>
       <div class="ft-table" data-table></div>
@@ -205,7 +205,7 @@ const ROWS = [
       cls('ms', parts.length ? (bad ? 'bad' : 'ok') : '');
 
       root.querySelector('[data-table]')!.innerHTML = rows.length
-        ? `<table><thead><tr><th>Block</th><th>σa local</th><th>σm local</th><th>σ equiv.</th><th>N</th><th>Damage</th></tr></thead><tbody>${rows.map((x) =>
+        ? `<table><thead><tr><th>Block</th><th><span class="nc">σa</span> local</th><th><span class="nc">σm</span> local</th><th><span class="nc">σ</span> equiv.</th><th>N</th><th>Damage</th></tr></thead><tbody>${rows.map((x) =>
           `<tr><td>${esc(x.label)}</td><td>${f(x.la, 0)}</td><td>${f(x.lm, 0)}</td><td>${f(x.sar, 0)}</td><td>${x.static ? 'static' : Number.isFinite(x.N) && x.N < 1e3 ? '&lt;10³' : cyc(x.N)}</td><td>${x.d > 0 ? `${f(x.d, x.d >= 1 ? 2 : 4)} · ${f(res.D > 0 ? (x.d / res.D) * 100 : 0, 0)}%` : '0'}</td></tr>`).join('')}</tbody></table>`
         : '';
 

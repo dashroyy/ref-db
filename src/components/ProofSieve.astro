@@ -42,16 +42,16 @@ const aScr = 0.86, aCrit = 1.04, ndt = 1.27;
     <line x1={X(aCrit)} y1="64" x2={X(aCrit)} y2={base} stroke="var(--rd-accent)" stroke-width="2.5"></line>
     <text x={X(aCrit) + 6} y="62" font-size="12" fill="var(--rd-accent)">fails at MEOP</text>
     <line x1={X(ndt)} y1="90" x2={X(ndt)} y2={base} stroke="var(--rd-muted)" stroke-width="2" stroke-dasharray="6 4"></line>
-    <text x={X(ndt) + 6} y="88" font-size="12" fill="var(--rd-muted)">NDT finds</text>
-    <text x={X(ndt) + 6} y="102" font-size="12" fill="var(--rd-muted)">reliably</text>
+    <text x={X(ndt) + 6} y="87" font-size="12" fill="var(--rd-muted)">NDT finds</text>
+    <text x={X(ndt) + 6} y="103" font-size="12" fill="var(--rd-muted)">reliably</text>
 
     <line x1={X(aScr) + 2} y1="130" x2={X(aCrit) - 2} y2="130" stroke="var(--rd-ok)" stroke-width="2.5" marker-end="url(#ps-ah)"></line>
     <text x={(X(aScr) + X(aCrit)) / 2} y="122" text-anchor="middle" font-size="12" fill="var(--rd-ok)">service life</text>
 
     <text x={X(0.35)} y="90" font-size="12" fill="var(--rd-blue)">survivors: every flaw</text>
     <text x={X(0.35)} y="106" font-size="12" fill="var(--rd-blue)">is smaller than this line</text>
-    <text x={X(1.15)} y="200" text-anchor="middle" font-size="12" fill="var(--rd-accent)">these cases</text>
-    <text x={X(1.15)} y="214" text-anchor="middle" font-size="12" fill="var(--rd-accent)">fail on the stand</text>
+    <text x={X(1.15)} y="199" text-anchor="middle" font-size="12" fill="var(--rd-accent)">these cases</text>
+    <text x={X(1.15)} y="215" text-anchor="middle" font-size="12" fill="var(--rd-accent)">fail on the stand</text>
   </svg>
   <figcaption>
     The proof test guarantees a maximum flaw size whether or not anyone could find it. Here the guaranteed size (0.86 mm)

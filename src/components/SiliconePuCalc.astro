@@ -185,7 +185,8 @@ const TABS = [{ key: 'chain', name: 'Chains' }, { key: 'cmp', name: 'Compare' },
       const X = (t: number) => L + ((t - lo) / (hi - lo)) * (W - L - R);
       const fam = (e: { family: string }) => (e.family === 'si' ? 'var(--rd-blue)' : e.family === 'pu' ? 'var(--rd-accent)' : 'var(--rd-muted)');
       const p: string[] = [];
-      for (let t = -50; t <= 250; t += 50) p.push(`<line x1="${X(t)}" x2="${X(t)}" y1="${T - 4}" y2="${H - 22}" stroke="var(--rd-line)"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t}</text>`);
+      const tStep = W - L - R < 200 ? 100 : 50; // on a narrow chart, every 100 °C so the labels do not touch
+      for (let t = tStep === 100 ? 0 : -50; t <= 250; t += tStep) p.push(`<line x1="${X(t)}" x2="${X(t)}" y1="${T - 4}" y2="${H - 22}" stroke="var(--rd-line)"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${t}</text>`);
       ELASTOMERS.forEach((e, i) => {
         const y = T + i * row, sel = e.key === picked;
         p.push(`<g data-k="${e.key}" style="cursor:pointer"><rect x="0" y="${y}" width="${W}" height="${row}" fill="${sel ? 'color-mix(in srgb, var(--rd-accent) 12%, transparent)' : 'transparent'}"/><text x="${L - 6}" y="${y + 15}" text-anchor="end" font-size="10.5" fill="var(--rd-ink)" font-family="var(--sl-font-system, system-ui)">${esc(e.name.replace(/ \(.*\)/, '').replace('Polyurethane', 'PU').replace('Silicone', 'Si'))}</text><rect x="${X(e.tmin)}" y="${y + 5}" width="${X(e.tmax) - X(e.tmin)}" height="${row - 10}" rx="3" fill="${fam(e)}" fill-opacity="0.6"/></g>`);

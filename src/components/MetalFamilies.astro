@@ -119,7 +119,7 @@ const DATA = METAL_FAMILIES.map((f) => ({
       const shown = cls ? fam.classes.filter((c) => c.key === cls) : fam.classes;
       $('[data-cards]').innerHTML = shown.map((c) => `<div class="mf-cc" style="--c:${colour(c.key)}"><b>${esc(c.name)}</b><dl><dt>Structure</dt><dd>${esc(c.structure)}</dd><dt>Strengthened by</dt><dd>${esc(c.strength)}</dd><dt>Watch for</dt><dd>${esc(c.watch)}</dd></dl></div>`).join('');
       const rows = list.slice().sort((a, b) => (b.Fty ?? 0) - (a.Fty ?? 0));
-      $('[data-table]').innerHTML = `<table class="mf-table"><thead><tr><th>Metal</th><th>Yield</th><th>UTS</th><th>ρ g/cm³</th><th>E GPa</th><th>Max °C</th></tr></thead><tbody>${rows.map((x) => `<tr data-key="${esc(x.key)}" class="${x.key === picked ? 'sel' : ''}"><td><i style="background:${colour(x.cls)}"></i>${esc(x.name)}</td><td>${x.Fty ?? '—'}</td><td>${x.Ftu ?? '—'}</td><td>${x.rho ? (x.rho / 1000).toFixed(2) : '—'}</td><td>${x.E ? (x.E / 1000).toFixed(0) : '—'}</td><td>${x.maxT ?? '—'}</td></tr>`).join('')}</tbody></table>`;
+      $('[data-table]').innerHTML = `<table class="mf-table"><thead><tr><th>Metal</th><th>Yield</th><th>UTS</th><th><span class="nc">ρ g/cm³</span></th><th>E <span class="nc">GPa</span></th><th>Max °C</th></tr></thead><tbody>${rows.map((x) => `<tr data-key="${esc(x.key)}" class="${x.key === picked ? 'sel' : ''}"><td><i style="background:${colour(x.cls)}"></i>${esc(x.name)}</td><td>${x.Fty ?? '—'}</td><td>${x.Ftu ?? '—'}</td><td>${x.rho ? (x.rho / 1000).toFixed(2) : '—'}</td><td>${x.E ? (x.E / 1000).toFixed(0) : '—'}</td><td>${x.maxT ?? '—'}</td></tr>`).join('')}</tbody></table>`;
     }
 
     const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-fam]')];

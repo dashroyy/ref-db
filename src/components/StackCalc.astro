@@ -401,10 +401,13 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
       return { X, Y, W, H, L, R, T, B };
     }
     const legend = (items: [string, string, string?][]) => {
-      let x = 8;
+      // one row where it fits; on a narrow chart the next item starts a second row
+      const W = width();
+      let x = 8, y = 13;
       for (const [name, color, dash] of items) {
-        el('line', { x1: x, x2: x + 18, y1: 13, y2: 13, stroke: color, 'stroke-width': 2.2, ...(dash ? { 'stroke-dasharray': dash } : {}) });
-        el('text', { x: x + 23, y: 17, 'font-size': 12, fill: 'var(--rd-ink)' }, name);
+        if (x > 8 && x + 23 + name.length * 7.2 > W - 8) { x = 8; y += 16; }
+        el('line', { x1: x, x2: x + 18, y1: y, y2: y, stroke: color, 'stroke-width': 2.2, ...(dash ? { 'stroke-dasharray': dash } : {}) });
+        el('text', { x: x + 23, y: y + 4, 'font-size': 12, fill: 'var(--rd-ink)' }, name);
         x += 37 + name.length * 7.2;
       }
     };
@@ -427,7 +430,8 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
       });
       el('rect', { x: 8, y: 9, width: 12, height: 8, rx: 2, fill: 'var(--rd-accent)' }); el('text', { x: 24, y: 17, 'font-size': 11, fill: 'var(--rd-ink)' }, legendA);
       el('rect', { x: 110, y: 9, width: 12, height: 8, rx: 2, fill: 'var(--rd-steel)' }); el('text', { x: 126, y: 17, 'font-size': 11, fill: 'var(--rd-ink)' }, legendB);
-      el('text', { x: (Lx + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, xl);
+      const half = xl.length * 3.3 + 4; // half the width of the title: centred on the bars, but kept inside the chart
+      el('text', { x: Math.min(Math.max((Lx + W - R) / 2, half), W - half), y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, xl);
     };
 
     // ---- the linear stack ----
@@ -691,7 +695,7 @@ const MATS = grouped(withProps(['alpha'])).map((g) => ({ label: g.label, items: 
         if (hasL) ring(lim, 'var(--rd-accent)');
         el('text', { x: cx + k * s.wc * 0.7071 + 4, y: cy - k * s.wc * 0.7071 - 2, 'font-size': 12, fill: 'var(--rd-muted)', ...halo }, `${f(s.wc, 2)}`);
         legend([['worst', 'var(--rd-muted)', '5 4'], ['RSS radii', 'var(--rd-blue)', '2 3'], ...(hasP ? [['coverage', 'var(--rd-ink)'] as [string, string]] : []), ...(hasL ? [['limit', 'var(--rd-accent)'] as [string, string]] : [])]);
-        el('text', { x: W / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--rd-muted)' }, `${xs.length.toLocaleString('en-GB')} of the simulated assemblies, offsets in mm`);
+        el('text', { x: W / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, `${xs.length.toLocaleString('en-GB')} simulated assemblies, offsets in mm`);
       };
     }
 

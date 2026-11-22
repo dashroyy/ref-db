@@ -442,9 +442,7 @@
   padding: 0.5rem 0.7rem 0.55rem;
 }
 .sl-markdown-content .calc .readout dt {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  display: flow-root; /* not flex: a flex row pulls a subscript out of the line and centres it */
   font-family: var(--sl-font-mono);
   font-size: 0.66rem;
   font-weight: 600;
@@ -456,16 +454,20 @@
 .sl-markdown-content .calc .readout dd small { display: block; margin-top: 0.2rem; font-family: var(--sl-font-system, system-ui); font-size: 0.74rem; font-weight: 400; line-height: 1.4; color: var(--rd-muted); }
 .sl-markdown-content .calc .readout.primary { grid-column: 1 / -1; border-left-color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 6%, var(--rd-panel2)); }
 .sl-markdown-content .calc .readout.primary dd { font-size: 1.45rem; color: var(--rd-ink); }
-.sl-markdown-content .calc .readout:is(.ok, .warn, .bad) dt::after { margin-left: auto; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.6rem; letter-spacing: 0.08em; }
+/* the badge floats at the top right, and a long label wraps round it */
+.sl-markdown-content .calc .readout:is(.ok, .warn, .bad) dt::before { float: right; margin-left: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.6rem; letter-spacing: 0.08em; }
 .sl-markdown-content .calc .readout.ok { border-left-color: var(--rd-ok); }
 .sl-markdown-content .calc .readout.ok dd { color: var(--rd-ok); }
-.sl-markdown-content .calc .readout.ok dt::after { content: 'OK'; color: var(--rd-ok); background: color-mix(in srgb, var(--rd-ok) 14%, transparent); }
+.sl-markdown-content .calc .readout.ok dt::before { content: 'OK'; color: var(--rd-ok); background: color-mix(in srgb, var(--rd-ok) 14%, transparent); }
 .sl-markdown-content .calc .readout.warn { border-left-color: var(--rd-warn); }
 .sl-markdown-content .calc .readout.warn dd { color: var(--rd-warn); }
-.sl-markdown-content .calc .readout.warn dt::after { content: 'CHECK'; color: var(--rd-warn); background: color-mix(in srgb, var(--rd-warn) 14%, transparent); }
+.sl-markdown-content .calc .readout.warn dt::before { content: 'CHECK'; color: var(--rd-warn); background: color-mix(in srgb, var(--rd-warn) 14%, transparent); }
 .sl-markdown-content .calc .readout.bad { border-left-color: var(--rd-accent); }
 .sl-markdown-content .calc .readout.bad dd { color: var(--rd-accent); }
-.sl-markdown-content .calc .readout.bad dt::after { content: 'FAIL'; color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 14%, transparent); }
+.sl-markdown-content .calc .readout.bad dt::before { content: 'FAIL'; color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 14%, transparent); }
+/* Labels are set in capitals, but a symbol keeps its case (σ is not Σ, and p is not P): subscripts, superscripts and
+   text in <span class="nc"> stay as written. */
+:is(.viz-title, .calc-head, .calc legend, .readout dt, .calc table th, .calc button.chip) :is(sub, sup, .nc) { text-transform: none; }
 
 /* charts: a framed figure */
 .sl-markdown-content .calc figure:not(.viz) {

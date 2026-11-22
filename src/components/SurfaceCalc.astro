@@ -134,11 +134,11 @@ const READINGS = '0.31, 0.29, 0.36, 0.42, 0.33, 0.30\n0.34, 0.28, 0.32, 0.35, 0.
       const flt = gaussianFilter(z, dx, lc), p = roughnessParams(flt.roughness, dx, lc), mr = materialRatio(flt.roughness, (cPct / 100) * p.Rz);
       const rec = cutoffFor(p.Ra);
       rows.push(
-        { dt: 'Ra', dd: `${g3(p.Ra)} µm <small>Rq ${g3(p.Rq)} µm · over ${p.segments} sampling lengths</small>`, primary: true },
-        { dt: 'Rz', dd: `${g3(p.Rz)} µm <small>Rt ${g3(p.Rt)} µm · Rp ${g3(p.Rp)} · Rv ${g3(p.Rv)} · Rz/Ra ${f(p.Rz / p.Ra, 1)}</small>` },
+        { dt: '<span class="nc">Ra</span>', dd: `${g3(p.Ra)} µm <small>Rq ${g3(p.Rq)} µm · over ${p.segments} sampling lengths</small>`, primary: true },
+        { dt: '<span class="nc">Rz</span>', dd: `${g3(p.Rz)} µm <small>Rt ${g3(p.Rt)} µm · Rp ${g3(p.Rp)} · Rv ${g3(p.Rv)} · Rz/Ra ${f(p.Rz / p.Ra, 1)}</small>` },
         { dt: 'Shape', dd: `Rsk ${f(p.Rsk, 2)} <small>Rku ${f(p.Rku, 2)} · ${p.Rsk < -0.4 ? 'plateaus with deep valleys: good bearing' : p.Rsk > 0.4 ? 'sharp peaks' : 'approximately symmetric'}</small>` },
-        { dt: `Rmr at c = ${f(cPct, 0)}% of Rz`, dd: `${f(100 * mr, 0)}% <small>c = ${g3((cPct / 100) * p.Rz)} µm below the highest peak</small>` },
-        { dt: 'Cutoff for this Ra', dd: `${rec} mm <small>ISO 4288, non-periodic profile${rec !== lc ? ` · you selected ${lc} mm` : ''}</small>`, cls: rec === lc ? 'ok' : 'warn' },
+        { dt: `<span class="nc">Rmr</span> at <span class="nc">c</span> = ${f(cPct, 0)}% of <span class="nc">Rz</span>`, dd: `${f(100 * mr, 0)}% <small>c = ${g3((cPct / 100) * p.Rz)} µm below the highest peak</small>` },
+        { dt: 'Cutoff for this <span class="nc">Ra</span>', dd: `${rec} mm <small>ISO 4288, non-periodic profile${rec !== lc ? ` · you selected ${lc} mm` : ''}</small>`, cls: rec === lc ? 'ok' : 'warn' },
       );
       if (turned) {
         const th = turnedRoughness(fd, nr);
@@ -152,7 +152,7 @@ const READINGS = '0.31, 0.29, 0.36, 0.42, 0.33, 0.30\n0.34, 0.28, 0.32, 0.35, 0.
       notes.push(['', 'Ra does not show the shape. Two surfaces with the same Ra can seal or wear very differently. Add Rz, Rmr or Rsk where the function depends on the peaks.']);
       return () => {
         svg.replaceChildren();
-        const W = size(), H = 250, L = 50, R = 14, T = 26, mid = 128;
+        const W = size(), H = 254, L = 50, R = 14, T = 26, mid = 128;
         svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
         const n = flt.roughness.length, step = Math.max(1, Math.floor(n / 600)), X = (i: number) => L + (i / (n - 1)) * (W - L - R);
         const raw = Array.from({ length: n }, (_, i) => z[i + flt.offset]);
@@ -172,7 +172,7 @@ const READINGS = '0.31, 0.29, 0.36, 0.42, 0.33, 0.30\n0.34, 0.28, 0.32, 0.35, 0.
         el('text', { x: W - R, y: mid + 12, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--rd-accent)' }, 'cut level c');
         el('text', { x: 6, y: (T + mid) / 2 + 10, 'font-size': 11, fill: 'var(--rd-muted)' }, `±${g3(rmax)}`);
         el('text', { x: 6, y: (mid + H) / 2 + 6, 'font-size': 11, fill: 'var(--rd-muted)' }, `±${g3(qmax)}`);
-        el('text', { x: W / 2, y: H - 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, `${f(5 * lc, 1)} mm evaluated · heights in µm`);
+        el('text', { x: W / 2, y: H - 5, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-muted)' }, `${f(5 * lc, 1)} mm evaluated · heights in µm`);
       };
     }
 
@@ -183,7 +183,7 @@ const READINGS = '0.31, 0.29, 0.36, 0.42, 0.33, 0.30\n0.34, 0.28, 0.32, 0.35, 0.
       rows.push({ dt: 'Typical finish', dd: `Ra ${fn.ra[0]} to ${fn.ra[1]} µm <small>${fn.note}</small>`, primary: true });
       const target = lim > 0 ? lim : fn.ra[1];
       const pf = processesFor(target), usual = pf.filter((x) => x.fit === 'usual').map((x) => x.name), poss = pf.filter((x) => x.fit === 'possible').map((x) => x.name);
-      rows.push({ dt: `Processes for Ra ${num2(target)}`, dd: `<small><b>usually:</b> ${usual.join(', ') || 'none'}${poss.length ? `<br><b>with care:</b> ${poss.join(', ')}` : ''}</small>` });
+      rows.push({ dt: `Processes for <span class="nc">Ra</span> ${num2(target)}`, dd: `<small><b>usually:</b> ${usual.join(', ') || 'none'}${poss.length ? `<br><b>with care:</b> ${poss.join(', ')}` : ''}</small>` });
       if (lim > 0) {
         if (vals.length) {
           const a = acceptance(vals, lim, rule);
@@ -199,7 +199,7 @@ const READINGS = '0.31, 0.29, 0.36, 0.42, 0.33, 0.30\n0.34, 0.28, 0.32, 0.35, 0.
       notes.push(['', 'The 16% rule accepts a surface if no more than 16% of the measured values are above the limit (ISO 4288 gives the sequence of measurements). The max rule accepts no value above the limit. Check which default the standard on your drawing uses, because ISO 21920 changed some defaults of ISO 1302 and ISO 4288.']);
       return () => {
         svg.replaceChildren();
-        const W = size(), H = 250, Lx = 128, R = 12, T = 22, B = 30, list = PROCESSES.slice().sort((a, b) => a.ra[1] - b.ra[1]);
+        const W = size(), H = 252, Lx = 128, R = 12, T = 22, B = 32, list = PROCESSES.slice().sort((a, b) => a.ra[1] - b.ra[1]);
         svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
         const lo = Math.log10(0.0125), hi = Math.log10(50), X = (v: number) => Lx + ((Math.log10(v) - lo) / (hi - lo)) * (W - Lx - R), row = (H - T - B) / list.length;
         for (const v of [0.025, 0.1, 0.4, 1.6, 6.3, 25]) {
@@ -214,7 +214,7 @@ const READINGS = '0.31, 0.29, 0.36, 0.42, 0.33, 0.30\n0.34, 0.28, 0.32, 0.35, 0.
         });
         el('rect', { x: X(fn.ra[0]), y: T, width: X(fn.ra[1]) - X(fn.ra[0]), height: H - T - B, fill: 'var(--rd-ok)', 'fill-opacity': 0.12 });
         if (lim > 0) el('line', { x1: X(lim), x2: X(lim), y1: T - 6, y2: H - B, stroke: 'var(--rd-accent)', 'stroke-width': 2 });
-        el('text', { x: Lx, y: 13, 'font-size': 11, fill: 'var(--rd-ok)' }, 'typical for the function');
+        el('text', { x: 6, y: 13, 'font-size': 11, fill: 'var(--rd-ok)' }, 'typical for the function');
         if (lim > 0) el('text', { x: W - R, y: 13, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--rd-accent)' }, 'your limit');
         el('text', { x: (Lx + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--rd-ink)' }, 'Ra (µm), log scale');
       };

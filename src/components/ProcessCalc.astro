@@ -39,7 +39,7 @@ const PRICE = Object.fromEntries(PRICED.map((m) => [m.key, m.price]));
           <label>Machining rate (£/h)<input name="c_rate" type="number" min="0" step="any" value="90" /></label>
           <label>Quantity<input name="c_q" type="number" min="1" step="1" value="20" /></label>
         </div>
-        <div class="pc-routes">
+        <div class="pc-rwrap"><div class="pc-routes">
           <span>Route</span><span>Buy-to-fly</span><span>Tooling (£)</span><span>Process (£/part)</span><span>Machining (h)</span>
           {ROUTES.map((r, i) => (
             <>
@@ -50,7 +50,7 @@ const PRICE = Object.fromEntries(PRICED.map((m) => [m.key, m.price]));
               <input name={`r_h${i}`} type="number" min="0" step="any" value={r.machiningHours} aria-label={`${r.name}: machining hours`} />
             </>
           ))}
-        </div>
+        </div></div>
         <p class="hint">Illustrative values for a machined closure. Replace them with quotes. Buy-to-fly is the mass bought divided by the finished mass.</p>
       </fieldset>
 
@@ -101,9 +101,13 @@ const PRICE = Object.fromEntries(PRICED.map((m) => [m.key, m.price]));
   .hc-fig svg { width: 100%; height: auto; font-family: var(--sl-font-mono); }
   .hc-fig figcaption { font-size: var(--sl-text-xs); color: var(--rd-muted); }
   .prcalc2 .pv-notes { font-size: var(--sl-text-sm); margin-top: 0.75rem !important; padding-left: 1.1rem; }
-  @container (max-width: 30rem) {
-    .pc-routes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .pc-routes > span:not(.pc-rn) { display: none; }
+  /* Five columns need about 36rem. In a narrower form (a phone, or the form column beside the results) the route name
+     takes its own row and the four headings stay above the four columns. */
+  .pc-rwrap { container-type: inline-size; }
+  @container (max-width: 36rem) {
+    .pc-routes { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
+    .pc-routes > span:first-child { display: none; }
+    .pc-routes > span:not(.pc-rn) { line-height: 1.25; }
     .pc-rn { grid-column: 1 / -1; margin-top: 0.3rem !important; }
   }
 </style>

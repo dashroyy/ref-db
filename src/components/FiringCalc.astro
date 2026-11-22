@@ -61,7 +61,7 @@
         </label>
       </fieldset>
       <fieldset data-panel="unc" hidden>
-        <legend>Measurement uncertainty (1σ)</legend>
+        <legend>Measurement uncertainty (1<span class="nc">σ</span>)</legend>
         <div class="row2">
           <label>Thrust (% of reading)<input name="uF" type="number" min="0" step="any" value="0.5" /></label>
           <label>Pressure (% of reading)<input name="up" type="number" min="0" step="any" value="0.5" /></label>
@@ -79,7 +79,7 @@
       <div data-out="reduce">
         <dl class="readouts">
           <div class="readout primary"><dt>Delivered specific impulse</dt><dd data-r="isp">—</dd></div>
-          <div class="readout"><dt>Delivered c*</dt><dd data-r="cs">—</dd></div>
+          <div class="readout"><dt>Delivered <span class="nc">c*</span></dt><dd data-r="cs">—</dd></div>
           <div class="readout"><dt>Delivered C<sub>F</sub></dt><dd data-r="cf">—</dd></div>
           <div class="readout"><dt>Burn rate</dt><dd data-r="rb">—</dd></div>
           <div class="readout"><dt>Action and burn time</dt><dd data-r="times">—</dd></div>
@@ -226,7 +226,7 @@
         ['C<sub>F</sub>', last.cf, rss(uF, up, uA, uE), 'thrust, pressure, throat, erosion'],
         ['Burn rate', last.burnRate, rss(uW, uTb), 'web, burn time'],
       ];
-      $('[data-utable]').innerHTML = `<table><thead><tr><th>Result</th><th>Value</th><th>1σ</th><th>±95% (k = 2)</th><th>From</th></tr></thead><tbody>${rows.map(([n, v, u, from]) =>
+      $('[data-utable]').innerHTML = `<table><thead><tr><th>Result</th><th>Value</th><th>1<span class="nc">σ</span></th><th>±95% (<span class="nc">k</span> = 2)</th><th>From</th></tr></thead><tbody>${rows.map(([n, v, u, from]) =>
         `<tr><td>${n}</td><td>${f(v, n === 'C<sub>F</sub>' ? 3 : n === 'Burn rate' ? 2 : 1)}</td><td>${f(u * 100, 2)}%</td><td>${f(2 * u * 100, 2)}%</td><td>${from}</td></tr>`).join('')}</tbody></table>`;
       notes.push(['', `The throat governs c* and C<sub>F</sub> here: a ${f(uD, 2)} mm measurement is ${f(uA * 100, 2)}% of the area, but the erosion history between ${f(d0, 2)} and ${f(d1, 2)} mm adds ${f(uE * 100, 2)}%. If nothing is known about the history, the area could be anywhere between the two: ${f((Math.abs(d1 * d1 - d0 * d0) / (2 * Math.sqrt(3) * aBar)) * 100, 1)}%. The specific impulse does not need the throat at all, which is why it is the most accurate result of a firing.`]);
       notes.push(['', 'These are the measurement terms only. The scatter between motors of the same lot is usually larger: fire enough motors to see it, and keep the two apart in the report.']);

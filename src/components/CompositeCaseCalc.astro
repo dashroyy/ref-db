@@ -96,7 +96,7 @@ const t700 = FIBRES[0];
           <div class="readout"><dt>Fibre stress</dt><dd data-r="sig">—</dd></div>
           <div class="readout"><dt>Case mass (netting)</dt><dd data-r="mass">—</dd></div>
           <div class="readout"><dt>Volume and length</dt><dd data-r="vol">—</dd></div>
-          <div class="readout"><dt>p<sub>b</sub>V/W</dt><dd data-r="pvw">—</dd></div>
+          <div class="readout"><dt><span class="nc">p</span><sub>b</sub>V/W</dt><dd data-r="pvw">—</dd></div>
           <div class="readout" data-grow><dt>Growth at MEOP</dt><dd data-r="grow">—</dd></div>
           <div class="readout" data-bs><dt>Grain bore strain from pressure</dt><dd data-r="bore">—</dd></div>
         </dl>
@@ -312,7 +312,7 @@ const t700 = FIBRES[0];
       const max = Math.max(...all.map((a) => a.c.mass), s && Number.isFinite(s.mass) ? s.mass : 0);
       const bar = (v: number) => `<span class="bar" style="width:${((3 * v) / max).toFixed(2)}rem"></span>`;
       const bore = !!inputs().bore;
-      $('[data-cmp]').innerHTML = `<p class="pv-sub">Every fibre at this duty</p><div class="wrap"><table><thead><tr><th>Fibre</th><th>Wall (mm)</th><th>Case mass (kg)</th><th>p<sub>b</sub>V/W (km)</th><th>Strain at MEOP (%)</th>${bore ? '<th>Bore strain (%)</th>' : ''}</tr></thead><tbody>${all.map(({ x, c }) =>
+      $('[data-cmp]').innerHTML = `<p class="pv-sub">Every fibre at this duty</p><div class="wrap"><table><thead><tr><th>Fibre</th><th>Wall (mm)</th><th>Case mass (kg)</th><th><span class="nc">p</span><sub>b</sub>V/W (<span class="nc">km</span>)</th><th>Strain at MEOP (%)</th>${bore ? '<th>Bore strain (%)</th>' : ''}</tr></thead><tbody>${all.map(({ x, c }) =>
         `<tr class="${x.key === sel ? 'sel' : ''}"><td>${esc(x.name)}</td><td>${f(c.wall, 3)}</td><td>${bar(c.mass)}${f(c.mass, 2)}</td><td>${f(c.pvw / 1000, 1)}</td><td>${f(c.strain * 100, 2)}</td>${bore ? `<td>${f(c.boreStrain * 100, 1)}</td>` : ''}</tr>`).join('')}${s && Number.isFinite(s.mass) ? `<tr class="metal"><td>${esc(m.name)} (metal, for reference)</td><td>${f(s.wall, 3)}</td><td>${bar(s.mass)}${f(s.mass, 2)}</td><td>${f(s.pvw / 1000, 1)}</td><td>${f(s.hoopStrain * 100, 2)}</td>${bore ? `<td>${f(s.boreStrain * 100, 1)}</td>` : ''}</tr>` : ''}</tbody></table></div><p class="hint">The same η and fibre volume fraction for every fibre, with the published strengths (your own values for the selected fibre). In practice η differs between fibres and processes, so compare your own burst data. Mass is one criterion: stiffness (the strain columns), toughness, moisture, cost and supply also decide.</p>`;
     }
 

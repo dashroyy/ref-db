@@ -166,7 +166,7 @@ const STUDY = makeStudy({ parts: 10, trials: 3, partSd: 12, repSd: 1.2, bias: [0
       notes.push(['', 'ISO 14253-1: the supplier proves conformance with the limits moved in by U, and the customer proves non-conformance with the limits moved out by U. Write the decision rule in the contract or on the drawing (ISO/TR 14253-6, ASME B89.7.3.1).']);
       return () => {
         svg.replaceChildren();
-        const W = size(), H = 250, L = 16, R = 16, T = 50, B = 40;
+        const W = size(), H = 258, L = 16, R = 16, T = 50, B = 44;
         svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
         const span = usl - lsl, x0 = Math.min(lsl - 0.25 * span, Number.isFinite(mean) ? mean - 4 * sd : lsl), x1 = Math.max(usl + 0.25 * span, Number.isFinite(mean) ? mean + 4 * sd : usl);
         const X = (v: number) => L + ((v - x0) / (x1 - x0)) * (W - L - R);
@@ -183,8 +183,8 @@ const STUDY = makeStudy({ parts: 10, trials: 3, partSd: 12, repSd: 1.2, bias: [0
         if (a.ok && rule === 'guard') for (const v of [a.lo, a.hi]) el('line', { x1: X(v), x2: X(v), y1: T, y2: H - B, stroke: 'var(--rd-accent)', 'stroke-width': 2, 'stroke-dasharray': '5 3' });
         txt(X(lsl), T - 14, 'LSL'); txt(X(usl), T - 14, 'USL');
         txt(W / 2, 14, rule === 'guard' ? 'dashed: acceptance limits · amber: ±U' : 'amber: ±U at each limit', 'var(--rd-muted)', 'middle', 11);
-        txt(X(lsl), H - B + 26, g3(lsl), 'var(--rd-muted)', 'middle', 11); txt(X(usl), H - B + 26, g3(usl), 'var(--rd-muted)', 'middle', 11);
-        txt(W / 2, H - 2, 'size (µm from nominal) · blue: the process', 'var(--rd-ink)', 'middle', 11);
+        txt(X(lsl), H - B + 24, g3(lsl), 'var(--rd-muted)', 'middle', 11); txt(X(usl), H - B + 24, g3(usl), 'var(--rd-muted)', 'middle', 11);
+        txt(W / 2, H - 5, 'size (µm from nominal) · blue: the process', 'var(--rd-ink)', 'middle', 11);
       };
     }
 
@@ -209,7 +209,7 @@ const STUDY = makeStudy({ parts: 10, trials: 3, partSd: 12, repSd: 1.2, bias: [0
       notes.push(['', 'GRR of tolerance tells if the gauge can accept parts. GRR of total variation tells if it can control the process. AIAG guidance: under 10% is acceptable, 10 to 30% can be acceptable for the application, over 30% is not acceptable.']);
       return () => {
         svg.replaceChildren();
-        const W = size(), H = 250, L = 96, R = 18, T = 26, B = 34;
+        const W = size(), H = 250, L = 116, R = 18, T = 26, B = 34;
         svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
         const items = [['repeatability', r.pctEV], ['reproducibility', r.pctAV], ['GRR', r.pctGRR], ['part', r.pctPV]] as [string, number][];
         const top = 100, X = (v: number) => L + (Math.min(v, top) / top) * (W - L - R), row = (H - T - B) / items.length;
@@ -220,9 +220,10 @@ const STUDY = makeStudy({ parts: 10, trials: 3, partSd: 12, repSd: 1.2, bias: [0
         items.forEach(([n, v], i) => {
           const y = T + i * row + row * 0.2;
           el('rect', { x: L, y, width: Math.max(1, X(v) - L), height: row * 0.6, rx: 2, fill: n === 'part' ? 'var(--rd-blue)' : n === 'GRR' ? 'var(--rd-accent)' : 'var(--rd-steel)', 'fill-opacity': 0.8 });
-          txt(L - 6, y + row * 0.3 + 4, n, 'var(--rd-ink)', 'end');
+          txt(L - 6, y + row * 0.3 + 4, n, 'var(--rd-ink)', 'end', 11);
         });
-        txt((L + W - R) / 2, H - 4, 'share of total variation (σ ÷ TV)', 'var(--rd-ink)', 'middle', 11);
+        const title = 'share of total variation (σ ÷ TV)', half = title.length * 3.3 + 4; // centred on the bars, kept inside the chart
+        txt(Math.min(Math.max((L + W - R) / 2, half), W - half), H - 4, title, 'var(--rd-ink)', 'middle', 11);
       };
     }
 
