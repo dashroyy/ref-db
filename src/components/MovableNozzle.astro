@@ -1,0 +1,100 @@
+---
+// A movable nozzle on a flexible bearing, in section: the aft dome of the case and its boss, the bearing (rubber pads
+// and shims on spheres round the pivot), the thermal boot, the nozzle with its housing and its actuator. The nozzle
+// turned by δ is dashed, with the thrust along the turned axis and its side component. Schematic; the angle is
+// exaggerated.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-accent)', steel = 'var(--rd-steel)';
+const P = { x: 180, y: 150 }; // pivot, on the motor axis
+const D = 7; // vector angle drawn, degrees (exaggerated)
+const rad = (a: number) => (a * Math.PI) / 180;
+const pol = (r: number, a: number) => [P.x + r * Math.cos(rad(a)), P.y - r * Math.sin(rad(a))] as const;
+const pt = (p: readonly [number, number]) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+/** A band between radii r0 < r1 and angles a0 < a1 (degrees), upper half. */
+const band = (r0: number, r1: number, a0: number, a1: number) =>
+  `M${pt(pol(r0, a0))} L${pt(pol(r1, a0))} A${r1} ${r1} 0 0 0 ${pt(pol(r1, a1))} L${pt(pol(r0, a1))} A${r0} ${r0} 0 0 1 ${pt(pol(r0, a0))} Z`;
+const A0 = 40, A1 = 64; // the angles that every pad spans
+const R0 = 56, R1 = 78; // the stack, from the case side to the nozzle side
+const N = 9; // layers drawn: pad, shim, pad, …
+const layers = Array.from({ length: N }, (_, k) => ({ r0: R0 + (k * (R1 - R0)) / N, r1: R0 + ((k + 1) * (R1 - R0)) / N, pad: k % 2 === 0 }));
+// case: the cylinder, the aft dome and the boss that holds the inner end ring
+const caseUp = `M0,22 L118,22 Q188,22 ${pt(pol(R0 - 4, A1 + 4))} L${pt(pol(R0 - 6, A0))} L${pt(pol(R0 - 14, A0 + 2))} L${pt(pol(R0 - 14, A1 + 6))} Q176,30 118,30 L0,30 Z`;
+// nozzle: nose lip, entrance, throat and exit cone on the gas side; the exit cone, the housing round the back of the
+// bearing and the nose on the outside
+const nozzleUp = [
+  'M146,118 Q196,118 226,137 L396,104 L396,98 L272,121',
+  `L${pt(pol(R1 + 14, 30))} A${R1 + 14} ${R1 + 14} 0 0 0 ${pt(pol(R1 + 14, A1))} L${pt(pol(R1 + 6, A1))} A${R1 + 6} ${R1 + 6} 0 0 1 ${pt(pol(R1 + 6, 30))}`,
+  'L252,128 L232,126 Q192,110 146,110 Z',
+].join(' ');
+const mirror = 'matrix(1 0 0 -1 0 300)'; // the lower half
+// actuator: from a bracket on the case to a bracket on the exit cone
+const act0 = [150, 30] as const, act1 = [318, 106] as const;
+const along = (t: number) => [act0[0] + (act1[0] - act0[0]) * t, act0[1] + (act1[1] - act0[1]) * t] as const;
+const ang = (Math.atan2(act1[1] - act0[1], act1[0] - act0[0]) * 180) / Math.PI;
+const body0 = along(0.1), body1 = along(0.6);
+// the thrust on the vehicle along the turned axis (forward), and its side component
+const F = 92, Fx = P.x - F * Math.cos(rad(D)), Fy = P.y + F * Math.sin(rad(D));
+---
+
+<figure class="viz mvn">
+  <p class="viz-title">A movable nozzle on a flexible bearing</p>
+  <svg viewBox="0 0 440 300" role="img" aria-labelledby="mvn-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="mvn-desc">
+      Section through the aft end of a motor. The aft dome of the case ends in a boss. The flexible bearing sits between
+      the boss and the nozzle housing: thin rubber pads and metal shims, all on spheres centred on the pivot, which is on
+      the motor axis. A flexible boot covers the inner edge of the bearing and keeps the hot gas off it. The nose of the
+      nozzle reaches forward into the chamber through the bearing. An actuator connects a bracket on the case to a
+      bracket on the exit cone. Dashed: the exit cone turned through the vector angle about the pivot. The thrust then
+      acts along the turned axis, and its side component turns the vehicle.
+    </desc>
+    <defs>
+      <marker id="mvn-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={ink}></path></marker>
+      <marker id="mvn-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={hot}></path></marker>
+    </defs>
+    {['', mirror].map((tf) => (
+      <g transform={tf || undefined}>
+        <path d={caseUp} fill={steel} fill-opacity="0.5" stroke={muted}></path>
+        <path d={nozzleUp} fill="var(--rd-propellant)" fill-opacity="0.5" stroke={muted}></path>
+        <path d={band(R0 - 6, R0, A0, A1)} fill={muted} fill-opacity="0.75"></path>
+        <path d={band(R1, R1 + 6, A0, A1)} fill={muted} fill-opacity="0.75"></path>
+        {layers.map((l) => <path d={band(l.r0, l.r1, A0, A1)} fill={l.pad ? 'var(--rd-ink)' : steel} fill-opacity={l.pad ? 0.85 : 1}></path>)}
+        <path d={`M${pt(pol(R0 - 13, A0 + 3))} Q206,126 230,125`} fill="none" stroke={hot} stroke-width="3" stroke-linecap="round"></path>
+      </g>
+    ))}
+    <!-- the motor axis, the turned nozzle axis and exit cone, and the angle -->
+    <line x1="0" x2="440" y1={P.y} y2={P.y} stroke={muted} stroke-dasharray="10 3 2 3"></line>
+    <g transform={`rotate(${-D} ${P.x} ${P.y})`}>
+      <line x1={P.x} x2="430" y1={P.y} y2={P.y} stroke={hot} stroke-dasharray="6 4"></line>
+      <path d={`M226,137 L396,104 L396,196 L226,163`} fill="none" stroke={hot} stroke-dasharray="4 3"></path>
+    </g>
+    <path d={`M${P.x + 236},${P.y} A236 236 0 0 0 ${pt(pol(236, D))}`} fill="none" stroke={hot}></path>
+    <text x={P.x + 241} y={P.y - 10} font-size="13" fill={hot}>δ</text>
+    <!-- actuator -->
+    <line x1={act0[0]} y1={act0[1]} x2={act1[0]} y2={act1[1]} stroke={ink} stroke-width="2"></line>
+    <rect x={body0[0]} y={body0[1] - 5} width={Math.hypot(body1[0] - body0[0], body1[1] - body0[1])} height="10" rx="2" fill="var(--rd-panel2)" stroke={ink} transform={`rotate(${ang} ${body0[0]} ${body0[1]})`}></rect>
+    <circle cx={act0[0]} cy={act0[1]} r="3.5" fill={ink}></circle>
+    <circle cx={act1[0]} cy={act1[1]} r="3.5" fill={ink}></circle>
+    <!-- pivot -->
+    <circle cx={P.x} cy={P.y} r="4.5" fill="var(--rd-panel)" stroke={ink} stroke-width="1.5"></circle>
+    <path d={`M${P.x - 8},${P.y} h16 M${P.x},${P.y - 8} v16`} stroke={ink}></path>
+    <!-- thrust on the vehicle along the turned axis, and its side component -->
+    <line x1={P.x - 12} y1={P.y + 12 * Math.sin(rad(D))} x2={Fx} y2={Fy} stroke={ink} stroke-width="2.2" marker-end="url(#mvn-a)"></line>
+    <line x1={Fx - 26} y1={P.y} x2={Fx - 26} y2={P.y + 30} stroke={hot} stroke-width="2.2" marker-end="url(#mvn-b)"></line>
+    <!-- labels -->
+    <text x="16" y="48" font-size="12" fill={muted}>case</text>
+    <text x="236" y="40" font-size="12" fill={ink}>actuator</text>
+    <text x={(P.x + Fx) / 2} y={P.y - 8} text-anchor="middle" font-size="12" fill={ink}>F</text>
+    <text x={Fx - 32} y={P.y + 46} font-size="12" fill={hot}>F sin δ</text>
+    <text x={P.x - 10} y={P.y + 21} text-anchor="end" font-size="12" fill={ink}>pivot</text>
+    <line x1="292" y1="254" x2={pol(68, -54)[0]} y2={pol(68, -54)[1]} stroke={muted}></line>
+    <text x="296" y="261" font-size="12" fill={ink}>flexible bearing:</text>
+    <text x="296" y="278" font-size="12" fill={ink}>rubber and shims</text>
+    <line x1="150" y1="226" x2="206" y2="176" stroke={muted}></line>
+    <text x="112" y="240" font-size="12" fill={hot}>boot</text>
+  </svg>
+  <figcaption>
+    The pads are thin, so the rubber cannot bulge much: the stack is stiff in compression and carries the blow-off load
+    of the nozzle to the case. The pads are soft in shear, so the nozzle turns about the pivot when the actuator pushes
+    it. Turned through δ, the thrust gives a side force F sin δ that steers the vehicle. Schematic; the angle is
+    exaggerated.
+  </figcaption>
+</figure>

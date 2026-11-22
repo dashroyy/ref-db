@@ -52,6 +52,7 @@ test('citations are found in the text of the pages that cite them', () => {
     ['bartz', 'motor/nozzle'], ['summerfield', 'motor/nozzle'], ['huzel', 'motor/nozzle'],
     ['eckert', 'motor/external-heating'], ['andersonhyp', 'motor/external-heating'], ['ussa', 'motor/external-heating'],
     ['hdbk310', 'motor/external-heating'], ['incropera', 'motor/transient-thermal'], ['ptc191', 'verify/static-firing'], ['gum', 'verify/static-firing'],
+    ['sp8114', 'motor/thrust-vector-control'], ['gent', 'motor/thrust-vector-control'], ['kelly', 'motor/thrust-vector-control'], ['en1337', 'motor/thrust-vector-control'],
   ];
   for (const [id, page] of cited) assert.ok(pages(id).includes(page), `${id} on ${page}`);
   // no pattern is so loose that it finds a source on most pages
@@ -59,7 +60,7 @@ test('citations are found in the text of the pages that cite them', () => {
 });
 
 test('the numbers that the page states', () => {
-  assert.equal(SOURCES.length, 90, 'the page says 90 sources');
+  assert.equal(SOURCES.length, 92, 'the page says 92 sources');
   assert.equal(CATS.length, 10, 'in ten subjects');
   assert.equal(SOURCES.filter((s) => s.start && s.free).length, 2, 'two of the start set are free');
   const casePath = PATHS.find((p) => p.key === 'case')!;

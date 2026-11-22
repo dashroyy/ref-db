@@ -47,6 +47,7 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r[r.findIndex((x) => x.key === 'pv') + 2].key, 'primer-closures', 'then the closures primer');
   assert.equal(r[r.findIndex((x) => x.key === 'grain') + 1].key, 'primer-instability', 'the instability primer follows the grain');
   assert.equal(r[r.findIndex((x) => x.key === 'ablative') + 1].key, 'primer-nozzle', 'the nozzle primer follows the ablative liners');
+  assert.equal(r[r.findIndex((x) => x.key === 'ablative') + 2].key, 'primer-tvc', 'then the thrust-vector-control primer');
   assert.equal(r[r.findIndex((x) => x.key === 'proof') + 1].key, 'primer-firing', 'the static-firing primer follows proof testing');
   assert.equal(r[r.findIndex((x) => x.key === 'thermal') + 1].key, 'primer-heating', 'the external-heating primer follows transient thermal');
   assert.equal(r.filter((x) => x.slug === null).length, 0, 'every zone is rebuilt');

@@ -1,0 +1,405 @@
+---
+// Movable nozzle: the flexible bearing pad by pad, the actuator's torque budget, and the steering authority. The
+// calculations live in src/lib/tvc.ts (unit-tested); this file is UI only.
+import MaterialSelect from './MaterialSelect.astro';
+import { MATERIALS, DEFAULTS as D, type Material } from '../lib/materials';
+
+const FAMILIES = ['steel', 'ss', 'ti'];
+const metals = MATERIALS.filter((m) => FAMILIES.includes(m.family) && m.Fty! > 0)
+  .sort((a, b) => b.Fty! - a.Fty!)
+  .map((m: Material) => ({ key: m.key, name: m.name, family: m.family, yield: m.Fty! }));
+const shim = metals.find((m) => m.name === '4130 (25CrMo4)')?.key ?? D.caseSteel;
+---
+
+<div class="calc tvcalc" data-tvcalc data-shim={shim}>
+  <div class="calc-head">
+    <span>Movable nozzle: flexible bearing, actuator and authority</span>
+    <span class="head-btns">
+      <span>bonded-layer theory · SP-8114 torque terms</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="bearing" aria-selected="true">Flexible bearing</button>
+    <button type="button" role="tab" class="chip" data-tab="act" aria-selected="false">Actuator</button>
+    <button type="button" role="tab" class="chip" data-tab="auth" aria-selected="false">Authority</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Motor</legend>
+        <div class="row2">
+          <label>Chamber pressure (MPa)<input name="pc" type="number" min="0.1" step="any" value="10" /></label>
+          <label>Ambient pressure (MPa)<input name="pa" type="number" min="0" step="any" value="0.101" /></label>
+          <label>Thrust at that pressure (kN)<input name="F" type="number" min="0" step="any" value="31.5" /></label>
+          <label>Largest vector angle (°)<input name="dl" type="number" min="0.1" max="15" step="any" value="5" /></label>
+        </div>
+        <p class="hint">Use MEOP for the design load. In firing, the thrust takes some load off the bearing. A pressure test with the throat plugged has no thrust, so the bearing carries the full pressure load.</p>
+      </fieldset>
+      <fieldset data-panel="bearing">
+        <legend>Bearing</legend>
+        <div class="row2">
+          <label>Pad inner radius (mm)<input name="ri" type="number" min="1" step="any" value="55" /></label>
+          <label>Pad outer radius (mm)<input name="ro" type="number" min="1" step="any" value="85" /></label>
+          <label>Pivot to the middle of the stack (mm)<input name="R" type="number" min="1" step="any" value="130" /></label>
+          <label>Number of pads<input name="n" type="number" min="1" max="60" step="1" value="12" /></label>
+          <label>Pad thickness (mm)<input name="te" type="number" min="0.1" step="any" value="1.4" /></label>
+          <label>Shim thickness (mm)<input name="ts" type="number" min="0" step="any" value="1.0" /></label>
+          <label>Rubber G, warm (MPa)<input name="G" type="number" min="0.01" step="any" value="0.6" /></label>
+          <label>Rubber G, cold end (MPa)<input name="Gc" type="number" min="0.01" step="any" value="1.2" /></label>
+          <label>Rubber bulk modulus (MPa)<input name="Kb" type="number" min="1" step="any" value="2000" /></label>
+        </div>
+        <label>Shim material<MaterialSelect name="sm" list={metals} selected={shim} /></label>
+        <p class="hint">The radii are normal to the nozzle axis, at the middle of the stack. Each pad spans the same angles from the pivot. A bearing rubber has a low shear modulus G, about 0.4 to 1 MPa at room temperature, and it gets stiffer in the cold. Measure G on your compound at both ends of the temperature range.</p>
+      </fieldset>
+      <fieldset data-panel="act" hidden>
+        <legend>Moving parts and actuator</legend>
+        <div class="row2">
+          <label>Mass that moves (kg)<input name="m" type="number" min="0" step="any" value="9" /></label>
+          <label>Its CG aft of the pivot (mm)<input name="d" type="number" step="any" value="110" /></label>
+          <label>Inertia about the pivot (kg·m²)<input name="I" type="number" min="0" step="any" value="0.16" /></label>
+          <label>Vehicle acceleration (g)<input name="acc" type="number" min="0" step="any" value="10" /></label>
+          <label>Centre of pressure aft of the pivot (mm)<input name="e" type="number" step="any" value="4" /></label>
+          <label>Friction or hysteresis (N·m)<input name="fr" type="number" min="0" step="any" value="50" /></label>
+          <label>Command amplitude (°)<input name="amp" type="number" min="0" step="any" value="1" /></label>
+          <label>at a frequency of (Hz)<input name="fq" type="number" min="0" step="any" value="6" /></label>
+          <label>Slew rate (°/s)<input name="sl" type="number" min="0" step="any" value="30" /></label>
+          <label>Actuator arm (mm)<input name="arm" type="number" min="1" step="any" value="150" /></label>
+        </div>
+        <p class="hint">The spring stiffness comes from the Flexible bearing tab, warm and cold. The centre of pressure, the friction and the hysteresis come from torque tests of the bearing at pressure: the values here are illustrative. A negative centre of pressure (forward of the pivot) pushes the nozzle out.</p>
+      </fieldset>
+      <fieldset data-panel="auth" hidden>
+        <legend>Vehicle</legend>
+        <div class="row2">
+          <label>Pivot to the vehicle CG (mm)<input name="L" type="number" min="1" step="any" value="700" /></label>
+          <label>Thrust-line offset at the CG (mm)<input name="dm" type="number" min="0" step="any" value="0.45" /></label>
+          <label>Lateral offset of the CG (mm)<input name="yc" type="number" min="0" step="any" value="1" /></label>
+        </div>
+        <p class="hint">The thrust-line offset is the result of the alignment stack on the <a href="../../drawing/tolerance-stack/#the-nozzle-alignment">Tolerance stack</a> page. The two offsets are added, as if they were in line.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Your criteria</legend>
+        <div class="row2">
+          <label>Allowable shear strain<input name="ga" type="number" min="0.05" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Shim factor on yield<input name="sf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Actuator force capacity (kN)<input name="cap" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">These come from your programme: the strain limit of the rubber and its bond from their tests, the factor from your design rules, the capacity from the actuator's specification. Not from this site.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="tv-out">
+      <div data-out="bearing">
+        <dl class="readouts">
+          <div class="readout primary" data-gam><dt>Shear strain in the rubber</dt><dd data-r="gam">—</dd></div>
+          <div class="readout"><dt>Blow-off load</dt><dd data-r="fax">—</dd></div>
+          <div class="readout"><dt>Pad pressure · shape factor</dt><dd data-r="sig">—</dd></div>
+          <div class="readout"><dt>Nozzle moves aft</dt><dd data-r="ax">—</dd></div>
+          <div class="readout" data-shimbox><dt>Shim stress</dt><dd data-r="shim">—</dd></div>
+          <div class="readout"><dt>Spring stiffness</dt><dd data-r="k">—</dd></div>
+          <div class="readout"><dt>Stack</dt><dd data-r="stack">—</dd></div>
+        </dl>
+        <figure class="tv-fig">
+          <svg data-bchart role="img" aria-label="Half section of the flexible bearing, to scale, with the pads shaded by their shear strain"></svg>
+          <figcaption>Half section of the bearing to scale, with the pivot on the nozzle axis. Every pad spans the same angles from the pivot. A darker pad has more shear strain, at the largest angle and warm.</figcaption>
+        </figure>
+      </div>
+      <div data-out="act" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-forcebox><dt>Actuator force</dt><dd data-r="force">—</dd></div>
+          <div class="readout"><dt>Torque at the largest angle</dt><dd data-r="tq">—</dd></div>
+          <div class="readout"><dt>Stroke · rate</dt><dd data-r="stroke">—</dd></div>
+          <div class="readout"><dt>Peak power</dt><dd data-r="pow">—</dd></div>
+          <div class="readout" data-stab><dt>Without the actuator</dt><dd data-r="stab">—</dd></div>
+        </dl>
+        <figure class="tv-fig">
+          <svg data-achart role="img" aria-label="Torque at the largest angle, warm and at the cold end, by its parts"></svg>
+          <figcaption>The torque that the actuator must give at the largest angle, warm and at the cold end, by its parts. The dashed line is the capacity of the actuator, when you enter it.</figcaption>
+        </figure>
+      </div>
+      <div data-out="auth" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>Left for steering</dt><dd data-r="left">—</dd></div>
+          <div class="readout"><dt>Side force</dt><dd data-r="side">—</dd></div>
+          <div class="readout"><dt>Disturbing moment</dt><dd data-r="dist">—</dd></div>
+          <div class="readout"><dt>Thrust lost</dt><dd data-r="loss">—</dd></div>
+        </dl>
+        <figure class="tv-fig">
+          <svg data-uchart role="img" aria-label="The largest vector angle, split into the trim for misalignment and the angle left for steering"></svg>
+          <figcaption>The largest vector angle, split into the part that holds the vehicle against the misalignment and the part left for steering.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. Bonded-layer theory for thin pads (Gent): the compression modulus 4G(1 + S²) in
+    series with the bulk modulus, the shear strain at the bonded edges 1.5Sσ/(G(1 + S²)), and 0.75σ·t<sub>e</sub>/t<sub>s</sub>
+    in a shim from each of its faces. The pads are on concentric spheres and span the same angles, and the pressure acts
+    inside the middle radius of the band. The torque terms follow NASA SP-8114. Not included: the change of the spring
+    torque with pressure, the pivot shift, the end rings, buckling of the shims, the thermal boot, fatigue of the rubber,
+    flow torques other than the centre-of-pressure offset, and the dynamics of the servo.
+  </div>
+  <script type="application/json" data-mats set:html={JSON.stringify(Object.fromEntries(metals.map((m) => [m.key, m])))}></script>
+</div>
+
+<style is:global>
+  .tv-out { min-width: 0; }
+  .tv-out > div > * { min-width: 0; }
+  .tv-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { bearing, torqueBudget, authority, type Bearing } from '../lib/tvc';
+  import { readFactor, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const ms = (v: number) => (Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : '−'}${f(Math.abs(v), 2)}`);
+  const msClass = (v: number) => (v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+
+  document.querySelectorAll<HTMLElement>('[data-tvcalc]').forEach((root) => {
+    const mats = JSON.parse(root.querySelector('[data-mats]')!.textContent!);
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement;
+    const num = (n: string) => +field(n).value;
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'bearing';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const geo = (): Bearing => ({ ri: num('ri'), ro: num('ro'), R: num('R'), n: Math.round(num('n')), te: num('te'), ts: num('ts') });
+    const load = (G: number, F = num('F') * 1000) => ({ pc: num('pc'), pa: num('pa'), F, G, K: num('Kb'), delta: num('dl') });
+
+    function run() {
+      const notes: [string, string][] = [];
+      const pc = num('pc'), pa = num('pa'), dl = num('dl');
+      if (!(pc > 0 && pa >= 0 && pa < pc && num('F') >= 0 && dl > 0 && dl <= 15)) {
+        clear('Check the motor inputs: a chamber pressure above the ambient pressure, a thrust of zero or more, and a vector angle above 0° and up to 15°.');
+        return;
+      }
+      if (mode === 'auth') runAuth(notes);
+      else {
+        const b = geo();
+        if (!(num('G') > 0 && num('Gc') > 0 && num('Kb') > 0)) { clear('Enter the shear modulus of the rubber, warm and cold, and its bulk modulus.'); return; }
+        const warm = bearing(b, load(num('G'))), cold = bearing(b, load(num('Gc'))), test = bearing(b, load(num('G'), 0));
+        if (!warm.g.valid) { clear('These dimensions do not make a bearing: the inner radius must be below the outer radius, the outer radius below the pivot radius, and the stack lower than the pivot radius.'); return; }
+        if (!(warm.Fax > 0)) { clear('The thrust is larger than the pressure load, so the bearing would be pulled, not pushed. A flexible bearing must stay in compression. Check the thrust and the radii.'); return; }
+        if (mode === 'bearing') runBearing(notes, b, warm, cold, test);
+        else runAct(notes, warm, cold);
+      }
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function runBearing(notes: [string, string][], b: Bearing, w: ReturnType<typeof bearing>, c: ReturnType<typeof bearing>, t: ReturnType<typeof bearing>) {
+      const dl = num('dl'), ga = readFactor(field('ga').value, 0.05), sf = readFactor(field('sf').value), mat = mats[field('sm').value];
+      const p0 = w.pads[0], mid = w.Fax / w.proj;
+      const strainMs = ga !== null ? ga / w.gamma - 1 : null;
+      r('gam').innerHTML = `${f(w.gamma, 2)} <small>pad nearest the pivot, warm, at ${f(dl, 1)}°: ${f(p0.gammaC, 2)} from the bulge + ${f(p0.gammaR, 2)} from the rotation${ga !== null ? ` · allowable ${f(ga, 2)}: MS ${ms(strainMs!)}` : ' · enter your allowable to see the margin'}</small>`;
+      $('[data-gam]').className = `readout primary ${strainMs !== null ? msClass(strainMs) : ''}`;
+      r('fax').innerHTML = `${f(w.Fax / 1000, 1)} kN <small>in firing · ${f(w.Ftest / 1000, 1)} kN in a pressure test with the throat plugged (+${f((w.Ftest / w.Fax - 1) * 100, 0)}%)</small>`;
+      r('sig').innerHTML = `${f(p0.sigma, 2)} MPa · S ${f(p0.S, 1)} <small>pad nearest the pivot; ${f(mid, 2)} MPa at the middle radius</small>`;
+      r('ax').innerHTML = `${f(w.axial, 2)} mm <small>under the firing load, warm · ${f(t.axial, 2)} mm in the pressure test</small>`;
+      const allow = sf !== null && mat ? mat.yield / sf : null, shimMs = allow !== null && w.shimMax > 0 ? allow / Math.max(w.shimMax, t.shimMax) - 1 : null;
+      if (b.ts > 0 && w.g.n > 1) {
+        r('shim').innerHTML = `${f(w.shimMax, 0)} MPa <small>from the bulge of the pads, in firing · ${f(t.shimMax, 0)} MPa in the pressure test${allow !== null ? ` · allowable ${f(allow, 0)} MPa (yield ÷ ${f(sf!, 2)}): MS ${ms(shimMs!)}` : ''}</small>`;
+        $('[data-shimbox]').className = `readout ${shimMs !== null ? msClass(shimMs) : ''}`;
+      } else { r('shim').innerHTML = '— <small>no shims</small>'; $('[data-shimbox]').className = 'readout'; }
+      r('k').innerHTML = `${f(w.Kdeg, 1)} N·m/° <small>warm · ${f(c.Kdeg, 1)} N·m/° at the cold end · spring torque at ${f(dl, 1)}°: ${f(w.spring, 0)} and ${f(c.spring, 0)} N·m</small>`;
+      r('stack').innerHTML = `${f(w.g.H, 1)} mm <small>${w.g.n} pads of ${f(b.te, 2)} mm and ${Math.max(0, w.g.n - 1)} shims of ${f(b.ts, 2)} mm · ${f(w.g.n * b.te, 1)} mm of rubber</small>`;
+      drawBearing(b, w, ga);
+      if (strainMs !== null && strainMs < 0) {
+        notes.push(['bad', p0.gammaC > p0.gammaR
+          ? `The rubber is over its allowable strain, and the bulge is the larger part. Use thinner pads: the same rubber thickness in more layers raises the shape factor and cuts the bulge strain, but it does not change the stiffness.`
+          : `The rubber is over its allowable strain, and the rotation is the larger part. Add rubber thickness (more pads), use a larger pivot radius, or reduce the angle.`]);
+      }
+      notes.push(['', `The pad nearest the pivot works hardest. It is the smallest, so it carries the highest pressure (${f(p0.sigma, 2)} MPa against ${f(w.pads[w.pads.length - 1].sigma, 2)} MPa for the outermost pad) with the lowest shape factor, and it turns the most.`]);
+      notes.push(['warn', `In a pressure test with the throat plugged, the bearing carries ${f(w.Ftest / 1000, 1)} kN. The bulge strain of the innermost pad is then ${f(t.pads[0].gammaC, 2)} at the middle position, and ${f(t.gamma, 2)} if the test also turns the nozzle to ${f(dl, 1)}°. Check the test as well as the firing.`]);
+      notes.push(['', `At the cold end, G goes from ${f(num('G'), 2)} to ${f(num('Gc'), 2)} MPa. The spring torque goes up by the same ratio and the bulge strain goes down. The rotation strain does not change. Check the strain warm, and size the actuator cold.`]);
+      if (shimMs !== null && shimMs > 3) notes.push(['', 'The bulge loads the shims lightly here. Thin shims save length and mass, but they must keep their shape when the bearing is moulded. FEA of the bearing checks the hoop compression near the inner edge of each shim.']);
+    }
+
+    function runAct(notes: [string, string][], w: ReturnType<typeof bearing>, c: ReturnType<typeof bearing>) {
+      const dl = num('dl'), cap = readFactor(field('cap').value, 1e-6);
+      if (!(num('arm') > 0 && num('m') >= 0 && num('I') >= 0 && num('acc') >= 0 && num('fr') >= 0 && num('amp') >= 0 && num('fq') >= 0 && num('sl') >= 0)) { const msg = 'Check the inputs of the moving parts and the actuator: the arm must be above zero, and the others zero or more.'; clear(msg); notes.push(['bad', msg]); return; }
+      const a = { delta: dl, Fax: w.Fax, e: num('e'), m: num('m'), d: num('d'), I: num('I'), acc: num('acc'), amp: num('amp'), freq: num('fq'), friction: num('fr'), arm: num('arm'), slew: num('sl') };
+      const tw = torqueBudget({ ...a, K: w.K }), tc = torqueBudget({ ...a, K: c.K });
+      const big = tc.force >= tw.force ? tc : tw, capMs = cap !== null ? (cap * 1000) / big.force - 1 : null;
+      r('force').innerHTML = `${f(big.force / 1000, 2)} kN <small>${big === tc ? 'at the cold end' : 'warm'} · ${f((big === tc ? tw : tc).force / 1000, 2)} kN ${big === tc ? 'warm' : 'at the cold end'} · arm ${f(num('arm'), 0)} mm${capMs !== null ? ` · capacity ${f(cap!, 2)} kN: MS ${ms(capMs)}` : ''}</small>`;
+      $('[data-forcebox]').className = `readout primary ${capMs !== null ? msClass(capMs) : ''}`;
+      r('tq').innerHTML = `${f(tc.total, 0)} N·m <small>cold · ${f(tw.total, 0)} N·m warm · spring ${f(tc.spring, 0)} / ${f(tw.spring, 0)}, centre of pressure ${f(tw.offset, 0)}, acceleration ${f(tw.accel, 1)}, inertia ${f(tw.inertia, 1)}, friction ${f(tw.friction, 0)} N·m</small>`;
+      r('stroke').innerHTML = `${f(tw.stroke, 1)} mm · ${f(tw.rate, 0)} mm/s <small>±${f(tw.stroke / 2, 1)} mm for ±${f(dl, 1)}°; ${f(num('sl'), 0)}°/s at the nozzle</small>`;
+      r('pow').innerHTML = `${f(big.power, 0)} W <small>if the full force comes at the full rate; ${f(big.alpha, 1)} rad/s² for ${f(num('amp'), 2)}° at ${f(num('fq'), 1)} Hz</small>`;
+      r('stab').innerHTML = tw.stable && tc.stable
+        ? `stable <small>the bearing pulls the nozzle back to the middle: ${f((tw.net * Math.PI) / 180, 1)} N·m/° warm</small>`
+        : `unstable <small>the pressure and acceleration terms push the nozzle out: ${f((Math.min(tw.net, tc.net) * Math.PI) / 180, 1)} N·m/°</small>`;
+      $('[data-stab]').className = `readout ${tw.stable && tc.stable ? 'ok' : 'bad'}`;
+      drawTorque(tw, tc, cap);
+      if (!(tw.stable && tc.stable)) notes.push(['bad', 'Near the middle position, the pressure and acceleration terms push the nozzle out faster than the bearing pulls it back. The actuator must hold the nozzle, and a failed actuator lets it run to its stop. Move the centre of pressure aft of the pivot, or make the bearing stiffer.']);
+      notes.push(['', `The spring torque of the bearing is ${f((tc.spring / tc.total) * 100, 0)}% of the total at the cold end and ${f((tw.spring / tw.total) * 100, 0)}% warm. Specify the temperature range of the actuator test, and test the bearing cold.`]);
+      notes.push(['warn', 'The centre of pressure, the friction and the hysteresis come from torque tests of the bearing at pressure. The spring torque also changes with pressure. Until you have test data, these terms are estimates.']);
+      notes.push(['', 'The actuator, its mount and the nozzle make a spring and a mass. Keep their resonance well above the frequencies that the autopilot uses. The stiffness of the mount on the case counts as much as that of the actuator.']);
+    }
+
+    function runAuth(notes: [string, string][]) {
+      const dl = num('dl'), F = num('F') * 1000, L = num('L'), dm = num('dm'), yc = num('yc');
+      if (!(F > 0 && L > 0 && dm >= 0 && yc >= 0)) { const msg = 'Enter the thrust, the distance from the pivot to the centre of gravity, and the two offsets (zero or more).'; clear(msg); notes.push(['bad', msg]); return; }
+      const a = authority({ F, delta: dl, L, dm, ycg: yc });
+      if (!Number.isFinite(a.trim) || a.trim >= dl) {
+        r('left').innerHTML = `none <small>the misalignment needs more than ${f(dl, 1)}° to trim</small>`;
+        notes.push(['bad', 'The offsets need all of the vector angle, or more, to hold the vehicle straight. Reduce the misalignment, or increase the angle.']);
+      } else r('left').innerHTML = `${f(a.left, 2)}° <small>of ${f(dl, 1)}°: ${f(a.trim, 3)}° (${f(a.share * 100, 1)}%) holds the vehicle against the misalignment and the CG offset</small>`;
+      r('side').innerHTML = `${f(a.side / 1000, 2)} kN <small>at ${f(dl, 1)}° · ${f(a.moment / 1000, 2)} kN·m about the CG</small>`;
+      r('dist').innerHTML = `${f(a.disturb, 1)} N·m <small>${f(F / 1000, 1)} kN × (${f(dm, 2)} + ${f(yc, 2)}) mm</small>`;
+      r('loss').innerHTML = `${f(a.lossPct, 2)}% <small>${f(a.loss, 0)} N at ${f(dl, 1)}°, only while the nozzle is turned</small>`;
+      drawAuth(dl, a.trim);
+      notes.push(['', 'Each degree that trims the misalignment is a degree that the vehicle cannot use to steer. The trim also costs actuator power for the whole burn.']);
+      notes.push(['', 'One movable nozzle cannot control roll. Roll needs two nozzles, vanes, or a separate roll system.']);
+      notes.push(['', 'The distance from the pivot to the centre of gravity changes as the propellant burns, and so does the thrust. Check the authority at ignition and at the end of the burn.']);
+    }
+
+    // the half section of the bearing, to scale, with each pad shaded by its strain
+    function drawBearing(b: Bearing, w: ReturnType<typeof bearing>, ga: number | null) {
+      const svg = root.querySelector<SVGSVGElement>('[data-bchart]')!;
+      const W = width(svg), g = w.g, dl = num('dl');
+      const rIn = b.R - g.H / 2, rOut = b.R + g.H / 2, ring = Math.max(3, 0.04 * b.R);
+      const xMin = -0.14 * b.R, xMax = (rOut + ring) * g.c1 + 0.04 * b.R, yMax = (rOut + ring) * Math.sin(g.t2);
+      const T = 44, Bm = 30, side = 10;
+      const sc = Math.min((W - 2 * side) / (xMax - xMin), 250 / yMax);
+      const H = Math.round(T + Bm + yMax * sc), x0 = (W - (xMax - xMin) * sc) / 2;
+      const X = (x: number) => x0 + (x - xMin) * sc, Y = (y: number) => H - Bm - y * sc;
+      const P = (rr: number, th: number) => `${X(rr * Math.cos(th)).toFixed(1)},${Y(rr * Math.sin(th)).toFixed(1)}`;
+      const sector = (a: number, z: number) => `M${P(a, g.t1)} L${P(z, g.t1)} A${(z * sc).toFixed(1)} ${(z * sc).toFixed(1)} 0 0 0 ${P(z, g.t2)} L${P(a, g.t2)} A${(a * sc).toFixed(1)} ${(a * sc).toFixed(1)} 0 0 1 ${P(a, g.t1)} Z`;
+      const ref = ga ?? w.gamma;
+      const out: string[] = [];
+      // the cones through the pivot that bound every pad, and the sphere of radius R
+      for (const th of [g.t1, g.t2]) out.push(`<line x1="${X(0)}" y1="${Y(0)}" x2="${X((rIn - ring) * Math.cos(th)).toFixed(1)}" y2="${Y((rIn - ring) * Math.sin(th)).toFixed(1)}" stroke="var(--rd-muted)" stroke-dasharray="2 3"/>`);
+      out.push(`<line x1="${X(xMin)}" x2="${X(xMax)}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--rd-muted)" stroke-dasharray="10 3 2 3"/>`);
+      const rad = (dl * Math.PI) / 180, lenA = xMax * 0.98;
+      out.push(`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(lenA * Math.cos(rad)).toFixed(1)}" y2="${Y(lenA * Math.sin(rad)).toFixed(1)}" stroke="var(--rd-accent)" stroke-dasharray="6 4"/>`);
+      // end rings, then pads and shims
+      out.push(`<path d="${sector(rIn - ring, rIn)}" fill="var(--rd-muted)" fill-opacity="0.45"/><path d="${sector(rOut, rOut + ring)}" fill="var(--rd-muted)" fill-opacity="0.45"/>`);
+      w.pads.forEach((p, k) => {
+        out.push(`<path d="${sector(p.R - b.te / 2, p.R + b.te / 2)}" fill="var(--rd-accent)" fill-opacity="${(0.2 + 0.75 * Math.min(1, p.gamma / ref)).toFixed(2)}"/>`);
+        if (k < w.pads.length - 1 && b.ts > 0) out.push(`<path d="${sector(p.R + b.te / 2, p.R + b.te / 2 + b.ts)}" fill="var(--rd-steel)"/>`);
+      });
+      // the dimension R to the middle of the band
+      const tm = (g.t1 + g.t2) / 2;
+      out.push(`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(b.R * Math.cos(tm)).toFixed(1)}" y2="${Y(b.R * Math.sin(tm)).toFixed(1)}" stroke="var(--rd-ink)" stroke-width="1"/>`);
+      const lx = X(0.45 * b.R * Math.cos(tm)), ly = Y(0.45 * b.R * Math.sin(tm));
+      out.push(`<text x="${(lx - 6).toFixed(1)}" y="${(ly - 6).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--rd-ink)" ${halo}>R ${f(b.R, 0)}</text>`);
+      out.push(`<circle cx="${X(0)}" cy="${Y(0)}" r="4.5" fill="var(--rd-panel)" stroke="var(--rd-ink)" stroke-width="1.5"/><path d="M${X(0) - 7},${Y(0)} h14 M${X(0)},${Y(0) - 7} v14" stroke="var(--rd-ink)"/>`);
+      out.push(`<text x="${X(0)}" y="${H - Bm + 17}" text-anchor="middle" font-size="11" fill="var(--rd-ink)">pivot</text>`);
+      out.push(`<text x="${X(xMax)}" y="${H - Bm + 17}" text-anchor="end" font-size="11" fill="var(--rd-muted)">nozzle axis</text>`);
+      out.push(`<text x="${X(xMax)}" y="${(Y(xMax * Math.tan(rad)) - 6).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--rd-accent)" ${halo}>turned ${f(dl, 1)}°</text>`);
+      // legend
+      out.push(`<rect x="${side}" y="6" width="12" height="9" fill="var(--rd-accent)" fill-opacity="0.8"/><text x="${side + 17}" y="14" font-size="11" fill="var(--rd-ink)">rubber: darker = more strain</text>`);
+      out.push(`<rect x="${side}" y="22" width="12" height="9" fill="var(--rd-steel)"/><text x="${side + 17}" y="30" font-size="11" fill="var(--rd-ink)">shim · grey: end rings</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // the torque at the largest angle, warm and cold, by its parts
+    function drawTorque(tw: ReturnType<typeof torqueBudget>, tc: ReturnType<typeof torqueBudget>, cap: number | null) {
+      const svg = root.querySelector<SVGSVGElement>('[data-achart]')!;
+      const W = width(svg), L = 12, R = 16;
+      const parts = (t: typeof tw) => (t.offset >= 0 && t.accel >= 0
+        ? [['spring', t.spring], ['centre of pressure', t.offset], ['acceleration', t.accel]]
+        : [['spring, net', Math.abs(t.elastic)]]).concat([['friction', t.friction], ['inertia', t.inertia]]) as [string, number][];
+      const COL: Record<string, string> = { spring: 'var(--rd-accent)', 'spring, net': 'var(--rd-accent)', 'centre of pressure': 'var(--rd-warn)', acceleration: 'var(--rd-blue)', friction: 'var(--rd-muted)', inertia: 'var(--rd-ink)' };
+      const out: string[] = [];
+      // legend, in rows that fit the width
+      let lx = 8, ly = 12;
+      for (const name of [...new Set([...parts(tw), ...parts(tc)].map(([n]) => n))]) {
+        const wd = 17 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 16; }
+        out.push(`<rect x="${lx}" y="${ly - 8}" width="11" height="9" fill="${COL[name]}"/><text x="${lx + 15}" y="${ly}" font-size="11" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 12;
+      }
+      // each row: its total above the bar, then the bar by parts
+      const T = ly + 12, barH = 18, pitch = 42, H = T + 2 * pitch + 30;
+      const capT = cap !== null ? (cap * 1000 * num('arm')) / 1000 : 0;
+      const top = Math.max(tw.total, tc.total, capT) * 1.06;
+      const X = (v: number) => L + (v / top) * (W - L - R);
+      ([['warm', tw], ['cold', tc]] as [string, typeof tw][]).forEach(([name, t], i) => {
+        const y = T + i * pitch;
+        out.push(`<text x="${L}" y="${y + 11}" font-size="11" fill="var(--rd-ink)">${name}: ${f(t.total, 0)} N·m · ${f(t.force / 1000, 2)} kN</text>`);
+        let x = 0;
+        for (const [n, v] of parts(t)) {
+          if (v <= 0) continue;
+          out.push(`<rect x="${X(x).toFixed(1)}" y="${y + 16}" width="${Math.max(0.5, X(x + v) - X(x)).toFixed(1)}" height="${barH}" fill="${COL[n]}" fill-opacity="0.85"/>`);
+          x += v;
+        }
+      });
+      const yAxis = T + 2 * pitch - 4;
+      const step = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000].find((s) => top / s <= 5) ?? 100000;
+      out.push(`<line x1="${L}" x2="${W - R}" y1="${yAxis}" y2="${yAxis}" stroke="var(--rd-line)"/>`);
+      for (let v = 0; v <= top; v += step) out.push(`<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${yAxis}" y2="${yAxis + 4}" stroke="var(--rd-muted)"/><text x="${X(v).toFixed(1)}" y="${yAxis + 15}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      if (capT > 0) out.push(`<line x1="${X(capT).toFixed(1)}" x2="${X(capT).toFixed(1)}" y1="${T + 14}" y2="${yAxis}" stroke="var(--rd-ok)" stroke-width="2" stroke-dasharray="5 3"/>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">torque at the largest angle, N·m</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // the vector angle: the part that trims the misalignment and the part left for steering
+    function drawAuth(dl: number, trim: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-uchart]')!;
+      const W = width(svg), L = 14, R = 16, T = 44, bh = 22, H = T + bh + 40;
+      const X = (v: number) => L + (Math.max(0, Math.min(dl, v)) / dl) * (W - L - R);
+      const tr = Number.isFinite(trim) ? Math.min(trim, dl) : dl;
+      const out: string[] = [];
+      out.push(`<text x="${L}" y="14" font-size="11" fill="var(--rd-accent)">trim: ${f(tr, 3)}°</text>`);
+      out.push(`<text x="${W - R}" y="32" text-anchor="end" font-size="11" fill="var(--rd-ok)">left for steering: ${f(Math.max(0, dl - tr), 2)}°</text>`);
+      out.push(`<rect x="${X(0)}" y="${T}" width="${(X(dl) - X(0)).toFixed(1)}" height="${bh}" fill="var(--rd-ok)" fill-opacity="0.35"/>`);
+      out.push(`<rect x="${X(0)}" y="${T}" width="${Math.max(1.5, X(tr) - X(0)).toFixed(1)}" height="${bh}" fill="var(--rd-accent)"/>`);
+      const step = dl > 8 ? 2 : dl > 3 ? 1 : dl > 1 ? 0.5 : 0.1;
+      for (let v = 0; v <= dl + 1e-9; v += step) out.push(`<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${T + bh}" y2="${T + bh + 4}" stroke="var(--rd-muted)"/><text x="${X(v).toFixed(1)}" y="${T + bh + 16}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${+v.toFixed(1)}</text>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">vector angle, °</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['ga', 'sf', 'cap'],
+      note: 'Worked-example criteria loaded: allowable shear strain 3.0, shim factor 1.5 on yield, actuator capacity 12 kN',
+      values: {
+        pc: '10', pa: '0.101', F: '31.5', dl: '5', ri: '55', ro: '85', R: '130', n: '12', te: '1.4', ts: '1.0', G: '0.6', Gc: '1.2', Kb: '2000', sm: root.dataset.shim!,
+        m: '9', d: '110', I: '0.16', acc: '10', e: '4', fr: '50', amp: '1', fq: '6', sl: '30', arm: '150', L: '700', dm: '0.45', yc: '1', ga: '3.0', sf: '1.5', cap: '12',
+      },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.tv-out')!);
+    }
+    run();
+  });
+</script>

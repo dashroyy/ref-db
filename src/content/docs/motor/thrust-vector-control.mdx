@@ -1,0 +1,279 @@
+---
+title: Thrust vector control
+description: How a solid motor steers with a movable nozzle on a flexible bearing. The ways to turn the thrust, the side force and what it costs, how the rubber pads and shims of the bearing carry the blow-off load and let the nozzle turn, the torque that the actuators must give at the cold end, and how a bearing is qualified, with a calculator and a worked example.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import MovableNozzle from '../../../components/MovableNozzle.astro';
+import TvcCalc from '../../../components/TvcCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A movable nozzle steers by turning the thrust through a few degrees. Its flexible bearing carries the full blow-off load in thin rubber pads, and the actuators must turn it against the stiffest rubber, at the cold end.</div>
+  <div><b>Before this</b><a href="../nozzle/">Nozzle design</a></div>
+  <div><b>Leads to</b><a href="../../verify/static-firing/">Static firing</a>, where the bearing turns under real heat and pressure</div>
+</div>
+
+## Why this matters
+
+A guided vehicle steers by turning its thrust. A solid motor cannot be throttled, so the usual way is to turn the
+whole nozzle through a few degrees about a pivot. For the 300 mm motor, 5° gives a side force of 2.7 kN. The side
+force is there from the moment of ignition, when the vehicle is too slow for fins to steer.
+
+The nozzle joint then has more jobs than a fixed joint. It must carry the blow-off load, seal the chamber, turn on
+command, and stand the heat. The usual solution, the **flexible bearing**, does all four with rubber. The rubber sets
+the torque that the actuators must give, and that torque can double at the cold end of the temperature range.
+
+## The intuition: a bridge bearing
+
+<Analogy title="The rubber pads under a bridge">
+  A bridge beam sits on pads of rubber with thin steel plates moulded in. The pads carry the weight of the bridge with
+  almost no movement, but they let the beam tilt and slide as it grows in the sun. The plates stop the rubber from
+  bulging out, so the pad is stiff in compression. Nothing stops the rubber from shearing, so the pad stays soft in
+  shear. A flexible bearing is the same idea, wrapped onto a sphere round the pivot of the nozzle.
+</Analogy>
+
+## Ways to turn the thrust
+
+| Method | How it works | Gives | Costs |
+| --- | --- | --- | --- |
+| Movable nozzle on a flexible bearing | Laminated rubber and shims let the whole nozzle turn about a pivot | No thrust lost in the exhaust; large angles; no sliding seal | Actuators and their power; a torque that rises in the cold; the bearing is part of the pressure boundary |
+| Movable nozzle on a ball and socket | A sliding spherical joint with a seal | A low torque at low pressure | Friction that grows with the pressure; a sliding seal in the heat |
+| Fluid injection into the exit cone | Gas or liquid injected through the wall of the exit cone makes a shock that turns the flow | No moving nozzle | A tank, valves and the mass of the fluid; small angles only |
+| Jet vanes or jetavators | Vanes or a ring in the exhaust turn part of the flow | A fast response; vanes also give roll | Thrust lost while they are in the jet; they erode, so the burn must be short |
+
+The rest of this page is about the flexible bearing, which most large movable nozzles use.
+
+## Side force and what it costs
+
+Turned through $\delta$, the thrust $F$ gives
+
+$$
+F_\text{side} = F \sin\delta
+\qquad
+M = F L \sin\delta
+\qquad
+\Delta F_\text{axial} = F\,(1 - \cos\delta)
+$$
+
+where $L$ is the distance from the pivot to the centre of gravity of the vehicle. The axial loss is small: 0.38% at
+5°, and only while the nozzle is turned.
+
+Part of the angle is not available to steer. The vehicle must also hold itself against the misalignment of the motor.
+A thrust line offset by $d_m$ at the centre of gravity, and a lateral offset $y_{cg}$ of the centre of gravity, need
+
+$$
+\delta_\text{trim} = \arcsin \frac{d_m + y_{cg}}{L}
+$$
+
+for the whole burn. The alignment stack on the [Tolerance stack](../../drawing/tolerance-stack/#the-nozzle-alignment)
+page gives $d_m$. One movable nozzle also cannot control roll: roll needs two nozzles, vanes, or a separate system.
+
+## The flexible bearing
+
+<MovableNozzle />
+
+The bearing is a stack of thin rubber pads and metal or composite shims, bonded together in a mould. Each layer is part
+of a sphere centred on the pivot, which is on the motor axis. One end ring bolts to the case and the other to the
+nozzle. The nozzle turns about the pivot because each pad shears a little.
+
+### How it carries the load
+
+The bearing carries the blow-off load of the nozzle. It comes from the same momentum balance as on the
+[Nozzle](../nozzle/#loads-on-the-nozzle) page, with the pressure taken to act inside the middle radius $r_m$ of the
+bearing:
+
+$$
+F_{ax} = (p_c - p_a)\,\pi r_m^2 - F
+$$
+
+A pressure test with the throat plugged has no thrust, so the bearing then carries the full pressure load. The bearing
+must stay in compression at all times, because the bond of rubber to metal is weak in tension. Over the band, the pads
+carry a pressure
+
+$$
+\sigma = \frac{F_{ax}}{\pi\,(r_o^2 - r_i^2)}
+$$
+
+in the middle of the stack. A thin rubber layer bonded on both faces cannot bulge much. Its **shape factor** $S$, the
+loaded area divided by the free area at its edges, sets how stiff it is in compression. For a long strip (Gent):
+
+$$
+E_c = 4G\,(1 + S^2)
+$$
+
+in series with the bulk modulus of the rubber. A pad 1 mm thick and 30 mm wide has $S = 15$, and it is about 900
+times stiffer in compression than in shear. The bulge also shears the rubber at the bonded edges:
+
+$$
+\gamma_c = \frac{1.5\,S\,\sigma}{G\,(1 + S^2)} \approx \frac{1.5\,\sigma}{G\,S}
+$$
+
+### How it turns
+
+Each pad turns through its share of $\delta$. With $n$ pads of thickness $t_e$ at a radius $R$ from the pivot, the
+shear strain from the turn is
+
+$$
+\gamma_r = \frac{R\,\delta}{n\,t_e}
+$$
+
+in the plane of the turn. The torque comes from the same shear. For one pad between the polar angles $\theta_1$ and
+$\theta_2$, with $c = \cos\theta$, the stiffness is
+
+$$
+k = \frac{\pi G R^4}{t_e} \left[ (c_1 - c_2) + \frac{c_1^3 - c_2^3}{3} \right]
+$$
+
+and the pads act in series: $1/K = \sum 1/k$.
+
+**The pad nearest the pivot works hardest.** All the pads carry the same load and the same torque, but the innermost
+pad is the smallest. It carries the highest pressure with the lowest shape factor, and it turns the most, because
+$k$ grows as $R^4$. The calculator takes each pad at its own radius.
+
+### The shims
+
+The shims stop the rubber from bulging, so the rubber pulls them toward its free edges. In a long strip, each face of a
+shim adds an in-plane stress of about
+
+$$
+\sigma_s \approx 0.75\,\sigma\,\frac{t_e}{t_s}
+$$
+
+in tension at the middle of the band. Near the inner edge, the same pull makes the circumference of the shim shorter,
+so there the shim is in hoop compression. Codes for bridge bearings size their steel plates with the same physics
+(EN 1337-3). FEA of the real bearing finds the peak.
+
+### Three numbers set the design
+
+- **The total rubber thickness** $n\,t_e$ sets the strain from the turn and the spring torque. More rubber gives less
+  strain and less torque, but more axial movement under the load.
+- **The pad thickness** $t_e$ sets the shape factor. For the same total rubber, thinner pads cut the bulge strain and
+  the axial movement, and the stiffness does not change. They need more shims.
+- **The radius** $R$ and the width of the band give the area that carries the load, and the torque grows as $R^4$.
+
+## The torque budget
+
+The actuator must turn the nozzle against these torques (NASA SP-8114 gives the full list):
+
+| Torque | From | Grows with |
+| --- | --- | --- |
+| Spring | The shear of the rubber: $K\delta$ | The angle, and $G$, so the cold |
+| Centre of pressure | The blow-off load acts on the nozzle axis at a distance $e$ from the pivot: $F_{ax}\,e\,\sin\delta$ | The angle and the pressure |
+| Acceleration | The mass $m$ of the moving parts, with its centre of gravity $d$ aft of the pivot, under the acceleration $a$ of the vehicle: $m\,a\,d\,\sin\delta$ | The angle and the acceleration |
+| Inertia | The moving parts: $I\,\ddot\delta$ | How fast the command changes |
+| Friction and hysteresis | Losses in the rubber, or friction in a sliding bearing | The direction of motion |
+
+A positive $e$ or $d$ (aft of the pivot) pulls the nozzle back to the middle. Forward of the pivot, the term pushes
+the nozzle out, and the actuator must hold it. The actuator force is the total torque divided by the actuator arm
+$a_r$. The stroke, $2\,a_r \sin\delta$ for $\pm\delta$, and the rate for the required slew set its power.
+
+**Size the actuator at the cold end.** Rubber gets stiffer as it cools toward its glass transition
+([Viscoelasticity](../../fundamentals/viscoelasticity/)). Natural rubber also stiffens if it crystallises during a long
+cold soak. The spring torque follows $G$. Keep the bearing warm, or size the actuator for the cold torque.
+
+## Heat and the boot
+
+The rubber of the bearing must stay cool. A **boot** of flexible insulation covers the inner edge of the bearing and the
+gap to the nozzle, and it moves with them. After burnout, heat soaks back from the hot nozzle into the bearing
+([Transient thermal](../transient-thermal/#soak-back)). Check that the rubber and its bonds stay below their limits for
+as long as the bearing must work.
+
+## How a bearing is qualified
+
+- **Torque tests at pressure.** The bearing turns through the duty cycle in a fixture filled with fluid at the chamber
+  pressure, at the hot and the cold temperature. The tests give the spring torque, the hysteresis, the centre of
+  pressure and the movement of the pivot.
+- **Proof pressure,** at the middle position and turned, with an inspection of the bonds after it.
+- **Inspection of the bonds** after moulding: ultrasound or radiography for voids and unbonded areas between the pads
+  and the shims.
+- **Static firing** with a vector duty cycle ([Static firing](../../verify/static-firing/)): the bearing, the boot and
+  the actuators together, in real heat and pressure.
+- **Ageing** of the rubber and its bonds over the storage life ([Storage & ageing](../../verify/storage-ageing/)).
+
+## Calculator
+
+<TvcCalc />
+
+The three tabs size the bearing, the actuator and the steering authority of the same motor. The criteria start blank:
+enter the values of your programme, or push **Load worked example**.
+
+## Worked example: a flexible bearing for the 300 mm motor
+
+The motor is the 300 mm motor of the [nozzle example](../nozzle/#worked-example-the-300-mm-motors-nozzle) at its MEOP
+of 10 MPa, with 31.5 kN of thrust. Its nozzle gets a flexible bearing for ±5°. All the values of the bearing are
+illustrative: pads between the radii 55 and 85 mm, centred 130 mm from the pivot, and a rubber with $G$ = 0.6 MPa warm
+and 1.2 MPa at the cold end. The criteria (an allowable shear strain of 3.0, a factor of 1.5 on the yield of the 4130
+shims, and a 12 kN actuator) are **for this example only**. Push **Load worked example**: it loads the first try.
+
+1. **Blow-off load.** $(10 - 0.101) \times \pi \times 70^2 - 31\,500 = 120.9$ kN in firing, and 152.4 kN in a pressure
+   test.
+2. **First try: 12 pads of 1.4 mm with 1.0 mm shims.** The pad nearest the pivot is at 116.8 mm. It carries 11.35 MPa
+   with $S = 11.6$. The bulge shears it by 2.43, and the turn of 5° adds 0.89. The total is **3.33, over the allowable
+   of 3.0 (MS = −0.10)**. The turn is not the problem: the bulge is.
+3. **Second try: 16 pads of 1.05 mm with 0.8 mm shims.** Change these three inputs. The rubber is the same 16.8 mm
+   thick, so the stiffness hardly changes (135.5 N·m/°). $S$ goes up to 15.4, the bulge strain goes down to 1.86, and
+   the total is **2.77: MS = +0.08**. The nozzle moves aft by 0.36 mm instead of 0.57 mm, and the stack is 28.8 mm
+   high, 1 mm more than before.
+4. **Shims.** The bulge gives 22 MPa in firing and 28 MPa in the pressure test, against $435 / 1.5 = 290$ MPa. The
+   stress does not set the thickness of these shims. Their shape after moulding does.
+5. **Torque at 5°.** The spring gives 678 N·m warm and 1355 N·m cold. The centre of pressure, 4 mm aft of the pivot,
+   adds 42 N·m. The 9 kg of moving parts at 10 g add 8.5 N·m, the inertia for 1° at 6 Hz adds 4.0 N·m, and friction
+   adds 50 N·m. The total is 1460 N·m cold.
+6. **Actuator.** On a 150 mm arm, the force is 9.73 kN cold and 5.22 kN warm: MS = +0.23 against 12 kN. The stroke is
+   ±13.1 mm, the rate is 79 mm/s at 30°/s, and the peak power is 0.76 kW.
+7. **Authority.** At 5°, the side force is 2.75 kN, a moment of 1.92 kN·m about the centre of gravity 700 mm forward.
+   The 0.45 mm of the alignment stack and a 1 mm offset of the centre of gravity need 0.12° of trim: 2.4% of the
+   angle.
+
+<Aside type="tip" title="What the example shows">
+  The limit of the rubber came from the load, not from the turn. Thinner pads fixed it, and the torque did not change.
+  The actuator is sized at the cold end, where the spring torque is twice the warm value. The misalignment that the
+  tolerance stack holds to 0.45 mm uses only 2.4% of the angle here. A vehicle without thrust vector control cannot
+  trim at all, and on such a vehicle the same 0.45 mm goes straight into its dispersion.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A screen for the first layout">
+  These are the first-order relations of a flexible bearing. They size a layout to test and to analyse. They do not
+  replace either.
+</Aside>
+
+- **Spring torque and pressure.** The spring torque of a real bearing changes with the pressure, and the pivot moves as
+  the stack compresses. Torque tests at pressure give both.
+- **The stress analysis of the bearing.** The shims near their inner edge, the end rings, the bonds and the rubber at
+  the edges need FEA with a hyperelastic model of the rubber ([FEA cards](../../verify/fea-cards/)).
+- **Fatigue and ageing** of the rubber and its bonds, over the duty cycle and the storage life.
+- **The boot and the heat** in the bearing ([Transient thermal](../transient-thermal/)).
+- **The servo:** the stiffness of the actuator and its mount, the load resonance and the control loop.
+- **The other methods** (fluid injection, vanes, a ball and socket) have their own design rules. NASA SP-8114 covers
+  them.
+
+## On the drawing
+
+- **The pivot point and the sphere radii** as basic dimensions from the datums of the case and the nozzle; the middle
+  (null) position of the nozzle and its alignment.
+- **The rubber compound** by its specification, its shear modulus at the temperature limits, and the tests of each
+  batch.
+- **The shims:** the material, the thickness and its tolerance, and the surface preparation for the bond.
+- **The bond system** (primer and adhesive), and the bond tests on samples moulded with each bearing.
+- **The bearing tests:** proof, the torque test at pressure and temperature, and the inspection of the bonds.
+- **The actuator attachment:** the brackets, the arm, the stroke and its stops.
+
+## References and further reading
+
+- NASA SP-8114, *Solid Rocket Thrust Vector Control* (1974) (free on NTRS).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017) (chapter 18, thrust vector control).
+- A. N. Gent (ed.), *Engineering with Rubber*, 3rd ed., Hanser (2012) (bonded rubber layers in compression and shear).
+- J. M. Kelly & D. A. Konstantinidis, *Mechanics of Rubber Bearings for Seismic and Vibration Isolation*, Wiley
+  (2011).
+- EN 1337-3, *Structural bearings, Part 3: Elastomeric bearings* (laminated bearings and their steel plates).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the tests of your bearing and the
+  approval of the responsible stress and safety authorities control the real design.
+</Aside>
