@@ -1,0 +1,291 @@
+---
+// Bondlines of a case-bonded grain: the grain end in cool-down (shear lag, with the long-cylinder radial tension), and
+// the bond shear and slump under acceleration. The calculations live in src/lib/bondline.ts (unit-tested); this file
+// is UI only.
+---
+
+<div class="calc bdcalc" data-bdcalc>
+  <div class="calc-head">
+    <span>Bondlines: the grain end, acceleration and slump</span>
+    <span class="head-btns">
+      <span>shear lag · long cylinder</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="end" aria-selected="true">Grain end, cold</button>
+    <button type="button" role="tab" class="chip" data-tab="accel" aria-selected="false">Acceleration and slump</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Grain</legend>
+        <div class="row2">
+          <label>Bore diameter (mm)<input name="db" type="number" min="1" step="any" value="100" /></label>
+          <label>Outer diameter, at the bond (mm)<input name="do" type="number" min="1" step="any" value="300" /></label>
+          <label>Bonded length (mm)<input name="L" type="number" min="1" step="any" value="980" /></label>
+          <label>Relaxed modulus E (MPa)<input name="E" type="number" min="0.01" step="any" value="3.6" /></label>
+        </div>
+        <p class="hint">A tubular grain bonded along its outer surface, with a free bore. Use the relaxed modulus of the propellant for slow loads: cool-down and storage.</p>
+      </fieldset>
+      <fieldset data-panel="end">
+        <legend>Cool-down and the bond layer</legend>
+        <div class="row2">
+          <label>Propellant expansion (µm/m·K)<input name="ap" type="number" min="0" step="any" value="100" /></label>
+          <label>Case expansion (µm/m·K)<input name="ac" type="number" min="0" step="any" value="12.3" /></label>
+          <label>Stress-free temperature (°C)<input name="T0" type="number" step="any" value="60" /></label>
+          <label>Coldest temperature (°C)<input name="T1" type="number" step="any" value="-40" /></label>
+          <label>Bond layer thickness (mm)<input name="h" type="number" min="0" step="any" value="3" /></label>
+          <label>Bond layer shear modulus (MPa)<input name="Gb" type="number" min="0.01" step="any" value="1.5" /></label>
+        </div>
+        <p class="hint">The bond layer is the liner and the insulation between the propellant and the case. The stress-free temperature is near the cure temperature: measure it, or take it from your grain analysis.</p>
+      </fieldset>
+      <fieldset data-panel="accel" hidden>
+        <legend>Acceleration</legend>
+        <div class="row2">
+          <label>Propellant density (kg/m³)<input name="rho" type="number" min="1" step="any" value="1800" /></label>
+          <label>Axial acceleration in flight (g)<input name="nf" type="number" min="0" step="any" value="15" /></label>
+          <label>In storage (g)<input name="ns" type="number" min="0" step="any" value="1" /></label>
+        </div>
+        <p class="hint">Storage at 1 g is a motor stood on its end. The slump uses the relaxed modulus: the grain keeps creeping down until the propellant stops relaxing.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Your criteria</legend>
+        <div class="row2">
+          <label>Bond strength in tension (MPa)<input name="st" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Bond strength in shear (MPa)<input name="ss" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Factor of safety<input name="sf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Concentration at the termination<input name="kt" type="number" min="1" step="any" placeholder="from your FEA" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Bond strengths from your tests, at the rate and the temperature of the load, and after ageing. The factor from your design rules. The concentration from FEA of your grain end: the peak stress at the end of the bond over the long-cylinder value.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="bd-out">
+      <div data-out="end">
+        <dl class="readouts">
+          <div class="readout primary" data-govbox><dt>Bond at the end of the grain</dt><dd data-r="gov">—</dd></div>
+          <div class="readout"><dt>Radial tension, long cylinder</dt><dd data-r="sr">—</dd></div>
+          <div class="readout"><dt>Shear at the end of the bond</dt><dd data-r="te">—</dd></div>
+          <div class="readout"><dt>The end moves</dt><dd data-r="ue">—</dd></div>
+          <div class="readout"><dt>Free axial shrinkage</dt><dd data-r="ef">—</dd></div>
+          <div class="readout"><dt>End zone</dt><dd data-r="len">—</dd></div>
+        </dl>
+        <figure class="bd-fig">
+          <svg data-echart role="img" aria-label="Shear on the bond against the distance from the end of the grain, with the long-cylinder radial tension"></svg>
+          <figcaption>The shear on the bond falls away from the end of the grain over the end zone. The dashed line is the radial tension of the long cylinder. The concentration at the termination, when you enter it, puts the peaks at the end of the bond.</figcaption>
+        </figure>
+      </div>
+      <div data-out="accel" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-accbox><dt>Bond shear in flight</dt><dd data-r="tf">—</dd></div>
+          <div class="readout"><dt>Shear for each g</dt><dd data-r="pg">—</dd></div>
+          <div class="readout"><dt>Slump of the bore in storage</dt><dd data-r="sl">—</dd></div>
+          <div class="readout"><dt>Weight on the bond</dt><dd data-r="wt">—</dd></div>
+        </dl>
+        <figure class="bd-fig">
+          <svg data-achart role="img" aria-label="Axial displacement through the web in storage, from the bore to the bond"></svg>
+          <figcaption>How far each part of the web moves down the case in storage, from the bore (left) to the bond (right). The bond holds the outer surface; the bore moves the most.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. A long, case-bonded tubular grain with a free bore, incompressible and elastic with
+    the relaxed modulus. The grain end is a one-dimensional shear-lag model: the axial stiffness E(1 + m²/3), the free
+    axial strain 3Δα·ΔT(1 + m²)/(3 + m²) of the held web, and the shear compliance of the web and the bond layer in
+    series. The radial tension is the long-cylinder value of the Propellant grain page. Not included: the stress at the
+    edge of the bond (enter it as the concentration from FEA), the shape of the dome and the end face, stress-relief
+    flaps, pressure, viscoelastic history and damage, and ageing.
+  </div>
+</div>
+
+<style is:global>
+  .bd-out { min-width: 0; }
+  .bd-out > div > * { min-width: 0; }
+  .bd-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { grainEnd, axialLoad, bondMargin } from '../lib/bondline';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const ms = (v: number) => (Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : '−'}${f(Math.abs(v), 2)}`);
+  const msClass = (v: number) => (v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+  const g3 = (v: number) => (Math.abs(v) >= 1 ? f(v, 2) : Math.abs(v) >= 0.01 ? f(v, 3) : f(v, 4));
+  const deg = (v: number) => `${f(v, 0).replace('-', '−')} °C`;
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+
+  document.querySelectorAll<HTMLElement>('[data-bdcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'end';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const crit = () => ({ st: readFactor(field('st').value, 1e-6), ss: readFactor(field('ss').value, 1e-6), sf: readFactor(field('sf').value), kt: readFactor(field('kt').value) });
+
+    function run() {
+      const notes: [string, string][] = [];
+      const a = num('db') / 2, b = num('do') / 2, E = num('E');
+      if (!(a > 0 && b > a && E > 0 && num('L') > 0)) { clear('Enter a bore smaller than the outer diameter, a bonded length and the relaxed modulus.'); return; }
+      if (mode === 'end') runEnd(notes, a, b, E); else runAccel(notes, a, b, E);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function runEnd(notes: [string, string][], a: number, b: number, E: number) {
+      const dT = num('T1') - num('T0'), h = num('h'), Gb = num('Gb');
+      if (!(num('ap') >= 0 && num('ac') >= 0 && h >= 0 && Gb > 0 && Number.isFinite(dT))) { const msg = 'Check the expansion coefficients, the temperatures and the bond layer.'; clear(msg); notes.push(['bad', msg]); return; }
+      const g = grainEnd({ a, b, L: num('L'), E, alphaP: num('ap') * 1e-6, alphaC: num('ac') * 1e-6, dT, h, Gb });
+      const c = crit(), kt = c.kt ?? 1, sr = Math.max(0, g.sigmaR);
+      r('sr').innerHTML = `${g3(sr)} MPa <small>${dT < 0 ? `at ${deg(num('T1'))}, ${f(-dT, 0)} K below stress-free: E(m² − 1)·Δα·|ΔT|, m = ${f(g.m, 2)}` : 'no cool-down: the grain is at or above its stress-free temperature'}</small>`;
+      r('te').innerHTML = `${g3(g.tauEnd)} MPa <small>the average over the end, from shear lag${c.kt !== null ? ` · ${g3(g.tauEnd * kt)} MPa at the termination` : ''}</small>`;
+      r('ue').innerHTML = `${f(g.uEnd, 2)} mm <small>toward the middle of the grain, relative to the case: the gap that a stress-relief flap must open</small>`;
+      r('ef').innerHTML = `${f(Math.abs(g.eps) * 100, 2)}% <small>along the axis, relative to the case: ${f(Math.abs(g.eps) / Math.max(1e-12, Math.abs((num('ap') - num('ac')) * 1e-6 * dT)), 2)} times that of a free bar, because the case holds the outer surface</small>`;
+      r('len').innerHTML = `${f(g.len, 0)} mm <small>1/λ from each end · the web gives ${f(g.webShare * 100, 0)}% of the compliance, the bond layer ${f((1 - g.webShare) * 100, 0)}%</small>`;
+      const ready = c.st !== null && c.ss !== null && c.sf !== null;
+      if (ready) {
+        const mt = bondMargin(sr, kt, c.st!, c.sf!), msh = bondMargin(g.tauEnd, kt, c.ss!, c.sf!), m0 = bondMargin(sr, 1, c.st!, c.sf!);
+        const gov = Math.min(mt, msh);
+        r('gov').innerHTML = `MS ${ms(gov)} <small>${gov === mt ? 'tension' : 'shear'} at the termination${c.kt === null ? ' (no concentration entered: long-cylinder values)' : `, concentration ${f(kt, 2)}`} · tension MS ${ms(mt)}, shear MS ${ms(msh)} · in the long cylinder, tension MS ${ms(m0)}</small>`;
+        $('[data-govbox]').className = `readout primary ${msClass(gov)}`;
+        if (gov < 0) notes.push(['bad', 'The bond is over its strength at the termination. A stress-relief flap moves the end of the bond into the insulation, where rubber can take the stress. A smaller ΔT, a softer propellant or a lower stress-free temperature also help.']);
+      } else {
+        r('gov').innerHTML = '<small>needs your criteria</small>';
+        $('[data-govbox]').className = 'readout primary';
+        notes.push(['warn', `The stresses are shown. ${awaitingMessage(['bond strengths', 'factor of safety'], 'the margins')}`]);
+      }
+      if (c.kt === null) notes.push(['warn', 'No concentration entered, so these are long-cylinder and average values. Where the bond meets a free surface at the end of the grain, the stress is much higher. FEA of the grain end gives the peak: enter it as the concentration at the termination.']);
+      if (dT < 0) notes.push(['', `At ${deg(num('T1'))}, the end of the grain moves ${f(g.uEnd, 2)} mm toward its middle. A flap must open this far, at the cold end, without tearing at its root.`]);
+      notes.push(['', `The web of propellant gives ${f(g.webShare * 100, 0)}% of the shear compliance, so a thicker or softer bond layer changes the end shear only a little. The end shear grows slowly with the size of the grain, but the end movement grows in proportion to it.`]);
+      drawEnd(g, sr, kt, c);
+    }
+
+    function runAccel(notes: [string, string][], a: number, b: number, E: number) {
+      const rho = num('rho'), nf = num('nf'), ns = num('ns');
+      if (!(rho > 0 && nf >= 0 && ns >= 0)) { const msg = 'Enter the density and the two accelerations (zero or more).'; clear(msg); notes.push(['bad', msg]); return; }
+      const fl = axialLoad(a, b, rho, nf, E / 3), st = axialLoad(a, b, rho, ns, E / 3);
+      const c = crit(), kt = c.kt ?? 1;
+      r('pg').innerHTML = `${f(fl.perG * 1000, 2)} kPa <small>ρ·g·(b² − a²)/2b: the bond carries the web</small>`;
+      const mass = rho * Math.PI * (b * b - a * a) * 1e-6 * num('L') * 1e-3; // kg
+      r('wt').innerHTML = `${f(mass, 1)} kg <small>of propellant on ${f(2 * Math.PI * b * num('L') * 1e-6, 3)} m² of bond · ${f((mass * 9.80665 * nf) / 1000, 1)} kN at ${f(nf, 1)} g</small>`;
+      r('sl').innerHTML = `${f(st.slump, st.slump < 0.1 ? 3 : 2)} mm <small>at ${f(ns, 1)} g, the bore against the case, with the relaxed shear modulus E/3 = ${f(E / 3, 2)} MPa</small>`;
+      if (c.ss !== null && c.sf !== null) {
+        const m = bondMargin(fl.tau, kt, c.ss, c.sf);
+        r('tf').innerHTML = `${g3(fl.tau)} MPa <small>at ${f(nf, 1)} g${c.kt !== null ? ` · ${g3(fl.tau * kt)} MPa at the termination` : ''} · against ${f(c.ss, 2)} MPa ÷ ${f(c.sf, 2)}: MS ${ms(m)}</small>`;
+        $('[data-accbox]').className = `readout primary ${msClass(m)}`;
+      } else {
+        r('tf').innerHTML = `${g3(fl.tau)} MPa <small>at ${f(nf, 1)} g · enter the shear strength and the factor to see the margin</small>`;
+        $('[data-accbox]').className = 'readout primary';
+      }
+      notes.push(['', `The bond carries the weight of the web: ${f(fl.perG * 1000, 2)} kPa for each g. That is small against a bond strength, but it adds to the cool-down stresses at the termination, and the grain ends and flaps carry more of it.`]);
+      notes.push(['', `In storage, the web creeps down the case until the propellant stops relaxing. The slump grows with the square of the size: it is ${f(st.slump, st.slump < 0.1 ? 3 : 2)} mm here, and about 9 mm for a grain 3.7 m across with the same propellant. Large motors check it, and the bore and the nozzle clearance it changes.`]);
+      drawAccel(a, b, st);
+    }
+
+    // shear on the bond along the grain from its end, the long-cylinder radial tension, and the peaks at the termination
+    function drawEnd(g: ReturnType<typeof grainEnd>, sr: number, kt: number, c: ReturnType<typeof crit>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-echart]')!;
+      const W = width(svg), L = 48, R = 14, B = 34;
+      const allowT = c.st !== null && c.sf !== null ? c.st / c.sf : NaN, allowS = c.ss !== null && c.sf !== null ? c.ss / c.sf : NaN;
+      const out: string[] = [];
+      // legend first, in rows that fit the width: it sets the top of the plot
+      const items: [string, string, string][] = [['shear', 'var(--rd-accent)', ''], ['radial tension', 'var(--rd-blue)', '6 4']];
+      if (Number.isFinite(allowT)) items.push(['tension allowed', 'var(--rd-ok)', '2 3']);
+      if (Number.isFinite(allowS)) items.push(['shear allowed', 'var(--rd-ok)', '7 3']);
+      let lx = 8, ly = 12;
+      for (const [name, col, dash] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"${dash ? ` stroke-dasharray="${dash}"` : ''}/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T = ly + 24, H = T + 170;
+      const sMax = Math.min(num('L') / 2, 4 * g.len);
+      const peak = Math.max(g.tauEnd * kt, sr * kt, Number.isFinite(allowT) ? allowT : 0, Number.isFinite(allowS) ? allowS : 0, 1e-6) * 1.12;
+      const X = (s: number) => L + (s / sMax) * (W - L - R), Y = (v: number) => T + (1 - v / peak) * (H - T - B);
+      const step = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5].find((s) => peak / s <= 5) ?? 10, dp = step < 0.01 ? 3 : step < 0.1 ? 2 : 1;
+      const grid: string[] = [];
+      for (let v = 0; v <= peak + 1e-12; v += step) grid.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(dp)}</text>`);
+      const sStep = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000].find((s) => sMax / s <= 5) ?? 10000;
+      for (let s = 0; s <= sMax + 1e-9; s += sStep) grid.push(`<text x="${X(s).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${s}</text>`);
+      grid.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">distance from the end of the bond, mm</text>`);
+      grid.push(`<text x="4" y="${T - 8}" font-size="10" fill="var(--rd-ink)">MPa</text>`);
+      if (Number.isFinite(allowT)) grid.push(`<line x1="${L}" x2="${W - R}" y1="${Y(allowT).toFixed(1)}" y2="${Y(allowT).toFixed(1)}" stroke="var(--rd-ok)" stroke-dasharray="2 3"/>`);
+      if (Number.isFinite(allowS)) grid.push(`<line x1="${L}" x2="${W - R}" y1="${Y(allowS).toFixed(1)}" y2="${Y(allowS).toFixed(1)}" stroke="var(--rd-ok)" stroke-dasharray="7 3"/>`);
+      grid.push(`<line x1="${L}" x2="${W - R}" y1="${Y(sr).toFixed(1)}" y2="${Y(sr).toFixed(1)}" stroke="var(--rd-blue)" stroke-width="2" stroke-dasharray="6 4"/>`);
+      const pts = Array.from({ length: 121 }, (_, k) => (sMax * k) / 120).map((s) => `${X(s).toFixed(1)},${Y(g.at(s).tau).toFixed(1)}`);
+      grid.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      if (kt > 1) {
+        grid.push(`<line x1="${X(0)}" x2="${X(0)}" y1="${Y(g.tauEnd).toFixed(1)}" y2="${Y(g.tauEnd * kt).toFixed(1)}" stroke="var(--rd-accent)" stroke-dasharray="2 2"/><line x1="${X(0) + 1}" x2="${X(0) + 1}" y1="${Y(sr).toFixed(1)}" y2="${Y(sr * kt).toFixed(1)}" stroke="var(--rd-blue)" stroke-dasharray="2 2"/>`);
+        grid.push(`<circle cx="${X(0)}" cy="${Y(g.tauEnd * kt).toFixed(1)}" r="4.5" fill="var(--rd-accent)"/><circle cx="${X(0)}" cy="${Y(sr * kt).toFixed(1)}" r="4.5" fill="var(--rd-blue)"/>`);
+        grid.push(`<text x="${X(0) + 9}" y="${(Y(sr * kt) + 4).toFixed(1)}" font-size="10" fill="var(--rd-ink)" ${halo}>×${f(kt, 1)} at the termination</text>`);
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = grid.join('') + out.join('');
+    }
+
+    // the axial displacement through the web in storage, from the bore to the bond
+    function drawAccel(a: number, b: number, st: ReturnType<typeof axialLoad>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-achart]')!;
+      const W = width(svg), L = 52, R = 16, T = 22, B = 34, H = 200;
+      const wMax = Math.max(st.slump, 1e-9) * 1.15;
+      const X = (rr: number) => L + ((rr - a) / (b - a)) * (W - L - R), Y = (w: number) => T + (w / wMax) * (H - T - B);
+      const out: string[] = [];
+      const step = [1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50].find((s) => wMax / s <= 5) ?? 100;
+      const dp = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+      for (let v = 0; v <= wMax + 1e-12; v += step) out.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(dp)}</text>`);
+      const pts = Array.from({ length: 101 }, (_, k) => a + ((b - a) * k) / 100).map((rr) => `${X(rr).toFixed(1)},${Y(st.w(rr)).toFixed(1)}`);
+      out.push(`<path d="M${X(a)},${Y(0)} L${pts.join(' L')} Z" fill="var(--rd-propellant)" fill-opacity="0.35"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      out.push(`<text x="${X(a) + 6}" y="${(Y(st.slump) - 6).toFixed(1)}" font-size="10" fill="var(--rd-accent)" ${halo}>bore: ${f(st.slump, st.slump < 0.1 ? 3 : 2)} mm</text>`);
+      out.push(`<text x="${X(a)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">bore</text><text x="${X(b)}" y="${H - B + 14}" text-anchor="end" font-size="10" fill="var(--rd-muted)">bond</text>`);
+      out.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">radius, ${f(a, 0)} to ${f(b, 0)} mm</text><text x="4" y="12" font-size="10" fill="var(--rd-ink)">down the case, mm</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['st', 'ss', 'sf', 'kt'],
+      note: 'Worked-example criteria loaded: bond strength 0.6 MPa in tension and 0.5 MPa in shear, factor of safety 1.5, concentration 3 at the termination',
+      values: { db: '100', do: '300', L: '980', E: '3.6', ap: '100', ac: '12.3', T0: '60', T1: '-40', h: '3', Gb: '1.5', rho: '1800', nf: '15', ns: '1', st: '0.6', ss: '0.5', sf: '1.5', kt: '3' },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.bd-out')!);
+    }
+    run();
+  });
+</script>

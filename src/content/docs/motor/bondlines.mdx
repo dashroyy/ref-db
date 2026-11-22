@@ -1,0 +1,254 @@
+---
+title: Bondlines and grain terminations
+description: The bonds that hold a case-bonded grain. The layers from the case to the propellant, how a bond fails and how it is tested, the stresses at the end of the grain where the bond stops, stress-relief flaps, the loads from acceleration and slump, and the inspection of the bondlines, with a calculator and a worked example.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import BondFlap from '../../../components/BondFlap.astro';
+import BondCalc from '../../../components/BondCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A case-bonded grain is only as good as its bonds. The long cylinder is easy; the ends of the grain, where the bond stops, carry the highest stresses. End the bond in rubber with a stress-relief flap, and inspect every bondline.</div>
+  <div><b>Before this</b><a href="../propellant-grain/#part-2-structural-integrity">Propellant grain: structural integrity</a></div>
+  <div><b>Leads to</b><a href="../../make/ndt/">NDT</a>, to find what the bond has done</div>
+</div>
+
+## Why this matters
+
+Most solid motors bond the grain to the case. The bond makes the case and the grain one structure: the grain cannot
+move in the case, and gas cannot get between them. If the bond lets go, a new surface burns. The burning area and the
+pressure go up, and hot gas reaches the insulation before its time. A separation is not a cosmetic defect: it can burst
+the case.
+
+In the long cylinder, the bond has an easy job. The [grain page](../propellant-grain/#cool-down-why-the-bore-cracks)
+puts its radial tension at a fraction of an MPa. The bond is weakest where it stops, and bond failures usually start
+at a termination: the end of the grain, the edge of a flap, or a defect in the bondline.
+
+## The intuition: a strip of tape
+
+<Analogy title="Tape on a box">
+  A strip of tape on a box does not fail in its middle. It fails at its edge, where you start to peel it. Pull the tape
+  along its length, and the load goes into the box over a short length near the end; the rest of the strip carries
+  almost nothing. A bonded grain is the same. The cylinder holds, and failures start where the bond stops.
+</Analogy>
+
+## The layers from the case to the propellant
+
+| Layer | Its job | Bonded to |
+| --- | --- | --- |
+| Case | The pressure vessel | The insulation, with an adhesive, or by curing the insulation in place |
+| Insulation | Keeps the heat of the burn off the case; often also makes the flaps | The case and the liner |
+| Liner | A thin rubber layer that the propellant cures against. It makes the bond, and it stops liquids from moving between the propellant and the insulation | The insulation and the propellant |
+| Propellant | The grain | The liner |
+| Inhibitor | Stops burning on surfaces that must not burn, such as the ends of the grain | The propellant |
+
+Each interface must be stronger than the propellant itself. A good bond, pulled to failure, tears the propellant and
+leaves propellant on both faces: a **cohesive** failure. A bond that fails at an interface, an **adhesive** failure,
+shows a process problem. Examples are a contaminated or badly prepared surface, a liner that was cured too far or not
+far enough before the cast, or a liquid that moved across the bond.
+
+## How a bond is tested
+
+- **Tensile bond tests:** a block of propellant cast on a liner and insulation, pulled at right angles to the
+  bondline.
+- **Peel tests:** the insulation peeled from the propellant at 90° or 180°. They show how a crack runs along the bond.
+- **Shear tests:** a double lap joint, for the bond in shear.
+- **Several rates and temperatures.** The bond is viscoelastic, like the propellant
+  ([Viscoelasticity](../../fundamentals/viscoelasticity/)). Its strength at the cold end and at the rate of ignition
+  is not its strength at room temperature.
+- **Samples cast with each motor** (witness panels), from the same batches of liner and propellant, and some of them
+  tested after ageing ([Storage & ageing](../../verify/storage-ageing/)).
+- **Record the failure mode** of each sample, not only the stress. An adhesive failure is a warning, even at a high
+  stress.
+
+## The bond in the long cylinder
+
+The [grain page](../propellant-grain/#cool-down-why-the-bore-cracks) derives the cool-down loads. For a grain with a bore
+radius $a$, an outer radius $b$ and $m = b/a$:
+
+- **Cool-down** pulls the grain off the case with a radial tension $\sigma_r(b) = E\,(m^2 - 1)\,(\alpha_p - \alpha_c)\,|\Delta T|$,
+  with the relaxed modulus $E$.
+- **Pressure** at ignition pushes the grain onto the case, so in the cylinder the bond is in compression.
+- **Acceleration** along the axis: the bond carries the weight of the web,
+
+$$
+\tau = \frac{\rho\,n\,g\,(b^2 - a^2)}{2b}
+$$
+
+- **Slump.** In storage, the grain creeps down the case under its own weight. With the relaxed shear modulus $G$, the
+  bore moves relative to the case by
+
+$$
+w(a) = \frac{\rho\,n\,g}{2G} \left[ \frac{b^2 - a^2}{2} - a^2 \ln\frac{b}{a} \right]
+$$
+
+  The slump grows with the square of the size. It is nothing for a small motor, and centimetres for a large motor that
+  stands on its end.
+
+## The end of the grain
+
+When the grain cools, it also tries to shrink along its length. The case holds its outer surface, so the volume that
+the propellant loses must go into the bore and along the axis. Relative to the case, a grain held at its outer surface
+wants to shrink along the axis by
+
+$$
+\varepsilon_z = \frac{3\,\Delta\alpha\,\Delta T\,(1 + m^2)}{3 + m^2}
+$$
+
+which is 2.5 times the free shrinkage of a bar for $m = 3$. In the long cylinder, the bond stops this. At the ends it
+cannot: the end of the grain slides toward the middle, and the bond near the end carries the force.
+
+A **shear-lag** model, the same as for a bonded lap joint, gives the size of the end zone. The grain is a bar with the
+axial stiffness $E(1 + m^2/3)\,A$ on a shear spring. The spring is the bond layer (thickness $h$, shear modulus $G_b$)
+and the web of propellant itself, in series:
+
+$$
+\lambda^2 = \frac{2\pi b}{E\,(1 + m^2/3)\,A\,c}
+\qquad
+c = c_\text{web} + \frac{h}{G_b}
+\qquad
+u_\text{end} = \frac{|\varepsilon_z| \tanh(\lambda L/2)}{\lambda}
+\qquad
+\tau_\text{end} = \frac{u_\text{end}}{c}
+$$
+
+$u_\text{end}$ is how far the end moves relative to the case, and $\tau_\text{end}$ is the average shear on the bond at
+the end. Two results follow:
+
+- **The web is the soft spring, not the bond layer.** In the 300 mm grain, the web gives more than 90% of the
+  compliance. A thicker bond layer changes the end shear only a little.
+- **The end movement grows with the size of the grain,** as $1/\lambda$ does, but the end shear does not grow much. The
+  end of a large grain moves by tens of millimetres.
+
+The shear lag gives the average stress near the end. At the edge itself, where the bond meets the free face of the
+grain, elastic theory gives a stress with no upper limit, like the stress at the tip of a crack (Bogy). Its value
+depends on the angle between the bond and the free face, on the mesh of a finite element model, and on how the
+propellant relaxes there. Get the stress near the edge from FEA of the real grain end, and compare it with bond tests
+that have the same kind of edge. The calculator takes this as a concentration factor on the long-cylinder values.
+
+## Stress-relief flaps
+
+<BondFlap />
+
+A stress-relief flap moves the end of the bond away from the propellant.
+
+- **What it is.** A sheet of insulation, part of the dome insulation at its root. The propellant is bonded to its inside.
+  A release layer stops the outside of the flap from bonding to the dome.
+- **How it works.** When the grain shrinks, the flap opens. The propellant takes the shrinkage as a movement, not as a
+  stress, and the bond ends at the root of the flap, in rubber. Rubber is much stronger and more flexible than the
+  propellant.
+- **Size the flap for the end movement.** At the coldest temperature, it must open by $u_\text{end}$, plus the shrinkage
+  of the propellant along the flap itself, without tearing at its root. Give the root a large radius.
+- **The gap is part of the chamber.** At ignition, gas fills it. The flap and the dome insulation must stand the heat
+  there, and the gap must not let gas flow along the bondline.
+- **The release layer must work, and stay where it is.** A release agent that moves into the bond weakens it. One that
+  does not work leaves the flap bonded to the dome, and then the flap does nothing. Radiography of the motor at a cold
+  temperature shows whether each flap opened.
+
+## Ignition, cycling and ageing
+
+- **Ignition** pushes the grain onto the case, so the bond in the cylinder is in compression. But at the ends of the
+  grain and in the flap gaps, the gas pushes on surfaces that no bond holds, and it can force open a small separation
+  at a termination. Treat a separation at a termination as a crack.
+- **Temperature cycling** works a separation at a termination like a crack in fatigue. It can grow a little with each
+  cycle.
+- **Ageing** changes the bond. Liquids move across the interfaces, and the propellant near the bond can get harder.
+  Surveillance tests of bond samples and of motors that are cut up follow the bond strength through the storage life
+  ([Storage & ageing](../../verify/storage-ageing/)).
+
+## Inspection of the bondlines
+
+- **Radiography and computed tomography** find separations between the liner and the propellant, and voids near the
+  bond. A separation shows best when the X-ray beam runs along it (tangential radiography). Look at the terminations
+  and the flaps from the angles where they line up with the beam.
+- **Ultrasound** finds unbonded areas between a metal case and its insulation, from the outside of the case.
+- **The acceptance criteria,** the size and the location of a separation that you can accept, come from your programme
+  and its fracture analysis. A separation at a termination is worse than the same separation in the middle of the
+  cylinder.
+- See [NDT](../../make/ndt/) for the methods and their limits.
+
+## Calculator
+
+<BondCalc />
+
+The two tabs check the end of the grain at the cold end, and the bond under acceleration and in storage. The criteria
+start blank: enter your bond strengths, your factor and the concentration from your FEA, or push **Load worked
+example**.
+
+## Worked example: the bonds of the 300 mm grain
+
+The grain is the HTPB grain of the [grain example](../propellant-grain/#worked-example-htpb-grain-in-the-d6ac-case): a
+300 mm D6AC case with a 100 mm bore ($m = 3$), a relaxed modulus of 3.6 MPa, $\alpha_p = 100$ and
+$\alpha_c = 12.3$ µm/m·K, stress-free at 60 °C and coldest at −40 °C. It is 980 mm long. The bond layer is 3 mm thick,
+with $G_b = 1.5$ MPa, and the density is 1800 kg/m³ (illustrative). The criteria are **for this example only**: a bond
+strength of 0.6 MPa in tension and 0.5 MPa in shear at the cold end, a factor of safety of 1.5, and a concentration of
+3 at the termination of a grain end without a flap. Push **Load worked example**.
+
+1. **Long cylinder.** The radial tension is $3.6 \times 8 \times 87.7 \times 10^{-6} \times 100 = 0.25$ MPa, as on the
+   grain page. MS = $0.6 / (1.5 \times 0.25) - 1 = +0.58$.
+2. **Free axial shrinkage.** $3 \times 87.7 \times 10^{-6} \times 100 \times 10/12 = 2.19\%$ relative to the case, 2.5
+   times that of a free bar.
+3. **End zone.** The axial modulus is $3.6 \times 4 = 14.4$ MPa. The web gives a compliance of 25.6 mm/MPa and the bond
+   layer $3 / 1.5 = 2.0$ mm/MPa, so $1/\lambda = 163$ mm.
+4. **End movement and shear.** $u_\text{end} = 2.19\% \times 163 = 3.55$ mm, and $\tau_\text{end} = 3.55 / 27.6 = 0.129$
+   MPa.
+5. **At the termination,** with the concentration of 3, the tension is 0.76 MPa and the shear is 0.39 MPa. MS = −0.47 in
+   tension and −0.14 in shear. **The bond fails at the end of the grain, and passes in the cylinder.**
+6. **With a flap,** the end of the bond moves into the insulation, and the end of the propellant can move. The flap
+   must open by 3.6 mm at −40 °C, plus the shrinkage of the propellant along the flap.
+7. **Acceleration.** The bond carries 1.18 kPa for each g: 0.018 MPa at 15 g. Even at the termination, the shear
+   margin is +5.3. The bond carries the 111 kg web in flight with no difficulty.
+8. **Slump.** Standing on its end in storage, the bore moves 0.05 mm: nothing. A grain 3.7 m across with a 1 m bore
+   and the same propellant slumps 9.3 mm.
+
+<Aside type="tip" title="What the example shows">
+  The same bond passes in the cylinder and fails at the end of the grain, by the concentration factor alone. Every
+  number that you can check by hand is comfortable. The risk is at the termination, and only FEA and tests can size
+  it. This is why case-bonded grains have flaps, and why the inspection of a motor looks hardest at the ends of the
+  grain.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="Long-cylinder and one-dimensional values">
+  These relations size the bond away from its edges and give the scale of the end zone. They do not give the stress at
+  a termination, which needs FEA of the real grain end and bond tests with the same kind of edge.
+</Aside>
+
+- **The edge of the bond:** the stress at the termination, and fracture mechanics for a separation there.
+- **The shape of the grain end:** the dome, the end face and the flap change the stress field.
+- **Viscoelastic history:** the rate of the cool-down, temperature cycling and the damage that they add up.
+- **Pressure at the terminations** during ignition, and the gas in the flap gaps.
+- **Ageing** of the liner, the bond and the propellant near the bond.
+- **Cartridge-loaded grains** have no case bond. Their supports and inhibitors have their own problems.
+
+## On the drawing and in the specifications
+
+- **The bond system:** the insulation, the liner and the adhesive by their specifications, with the surface
+  preparation and the times between the steps (for example, the cure state of the liner when the propellant is cast).
+- **The flaps:** their geometry, the root radius, the release layer and where it stops.
+- **The bond tests** on samples cast with each motor: the rates, the temperatures, and the failure mode that you
+  require.
+- **The inspection of the bondlines:** the method, the views, and the acceptance criteria for separations by location.
+- **The temperature limits** of storage and transport, which set $\Delta T$.
+
+## References and further reading
+
+- NASA SP-8073, *Solid Propellant Grain Structural Integrity Analysis* (1973) (free on NTRS).
+- M. L. Williams, P. J. Blatz & R. A. Schapery, *Fundamental Studies Relating to Systems Analysis of Solid Propellants*,
+  GALCIT SM 61-5, California Institute of Technology (1961).
+- O. Volkersen, "Die Nietkraftverteilung in zugbeanspruchten Nietverbindungen mit konstanten Laschenquerschnitten",
+  *Luftfahrtforschung* 15 (1938) (shear lag in a lap joint).
+- D. B. Bogy, "Two edge-bonded elastic wedges of different materials and wedge angles under surface tractions",
+  *Journal of Applied Mechanics* 38 (1971) (the stress at the edge of a bond).
+- A. N. Gent (ed.), *Engineering with Rubber*, 3rd ed., Hanser (2012).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the tests of your bond system and
+  the approval of the responsible stress and safety authorities control the real design.
+</Aside>

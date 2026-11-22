@@ -126,6 +126,7 @@ export const PRIMERS = [
   { key: 'primer-srm', phase: 'orient', after: 'home', slug: 'fundamentals/how-a-solid-motor-works', label: 'HOW A SOLID MOTOR WORKS', ico: '✦' },
   { key: 'primer-composite', phase: 'size', after: 'pv', slug: 'motor/composite-cases', label: 'COMPOSITE CASES', ico: '✦' },
   { key: 'primer-closures', phase: 'size', after: 'pv', slug: 'motor/closures', label: 'CASE CLOSURES', ico: '✦' },
+  { key: 'primer-bond', phase: 'size', after: 'grain', slug: 'motor/bondlines', label: 'BONDLINES', ico: '✦' },
   { key: 'primer-instability', phase: 'size', after: 'grain', slug: 'motor/combustion-instability', label: 'COMBUSTION INSTABILITY', ico: '✦' },
   { key: 'primer-nozzle', phase: 'size', after: 'ablative', slug: 'motor/nozzle', label: 'NOZZLE DESIGN', ico: '✦' },
   { key: 'primer-tvc', phase: 'size', after: 'ablative', slug: 'motor/thrust-vector-control', label: 'THRUST VECTOR CONTROL', ico: '✦' },
