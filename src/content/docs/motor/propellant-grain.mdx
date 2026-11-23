@@ -61,7 +61,7 @@ This has two direct results:
 | Volumetric loading | Propellant volume ÷ volume available inside the case | How much of the case you filled with propellant |
 | Sliver | Propellant that stays when the flame first touches the case | Burns in a low-pressure tail-off, and gives little useful thrust |
 | $K_n$ | Burning area ÷ throat area | Sets the chamber pressure |
-| Port ÷ throat area | Flow area along the bore relative to the throat | If too small, the bore flow is fast and causes erosive burning |
+| Port ÷ throat area | Flow area along the bore relative to the throat | If too small, the bore flow is fast and causes [erosive burning](../erosive-burning/) |
 
 ### Shape sets the thrust curve
 
@@ -158,7 +158,8 @@ The tube preset of the simulator gives these numbers within approximately 1%. Th
 
 <Aside type="caution" title="Where the burn-back model stops">
   Real motors have effects that this model does not include. **Erosive burning:** fast gas along the bore increases
-  the local burn rate. This is why a low port-to-throat ratio gives an ignition spike. Also: the **ignition
+  the local burn rate. This is why a low port-to-throat ratio gives an ignition spike
+  ([Erosive burning and port flow](../erosive-burning/)). Also: the **ignition
   transient**; **throat erosion** (the pressure decreases during the burn); the **burn-rate scale factor and "hump"**
   between small test motors and full-scale grains; **3-D geometry** (finocyl fins, conical ports, domed ends); and grain
   **deformation** under pressure, which changes the port. Production ballistics use full internal-ballistics codes,

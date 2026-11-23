@@ -1,0 +1,345 @@
+---
+title: Erosive burning and port flow
+description: Why fast gas along the port makes the propellant burn faster. How the flow along the port drops the pressure from the head end to the nozzle, and what that does to the peak pressure, the burn-back, the aft insulation and the loads on the grain, with a calculator and a worked example.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import PortFlow from '../../../components/PortFlow.astro';
+import ErosiveCalc from '../../../components/ErosiveCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>All the gas of the grain flows along the port to the nozzle. Where that flow is fast, the propellant burns faster, the pressure at the head end goes up, and the nozzle end of the grain burns through first.</div>
+  <div><b>Before this</b><a href="../propellant-grain/">Propellant grain</a> · <a href="../propellant/#building-meop">Building MEOP</a></div>
+  <div><b>Leads to</b><a href="../insulation/#exposure-time-sets-the-thickness">Insulation</a>, for the longer exposure at the aft end · <a href="../bondlines/">Bondlines</a>, for the push on the grain</div>
+</div>
+
+## Why this matters
+
+The [grain page](../propellant-grain/) predicts the burn with one pressure for the whole chamber and one burn rate for
+the whole burning surface. That is a good model for a short grain with a large port. For a long grain or a small port,
+it is not:
+
+- **The gas speeds up along the port.** The gas leaves the head end at rest. Each length of the grain adds its own gas,
+  so at the nozzle end, all the gas of the grain flows through the port. The pressure falls along the port.
+- **Fast gas makes the propellant burn faster.** This is **erosive burning**. More gas gives a higher pressure, and the
+  pressure amplifies the change by $1/(1-n)$.
+- **The case and the forward closure see the head-end pressure.** It is higher than the pressure of the uniform model.
+  MEOP must include the difference.
+- **The nozzle end burns back faster.** It reaches the case first, so the insulation there sees the hot gas for longer.
+- **The pressure drop pushes the grain toward the nozzle.** The bond carries this load at ignition.
+
+The effects are largest at ignition, when the port is smallest. As the port opens, the flow slows down and the effects
+go away.
+
+## The intuition: wind on a fire
+
+<Analogy title="Blowing on a campfire">
+  Blow across a campfire, and the wood burns faster. The moving air pushes the flame closer to the wood and stirs the
+  hot gas, so more heat gets into the wood. In a motor, the gas that flows along the port does the same to the burning
+  surface. The faster the flow, the thinner the layer of hot gas between the flame and the propellant, and the more
+  heat reaches the surface.
+</Analogy>
+
+## The flow along the port
+
+<PortFlow />
+
+### The mass flux builds up toward the nozzle
+
+Each length of the port adds gas at the rate $\rho_p\,r\,P$, where $P$ is the burning perimeter of the port. At a
+distance $x$ from the head end, the port carries all the gas that the grain makes upstream:
+
+$$
+\dot m(x) = \int_0^x \rho_p\,r\,P\,dx
+\qquad
+G(x) = \frac{\dot m(x)}{A_p}
+$$
+
+$G$ is the **mass flux**: the mass flow for each unit area of the port. At the nozzle end, all the gas of the grain
+passes through the port, and the throat passes the same gas, $\dot m = p_0 A_t / c^*$. So the mass flux at the end of
+the port is
+
+$$
+G_\text{aft} = \frac{p_0}{c^*\,(A_p/A_t)}
+$$
+
+It depends only on the pressure and on the **port-to-throat area ratio**, not on the size of the motor. At 7 MPa, with
+$c^* = 1540$ m/s and a ratio of 2, it is 2270 kg/m²·s.
+
+### The pressure falls from the head end
+
+The gas leaves the burning surface at right angles to the axis, so it brings no momentum along the axis. With no
+friction, the momentum balance of a port of constant area gives
+
+$$
+p + \rho u^2 = p_\text{head}
+\qquad\Rightarrow\qquad
+\frac{p_\text{head}}{p_\text{aft}} = 1 + \gamma M_\text{aft}^2
+$$
+
+The flow from the end of the port into the throat is isentropic. So the port-to-throat ratio alone sets the Mach number
+at the end of the port, as the area ratio of a nozzle does. For $\gamma = 1.2$:
+
+| Port ÷ throat area | Mach number at the end of the port | Static pressure drop along the port | Head-end pressure ÷ stagnation pressure at the nozzle |
+| --- | --- | --- | --- |
+| 1.2 | 0.60 | 30% | 1.158 |
+| 1.5 | 0.44 | 19% | 1.098 |
+| 2 | 0.31 | 10.5% | 1.054 |
+| 3 | 0.20 | 4.7% | 1.024 |
+| 4 | 0.15 | 2.6% | 1.013 |
+| 6 | 0.10 | 1.2% | 1.006 |
+
+- **The stagnation pressure falls too.** The gas in the port must speed up each new part of gas that the grain adds,
+  and this costs pressure. At a ratio of 2, the nozzle sees 5% less than the head end.
+- **At a ratio of 1, the port chokes at its end.** Then the port, not the throat, controls the flow. Keep well clear of
+  this.
+- **The thrust comes from the nozzle pressure, the case load from the head-end pressure.** The difference is small for
+  the thrust, but it goes straight into MEOP.
+
+### The real flow in the port
+
+The one-dimensional model uses the mean speed across the port. In a real port, the gas that leaves the wall turns
+toward the nozzle, and the speed is not uniform across the port: this is the Taylor–Culick flow (Culick 1966). Near the
+head end the flow is smooth. Further along it becomes turbulent, and turbulence near the wall brings more heat to the
+surface. This is where erosive burning starts. CFD gives the details. The one-dimensional model is the usual tool for
+the pressure along the port and the mass flux.
+
+## Erosive burning
+
+### What it is
+
+When gas flows fast over a burning surface, the burn rate goes up. The flow thins the layer of hot gas above the
+surface and makes it turbulent, so more heat reaches the propellant. The **erosive ratio** $\eta = r/r_0$ is the rate
+over the rate $r_0$ with no flow, at the same pressure.
+
+- **There is a threshold.** Below a mass flux, the rate does not change. Above it, the rate rises with the mass flux.
+- **Some propellants first burn more slowly** at a low flow (negative erosion). Mukunda and Paul note that it shows
+  mainly in propellants with less solid filler. High-solids propellants with binders such as PBAN, CTPB and HTPB do not
+  show it.
+- **A slow propellant is more sensitive.** The law compares the flow with the gas that leaves the surface,
+  $\rho_p r_0$. At the same mass flux, a slower propellant has a larger ratio.
+- **A small port is more sensitive.** At the same mass flux, a large motor erodes less, and it takes a higher mass flux
+  before it starts.
+- **Corners and narrow passages** (star points, slots, fins) have a small hydraulic diameter and fast local flow.
+
+### Lenoir and Robillard
+
+The first model (Lenoir and Robillard, 1957) adds an erosive part to the burn rate:
+
+$$
+r = a\,p^n + \alpha\,\frac{G^{0.8}}{D^{0.2}}\,\exp\!\left(-\frac{\beta\,\rho_p\,r}{G}\right)
+$$
+
+- The factor $G^{0.8}/D^{0.2}$ is the heat transfer of turbulent flow in a pipe.
+- The exponential is the effect of the gas that blows off the surface. It thickens the layer of gas over the surface
+  and decreases the heat transfer.
+- $\alpha$ comes from the properties of the gas and the propellant, and $\beta$ from firings. Lenoir and Robillard
+  found $\beta = 53$.
+- $D$ was the distance along the port in the original work. Later users take the hydraulic diameter of the port.
+- $r$ is on both sides, so the rate is found by iteration.
+
+### Mukunda and Paul
+
+Mukunda and Paul (1997) put the erosive-burning data of many propellants and motors on one curve. Let
+$g_0 = G/(\rho_p r_0)$ be the mass flux over the mass flux that leaves the surface, and $Re_0 = \rho_p r_0 d/\mu$ a
+Reynolds number on the hydraulic diameter $d$ of the port, with $\mu$ the viscosity of the gas. Then
+
+$$
+\eta = 1 + 0.023\left(g^{0.8} - g_\text{th}^{0.8}\right)\ \text{ for } g > g_\text{th} = 35,
+\qquad
+g = g_0 \left(\frac{Re_0}{1000}\right)^{-0.125}
+$$
+
+and $\eta = 1$ below the threshold. The term $g^{0.8}$ carries the effect of the flow. The Reynolds number carries the
+size of the port: $g$ falls as $d^{-0.125}$. The threshold mass flux follows from $g = 35$:
+
+$$
+G_\text{th} = 35\,\rho_p\,r_0 \left(\frac{Re_0}{1000}\right)^{0.125}
+$$
+
+For the propellant of the grain page at 2.66 MPa ($r_0 = 5.70$ mm/s) in an 80 mm port, it is 468 kg/m²·s.
+
+<Aside type="caution" title="Use a correlation inside its data">
+  Mukunda and Paul checked their law with firings of motors that had ports of 20 to 90 mm. Kibbey (2014) compared
+  erosive-burning models with the large booster motors of the Space Shuttle and its successor, which have ports of
+  about 1.5 m. Models fitted on small motors, the Lenoir–Robillard model among them, predicted much more erosive
+  burning than these motors showed. For a real design, fit the law to firings of your own propellant at your own
+  scale.
+</Aside>
+
+### How it is measured
+
+- **Test motors with a long port** and pressure taps along the length. The head-end and the nozzle-end pressures,
+  with the burn-back, give the rate along the port.
+- **Ultrasonic gauges** on the case measure the web as it burns, at several stations. They give the rate at each
+  station during the burn.
+- **Cross-flow burners:** a slab of propellant forms one wall of a duct, and hot gas from a second motor flows over it
+  at a known speed.
+- **Full-scale firings** close the loop: fit the law so that the one-dimensional ballistics give the measured
+  head-end pressure.
+
+## What it does to the motor
+
+### The peak pressure and MEOP
+
+- **A neutral or regressive grain:** the spike at ignition is the peak of the burn. It adds directly to MEOP.
+- **A progressive tube:** the uniform model has its peak at the end of the burn. Erosive burning gives a hump at
+  ignition, at a lower pressure, and the peak at the end can be a little lower, because the nozzle end has already
+  stopped burning. MEOP does not change, but the aft insulation does (below).
+- **Temperature:** the erosive ratio changes with the burn rate. Check the allowance at the hot and the cold end of
+  the firing range.
+- **In the MEOP build-up,** enter the allowance as "Other" in the
+  [calculator of the Propellant page](../propellant/#calculator). It is the ratio of the peak at the head end to the
+  peak of the uniform model.
+
+### The head end and the nozzle
+
+- **The case, the forward closure and the igniter see the head-end pressure.** Measure the pressure for MEOP at the
+  head end.
+- **The thrust comes from the stagnation pressure at the nozzle,** which is lower. In a firing, c\* calculated from
+  the head-end pressure is a little too high early in the burn ([Static firing](../../verify/static-firing/)).
+
+### The aft end burns through first
+
+- **The nozzle end reaches the case first.** It burns back faster, so the insulation at the aft end sees the hot gas
+  for longer, and the gas there is the fastest in the motor. Size the aft insulation for its own exposure time
+  ([Insulation](../insulation/#exposure-time-sets-the-thickness)).
+- **With no erosive burning, the reverse is true.** The pressure at the nozzle end is lower, so that end burns a
+  little more slowly and reaches the case last.
+- **The tail-off is longer,** because the grain does not reach the case at all stations at the same time.
+
+### The push on the grain
+
+The pressure falls toward the nozzle, so the gas pushes the grain aft. Bonded to the case, the nearly incompressible
+grain takes the local pressure as its axial stress, and the bond carries the change of it:
+
+$$
+\tau = \frac{A_\text{case} - A_\text{port}}{2\pi b}\,\left|\frac{dp}{dx}\right|
+$$
+
+- **It is an acceleration load.** This is the bond shear of an acceleration on the
+  [Bondlines page](../bondlines/#the-bond-in-the-long-cylinder), with $\rho_p\,n\,g$ replaced by $|dp/dx|$. The
+  pressure gradient acts on the propellant like an acceleration of $|dp/dx|/(\rho_p g)$.
+- **It is highest at the nozzle end,** where the gradient is steepest and where the bond stops at the aft end of the
+  grain.
+- **It comes at ignition,** together with the pressure load of ignition. In a long motor with a small port, it can be
+  larger than the flight acceleration.
+
+## Design responses
+
+- **Open the port at the nozzle end.** A port that gets larger toward the nozzle (a taper, or a larger bore in the aft
+  segment) decreases the mass flux where it is highest. This is the usual fix.
+- **Keep the port-to-throat ratio up.** A ratio of 2 or more at the nozzle end is a common rule of thumb. But the mass
+  flux and the hydraulic diameter decide, not the ratio alone (see the worked example).
+- **Look at the narrow parts of the port.** Star points, slots and fins have a small hydraulic diameter. Give them
+  enough flow area, or keep them where the flow is slow.
+- **Or accept it, and measure it.** A motor with a high volumetric loading can accept a known amount of erosive
+  burning: more propellant in the case, for a known spike. Then the firings must characterise it, and MEOP must include
+  it.
+- **Check again when the propellant changes.** A slower propellant erodes more at the same mass flux.
+
+## Calculator
+
+<ErosiveCalc />
+
+**At ignition** takes the port as cast: the pressure along the port, the mass flux, the erosive ratio and the push on
+the grain. **Through the burn** burns each length of the port back at its own rate. It gives the head-end pressure
+against time, the time at which each end of the port reaches the case, and the allowance for MEOP. The buttons load the
+tube and the star of the grain page, and the long tube of the example below. The criteria start blank: enter your bond
+strength, factor and concentration, or push **Load worked example**.
+
+## Worked example: a longer grain, and a star
+
+The propellant is that of the [grain page](../propellant-grain/): $a = 4.05$ mm/s at 1 MPa, $n = 0.35$,
+$\rho_p = 1770$ kg/m³ and $c^* = 1540$ m/s. The gas has $\gamma = 1.2$ and a viscosity of $8.5 \times 10^{-5}$ Pa·s
+(illustrative). The erosive law is that of Mukunda and Paul, with their constants. The criteria are **for this example
+only**: a bond strength in shear of 0.5 MPa at ignition, a factor of safety of 1.5, and a concentration of 3 at the
+termination. Push **Load worked example** for the long tube, and then the **Star** button for step 7.
+
+1. **The tube of the grain page:** 150 mm OD, an 80 mm port, 600 mm long, with a 33.5 mm throat. The port is 5.70 times
+   the throat, so the Mach number at the end of the port is 0.10, and the pressure falls by 1.3%. At ignition,
+   $G_\text{aft} = 2.66 \times 10^6 / (1540 \times 5.70) = 303$ kg/m²·s, below the threshold of 468 kg/m²·s. There is
+   no erosive burning, and the uniform model is correct within 1%.
+2. **Three tubes long:** 1800 mm, with the throat sized again for the same 7 MPa peak, 58.0 mm. The burning area is
+   three times larger, so the port is now only 1.90 times the throat. The Mach number at the end of the port is 0.33,
+   and the static pressure falls by 12% along the port.
+3. **The mass flux at the nozzle end,** at the 2.66 MPa of the uniform model:
+   $2.663 \times 10^6 / (1540 \times 1.902) = 909$ kg/m²·s, almost twice the threshold. With $r_0 = 5.70$ mm/s,
+   $g_0 = 909 / (1770 \times 0.00570) = 90.0$, $Re_0 = 9500$ and $g = 90.0 \times 9.50^{-0.125} = 68.0$. So
+   $\eta = 1 + 0.023\,(68.0^{0.8} - 35^{0.8}) = 1.28$: the propellant at the nozzle end burns 28% faster.
+4. **At ignition,** the calculator also includes the higher pressure that this gives. It puts the head end at
+   3.20 MPa, 20% above the 2.66 MPa of the uniform model. The port flow alone gives 7%, and erosive burning gives the
+   rest. Erosive burning starts at 53% of the length, and $\eta = 1.33$ at the nozzle end.
+5. **Through the burn,** the hump at ignition goes away as the port opens at the nozzle end. The nozzle end reaches the
+   case at 4.70 s and the head end at 5.05 s, so the aft insulation sees the gas for 0.35 s longer: 7% of the burn.
+   The peak at the end of the burn is 6.72 MPa, 4% below the uniform model, because the nozzle end has stopped burning.
+   This progressive grain does not need a higher MEOP.
+6. **The push on the grain** at ignition: the pressure falls 0.37 MPa along the port, which puts 4.7 kN on the grain
+   toward the nozzle. At the nozzle end the gradient is 0.56 MPa/m, like 32 g on the propellant: twice the 15 g of
+   flight on the [Bondlines page](../bondlines/#worked-example-the-bonds-of-the-300-mm-grain). The bond shear there is
+   0.015 MPa, and 0.045 MPa at the termination, so MS = 0.5 / (1.5 × 0.045) − 1 = +6.4.
+7. **The star of the grain page:** 7 points, a 110 mm tip and a 40 mm valley, 600 mm long, with its throat of 36.5 mm
+   for a 7 MPa peak. The port is 3.20 times the throat, which the rule of thumb accepts. But the uniform model starts
+   at 6.50 MPa, near its peak, and the star has a hydraulic diameter of only 25 mm. At ignition, the mass flux at the
+   nozzle end is 1580 kg/m²·s and $\eta = 1.44$. The head end gets to 7.94 MPa: **13% above the 7.0 MPa peak** of the
+   uniform model, at ignition. For this neutral grain, the erosive peak is the peak of the burn. Add 13% to MEOP as
+   "Other", or open the port.
+
+<Aside type="tip" title="What the example shows">
+  The port-to-throat ratio does not decide alone. The long tube at 1.9 and the star at 3.2 both burn erosively, because
+  the mass flux and the hydraulic diameter decide. In a progressive grain, the hump at ignition stays below the final
+  peak, and the cost is the longer exposure of the aft insulation. In a neutral grain, the same effect adds directly to
+  MEOP.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A one-dimensional, quasi-steady screen">
+  This model gives the pressure along the port and the scale of erosive burning. It does not replace a ballistics code
+  calibrated on firings of your motor.
+</Aside>
+
+- **The erosive law is a correlation.** Its constants come from firings, and they change with the propellant, the scale
+  and the shape of the port.
+- **The ignition transient:** flame spreading, the filling of the chamber and the gas of the igniter. They add to the
+  spike at ignition.
+- **The real flow** across the port, its turbulence, and the flow in slots and fins need multi-dimensional analysis.
+- **Grain deformation** under the pressure changes the port, most at the nozzle end.
+- **Burning ends,** segments with gaps between them, and ports that change along the length.
+- **The particles** in the flow of a metallised propellant, which erode the insulation and the entry of the nozzle.
+
+## On the drawing and in the specifications
+
+- **The port geometry along the length,** with any taper toward the nozzle, and its tolerances. The port at the nozzle
+  end is a critical dimension.
+- **The throat diameter,** with its tolerance: it sets the port-to-throat ratio.
+- **The propellant specification:** the burn-rate law, and the erosive law or the firings that the ballistic
+  prediction uses.
+- **The pressure transducer at the head end,** for MEOP and for acceptance.
+- **The aft insulation,** sized for its own exposure time.
+
+## References and further reading
+
+- J. M. Lenoir & G. Robillard, "A mathematical method to predict the effects of erosive burning in solid-propellant
+  rockets", *Sixth Symposium (International) on Combustion*, Reinhold (1957), pp. 663–667.
+- H. S. Mukunda & P. J. Paul, "Universal behaviour in erosive burning of solid propellants", *Combustion and Flame* 109
+  (1997), pp. 224–236.
+- M. K. Razdan & K. K. Kuo, "Erosive burning of solid propellants", chapter 10 in K. K. Kuo & M. Summerfield (eds.),
+  *Fundamentals of Solid-Propellant Combustion*, Progress in Astronautics and Aeronautics 90, AIAA (1984).
+- T. P. Kibbey, "A one-dimensional global-scaling erosive burning model informed by blowing wall turbulence",
+  AIAA/ASME/SAE/ASEE Joint Propulsion Conference (2014) (free on NTRS).
+- F. E. C. Culick, "Rotational axisymmetric mean flow and damping of acoustic waves in a solid propellant rocket",
+  *AIAA Journal* 4 (1966).
+- NASA SP-8076, *Solid Propellant Grain Design and Internal Ballistics* (1972) (free on NTRS).
+- A. H. Shapiro, *The Dynamics and Thermodynamics of Compressible Fluid Flow*, Vol. 1, Ronald Press (1953) (flow with
+  mass addition).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the firings of your motor and the
+  approval of the responsible ballistics, stress and safety authorities control the real design.
+</Aside>

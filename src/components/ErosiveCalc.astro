@@ -1,0 +1,450 @@
+---
+// Erosive burning and the flow along the port: the port at ignition (pressure along the port, the burn-rate ratio, the
+// push on the grain) and the burn station by station (head-end pressure against time, the port as it opens). The
+// calculations live in src/lib/erosive.ts (unit-tested); this file is UI only.
+const presets = [
+  { key: 'tube600', label: 'Tube', len: '600 mm' },
+  { key: 'tube1800', label: 'Tube', len: '1800 mm' },
+  { key: 'star600', label: 'Star', len: '600 mm' },
+];
+---
+
+<div class="calc ercalc" data-ercalc>
+  <div class="calc-head">
+    <span>Erosive burning and port flow</span>
+    <span class="head-btns">
+      <span>1-D port flow · Mukunda–Paul</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="now" aria-selected="true">At ignition</button>
+    <button type="button" role="tab" class="chip" data-tab="burn" aria-selected="false">Through the burn</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Port and grain</legend>
+        <div class="er-presets">
+          <span>Grain-page geometries:</span>
+          {presets.map((p) => <button type="button" class="chip" data-preset={p.key}>{p.label} <span class="nc">{p.len}</span></button>)}
+        </div>
+        <label>Cross-section
+          <select name="kind">
+            <option value="circular">Circular (tube)</option>
+            <option value="star">Star</option>
+            <option value="slots">Core + radial slots</option>
+          </select>
+        </label>
+        <div data-show="circular"><label>Port diameter (mm)<input name="d" type="number" min="1" step="any" value="80" /></label></div>
+        <div data-show="star" class="row2" hidden>
+          <label>Points<input name="points" type="number" min="3" max="16" step="1" value="7" /></label>
+          <label>Tip Ø (mm)<input name="tipD" type="number" min="1" step="any" value="110" /></label>
+          <label>Valley Ø (mm)<input name="valleyD" type="number" min="1" step="any" value="40" /></label>
+        </div>
+        <div data-show="slots" class="row2" hidden>
+          <label>Slots<input name="slots" type="number" min="1" max="16" step="1" value="6" /></label>
+          <label>Core Ø (mm)<input name="coreD" type="number" min="1" step="any" value="40" /></label>
+          <label>Slot width (mm)<input name="slotW" type="number" min="0.5" step="any" value="8" /></label>
+          <label>Slot tip Ø (mm)<input name="slotD" type="number" min="1" step="any" value="110" /></label>
+        </div>
+        <div class="row2">
+          <label>Grain OD (mm)<input name="od" type="number" min="10" step="any" value="150" /></label>
+          <label>Grain length (mm)<input name="L" type="number" min="10" step="any" value="600" /></label>
+          <label>Throat diameter (mm)<input name="dt" type="number" min="1" step="any" value="33.5" /></label>
+        </div>
+        <p class="hint">A prismatic grain: the same section for its full length, with inhibited ends. The section burns back as on the Propellant grain page. The head end is closed; the nozzle is at the other end.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Propellant and gas</legend>
+        <div class="row2">
+          <label>a (mm/s at 1 MPa)<input name="a" type="number" min="0.1" step="any" value="4.05" /></label>
+          <label>n<input name="n" type="number" min="0" max="0.95" step="0.01" value="0.35" /></label>
+          <label>Density (kg/m³)<input name="rho" type="number" min="100" step="any" value="1770" /></label>
+          <label>c* (m/s)<input name="cstar" type="number" min="100" step="any" value="1540" /></label>
+          <label>γ of the gas<input name="gam" type="number" min="1.05" max="1.67" step="0.01" value="1.2" /></label>
+          <label>Gas viscosity (10⁻⁵ Pa·s)<input name="mu" type="number" min="0.1" step="any" value="8.5" /></label>
+        </div>
+        <p class="hint">Illustrative values similar to AP/HTPB, as on the Propellant grain page, not a real propellant. The viscosity is that of the hot gas in the port.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Erosive burning</legend>
+        <div class="row2">
+          <label>Law
+            <select name="law">
+              <option value="mp">Mukunda–Paul</option>
+              <option value="none">None: the port flow only</option>
+            </select>
+          </label>
+          <label>K<sub>1</sub><input name="K1" type="number" min="0" step="any" value="0.023" /></label>
+          <label>g<sub>th</sub><input name="gth" type="number" min="0" step="any" value="35" /></label>
+        </div>
+        <p class="hint">η = 1 + K<sub>1</sub>(g<sup>0.8</sup> − g<sub>th</sub><sup>0.8</sup>) above the threshold, with the published constants 0.023 and 35. Fit them to firings of your own propellant and motor size.</p>
+      </fieldset>
+      <fieldset data-panel="now">
+        <legend>Your criteria</legend>
+        <div class="row2">
+          <label>Bond strength in shear (MPa)<input name="ss" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Factor of safety<input name="sf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label>Concentration at the termination<input name="kt" type="number" min="1" step="any" placeholder="from your FEA" autocomplete="off" /></label>
+        </div>
+        <p class="hint">The bond strength from your tests, at the rate and the temperature of ignition. The factor from your design rules. The concentration from FEA of the aft end of your grain.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="er-out">
+      <div data-out="now">
+        <dl class="readouts">
+          <div class="readout primary"><dt>Head-end pressure</dt><dd data-r="ph">—</dd></div>
+          <div class="readout"><dt>Along the port</dt><dd data-r="drop">—</dd></div>
+          <div class="readout"><dt>Mass flux at the nozzle end</dt><dd data-r="flux">—</dd></div>
+          <div class="readout"><dt>Erosive burning</dt><dd data-r="eta">—</dd></div>
+          <div class="readout"><dt>Push on the grain</dt><dd data-r="push">—</dd></div>
+          <div class="readout" data-bondbox><dt>Bond shear at the nozzle end</dt><dd data-r="bond">—</dd></div>
+        </dl>
+        <figure class="er-fig">
+          <svg data-nchart role="img" aria-label="Static pressure and burn-rate ratio along the port, from the head end to the nozzle end"></svg>
+          <figcaption>Top: the static pressure along the port at ignition, against the single pressure of the uniform-pressure model (dashed). Bottom: the burn rate over the rate with no flow. Erosive burning starts where the mass flux passes the threshold.</figcaption>
+        </figure>
+      </div>
+      <div data-out="burn" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-peakbox><dt>Peak at the head end</dt><dd data-r="pk">—</dd></div>
+          <div class="readout"><dt>Allowance for <span class="nc">MEOP</span></dt><dd data-r="allow">—</dd></div>
+          <div class="readout"><dt>At ignition</dt><dd data-r="ign">—</dd></div>
+          <div class="readout"><dt>First at the case</dt><dd data-r="touch">—</dd></div>
+          <div class="readout"><dt>Aft insulation</dt><dd data-r="aft">—</dd></div>
+        </dl>
+        <figure class="er-fig">
+          <svg data-tchart role="img" aria-label="Head-end pressure, nozzle pressure and the uniform-pressure model against time"></svg>
+          <figcaption>The pressure at the head end, at the nozzle, and in the uniform-pressure model of the Propellant grain page (dashed). The case and the forward closure see the head-end pressure.</figcaption>
+        </figure>
+        <figure class="er-fig">
+          <svg data-pchart role="img" aria-label="Equivalent port radius along the grain at several times"></svg>
+          <figcaption>The port along the grain at equal steps of time, as the radius of a round port of the same area. Where the lines spread toward the nozzle end, that end burns back faster.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. Quasi-steady, one-dimensional flow in the port: the gas enters at right angles to
+    the axis, with no friction, and the stagnation temperature is constant. The flow from the end of the port to the
+    throat is isentropic. Each of 48 lengths of the port burns back at its own rate, with the section of the Propellant
+    grain page. Not included: the ignition transient and flame spreading, the gas stored in the port, throat erosion,
+    the real velocity profile in the port and its turbulence, burning ends, grain deformation, and changes of the
+    erosive law with the temperature. The Mukunda–Paul law (1997) uses the hydraulic diameter of the port.
+  </div>
+</div>
+
+<style is:global>
+  .er-out { min-width: 0; }
+  .er-out > div > * { min-width: 0; }
+  .er-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .er-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; margin: 0 0 0.6rem !important; }
+  .er-presets > span { font-size: var(--sl-text-xs); color: var(--rd-muted); margin-right: 0.2rem; }
+  .er-presets .chip { white-space: nowrap; }
+</style>
+
+<script>
+  import { section, portFlow, burn1D, gradientLoad, thresholdFlux, type Section } from '../lib/erosive';
+  import { equilibriumPressure } from '../lib/ballistics';
+  import type { Port } from '../lib/grain';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+  const ms = (v: number) => (Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : '−'}${f(Math.abs(v), 2)}`);
+  const msClass = (v: number) => (v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+  const pct = (v: number, d = 1) => `${v < 0 ? '−' : '+'}${f(Math.abs(v) * 100, d)}%`;
+  const g3 = (v: number) => (Math.abs(v) >= 1 ? f(v, 2) : Math.abs(v) >= 0.01 ? f(v, 3) : f(v, 4));
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+  const N = 48;
+
+  const PRESETS: Record<string, Record<string, string>> = {
+    tube600: { kind: 'circular', d: '80', od: '150', L: '600', dt: '33.5' },
+    tube1800: { kind: 'circular', d: '80', od: '150', L: '1800', dt: '58' },
+    star600: { kind: 'star', points: '7', tipD: '110', valleyD: '40', od: '150', L: '600', dt: '36.5' },
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-ercalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'now';
+    const cache = new Map<string, Section>();
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const showKind = () => root.querySelectorAll<HTMLElement>('[data-show]').forEach((el) => (el.hidden = el.dataset.show !== field('kind').value));
+
+    /** The port from the form, or a message saying what is wrong with it. */
+    function readPort(od: number): Port | string {
+      const kind = field('kind').value;
+      if (kind === 'circular') {
+        const d = num('d');
+        return d > 0 && d < od ? { kind, d } : 'Enter a port diameter smaller than the grain OD.';
+      }
+      if (kind === 'star') {
+        const points = Math.round(num('points')), tipD = num('tipD'), valleyD = num('valleyD');
+        return points >= 3 && points <= 16 && valleyD > 0 && tipD > valleyD && tipD < od
+          ? { kind, points, tipD, valleyD } : 'Enter 3 to 16 points, a valley Ø smaller than the tip Ø, and a tip Ø smaller than the grain OD.';
+      }
+      const slots = Math.round(num('slots')), coreD = num('coreD'), slotW = num('slotW'), slotD = num('slotD');
+      return slots >= 1 && slots <= 16 && coreD > 0 && slotW > 0 && slotW < coreD && slotD > coreD && slotD < od
+        ? { kind: 'slots', slots, coreD, slotW, slotD } : 'Enter 1 to 16 slots, a slot narrower than the core, and a slot tip Ø between the core Ø and the grain OD.';
+    }
+
+    function sectionOf(od: number, L: number, port: Port) {
+      const key = JSON.stringify([od, L, port]);
+      let s = cache.get(key);
+      if (!s) { s = section(od, L, port); if (cache.size > 12) cache.clear(); cache.set(key, s); }
+      return s;
+    }
+
+    const crit = () => ({ ss: readFactor(field('ss').value, 1e-6), sf: readFactor(field('sf').value), kt: readFactor(field('kt').value) });
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('.er-fig svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function run() {
+      showKind();
+      const od = num('od'), L = num('L'), Dt = num('dt');
+      const prop = { rhoP: num('rho'), a: num('a'), n: num('n'), cStar: num('cstar') };
+      const gas = { gamma: num('gam'), cStar: prop.cStar, mu: num('mu') * 1e-5 };
+      if (!(od > 0 && L > 0 && Dt > 0)) { clear('Enter the grain OD, the grain length and the throat diameter.'); return; }
+      if (!(prop.rhoP > 0 && prop.a > 0 && prop.n >= 0 && prop.n < 1 && prop.cStar > 0)) { clear('Enter the propellant: a, n below 1, the density and c*.'); return; }
+      if (!(gas.gamma > 1 && gas.mu > 0)) { clear('Enter γ above 1 and the gas viscosity.'); return; }
+      const port = readPort(od);
+      if (typeof port === 'string') { clear(port); return; }
+      const lawOn = field('law').value === 'mp';
+      const law = lawOn ? { K1: num('K1'), gth: num('gth') } : null;
+      if (law && !(law.K1 >= 0 && law.gth >= 0)) { clear('Enter K₁ and g_th: zero or more.'); return; }
+      const sec = sectionOf(od, L, port);
+      const At = (Math.PI * Dt * Dt) / 4;
+      if (!(sec.A0 > At)) { clear(`The port (${f(sec.A0, 0)} mm²) is not larger than the throat (${f(At, 0)} mm²). Then the port, not the throat, chokes, and this model does not apply. Open the port or make the throat smaller.`); return; }
+      const notes: [string, string][] = [];
+      if (mode === 'now') runNow(notes, { od, L, At, prop, gas, law, sec });
+      else runBurn(notes, { od, L, Dt, port, prop, gas, law, sec });
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    type Ctx = { od: number; L: number; prop: { rhoP: number; a: number; n: number; cStar: number }; gas: { gamma: number; cStar: number; mu: number }; law: { K1: number; gth: number } | null; sec: Section };
+
+    function runNow(notes: [string, string][], c: Ctx & { At: number }) {
+      const { sec, prop, gas, law, L, At } = c;
+      const cells = Array.from({ length: N }, () => ({ A: sec.A(0), P: sec.P(0), dh: sec.dh(0) }));
+      const fl = portFlow({ cells, length: L, prop, gas, law, At });
+      if (!fl.ok) { clear(fl.why ?? 'No solution for this port.'); return; }
+      const p0D = equilibriumPressure({ ...prop, kn: (sec.P(0) * L) / At });
+      const ratio = sec.A0 / At, dh = sec.dh(0);
+      const end = fl.points[N - 1];
+      const r0aft = (prop.a * Math.pow(fl.pAft, prop.n)) / 1000;
+      const Gth = law ? thresholdFlux(prop.rhoP, r0aft, dh / 1000, gas.mu, law.gth) : NaN;
+      const first = fl.points.find((q) => q.eta > 1 + 1e-9);
+      const gl = gradientLoad(fl, { caseArea: sec.caseArea, portArea: sec.A0, length: L, rhoP: prop.rhoP, od: c.od })!;
+      r('ph').innerHTML = `${f(fl.pHead, 2)} MPa <small>${pct(fl.pHead / p0D - 1)} on the uniform-pressure model (${f(p0D, 2)} MPa) · the nozzle sees ${f(fl.p0, 2)} MPa</small>`;
+      r('drop').innerHTML = `${f(gl.drop, gl.drop < 0.1 ? 3 : 2)} MPa <small>the static pressure falls ${f((gl.drop / fl.pHead) * 100, 1)}% from the head end · M ${f(fl.M, 2)} at the nozzle end · port ÷ throat ${f(ratio, 2)}</small>`;
+      r('flux').innerHTML = `${f(end.G, 0)} kg/m²·s <small>${law ? `the threshold there is ${f(Gth, 0)} kg/m²·s: ${f(end.G / Gth, 2)} times` : 'no erosive law selected: the port flow only'} · hydraulic diameter ${f(dh, 1)} mm</small>`;
+      if (!law) r('eta').innerHTML = 'off <small>select the Mukunda–Paul law to include it</small>';
+      else if (first) r('eta').innerHTML = `${pct(end.eta - 1, 0)} <small>on the burn rate at the nozzle end · it starts about ${f(first.x - L / N / 2, 0)} mm from the head end, at ${f(((first.x - L / N / 2) / L) * 100, 0)}% of the length</small>`;
+      else r('eta').innerHTML = 'none <small>the mass flux stays below the threshold for the full length of the port</small>';
+      r('push').innerHTML = `${f(gl.force, 2)} kN <small>toward the nozzle · like ${f(gl.gAft, 0)} g at the nozzle end, and ${f(gl.gMean, 0)} g over the grain</small>`;
+      const k = crit(), kt = k.kt ?? 1;
+      if (k.ss !== null && k.sf !== null) {
+        const m = k.ss / (k.sf * kt * gl.tauAft) - 1;
+        r('bond').innerHTML = `${g3(gl.tauAft)} MPa <small>${k.kt !== null ? `${g3(gl.tauAft * kt)} MPa at the termination · ` : ''}against ${f(k.ss, 2)} MPa ÷ ${f(k.sf, 2)}: MS ${ms(m)}</small>`;
+        $('[data-bondbox]').className = `readout ${msClass(m)}`;
+        if (m < 0) notes.push(['bad', 'The bond shear at the aft termination is over its allowable. Open the port at the nozzle end, or end the bond with a stress-relief flap at the aft end of the grain.']);
+      } else {
+        r('bond').innerHTML = `${g3(gl.tauAft)} MPa <small>(A<sub>case</sub> − A<sub>port</sub>)/2πb · |dp/dx| · enter your criteria to see the margin</small>`;
+        $('[data-bondbox]').className = 'readout';
+        notes.push(['warn', `The bond shear is shown. ${awaitingMessage(['bond strength', 'factor of safety'], 'the margin')}`]);
+      }
+      if (law && first) notes.push(['', `Erosive burning raises the burn rate by up to ${f((end.eta - 1) * 100, 0)}% at the nozzle end. The extra gas raises the pressure everywhere: the head end is ${f((fl.pHead / p0D - 1) * 100, 1)}% above the uniform-pressure model.`]);
+      else if (law) notes.push(['', `No erosive burning: the mass flux at the nozzle end, ${f(end.G, 0)} kg/m²·s, is below the threshold of ${f(Gth, 0)} kg/m²·s. The port flow alone puts the head end ${f((fl.pHead / p0D - 1) * 100, 1)}% above the uniform-pressure model.`]);
+      if (ratio < 2) notes.push(['warn', `The port is only ${f(ratio, 2)} times the throat area. A common rule of thumb asks for 2 or more. The mass flux and the size of the port decide, not the ratio alone.`]);
+      if (sec.dh(0) < 0.9 * Math.sqrt((4 * sec.A0) / Math.PI)) notes.push(['', `This port has a hydraulic diameter of ${f(dh, 1)} mm, less than the ${f(Math.sqrt((4 * sec.A0) / Math.PI), 1)} mm of a round port of the same area. At the same mass flux, a narrow port erodes more.`]);
+      if (law && (dh < 20 || dh > 90)) notes.push(['warn', `The motors that Mukunda and Paul used to check their law had ports of 20 to 90 mm. This port is ${f(dh, 0)} mm. Correlations from small motors are known to overpredict erosive burning in large motors: calibrate the law on your own firings.`]);
+      notes.push(['', `The pressure falls toward the nozzle, so the gas pushes the grain aft with ${f(gl.force, 2)} kN. At the nozzle end the gradient is like ${f(gl.gAft, 0)} g of acceleration on the propellant, and the bond carries it, as it carries the flight loads on the Bondlines page.`]);
+      drawNow(fl, p0D, L, first ? first.x - L / N / 2 : NaN);
+    }
+
+    let pending = 0;
+    function runBurn(notes: [string, string][], c: Ctx & { Dt: number; port: Port }) {
+      const b = burn1D({ od: c.od, length: c.L, port: c.port, prop: c.prop, gas: c.gas, law: c.law, throatD: c.Dt, sec: c.sec, cells: N });
+      if (!b.ok) { clear(b.why ?? 'No solution for this grain.'); return; }
+      const allow = b.peak.p / b.peak0.p - 1, web0 = b.web0;
+      r('pk').innerHTML = `${f(b.peak.p, 2)} MPa <small>at ${f(b.peak.t, 2)} s · the uniform-pressure model peaks at ${f(b.peak0.p, 2)} MPa at ${f(b.peak0.t, 2)} s</small>`;
+      r('allow').innerHTML = allow > 0.0005
+        ? `${pct(allow)} <small>the 1-D peak over the uniform-pressure peak · enter it as “Other” in the MEOP build-up, for this grain at this temperature</small>`
+        : `none <small>the 1-D peak is not above the uniform-pressure peak (${pct(allow)})</small>`;
+      r('ign').innerHTML = `${f(b.start.pHead, 2)} MPa <small>${pct(b.start.pHead / b.start.p0D - 1)} on the uniform-pressure model at ignition (${f(b.start.p0D, 2)} MPa)</small>`;
+      r('touch').innerHTML = `${f(b.touch.aft, 2)} s <small>at the nozzle end · ${f(b.touch.head, 2)} s at the head end · ${f(web0, 2)} s in the uniform-pressure model</small>`;
+      const dT = b.touch.head - b.touch.aft;
+      r('aft').innerHTML = dT > 0.005
+        ? `${f(dT, 2)} s longer <small>the gas reaches the case at the nozzle end first, ${f((dT / b.touch.head) * 100, 1)}% of the burn before the head end</small>`
+        : dT < -0.005
+          ? `${f(-dT, 2)} s shorter <small>the head end reaches the case first: the nozzle end, at a lower pressure, burns more slowly</small>`
+          : 'the same <small>the two ends reach the case together</small>';
+      $('[data-peakbox]').className = `readout primary${allow > 0.02 ? ' warn' : ''}`;
+      if (b.peak.t < 0.05 * b.touch.head && allow > 0.0005) notes.push(['warn', `The peak is at ignition, ${pct(allow)} above the peak of the uniform-pressure model. Erosive burning and the port flow set it. Add this to MEOP for this grain, and check it at the hot and the cold temperature: the erosive law changes with the burn rate.`]);
+      else if (b.start.pHead / b.start.p0D > 1.05) notes.push(['', `The pressure at ignition is ${f((b.start.pHead / b.start.p0D - 1) * 100, 1)}% above the uniform-pressure model, but the peak of the burn is later. The hump at ignition does not set MEOP here.`]);
+      if (dT > 0.005) notes.push(['', `The nozzle end reaches the case ${f(dT, 2)} s before the head end. The insulation there sees hot gas for that much longer, at the highest gas speed in the motor. Size the aft insulation for its own exposure time.`]);
+      if (b.peak.p < b.peak0.p - 0.005 && b.peak.t > 0.5 * b.touch.head) notes.push(['', 'The peak at the end of the burn is below the uniform-pressure model, because the nozzle end has already reached the case and stopped burning. The tail-off is longer.']);
+      drawTime(b);
+      drawPort(b, c.L, c.od);
+    }
+
+    function ticks(max: number, n = 5) {
+      const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))), s = [1, 2, 2.5, 5, 10].map((k) => k * p).find((k) => k >= raw) ?? 10 * p;
+      return s;
+    }
+
+    // the port at ignition: static pressure (top) and the burn-rate ratio (bottom) along the port
+    function drawNow(fl: ReturnType<typeof portFlow>, p0D: number, L: number, x0: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-nchart]')!;
+      const W = width(svg), Lm = 50, R = 14, T1 = 22, H1 = 112, gap = 34, T2 = T1 + H1 + gap, H2 = 96, B = 34, H = T2 + H2 + B;
+      const X = (x: number) => Lm + (x / L) * (W - Lm - R);
+      const pts = [{ x: 0, p: fl.pHead, eta: fl.points[0].eta }, ...fl.points.map((q) => ({ x: q.x, p: q.p, eta: q.eta }))];
+      const pLo = Math.min(fl.pAft, p0D, fl.p0), pHi = Math.max(fl.pHead, p0D);
+      const span = Math.max(pHi - pLo, 0.02 * pHi), lo = pLo - 0.12 * span, hi = pHi + 0.12 * span;
+      const Y1 = (p: number) => T1 + ((hi - p) / (hi - lo)) * H1;
+      const eMax = Math.max(1.1, ...pts.map((q) => q.eta)) + 0.02;
+      const Y2 = (e: number) => T2 + ((eMax - e) / (eMax - 1)) * H2;
+      const out: string[] = [];
+      const ps = ticks(hi - lo, 4), dp = ps < 0.01 ? 3 : ps < 0.1 ? 2 : 1;
+      for (let v = Math.ceil(lo / ps) * ps; v <= hi + 1e-12; v += ps) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y1(v).toFixed(1)}" y2="${Y1(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y1(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(dp)}</text>`);
+      const es = ticks(eMax - 1, 3);
+      for (let v = 1; v <= eMax + 1e-12; v += es) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y2(v).toFixed(1)}" y2="${Y2(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y2(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v.toFixed(es < 0.1 ? 2 : 1)}</text>`);
+      const xs = ticks(L, W < 420 ? 3 : 5);
+      for (let x = 0; x <= L + 1e-9; x += xs) out.push(`<line x1="${X(x).toFixed(1)}" x2="${X(x).toFixed(1)}" y1="${T2 + H2}" y2="${T2 + H2 + 4}" stroke="var(--rd-muted)"/><text x="${X(x).toFixed(1)}" y="${T2 + H2 + 15}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(x, 0)}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 5}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">distance from the head end, mm</text>`);
+      out.push(`<text x="4" y="12" font-size="10" fill="var(--rd-ink)">static pressure, MPa</text><text x="4" y="${T2 - 10}" font-size="10" fill="var(--rd-ink)">burn rate ÷ rate with no flow</text>`);
+      out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y1(p0D).toFixed(1)}" y2="${Y1(p0D).toFixed(1)}" stroke="var(--rd-muted)" stroke-width="1.6" stroke-dasharray="6 4"/>`);
+      out.push(`<polyline points="${pts.map((q) => `${X(q.x).toFixed(1)},${Y1(q.p).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      out.push(`<polyline points="${pts.map((q) => `${X(q.x).toFixed(1)},${Y2(q.eta).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-blue)" stroke-width="2.4"/>`);
+      const yH = Y1(fl.pHead), yD = Y1(p0D);
+      out.push(`<text x="${Lm + 6}" y="${(Math.abs(yH - yD) < 13 ? Math.min(yH, yD) - 6 : yH - 6).toFixed(1)}" font-size="10" fill="var(--rd-accent)" ${halo}>head end ${f(fl.pHead, 2)}</text>`);
+      const dashLabelBelow = yD + 14 < T1 + H1 && (Y1(fl.pAft) < yD || Math.abs(Y1(fl.pAft) - yD) > 16);
+      out.push(`<text x="${W - R - 4}" y="${(dashLabelBelow ? yD + 13 : yD - 5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)" ${halo}>uniform model ${f(p0D, 2)}</text>`);
+      if (Number.isFinite(x0)) {
+        out.push(`<line x1="${X(x0).toFixed(1)}" x2="${X(x0).toFixed(1)}" y1="${T2}" y2="${T2 + H2}" stroke="var(--rd-ink)" stroke-dasharray="2 3"/>`);
+        // the side with room for the label, or a shorter label when neither side has room
+        const xl = X(x0), roomR = W - R - (xl + 6), roomL = xl - 6 - Lm, wide = (s: string) => s.length * 6.1;
+        const text = Math.max(roomR, roomL) >= wide('erosive burning starts') ? 'erosive burning starts' : 'erosion starts';
+        const right = roomR >= wide(text) || roomR >= roomL;
+        out.push(`<text x="${(xl + (right ? 6 : -6)).toFixed(1)}" y="${T2 + 12}" text-anchor="${right ? 'start' : 'end'}" font-size="10" fill="var(--rd-ink)" ${halo}>${text}</text>`);
+      } else out.push(`<text x="${Lm + 6}" y="${(Y2(1) - 8).toFixed(1)}" font-size="10" fill="var(--rd-muted)" ${halo}>no erosive burning</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // pressure against time: head end, nozzle, and the uniform-pressure model
+    function drawTime(b: ReturnType<typeof burn1D>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-tchart]')!;
+      const W = width(svg), Lm = 46, R = 14, B = 34;
+      const items: [string, string, string][] = [['head end', 'var(--rd-accent)', ''], ['nozzle', 'var(--rd-blue)', ''], ['uniform model', 'var(--rd-muted)', '6 4']];
+      const out: string[] = [];
+      let lx = 8, ly = 12;
+      for (const [name, col, dash] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"${dash ? ` stroke-dasharray="${dash}"` : ''}/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T = ly + 22, H = T + 176;
+      const tMax = Math.max(b.end, b.end0, ...b.zeroD.map((q) => q.t)) * 1.02;
+      const pMax = Math.max(b.peak.p, b.peak0.p) * 1.12;
+      const X = (t: number) => Lm + (t / tMax) * (W - Lm - R), Y = (p: number) => T + (1 - p / pMax) * (H - T - B);
+      const ps = ticks(pMax, 4);
+      for (let v = 0; v <= pMax + 1e-12; v += ps) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${f(v, ps < 1 ? 1 : 0)}</text>`);
+      const ts = ticks(tMax, W < 420 ? 4 : 6);
+      for (let t = 0; t <= tMax + 1e-9; t += ts) out.push(`<text x="${X(t).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(t, ts < 1 ? 1 : 0)}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">time, s</text><text x="4" y="${T - 8}" font-size="10" fill="var(--rd-ink)">MPa</text>`);
+      const line = (pts: { t: number; p: number }[], col: string, w: number, dash = '') => `<polyline points="${pts.map((q) => `${X(q.t).toFixed(1)},${Y(q.p).toFixed(1)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
+      const endPt = { t: b.end, p: 0 };
+      out.push(line(b.zeroD, 'var(--rd-muted)', 1.8, '6 4'));
+      out.push(line([...b.trace.map((q) => ({ t: q.t, p: q.p0 })), endPt], 'var(--rd-blue)', 1.6));
+      out.push(line([...b.trace.map((q) => ({ t: q.t, p: q.pHead })), endPt], 'var(--rd-accent)', 2.4));
+      out.push(`<circle cx="${X(b.peak.t).toFixed(1)}" cy="${Y(b.peak.p).toFixed(1)}" r="4" fill="var(--rd-accent)"/>`);
+      const right = X(b.peak.t) < (Lm + W - R) / 2;
+      out.push(`<text x="${(X(b.peak.t) + (right ? 8 : -8)).toFixed(1)}" y="${(Y(b.peak.p) - 7).toFixed(1)}" text-anchor="${right ? 'start' : 'end'}" font-size="10" fill="var(--rd-accent)" ${halo}>peak ${f(b.peak.p, 2)} MPa</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // the port along the grain at equal steps of time
+    function drawPort(b: ReturnType<typeof burn1D>, L: number, od: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-pchart]')!;
+      const W = width(svg), Lm = 46, R = 14, T = 26, B = 34, H = 220;
+      // the range from the port as cast to the case, so that the spread toward the nozzle end shows
+      const Rc = od / 2, r0 = Math.min(...b.profiles[0].r);
+      const lo = Math.max(0, r0 - 0.12 * (Rc - r0)), hi = Rc + 0.08 * (Rc - r0);
+      const X = (x: number) => Lm + (x / L) * (W - Lm - R), Y = (rr: number) => T + ((hi - rr) / (hi - lo)) * (H - T - B);
+      const out: string[] = [];
+      const rs = ticks(hi - lo, 4);
+      for (let v = Math.ceil(lo / rs) * rs; v <= hi + 1e-9; v += rs) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${f(v, rs < 1 ? 1 : 0)}</text>`);
+      const xs = ticks(L, W < 420 ? 3 : 5);
+      for (let x = 0; x <= L + 1e-9; x += xs) out.push(`<text x="${X(x).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(x, 0)}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">distance from the head end, mm</text><text x="4" y="12" font-size="10" fill="var(--rd-ink)">port radius, mm</text>`);
+      out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(Rc).toFixed(1)}" y2="${Y(Rc).toFixed(1)}" stroke="var(--rd-ink)" stroke-width="2"/><text x="${W - R - 4}" y="${(Y(Rc) - 5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-ink)" ${halo}>case</text>`);
+      // profiles at equal steps of time, up to the first contact with the case
+      const tEnd = Math.min(Number.isFinite(b.touch.aft) ? b.touch.aft : b.end, Number.isFinite(b.touch.head) ? b.touch.head : b.end);
+      const marks = [0, 0.2, 0.4, 0.6, 0.8, 1].map((k) => k * tEnd);
+      const xsCell = Array.from({ length: N }, (_, j) => ((j + 0.5) * L) / N);
+      let lastY = -1e9;
+      marks.forEach((tm, k) => {
+        const pr = b.profiles.reduce((a, q) => (Math.abs(q.t - tm) < Math.abs(a.t - tm) ? q : a), b.profiles[0]);
+        const op = (0.35 + (0.65 * k) / (marks.length - 1)).toFixed(2);
+        out.push(`<polyline points="${pr.r.map((rr, j) => `${X(xsCell[j]).toFixed(1)},${Y(rr).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-opacity="${op}" stroke-width="2"/>`);
+        const yl = Y(pr.r[0]) + 13; // under its line, clear of the case line above
+        if (Math.abs(yl - lastY) >= 13 && yl < H - B - 2) { out.push(`<text x="${Lm + 4}" y="${yl.toFixed(1)}" font-size="10" fill="var(--rd-ink)" ${halo}>${f(pr.t, 2)} s</text>`); lastY = yl; }
+      });
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const schedule = () => { clearTimeout(pending); pending = window.setTimeout(run, mode === 'burn' ? 120 : 0); };
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((bt) => bt.addEventListener('click', () => {
+      for (const [k, v] of Object.entries(PRESETS[bt.dataset.preset!])) field(k).value = v;
+      run();
+    }));
+    form.addEventListener('input', schedule);
+    form.addEventListener('change', schedule);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['ss', 'sf', 'kt'],
+      note: 'Worked-example criteria loaded: bond strength 0.5 MPa in shear, factor of safety 1.5, concentration 3 at the termination',
+      values: { ...PRESETS.tube1800, a: '4.05', n: '0.35', rho: '1770', cstar: '1540', gam: '1.2', mu: '8.5', law: 'mp', K1: '0.023', gth: '35', ss: '0.5', sf: '1.5', kt: '3' },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.er-out')!);
+    }
+    run();
+  });
+</script>

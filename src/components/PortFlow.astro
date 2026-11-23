@@ -1,0 +1,83 @@
+---
+// The flow along the port. Top: the pressure in the port falls from the head end to the nozzle end. Middle: a section
+// through a motor with a tubular port. The gas speeds up toward the nozzle (arrows), because each length of the grain
+// adds its own gas; the fast gas at the nozzle end raises the burn rate there (erosive burning, the highlighted wall),
+// so later the port is wider at that end (dashed). The pressure drop pushes the grain toward the nozzle. Schematic.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-accent)', blue = 'var(--rd-blue)';
+const x0 = 54, x1 = 352, y0 = 156, Rg = 54, Rc = 58, rp = 14; // grain ends, axis, grain and case half-heights, port
+const halo = { stroke: 'var(--rd-panel)', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' };
+// the pressure sketch: a drop that grows faster toward the nozzle end
+const drop = (u: number) => 0.4 * u * u + 0.6 * u ** 4;
+const curve = Array.from({ length: 41 }, (_, k) => k / 40).map((u) => `${(x0 + u * (x1 - x0)).toFixed(1)},${(24 + 34 * drop(u)).toFixed(1)}`).join(' ');
+// the port later: wider at the nozzle end
+const later = (s: number) => [x0 + 2, x1].map((x, k) => `${x},${(y0 + s * (k ? 42 : 24)).toFixed(1)}`).join(' L');
+const arrows = [[66, 10], [122, 16], [180, 23], [240, 31], [300, 40]];
+const inflow = [100, 200, 300];
+const caseTop = `M${x0},${y0 - Rc} L${x1},${y0 - Rc} Q${x1 + 22},${y0 - Rc} ${x1 + 26},${y0 - 16} L392,${y0 - 9} L434,${y0 - 24}`;
+const caseBot = `M${x0},${y0 + Rc} L${x1},${y0 + Rc} Q${x1 + 22},${y0 + Rc} ${x1 + 26},${y0 + 16} L392,${y0 + 9} L434,${y0 + 24}`;
+const head = `M${x0},${y0 - Rc} A26 ${Rc} 0 0 0 ${x0},${y0 + Rc}`;
+---
+
+<figure class="viz pfl">
+  <p class="viz-title">Along the port</p>
+  <svg viewBox="0 0 440 256" role="img" aria-labelledby="pfl-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="pfl-desc">
+      Top: a small plot of the pressure in the port. It is highest at the head end and falls toward the nozzle, faster
+      near the nozzle end. Below it, a section through a motor with a tubular port. Arrows along the axis of the port get
+      longer toward the nozzle: the gas speeds up, because each length of the grain adds its own gas. Short arrows show
+      gas leaving the burning surface into the port. Near the nozzle end the wall of the port is highlighted: there the
+      fast gas raises the burn rate, which is erosive burning. A dashed line shows the port later in the burn, wider at
+      the nozzle end. An arrow in the propellant shows that the pressure drop pushes the grain toward the nozzle.
+    </desc>
+    <defs>
+      <marker id="pfl-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={blue}></path></marker>
+      <marker id="pfl-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={ink}></path></marker>
+      <marker id="pfl-c" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={muted}></path></marker>
+    </defs>
+    <!-- the pressure in the port -->
+    <line x1={x0} y1="18" x2={x0} y2="64" stroke={muted}></line>
+    <line x1={x0} y1="64" x2={x1} y2="64" stroke={muted}></line>
+    <polyline points={curve} fill="none" stroke={hot} stroke-width="2.4"></polyline>
+    <text x={x0 + 6} y="14" font-size="11" fill={ink}>pressure in the port</text>
+    <text x="362" y="30" font-size="11" fill={muted}>it falls</text>
+    <text x="362" y="45" font-size="11" fill={muted}>toward the</text>
+    <text x="362" y="60" font-size="11" fill={muted}>nozzle</text>
+    <!-- the motor -->
+    <rect x={x0} y={y0 - Rg} width={x1 - x0} height={Rg - rp} fill="var(--rd-propellant)" fill-opacity="0.35"></rect>
+    <rect x={x0} y={y0 + rp} width={x1 - x0} height={Rg - rp} fill="var(--rd-propellant)" fill-opacity="0.35"></rect>
+    <path d={head} fill="none" stroke={ink} stroke-width="2.4"></path>
+    <path d={caseTop} fill="none" stroke={ink} stroke-width="2.4"></path>
+    <path d={caseBot} fill="none" stroke={ink} stroke-width="2.4"></path>
+    <path d={`M${later(-1)}`} fill="none" stroke={ink} stroke-width="1.3" stroke-dasharray="5 3"></path>
+    <path d={`M${later(1)}`} fill="none" stroke={ink} stroke-width="1.3" stroke-dasharray="5 3"></path>
+    <line x1="232" y1={y0 - rp} x2={x1} y2={y0 - rp} stroke={hot} stroke-width="3.2"></line>
+    <line x1="232" y1={y0 + rp} x2={x1} y2={y0 + rp} stroke={hot} stroke-width="3.2"></line>
+    {arrows.map(([x, l]) => <line x1={x} y1={y0} x2={x + l} y2={y0} stroke={blue} stroke-width="2" marker-end="url(#pfl-a)"></line>)}
+    {inflow.map((x) => (
+      <>
+        <line x1={x - 5} y1={y0 - rp + 1} x2={x + 2} y2={y0 - rp + 8} stroke={muted} stroke-width="1.4" marker-end="url(#pfl-c)"></line>
+        <line x1={x - 5} y1={y0 + rp - 1} x2={x + 2} y2={y0 + rp - 8} stroke={muted} stroke-width="1.4" marker-end="url(#pfl-c)"></line>
+      </>
+    ))}
+    <line x1="246" y1={y0 + 44} x2="300" y2={y0 + 44} stroke={ink} stroke-width="2.4" marker-end="url(#pfl-b)"></line>
+    <text x="238" y={y0 + 48} text-anchor="end" font-size="11" fill={ink} {...halo}>the gas pushes the grain aft</text>
+    <text x="412" y={y0 - 32} text-anchor="middle" font-size="10" fill={muted}>throat</text>
+    <line x1="404" y1={y0 - 29} x2="394" y2={y0 - 12} stroke={muted}></line>
+    <!-- erosive burning -->
+    <text x="292" y="77" text-anchor="middle" font-size="11" fill={hot}>erosive burning: the fast gas</text>
+    <text x="292" y="92" text-anchor="middle" font-size="11" fill={hot}>raises the burn rate here</text>
+    <line x1="300" y1="96" x2="300" y2={y0 - rp - 2} stroke={hot} stroke-width="1.2"></line>
+    <!-- the ends and the dashed port -->
+    <text x="8" y="233" font-size="11" fill={ink}>head end: gas at rest,</text>
+    <text x="8" y="248" font-size="11" fill={ink}>the highest pressure</text>
+    <text x="248" y="233" text-anchor="middle" font-size="11" fill={muted}>dashed: the port later,</text>
+    <text x="248" y="248" text-anchor="middle" font-size="11" fill={muted}>wider at the nozzle end</text>
+    <text x="434" y="233" text-anchor="end" font-size="11" fill={blue}>nozzle end:</text>
+    <text x="434" y="248" text-anchor="end" font-size="11" fill={blue}>fastest gas</text>
+  </svg>
+  <figcaption>
+    The gas leaves the head end at rest and speeds up toward the nozzle, because each length of the grain adds its own
+    gas. The pressure falls along the port, and faster near the nozzle end. There the fast gas raises the burn rate, so
+    the port opens faster at that end. The pressure drop pushes the grain toward the nozzle. Schematic.
+  </figcaption>
+</figure>
