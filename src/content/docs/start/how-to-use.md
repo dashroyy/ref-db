@@ -13,9 +13,9 @@ description: How the key topics and ADVANCED work, how topic pages are arranged,
 ## Finding your way
 
 - **Key topics first.** The mission rail (on the left; the ☰ menu on a phone) shows the key topics: how a solid motor
-  works and its parts, the propellant, the grain, the case, the insulation and the nozzle, the materials, the margins
-  and the tests, the drawing (GD&T, fits, stacks and surface finish), threads and seals, and how a part is made,
-  inspected and released. Read these pages first. Most design work also starts on them.
+  works and its parts, the propellant, the grain, the case, the insulation and the nozzle, the materials, the margins,
+  the FEA and the tests, the drawing (GD&T, fits, stacks and surface finish), threads, bolted joints and seals, and how
+  a part is made, inspected and released. Read these pages first. Most design work also starts on them.
 - **ADVANCED**, at the top of the rail, shows all the topics, with the specialised zones and primers such as
   bondlines, combustion instability, thrust vector control, welding and galvanic corrosion. Push it again to show only
   the key topics. The button at the end of the rail does the same. The site remembers your selection. Search always
@@ -25,7 +25,7 @@ description: How the key topics and ADVANCED work, how topic pages are arranged,
 - **The orbit map** at the top of the rail shows the phases as planets, with your current zone in the sun. Select a
   planet to go to that phase in the list.
 - **The zone banner** at the top of each page shows your location. When ADVANCED is off, it shows the number of the
-  key topic, for example *SIZE · Z25 · KEY TOPIC 13 OF 40*, and **PREV / NEXT** go through the key topics. When
+  key topic, for example *SIZE · Z25 · KEY TOPIC 13 OF 42*, and **PREV / NEXT** go through the key topics. When
   ADVANCED is on, it shows the phase and the step, for example *PHASE 3 OF 8 · SIZE · STEP 5 OF 10 · Z25*, and
   **PREV / NEXT** go through all the pages. The same links are also at the bottom of each page.
 - **STAR MAP** shows the route as a solar system, with the same topics as the rail.

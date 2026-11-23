@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PHASES, ZONE_PLAN, REBUILT, PRIMERS, BRIEFING, CORE, route, around, hrefOf } from '../src/data/zones.mjs';
@@ -51,6 +51,19 @@ test('the key topics: real route items, not the whole route, with their own prev
   assert.deepEqual([around('thermal').prev?.key, around('thermal').next?.key], ['primer-mass', 'primer-heating']);
   assert.equal(around(r.filter((z) => z.core).at(-1)!.key, key).next, null, 'the last key topic has no next key topic');
   assert.deepEqual(around('not-a-zone'), { prev: null, next: null });
+});
+
+test('the How to use guide gives the current key-topic numbers', () => {
+  const core = route().filter((z) => z.core);
+  const md = readFileSync(join(DOCS, 'start/how-to-use.md'), 'utf8');
+  const ex = [...md.matchAll(/\*([A-Z]+) \u00b7 ([ZP]\d+) \u00b7 KEY TOPIC (\d+) OF (\d+)\*/g)];
+  assert.ok(ex.length > 0, 'the guide has an example of the key-topic banner');
+  for (const [, phase, tag, at, of] of ex) {
+    const z = core.find((x) => x.tag === tag);
+    assert.ok(z, `${tag} in the guide is a key topic`);
+    assert.equal(PHASES.find((p) => p.k === z.phase)!.n, phase);
+    assert.deepEqual([Number(at), Number(of)], [core.indexOf(z) + 1, core.length], `update the banner example of ${tag} in how-to-use.md`);
+  }
 });
 
 test('route numbering derives from the plan; primers are unnumbered', () => {

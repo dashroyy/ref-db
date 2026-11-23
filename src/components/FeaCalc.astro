@@ -264,12 +264,14 @@ const TABS = [{ key: 'conv', name: 'Mesh convergence' }, { key: 'free', name: 'E
       notes.push(['', 'Check reactions on every run, before looking at a single stress. Then far-field stresses and displacements against the hand calc. See <a href="../../fundamentals/hand-calcs/">Hand calcs</a>.']);
       return () => {
         svg.replaceChildren();
-        const W = Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420))), H = 250, Lx = 98, R = 20, T = 30, B = 34;
+        const W = Math.round(Math.min(420, Math.max(300, svg.clientWidth || 420))), H = 250, Lx = 98, R = 20, T = 30, B = 38;
         svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
         const top = Math.max(1.3, ...checks.map((c) => c.u)) * 1.05, X = (u: number) => Lx + (Math.max(0, Math.min(u, top)) / top) * (W - Lx - R), row = (H - T - B) / Math.max(1, checks.length);
-        for (let u = 0; u <= top + 1e-9; u += 0.25) {
+        // a label is about 29 units wide: when the lines are closer than 36, label every other line
+        const every = (0.25 / top) * (W - Lx - R) < 36 ? 2 : 1;
+        for (let i = 0, u = 0; u <= top + 1e-9; i++, u = i * 0.25) {
           el('line', { x1: X(u), x2: X(u), y1: T, y2: H - B, stroke: Math.abs(u - 1) < 1e-9 ? 'var(--rd-ink)' : 'var(--rd-line)', 'stroke-opacity': Math.abs(u - 1) < 1e-9 ? 0.7 : 1 });
-          el('text', { x: X(u), y: H - B + 15, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--rd-muted)' }, `${f(100 * u, 0)}%`);
+          if (i % every === 0) el('text', { x: X(u), y: H - B + 15, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--rd-muted)' }, `${f(100 * u, 0)}%`);
         }
         checks.forEach((ch, i) => {
           const y = T + i * row + row * 0.2, off = Math.abs(ch.u - 1) > 0.02;

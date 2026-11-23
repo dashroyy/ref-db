@@ -150,9 +150,9 @@ export const CORE = [
   'home', 'primer-srm', 'duty', 'metal', 'fatigue', 'worked', 'read',
   'materials', 'trade', 'sheet',
   'rocket', 'propellant', 'pv', 'primer-composite', 'primer-closures', 'grain', 'ablative', 'primer-nozzle',
-  'margins', 'proof', 'primer-firing', 'feamat', 'ageing',
+  'margins', 'proof', 'primer-firing', 'feamat', 'fea', 'ageing',
   'gdt', 'gdtprac', 'fits', 'stack', 'surf',
-  'threads', 'locking', 'sealstrat', 'oring',
+  'threads', 'bolts', 'locking', 'sealstrat', 'oring',
   'cost', 'ndt', 'leak', 'matspec', 'certs',
   'standards', 'guides', 'release',
 ];
