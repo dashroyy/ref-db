@@ -1,0 +1,201 @@
+---
+title: Thermal cycles and cumulative damage
+description: How the daily and seasonal swings of a storage climate reach a case-bonded grain, how much of them the bore strain feels, and how the damage of years of cycles adds up by Miner's rule. The time under the held strain, the strength left for the ignition, and the service life, with a calculator and a worked example.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import ThermalWave from '../../../components/ThermalWave.astro';
+import ThermalCycleCalc from '../../../components/ThermalCycleCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A motor in store follows the weather. The seasons reach all of a grain; the days reach all of a small grain, but only the outer part of a large one. Every cold night uses a little of its life, and because the damage grows steeply with the strain, the cold months do most of it.</div>
+  <div><b>Before this</b><a href="../../motor/propellant-grain/#part-2-structural-integrity">Propellant grain: structural integrity</a> · <a href="../../motor/propellant-tests/">Propellant mechanical tests</a></div>
+  <div><b>Leads to</b><a href="../storage-ageing/">Storage &amp; ageing</a>, for the service life</div>
+</div>
+
+## Why this matters
+
+- **A motor spends years in stores, transport and launchers, and seconds firing.** The temperature around it cycles
+  each day and each year.
+- **Each cycle strains the bore and the bond,** and a viscoelastic propellant does not take each one back in full.
+  Repeated cycles can crack a grain at a strain that it survives once.
+- **The checks of the [grain page](../../motor/propellant-grain/) take one load at a time.** A service life needs the
+  sum of all the loads, together with the ageing of the propellant.
+- **The strength that the storage uses is not there for the cold ignition** at the end of it.
+
+## The intuition: a paperclip and a rubber band
+
+<Analogy title="A paperclip and a rubber band">
+  Bend a paperclip once and it holds; bend it fifty times and it breaks. A rubber band left stretched around a box for
+  a year cracks, although it would once have stretched further. A grain has both: cycles from the weather, and a strain
+  that it holds for years. Neither one matters in a day; both add up.
+</Analogy>
+
+<ThermalWave />
+
+## The climate
+
+- **The air around a store, a transport and a launcher swings** each day and each year. MIL-HDBK-310 gives the world's
+  extremes; your environment specification gives those of your programme.
+- **A shelter, a container or a heated store cuts the daily swing.** Sunshine on a case in the open adds to it.
+- **Write the climate as a mean, a seasonal amplitude and a daily amplitude** for each phase of the life, with the time
+  that the motor spends in each.
+
+## How a cycle reaches the grain
+
+- **A periodic temperature dies away into a solid.** In a thick solid its amplitude falls as $e^{-x/\delta}$ and lags by
+  $x/\delta$ radians, with the penetration depth
+
+$$
+\delta = \sqrt{\frac{2\alpha}{\omega}}
+$$
+
+  For a propellant with $\alpha = 2 \times 10^{-7}$ m²/s, $\delta$ is 75 mm for a daily cycle and 1.4 m for a seasonal
+  one (Carslaw and Jaeger). A web much thicker than $\delta$ filters the cycle. A web of about $\delta$ does not: the
+  bore is closed, so the whole web swings with the case.
+- **The bore strain follows the mean temperature of the web.** The propellant is nearly incompressible, so the volume
+  that it gains or loses goes to the bore. The bore strain follows the area-weighted mean temperature change of the
+  propellant, $\Delta\bar T_p$, and that of the case, $\Delta T_c$:
+
+$$
+\varepsilon_\text{bore} = -\tfrac{3\alpha_p}{2}\,(m^2 - 1)\,\Delta\bar T_p + \tfrac{\alpha_c}{2}\,(3m^2 - 1)\,\Delta T_c
+$$
+
+  With one $\Delta T$ for both, this is the cool-down strain of the
+  [grain page](../../motor/propellant-grain/#cool-down-why-the-bore-cracks).
+- **A small grain feels the day; a large one feels only the season.** The area weighting puts most of the web near the
+  case, where the daily cycle is strongest. The bore of the 300 mm grain feels 71% of a daily cycle; that of a 3 m
+  grain only 12%, and 10 hours late. Both feel almost all of the seasonal cycle.
+- **The bond feels the day in full.** The propellant next to the case follows the air, so the bond and the grain ends
+  see the daily cycle even in a large motor.
+- **A fast cycle still moves the case.** When the case warms before the grain, it stretches the grain: the case term
+  does not lag.
+
+## Damage
+
+### Cycles: Miner's rule
+
+- **The life at one strain.** Cyclic tests of the propellant, at the rate and the temperature of the cycles, give the
+  number of cycles to failure at each strain. A power law often fits them:
+
+$$
+N_f = \left(\frac{\varepsilon_\text{cap}}{\varepsilon}\right)^{k}
+$$
+
+- **Miner's rule adds the fractions:** $D = \sum n_i / N_i$, and the grain fails at $D = 1$
+  ([Fatigue](../../fundamentals/fatigue/#variable-loads-miners-rule)). For a climate, count each day with its peak
+  strain: the mean strain, the seasonal strain of that day, and the daily amplitude.
+- **The power law makes the cold months do the work.** With $k = 8$, a strain 9% higher doubles the damage of a day.
+  In the worked example, the coldest quarter of the year does 60% of the damage and the colder half 89%. The climate
+  matters far more than the count of the days.
+- **Use the capability at the rate of the cycles.** A daily cycle is slow: its reduced rate is on the low branch of the
+  master curve, often below the slowest tests
+  ([Propellant mechanical tests](../../motor/propellant-tests/#from-the-tests-to-a-master-curve)).
+
+### Time under the held strain
+
+- **The mean strain is held for the life of the motor.** A propellant held at a strain or a stress fails in time, and
+  sooner at a higher load. Tests at a constant strain or a constant load, at several levels and temperatures, give the
+  time to failure.
+- **The same rule adds this damage in time:** $D = \int dt / t_f$, with the time to failure $t_f$ from those tests,
+  shifted to each temperature by $a_T$. Linear cumulative damage of this kind is a common basis of service-life
+  prediction for grains (AGARD-CP-586). The calculator does not include it: add it from your own tests.
+
+### The strength that is left
+
+- **By Miner's rule, the ignition breaks the grain when its own damage fills the life that is left:**
+  $(\varepsilon/\varepsilon_\text{cap})^k = 1 - D$. So a grain that has used a fraction $D$ of its life keeps a
+  fraction $(1 - D)^{1/k}$ of its capability, if the same exponent holds at the rate of the ignition.
+- **The steeper the law, the less strength the damage costs.** With $k = 8$, half the life costs 8% of the strength.
+- **Multiply the capability at the cold ignition by it,** and check the ignition again at the end of the storage
+  ([Propellant mechanical tests](../../motor/propellant-tests/#worked-example-an-allowable-for-the-300-mm-grain)).
+
+## The service life
+
+- **The service life is the shortest of several limits:** the time to the allowed damage; the time at which ageing and
+  damage together take the margin of a load case to zero; the chemical life of the propellant, which your energetics
+  specialists assess; and the life of the other parts ([Storage & ageing](../storage-ageing/)).
+- **Programmes add the damage over the phases of the life:** the factory, the depot, the transport and the launcher.
+  They often run it as a Monte Carlo over the climates and the properties, and they compare it with surveillance motors.
+- **Milder storage buys life.** A heated store, a shade from the sun and a lower stress-free temperature all cut the
+  strain, and with a steep law a small cut in the strain is a large cut in the damage.
+
+## Calculator
+
+<ThermalCycleCalc />
+
+**Into the grain** solves the periodic conduction through the insulation and the propellant for a daily and a seasonal
+cycle, and gives the strains at the bore. **Damage over the years** counts the days by Miner's rule, adds other events,
+and gives the life and the strength left for the ignition. The cyclic data and the allowed damage start blank: enter
+your own, or push **Load worked example**.
+
+## Worked example: the 300 mm grain in a cold depot
+
+The grain is that of the [grain example](../../motor/propellant-grain/#worked-example-htpb-grain-in-the-d6ac-case): a
+100 mm bore in a 300 mm OD, stress-free at 60 °C, with $\alpha_p = 100$ and $\alpha_c = 12.3$ µm/m·K. There is 2 mm of
+EPDM between the grain and the case. The thermal properties of the propellant are illustrative: 0.45 W/m·K,
+1770 kg/m³ and 1250 J/kg·K. The depot has a mean of −5 °C, ±15 K over the year and ±8 K over the day, for ten years,
+with two cold soaks to −40 °C each year (10.4% at the bore each time). The damage values are **for this example
+only**: a capability of 25% at the rate of the cycles (near the 24.7% that the propellant tests page gives for the slow
+cool-down), an exponent of 8, and an allowed damage of 0.5. Push **Load worked example**.
+
+1. **Into the grain.** The daily penetration depth is 75 mm and the web is 100 mm, so the daily cycle reaches all of the
+   web, with 68% at the bore. The bore strain feels 71% of it, 2.7 hours after the air, and all of the seasonal cycle.
+2. **The strains.** The cooling from 60 °C to the mean of −5 °C holds 6.76% at the bore. The seasons add ±1.56% and the
+   days ±0.60%: 8.92% on a winter night.
+3. **One year.** The 365 days use 0.0345 of the life, and the worst day $2.6 \times 10^{-4}$, in the middle of winter.
+   The two cold soaks add 0.0018.
+4. **Ten years:** $D = 10 \times (0.0345 + 0.0018) = 0.363$. At this rate the grain gets to the allowed 0.5 in
+   13.8 years.
+5. **The strength left** for the cold ignition is $(1 - 0.363)^{1/8} = 0.945$: the capability at the cold ignition is
+   5.5% lower after the ten years.
+6. **A temperate depot** (15 °C, ±10 K and ±6 K) peaks at 6.17%, 31% lower. In ten years its cycles use 0.0185 of the
+   life: 19 times less. With the same cold soaks, the total is 0.036, and the soaks do half of it.
+7. **A 3 m grain** in the same cold depot feels only 12% of the daily cycle at its bore. Its cycles use 0.0205 of the
+   life each year, against 0.0345 for the 300 mm grain.
+
+<Aside type="tip" title="What the example shows">
+  The cycles of a cold depot use a third of this grain's life in ten years, most of it in the cold months. The strain,
+  not the count of the days, decides: in a temperate depot the cycles of the same grain do 19 times less damage. And
+  the damage costs the ignition less than it seems: a damage of 0.36 costs 5.5% of the strength.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A screen of the cycles">
+  The calculator counts the damage of the thermal cycles at the bore. A service life also needs the time under the
+  held strain, the bond and the grain ends, the ageing of the propellant, and the test data of your propellant.
+</Aside>
+
+- **The held strain.** The damage of the time under load is not in the calculator.
+- **Viscoelastic stresses,** and the bond and the grain ends, which see the daily cycle in full.
+- **Sunshine and wind.** A case in the sun can be much hotter than the air.
+- **The order of the loads.** Miner's rule takes it as unimportant; for a propellant it can matter.
+- **Ageing** changes the capability, and can change the stress-free temperature, over the life.
+- **The sensitivity.** The result depends steeply on the exponent and on the capability at slow rates: both come from
+  tests.
+
+## On the drawing and in the specifications
+
+- **The environments:** the temperature limits of storage, transport and the launcher, the climates, and the time in
+  each.
+- **The stress-free temperature** of the grain, and the cure that sets it.
+- **The service life,** its basis, and the surveillance that confirms it.
+- **The shelter and conditioning** that the life depends on.
+
+## References and further reading
+
+- H. S. Carslaw & J. C. Jaeger, *Conduction of Heat in Solids*, 2nd ed., Oxford University Press (1959).
+- M. A. Miner, "Cumulative damage in fatigue", *Journal of Applied Mechanics* 12 (1945) A159–A164.
+- NASA SP-8073, *Solid Propellant Grain Structural Integrity Analysis* (1973) (free on NTRS).
+- AGARD-CP-586, *Service Life of Solid Propellant Systems*, NATO AGARD (1996).
+- US Department of Defense, MIL-HDBK-310, *Global Climatic Data for Developing Military Products* (1997).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the tests of your propellant and
+  the approval of the responsible stress and safety authorities control the real design.
+</Aside>

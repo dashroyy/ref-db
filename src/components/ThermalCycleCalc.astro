@@ -1,0 +1,273 @@
+---
+// Thermal cycles and cumulative damage: how a storage climate reaches the bore strain of a case-bonded grain (periodic
+// conduction through the insulation and the propellant), and the damage of the daily cycles over the years by Miner's
+// rule, with the strength left for the ignition. The calculations live in src/lib/thermalcycles.ts (unit-tested); this
+// file is UI only.
+---
+
+<div class="calc tccalc" data-tccalc>
+  <div class="calc-head">
+    <span>Thermal cycles and cumulative damage</span>
+    <span class="head-btns">
+      <span>periodic conduction · Miner</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="heat" aria-selected="true">Into the grain</button>
+    <button type="button" role="tab" class="chip" data-tab="dmg" aria-selected="false">Damage over the years</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Grain and climate</legend>
+        <div class="row2">
+          <label>Bore diameter (mm)<input name="bore" type="number" min="1" step="any" value="100" /></label>
+          <label>Grain OD (mm)<input name="od" type="number" min="1" step="any" value="300" /></label>
+          <label>Insulation thickness (mm)<input name="ti" type="number" min="0" step="any" value="2" /></label>
+          <label>Stress-free temperature (°C)<input name="tsf" type="number" step="any" value="60" /></label>
+          <label>Mean air temperature (°C)<input name="tm" type="number" step="any" value="15" /></label>
+          <label>Seasonal amplitude (K)<input name="as" type="number" min="0" step="any" value="10" /></label>
+          <label>Daily amplitude (K)<input name="ad" type="number" min="0" step="any" value="6" /></label>
+        </div>
+        <p class="hint">Amplitudes are half the swing: a day from 9 °C to 21 °C is 6 K about 15 °C. Take the climate of the store, the transport and the launcher from your environment specification (MIL-HDBK-310 gives the world's extremes).</p>
+      </fieldset>
+      <fieldset data-panel="heat">
+        <legend>Materials</legend>
+        <div class="row2">
+          <label>Propellant conductivity (W/m·K)<input name="kp" type="number" min="0.01" step="any" value="0.45" /></label>
+          <label>Propellant density (kg/m³)<input name="rp" type="number" min="1" step="any" value="1770" /></label>
+          <label>Propellant specific heat (J/kg·K)<input name="cp" type="number" min="1" step="any" value="1250" /></label>
+          <label>Insulation conductivity (W/m·K)<input name="ki" type="number" min="0.01" step="any" value="0.25" /></label>
+          <label>Insulation density (kg/m³)<input name="ri" type="number" min="1" step="any" value="1100" /></label>
+          <label>Insulation specific heat (J/kg·K)<input name="ci" type="number" min="1" step="any" value="2000" /></label>
+          <label>Propellant expansion (µm/m·K)<input name="ap" type="number" min="0" step="any" value="100" /></label>
+          <label>Case expansion (µm/m·K)<input name="ac" type="number" min="0" step="any" value="12.3" /></label>
+        </div>
+        <p class="hint">Illustrative propellant values; the EPDM of the Insulation page; the D6AC case of the other pages. The case follows the air.</p>
+      </fieldset>
+      <fieldset data-panel="dmg" hidden>
+        <legend>Damage</legend>
+        <div class="row2">
+          <label>Capability at the rate of the cycles (%)<input name="cap" type="number" min="0" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label>Exponent of the cyclic life, <span class="nc">k</span><input name="k" type="number" min="1" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label>Other events each year<input name="en" type="number" min="0" step="1" value="2" /></label>
+          <label>Their peak bore strain (%)<input name="ee" type="number" min="0" step="any" value="10.4" /></label>
+          <label>Years<input name="yr" type="number" min="0" step="any" value="10" /></label>
+          <label>Allowed damage<input name="dal" type="number" min="0" max="1" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Cycles to failure at a peak strain ε: N = (ε<sub>cap</sub>/ε)<sup>k</sup>, from cyclic tests of your propellant at the slow rate and the temperatures of the cycles. Other events: cold soaks, transport and the like. The allowed damage comes from your programme.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="tc-out">
+      <div data-out="heat">
+        <dl class="readouts">
+          <div class="readout primary"><dt>Peak strain at the bore</dt><dd data-r="pk">—</dd></div>
+          <div class="readout"><dt>Daily cycle at the bore</dt><dd data-r="day">—</dd></div>
+          <div class="readout"><dt>Seasonal cycle at the bore</dt><dd data-r="sea">—</dd></div>
+          <div class="readout"><dt>How deep a cycle goes</dt><dd data-r="pen">—</dd></div>
+        </dl>
+        <figure class="tc-fig">
+          <svg data-hchart role="img" aria-label="Amplitude of the daily and the seasonal temperature cycles across the grain, from the bore to the case"></svg>
+          <figcaption>How much of a temperature cycle of the air reaches each radius, from the bore (left) to the case (right). The seasonal cycle reaches all of the grain; the daily cycle dies away into a large web.</figcaption>
+        </figure>
+      </div>
+      <div data-out="dmg" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-dbox><dt>Damage over the years</dt><dd data-r="dt">—</dd></div>
+          <div class="readout"><dt>In one year</dt><dd data-r="dy">—</dd></div>
+          <div class="readout"><dt>Life</dt><dd data-r="life">—</dd></div>
+          <div class="readout"><dt>Strength left for the ignition</dt><dd data-r="rs">—</dd></div>
+        </dl>
+        <figure class="tc-fig">
+          <svg data-dchart role="img" aria-label="Damage of each day of the year, from summer through winter to summer"></svg>
+          <figcaption>The damage of each day of one year, from the middle of summer, through the winter, to the next summer. Most of it comes in the cold months.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. The periodic steady state of radial conduction through the propellant and the
+    insulation, with the case at the air temperature and no heat flow at the bore; the bore strain from the
+    area-weighted mean temperature of the propellant and the temperature of the case (incompressible grain, the
+    cool-down strain of the Propellant grain page). Damage: Miner's rule on the peak strain of each day with a power-law
+    cyclic life. Not included: sunshine and wind on the case, the time under the held strain, the bond and the grain
+    ends, viscoelastic stresses, and ageing.
+  </div>
+</div>
+
+<style is:global>
+  .tc-out { min-width: 0; }
+  .tc-out > div > * { min-width: 0; }
+  .tc-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { boreCycles, penetration, omegaOf, yearDamage, eventDamage, residualStrength, cabs, DAY, YEAR, type Section } from '../lib/thermalcycles';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−') : '—');
+  const sci = (v: number) => (v >= 0.1 || v === 0 ? f(v, 3) : v >= 0.01 ? f(v, 4) : v.toExponential(1).replace('e-', ' × 10<sup>−').replace(/$/, '</sup>'));
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+
+  document.querySelectorAll<HTMLElement>('[data-tccalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'heat';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('.tc-fig svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function run() {
+      const a = num('bore') / 2000, b = num('od') / 2000, tI = num('ti') / 1000;
+      if (!(a > 0 && b > a && tI >= 0)) { clear('Enter a bore smaller than the grain OD, and the insulation thickness (zero or more).'); return; }
+      const kP = num('kp'), kI = num('ki');
+      const sec: Section = { a, b, kP, alphaP: kP / (num('rp') * num('cp')), tI, kI, alphaI: kI / (num('ri') * num('ci')) };
+      if (!(sec.alphaP > 0 && sec.alphaI > 0)) { clear('Enter positive conductivities, densities and specific heats.'); return; }
+      const cl = { Tmean: num('tm'), As: num('as'), Ad: num('ad') };
+      if (!(Number.isFinite(cl.Tmean) && cl.As >= 0 && cl.Ad >= 0 && Number.isFinite(num('tsf')))) { clear('Enter the climate and the stress-free temperature.'); return; }
+      const bc = boreCycles(sec, num('ap') * 1e-6, num('ac') * 1e-6, num('tsf'), cl);
+      const notes: [string, string][] = [];
+      if (mode === 'heat') runHeat(notes, sec, bc, cl);
+      else runDmg(notes, bc, cl);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    type BC = ReturnType<typeof boreCycles>;
+    function runHeat(notes: [string, string][], sec: Section, bc: BC, cl: { Tmean: number; As: number; Ad: number }) {
+      const lagH = (bc.day.lag * 24) / (2 * Math.PI), lagD = (bc.season.lag * 365.25) / (2 * Math.PI);
+      r('pk').innerHTML = `${f(bc.peak * 100, 2)}% <small>on a winter night: ${f(bc.mean * 100, 2)}% from the mean temperature, ${f(bc.epsS * 100, 2)}% from the season and ${f(bc.epsD * 100, 2)}% from the day · ${f(bc.perK * 100, 3)}% for each kelvin of slow cooling</small>`;
+      r('day').innerHTML = `±${f(bc.epsD * 100, 3)}% <small>${f(bc.day.gain * 100, 0)}% of the strain that a slow cycle would give, ${f(lagH, 1)} h after the air</small>`;
+      r('sea').innerHTML = `±${f(bc.epsS * 100, 2)}% <small>${f(bc.season.gain * 100, 0)}% of the slow strain, ${f(lagD, 1)} days after the air</small>`;
+      const dD = penetration(sec.alphaP, omegaOf(DAY)), dY = penetration(sec.alphaP, omegaOf(YEAR));
+      r('pen').innerHTML = `${f(dD * 1000, 0)} mm <small>for a daily cycle, and ${f(dY, 2)} m for a seasonal one, against a web of ${f((sec.b - sec.a) * 1000, 0)} mm. In a thick web, the amplitude falls to 37% at that depth</small>`;
+      if (bc.day.gain > 0.5) notes.push(['', `The web is not much thicker than the daily penetration depth, so most of the daily cycle reaches the bore strain. A larger grain filters it: the seasonal cycle and the mean temperature then dominate.`]);
+      else notes.push(['', 'The web is thick against the daily penetration depth, so the daily cycle reaches the bore strain only in part. The bond and the outer propellant still see it in full.']);
+      notes.push(['', `The mean strain, ${f(bc.mean * 100, 2)}%, comes from the cooling from the stress-free temperature to the mean of the climate. It is held for the life of the motor; the cycles ride on it.`]);
+      drawHeat(bc, sec);
+    }
+
+    function drawHeat(bc: BC, sec: Section) {
+      const svg = root.querySelector<SVGSVGElement>('[data-hchart]')!;
+      const W = width(svg), Lm = 42, R = 14, B = 34;
+      const out: string[] = [];
+      const items: [string, string][] = [['daily cycle', 'var(--rd-accent)'], ['seasonal cycle', 'var(--rd-blue)']];
+      let lx = 8, ly = 12;
+      for (const [name, col] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T = ly + 26, H = T + 170;
+      const rO = sec.b + sec.tI, X = (rr: number) => Lm + ((rr - sec.a) / (rO - sec.a)) * (W - Lm - R), Y = (v: number) => T + (1 - v) * (H - T - B);
+      for (let v = 0; v <= 1.0001; v += 0.25) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v === 0 ? '0' : f(v, 2)}</text>`);
+      if (sec.tI > 0) out.push(`<rect x="${X(sec.b).toFixed(1)}" y="${T}" width="${(X(rO) - X(sec.b)).toFixed(1)}" height="${H - T - B}" fill="var(--rd-steel)" fill-opacity="0.3"/>`);
+      const xt = [sec.a, (sec.a + sec.b) / 2, sec.b];
+      for (const rr of xt) out.push(`<text x="${X(rr).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(rr * 1000, 0)}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">radius, mm: bore to case</text><text x="4" y="${T - 10}" font-size="10" fill="var(--rd-ink)">amplitude ÷ air amplitude</text>`);
+      const line = (pc: BC['day']['pc'], col: string) => {
+        const pts = [[sec.a, cabs(pc.theta[0])], ...pc.r.map((rr, i) => [rr, cabs(pc.theta[i])]), [rO, 1]];
+        return `<polyline points="${pts.map(([x, v]) => `${X(x).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4"/>`;
+      };
+      out.push(line(bc.season.pc, 'var(--rd-blue)'), line(bc.day.pc, 'var(--rd-accent)'));
+      const mD = cabs(bc.day.pc.mean);
+      out.push(`<line x1="${Lm}" x2="${X(sec.b).toFixed(1)}" y1="${Y(mD).toFixed(1)}" y2="${Y(mD).toFixed(1)}" stroke="var(--rd-accent)" stroke-dasharray="4 3"/>`);
+      out.push(`<text x="${Lm + 4}" y="${(Y(mD) - 5).toFixed(1)}" font-size="10" fill="var(--rd-accent)" ${halo}>mean over the web ${f(mD, 2)}</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    function runDmg(notes: [string, string][], bc: BC, cl: { Tmean: number; As: number; Ad: number }) {
+      const cap = readFactor(field('cap').value, 1e-9), k = readFactor(field('k').value), dal = readFactor(field('dal').value, 1e-9);
+      const yrs = num('yr'), en = num('en') || 0, ee = num('ee') / 100;
+      if (!(yrs >= 0)) { clear('Enter the number of years (zero or more).'); return; }
+      if (cap === null || k === null) {
+        ['dt', 'dy', 'life', 'rs'].forEach((x) => (r(x).innerHTML = '<small>needs your cyclic test data</small>'));
+        $('[data-dbox]').className = 'readout primary';
+        notes.push(['warn', `The strains are on the first tab. Enter the capability of your propellant at the rate of the cycles and the exponent of its cyclic life, from your tests, to count the damage. ${awaitingMessage(['allowed damage'], 'the check', true)}`]);
+        root.querySelector<SVGSVGElement>('[data-dchart]')!.innerHTML = '';
+        return;
+      }
+      const c = cap / 100, yd = yearDamage(bc.mean, bc.epsS, bc.epsD, c, k), ev = Number.isFinite(ee) ? eventDamage(en, ee, c, k) : 0;
+      const perYear = yd.D + ev, D = perYear * yrs;
+      r('dt').innerHTML = `${sci(D)} <small>after ${f(yrs, 0)} years: the daily cycles ${sci(yd.D * yrs)}, the other events ${sci(ev * yrs)}${dal !== null ? ` · ${f((D / dal) * 100, 0)}% of the ${f(dal, 2)} allowed` : ''}</small>`;
+      $('[data-dbox]').className = `readout primary${dal !== null ? (D > dal ? ' bad' : D > 0.9 * dal ? ' warn' : ' ok') : ''}`;
+      r('dy').innerHTML = `${sci(perYear)} <small>${sci(yd.D)} from 365 days, ${sci(ev)} from ${f(en, 0)} events · the worst day ${sci(yd.worstDay)}</small>`;
+      r('life').innerHTML = dal !== null && perYear > 0 ? `${f(dal / perYear, 1)} years <small>to the allowed damage, in this climate</small>` : '<small>needs your allowed damage</small>';
+      const rs = residualStrength(D, k);
+      r('rs').innerHTML = `${f(rs * 100, 1)}% <small>of its capability for the ignition: (1 − D)<sup>1/k</sup>, if the same exponent holds at the rate of the ignition. Multiply the ignition capability by it</small>`;
+      const twice = Math.pow(2, 1 / k) - 1;
+      notes.push(['', `With k = ${f(k, 1)}, a strain ${f(twice * 100, 0)}% higher doubles the damage. The climate, the stress-free temperature and the bore of the grain matter far more than the count of the days.`]);
+      if (dal !== null && D > dal) notes.push(['bad', `The damage passes the allowed ${f(dal, 2)} after ${f(dal / perYear, 1)} years. Store the motor in a milder climate or a heated shelter, lower the stress-free temperature, or open the bore.`]);
+      if (dal === null) notes.push(['warn', awaitingMessage(['allowed damage'], 'the life')]);
+      drawDays(bc, c, k);
+    }
+
+    function drawDays(bc: BC, cap: number, k: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-dchart]')!;
+      const W = width(svg), Lm = 50, R = 14, T = 22, B = 34, H = 200;
+      const days = Array.from({ length: 365 }, (_, d) => {
+        const e = bc.mean + bc.epsS * Math.cos((2 * Math.PI * (d + 0.5)) / 365 - Math.PI) + bc.epsD; // winter in the middle
+        return e > 0 ? Math.pow(e / cap, k) : 0;
+      });
+      const vMax = Math.max(...days, 1e-30) * 1.1;
+      const X = (d: number) => Lm + (d / 365) * (W - Lm - R), Y = (v: number) => T + (1 - v / vMax) * (H - T - B);
+      const out: string[] = [];
+      for (const v of [0, vMax / 2 / 1.1, vMax / 1.1]) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v === 0 ? '0' : v.toExponential(1).replace('e-', 'e−')}</text>`);
+      out.push(`<path d="M${X(0)},${Y(0)} ${days.map((v, d) => `L${X(d + 0.5).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')} L${X(365)},${Y(0)} Z" fill="var(--rd-accent)" fill-opacity="0.3" stroke="var(--rd-accent)" stroke-width="1.6"/>`);
+      for (const [d, name] of [[0, 'summer'], [182.5, 'winter'], [365, 'summer']] as const) out.push(`<text x="${X(d).toFixed(1)}" y="${H - B + 14}" text-anchor="${d === 0 ? 'start' : d === 365 ? 'end' : 'middle'}" font-size="10" fill="var(--rd-muted)">${name}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">one year</text><text x="4" y="12" font-size="10" fill="var(--rd-ink)">damage of each day</text>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const show = () => {
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+    };
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      show();
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['cap', 'k', 'dal'],
+      note: 'Worked-example values loaded: a capability of 25% at the rate of the cycles, a cyclic exponent of 8 and an allowed damage of 0.5, all for this example only',
+      values: { bore: '100', od: '300', ti: '2', tsf: '60', tm: '-5', as: '15', ad: '8', kp: '0.45', rp: '1770', cp: '1250', ki: '0.25', ri: '1100', ci: '2000', ap: '100', ac: '12.3', cap: '25', k: '8', en: '2', ee: '10.4', yr: '10', dal: '0.5' },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.tc-out')!);
+    }
+    show();
+    run();
+  });
+</script>

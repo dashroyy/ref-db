@@ -1,0 +1,93 @@
+---
+// How a daily cycle of the air reaches the bore. Top: half-sections of the 300 mm grain of the worked example and of a
+// 3 m grain of the same shape, shaded by the amplitude of a daily cycle at each radius. Below: three days of the air and
+// of the bore strain of each grain. Computed at build time with the same solver the calculator uses.
+import { periodicConduction, boreCycles, omegaOf, DAY, cabs, type Section } from '../lib/thermalcycles';
+
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-accent)', blue = 'var(--rd-blue)';
+const AP = 0.45 / (1770 * 1250), AI = 0.25 / (1100 * 2000); // the illustrative propellant and the EPDM of the example
+const small: Section = { a: 0.05, b: 0.15, kP: 0.45, alphaP: AP, tI: 0.002, kI: 0.25, alphaI: AI };
+const large: Section = { ...small, a: 0.5, b: 1.5, tI: 0.006 };
+const Rc = 80, Rg = 77, Rb = Rg / 3, y0 = 118; // case, grain outer, bore (px); the bore is a third of the OD for both
+const arc = (x: number, r: number) => `M${x - r},${y0} A${r} ${r} 0 0 1 ${x + r},${y0}`;
+const band = (x: number, ro: number, ri: number) => `M${x - ro},${y0} A${ro} ${ro} 0 0 1 ${x + ro},${y0} L${x + ri},${y0} A${ri} ${ri} 0 0 0 ${x - ri},${y0} Z`;
+const grains = [
+  { s: small, x: 112, id: 'tcw-g1', title: '300 mm grain', day: 'the day reaches the bore' },
+  { s: large, x: 328, id: 'tcw-g2', title: '3 m grain, the same shape', day: 'the day: only the outer part' },
+].map((g) => {
+  const pc = periodicConduction(g.s, omegaOf(DAY));
+  const idx = Array.from({ length: 41 }, (_, k) => Math.min(159, k * 4)); // the 160 cells of the propellant
+  const stops = idx.map((i) => ({ off: (pc.r[i] / g.s.b).toFixed(4), op: (0.8 * cabs(pc.theta[i])).toFixed(3) }));
+  const bc = boreCycles(g.s, 100e-6, 12.3e-6, 60, { Tmean: 0, As: 0, Ad: 1 });
+  return { ...g, stops, gain: bc.day.gain, lag: (bc.day.lag * 24) / (2 * Math.PI) };
+});
+// three days at the bore: the air (warm up) and the bore strain of each grain (tension up), coldest air at hour 0
+const X0 = 28, X1 = 428, yc = 224, amp = 30;
+const tx = (h: number) => X0 + (h / 72) * (X1 - X0);
+const hours = Array.from({ length: 289 }, (_, i) => i / 4);
+const curve = (f: (h: number) => number) => hours.map((h) => `${tx(h).toFixed(1)},${f(h).toFixed(1)}`).join(' ');
+const air = curve((h) => yc + amp * Math.cos((2 * Math.PI * h) / 24));
+const strains = grains.map((g) => curve((h) => yc - g.gain * amp * Math.cos((2 * Math.PI * (h - g.lag)) / 24)));
+const legend = [
+  { name: 'air, warm up', col: muted, w: 1.8, dash: '5 3' },
+  { name: '300 mm bore, tension up', col: hot, w: 2.4, dash: '' },
+  { name: '3 m bore', col: ink, w: 1.6, dash: '' },
+].reduce<{ x: number; items: { name: string; col: string; w: number; dash: string; x: number }[] }>(
+  (acc, it) => ({ x: acc.x + 20 + it.name.length * 6 + 14, items: [...acc.items, { ...it, x: acc.x }] }),
+  { x: X0, items: [] },
+).items;
+---
+
+<figure class="viz tcw">
+  <p class="viz-title">How a temperature cycle reaches the bore</p>
+  <svg viewBox="0 0 440 292" role="img" aria-labelledby="tcw-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="tcw-desc">
+      Two half-sections of case-bonded grains with the same shape, the bore a third of the outer diameter, shaded by the
+      amplitude of a daily temperature cycle of the air. In the 300 mm grain the shading fills the web: the daily cycle
+      reaches the bore. In a 3 m grain only a thin outer layer is shaded. The seasonal cycle reaches the bore of both.
+      Below, three days of the air temperature and of the strain at the bore of each grain. The strain of the small grain
+      swings nearly as much as the air and a few hours late; the strain of the large grain swings very little, and later.
+    </desc>
+    <defs>
+      {grains.map((g) => (
+        <radialGradient id={g.id} gradientUnits="userSpaceOnUse" cx={g.x} cy={y0} r={Rg}>
+          {g.stops.map((s) => <stop offset={s.off} style={`stop-color:${hot};stop-opacity:${s.op}`}></stop>)}
+        </radialGradient>
+      ))}
+    </defs>
+    {grains.map((g) => (
+      <g>
+        <path d={band(g.x, Rg, Rb)} fill={`url(#${g.id})`}></path>
+        <path d={arc(g.x, Rg)} fill="none" stroke={ink} stroke-width="1"></path>
+        <path d={arc(g.x, Rc)} fill="none" stroke={ink} stroke-width="3"></path>
+        <path d={arc(g.x, Rb)} fill="none" stroke={ink} stroke-width="1.4"></path>
+        <line x1={g.x - Rc - 8} y1={y0} x2={g.x + Rc + 8} y2={y0} stroke={muted} stroke-dasharray="8 3 2 3"></line>
+        <text x={g.x} y={y0 - 8} text-anchor="middle" font-size="10" fill={muted}>bore</text>
+        <text x={g.x} y="20" text-anchor="middle" font-size="11" fill={ink}>{g.title}</text>
+        <text x={g.x} y="136" text-anchor="middle" font-size="10" fill={hot}>{g.day}</text>
+      </g>
+    ))}
+    <text x="220" y="152" text-anchor="middle" font-size="10" fill={blue}>the season reaches the bore of both</text>
+    <!-- three days at the bore -->
+    {legend.map((it) => (
+      <g>
+        <line x1={it.x} y1="177" x2={it.x + 16} y2="177" stroke={it.col} stroke-width={it.w} stroke-dasharray={it.dash || undefined}></line>
+        <text x={it.x + 20} y="180" font-size="10" fill={it.col}>{it.name}</text>
+      </g>
+    ))}
+    <line x1={X0} y1={yc + amp + 12} x2={X1} y2={yc + amp + 12} stroke={muted}></line>
+    {[0, 24, 48, 72].map((h) => <line x1={tx(h)} y1={yc + amp + 8} x2={tx(h)} y2={yc + amp + 16} stroke={muted}></line>)}
+    <text x={(X0 + X1) / 2} y={yc + amp + 30} text-anchor="middle" font-size="10" fill={muted}>three days</text>
+    <polyline points={air} fill="none" stroke={muted} stroke-width="1.8" stroke-dasharray="5 3"></polyline>
+    <polyline points={strains[1]} fill="none" stroke={ink} stroke-width="1.6"></polyline>
+    <polyline points={strains[0]} fill="none" stroke={hot} stroke-width="2.4"></polyline>
+  </svg>
+  <figcaption>
+    The shading is the amplitude of a daily cycle of the air at each radius, from the solution of the calculator. The web
+    of the 300 mm grain is 100 mm, not much more than the 75 mm penetration depth, and its bore is closed: the daily
+    cycle reaches all of the web, with 68% at the bore. In a 3 m grain of the same shape it is down to less than a
+    quarter at 100 mm from the case. The seasonal cycle reaches the bore of both. Below, three days at the bore: the
+    strain of the small grain follows the cold air at 71% of a slow cycle and 2.7 hours late; the strain of the large
+    grain at 12%, 10 hours late.
+  </figcaption>
+</figure>

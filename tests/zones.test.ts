@@ -55,6 +55,7 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r[r.findIndex((x) => x.key === 'vibration') + 1].key, 'primer-handling', 'the handling primer follows random vibration');
   assert.equal(r[r.findIndex((x) => x.key === 'proof') + 1].key, 'primer-firing', 'the static-firing primer follows proof testing');
   assert.equal(r[r.findIndex((x) => x.key === 'ndt') + 1].key, 'primer-flaws', 'the grain-flaws primer follows NDT');
+  assert.equal(r[r.findIndex((x) => x.key === 'ageing') + 1].key, 'primer-cycles', 'the thermal-cycles primer follows storage and ageing');
   assert.equal(r[r.findIndex((x) => x.key === 'thermal') + 1].key, 'primer-heating', 'the external-heating primer follows transient thermal');
   assert.equal(r.filter((x) => x.slug === null).length, 0, 'every zone is rebuilt');
   assert.equal(hrefOf({ ...r.find((x) => x.key === 'read')!, slug: null }, '/'), '/legacy/?z=read', 'a zone without a page opens the v1 archive');

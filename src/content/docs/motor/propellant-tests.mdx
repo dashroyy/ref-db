@@ -52,7 +52,7 @@ import PropTestCalc from '../../../components/PropTestCalc.astro';
 | Dilatometer | The bulk modulus and the thermal expansion | The pressure and cool-down strains |
 | Bond tests: tension, peel and shear | Bond strength and the failure mode | [Bondlines](../bondlines/#how-a-bond-is-tested) |
 | Fracture tests | The fracture energy and the rate of crack growth | [Flaws in the grain](../../make/grain-flaws/#a-crack-at-the-bore-grows) |
-| Cyclic and constant-strain tests | Damage, and the time to failure under a held strain | Temperature cycles and long storage |
+| Cyclic and constant-strain tests | Damage, and the time to failure under a held strain | [Thermal cycles and cumulative damage](../../verify/thermal-cycles/) |
 | Aged specimens | The change of each property with time | End-of-life margins ([Storage & ageing](../../verify/storage-ageing/)) |
 | Hardness and density | Quick checks of a batch | Batch acceptance |
 
@@ -162,8 +162,8 @@ credit, a factor of safety of 1.5, and the B-basis bound. Push **Load worked exa
 - **One scatter for all rates.** Real scatter changes with the rate and the temperature.
 - **The WLF constants.** Fit them to your relaxation tests: the general constants are only a start, and ageing can
   move them.
-- **Strain criteria only.** Stress criteria, the failure envelope, and cumulative damage for temperature cycles and
-  long storage are not included.
+- **Strain criteria only.** Stress criteria and the failure envelope are not included. For the cumulative damage of
+  temperature cycles and long storage, see [Thermal cycles and cumulative damage](../../verify/thermal-cycles/).
 - **A specimen is not the grain.** The cure, the residual stress and the size of a specimen from a block differ from
   those in a grain. Correlate with motors that are taken apart.
 - **The form of the fit.** A quadratic is a convenient fit, not a law: use the form that your data supports.
