@@ -128,6 +128,7 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
     border: 1px solid var(--hud-edge); border-left: 3px solid var(--fc); border-radius: 0 6px 6px 0; }
   .mc-card h4 { margin: 0 !important; font-size: 1rem; }
   .mc-card .mc-sum { grid-column: 1 / -1; font-size: var(--sl-text-sm); color: var(--sl-color-gray-2); margin: 0 !important; }
+  /* one span per property, so that a property wraps as one piece */
   .mc-card .mc-props { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sl-font-mono); font-size: 0.7rem; color: var(--sl-color-gray-3); margin: 0 !important; }
   .mc-card .mc-props b { color: var(--sl-color-white); font-weight: 400; }
   .mc-card .mc-idx { font-family: var(--sl-font-mono); color: var(--pc, var(--sl-color-accent)); text-align: right; }
@@ -323,12 +324,12 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
       if (!m) { box.innerHTML = ''; return; }
       const pos = ranked.findIndex((r) => r.m.name === m.name);
       const v = idx?.value(m);
-      const p = (k: string) => { const pr = prop(k); const val = pr.get(m); return val !== undefined ? `${pr.label.replace(/ K_IC/, '')} <b>${fmt(val)}</b> ${pr.unit}` : ''; };
+      const p = (k: string) => { const pr = prop(k); const val = pr.get(m); return val !== undefined ? `<span>${pr.label.replace(/ K_IC/, '')} <b>${fmt(val)}</b> ${pr.unit}</span>` : ''; };
       box.innerHTML = `<div class="mc-card" style="--fc:${famColor[m.family]}">
         <h4>${m.name}</h4>
         <span class="mc-idx">${idx && v !== undefined ? `#${pos + 1} · M = ${fmt(v)}` : ''}</span>
         <p class="mc-sum">${m.summary}. ${m.spec}</p>
-        <p class="mc-props">${['density', 'yield', 'uts', 'fatigue', 'E', 'kic', 'tmax', 'cte', 'k'].map(p).filter(Boolean).join(' · ')}${(m as any).retention !== undefined && (m as any).retention < 1 ? ` · strengths at ${field('T').value} °C: ${Math.round(100 * (m as any).retention)}% of room temperature` : ''}${m.weldable ? ' · weldable' : ''}${m.kicIsFamilyDefault ? ' · K<sub>IC</sub> is a family default' : ''}</p>
+        <p class="mc-props">${['density', 'yield', 'uts', 'fatigue', 'E', 'kic', 'tmax', 'cte', 'k'].map(p).filter(Boolean).join('')}${(m as any).retention !== undefined && (m as any).retention < 1 ? `<span>strengths at ${field('T').value} °C: ${Math.round(100 * (m as any).retention)}% of room temperature</span>` : ''}${m.weldable ? '<span>weldable</span>' : ''}${m.kicIsFamilyDefault ? '<span>K<sub>IC</sub> is a family default</span>' : ''}</p>
       </div>`;
     }
 

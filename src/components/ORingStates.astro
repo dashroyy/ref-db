@@ -1,9 +1,9 @@
 ---
 // How an O-ring seals: installed squeeze, pressure-energised, and extrusion with the back-up ring fix.
 const panels = [
-  { x: 0, title: '1 · Installed', sub: 'squeeze makes the first seal' },
-  { x: 270, title: '2 · Pressurised', sub: 'pressure pushes it harder into the gap' },
-  { x: 540, title: '3 · Too much gap or pressure', sub: 'it extrudes: a back-up ring stops it' },
+  { x: 0, title: '1 · Installed', sub: ['squeeze makes', 'the first seal'] },
+  { x: 270, title: '2 · Pressurised', sub: ['pressure pushes it into', 'the low-pressure corner'] },
+  { x: 540, title: '3 · Too much gap or pressure', sub: ['without a back-up ring,', 'it extrudes into the gap'] },
 ];
 ---
 
@@ -52,14 +52,13 @@ const panels = [
             <text x="234" y="96" font-size="10">gap</text>
           </g>
         )}
-        <text x="135" y="262" text-anchor="middle" font-size="12" fill="var(--rd-muted)">{p.sub}</text>
+        {p.sub.map((s, k) => <text x="135" y={256 + 14 * k} text-anchor="middle" font-size="11" fill="var(--rd-muted)">{s}</text>)}
       </g>
     ))}
-    <!-- extrusion illustration in panel 3: a tongue of rubber forced into the gap, shown faintly beside the back-up ring -->
+    <!-- extrusion in panel 3: a faint tongue of rubber in the gap beside the back-up ring, what happens without the ring
+         (the caption under the panel says so) -->
     <g transform="translate(540 0)">
       <path d="M184,80.5 C205,80 225,81 248,82 L248,85.5 C225,85 205,85 184,85.5 Z" fill="var(--rd-accent)" fill-opacity="0.35"></path>
-      <text x="196" y="104" text-anchor="middle" font-size="10" fill="var(--rd-accent)">without it: nibbled</text>
-      <text x="196" y="116" text-anchor="middle" font-size="10" fill="var(--rd-accent)">into the gap</text>
     </g>
   </svg>
   <figcaption>

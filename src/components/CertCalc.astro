@@ -149,7 +149,7 @@ const DIRS = [['L', 'L (longitudinal)'], ['LT', 'LT (long transverse)'], ['ST', 
       const bars: [string, number, number][] = [['UTS', i.uts, i.minUts], ['Yield', i.ys, i.minYs], ['Elong.', i.el, i.minEl]];
       const hard = i.steel && Number.isFinite(i.hrc) && Number.isFinite(i.minUts) && i.minUts > 0 ? utsFromHrc(i.hrc) : NaN;
       return () => {
-        const H = 200, W = frame(H), L = 56, R = 16, T = 18, B = 30;
+        const H = 200, W = frame(H), L = 56, R = 16, T = 18, B = 33;
         const list = bars.filter(([, v, m]) => Number.isFinite(v) && m > 0);
         if (Number.isFinite(hard)) list.push(['HRC → UTS', hard, i.minUts]);
         const xMax = Math.max(1.3, ...list.map(([, v, m]) => (v / m) * 1.08));

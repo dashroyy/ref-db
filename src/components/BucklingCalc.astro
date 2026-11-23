@@ -179,7 +179,7 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { E: +(m.E! / 1000).to
     function kdChart(rt: number, gA: number, gB: number, gP: number) {
       const svg = root.querySelector<SVGSVGElement>('[data-kd]')!;
       svg.replaceChildren();
-      const W = 480, H = 230, L = 44, R = 12, T = 12, B = 36, x1 = 1, x2 = Math.log10(3000);
+      const W = 480, H = 230, L = 44, R = 18, T = 12, B = 36, x1 = 1, x2 = Math.log10(3000);
       const X = (v: number) => L + ((Math.log10(v) - x1) / (x2 - x1)) * (W - L - R);
       const Y = (g: number) => H - B - g * (H - T - B);
       for (let g = 0; g <= 1.001; g += 0.2) {

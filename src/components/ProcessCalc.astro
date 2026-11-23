@@ -107,7 +107,7 @@ const PRICE = Object.fromEntries(PRICED.map((m) => [m.key, m.price]));
   @container (max-width: 36rem) {
     .pc-routes { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
     .pc-routes > span:first-child { display: none; }
-    .pc-routes > span:not(.pc-rn) { line-height: 1.25; }
+    .pc-routes > span:not(.pc-rn) { line-height: 1.25; hyphens: auto; overflow-wrap: break-word; }
     .pc-rn { grid-column: 1 / -1; margin-top: 0.3rem !important; }
   }
 </style>

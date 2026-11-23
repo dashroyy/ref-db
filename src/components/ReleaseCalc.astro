@@ -99,7 +99,9 @@ const ANS = [{ v: 'yes', t: 'Yes' }, { v: 'no', t: 'No' }, { v: 'unsure', t: 'Un
   /* the interchangeability gates, then the outcome */
   .rl-gates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
   .rl-gates > * { margin: 0 !important; }
-  @media (max-width: 30rem) { .rl-gates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  /* four gates need about 31rem of calculator width: below that, two by two, and one by one on the smallest phones */
+  @container (max-width: 31rem) { .rl-gates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @container (max-width: 17rem) { .rl-gates { grid-template-columns: minmax(0, 1fr); } }
   .rl-gate { border: 1px solid var(--rd-line); border-top: 3px solid var(--rd-ok); border-radius: 6px; padding: 0.35rem 0.45rem; background: var(--rd-panel2); font-family: var(--sl-font-mono); font-size: 0.72rem; color: var(--rd-muted); transition: border-color 0.2s; }
   .rl-gate b { display: block; font-size: 0.95rem; color: var(--rd-ink); }
   .rl-gate.no { border-top-color: var(--rd-accent); }

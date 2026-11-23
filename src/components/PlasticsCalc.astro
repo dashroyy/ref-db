@@ -95,7 +95,7 @@ const TABS = [{ key: 'select', name: 'Select' }, { key: 'fit', name: 'In a metal
   .pl-card h4 small { font: 400 var(--sl-text-xs) var(--sl-font-system, system-ui); color: var(--rd-muted); margin-left: 0.4rem; }
   .pl-card .alt { color: var(--rd-muted); font-size: var(--sl-text-xs); margin-top: 0.15rem !important; }
   .pl-card .app { margin-top: 0.4rem !important; color: var(--rd-ink); }
-  .pl-gb { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.4rem 1rem; margin-top: 0.5rem !important; }
+  .pl-gb { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: 0.4rem 1rem; margin-top: 0.5rem !important; }
   .pl-gb > * { margin: 0 !important; }
   .pl-gb ul { margin: 0.2rem 0 0 !important; padding-left: 1.1rem; color: var(--rd-muted); font-size: var(--sl-text-xs); }
   .pl-gb li { margin: 0.1rem 0 0 !important; }

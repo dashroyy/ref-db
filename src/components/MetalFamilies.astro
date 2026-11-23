@@ -54,7 +54,7 @@ const DATA = METAL_FAMILIES.map((f) => ({
   .mf-card .mf-props { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; font: 0.72rem var(--sl-font-mono); color: var(--rd-muted); margin-top: 0.3rem !important; }
   .mf-card .mf-props b { color: var(--rd-ink); }
   .mf-card p { color: var(--rd-muted); margin-top: 0.35rem !important; }
-  .mf-classcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.5rem; }
+  .mf-classcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: 0.5rem; }
   .mf-classcards > * { margin: 0 !important; }
   .mf-cc { border: 1px solid var(--rd-line); border-top: 3px solid var(--c, var(--rd-line)); border-radius: 6px; padding: 0.5rem 0.65rem; font-size: var(--sl-text-xs); color: var(--rd-muted); background: color-mix(in srgb, var(--rd-panel) 80%, transparent); }
   .mf-cc > * { margin: 0 !important; }

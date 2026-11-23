@@ -189,6 +189,7 @@ const VIEWS = [{ key: 'range', name: 'Squeeze range' }, { key: 'temp', name: 'Te
   .or-head .v { grid-column: 1 / -1; font-weight: 600; }
   .or-head div b { display: block; font: 600 1.15rem var(--sl-font-mono); }
   .or-head div span { font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  @container (max-width: 18rem) { .or-head div b { font-size: 1rem; } }
   .or-live { border: 1px solid var(--rd-line); border-radius: 6px; padding: 0.6rem; margin: 0 !important; }
   .or-ctl { display: grid; gap: 0.45rem; }
   .or-ctl > * { margin: 0 !important; }

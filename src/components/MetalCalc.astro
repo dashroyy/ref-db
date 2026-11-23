@@ -148,13 +148,14 @@ const TABS = [{ key: 'fec', name: 'Iron and carbon' }, { key: 'temp', name: 'Tem
         line(cs.map((c) => [X(c), Y(a3Binary(c))]), 'var(--rd-ink)', 1.6);
         line(ch.map((c) => [X(c), Y(acmBinary(c))]), 'var(--rd-ink)', 1.6);
         line([[X(FE_C.alphaMax), Y(FE_C.A1)], [X(x1), Y(FE_C.A1)]], 'var(--rd-ink)', 1.6);
+        // the carbon line first, so that the region names (with their halo) stay readable where it crosses them
+        const c = Math.min(s.C, x1);
+        line([[X(c), Y(y0)], [X(c), Y(y1)]], 'var(--rd-accent)', 1.4, '4 3');
         txt(X(0.55), Y(930), 'austenite γ', 'var(--rd-ink)', 'middle');
         txt(X(0.12), Y(760), 'α + γ', 'var(--rd-ink)', 'middle');
         txt(X(1.12), Y(760), 'γ + Fe₃C', 'var(--rd-ink)', 'middle');
-        txt(X(0.3), Y(640), 'ferrite + pearlite', 'var(--rd-muted)', 'middle');
-        txt(X(1.1), Y(640), 'pearlite + Fe₃C', 'var(--rd-muted)', 'middle');
-        const c = Math.min(s.C, x1);
-        line([[X(c), Y(y0)], [X(c), Y(y1)]], 'var(--rd-accent)', 1.4, '4 3');
+        txt(X(0.3), Y(620), 'ferrite + pearlite', 'var(--rd-muted)', 'middle');
+        txt(X(1.1), Y(620), 'pearlite + Fe₃C', 'var(--rd-muted)', 'middle');
         // the Andrews points only inside their range of validity
         for (const [t, n, a] of (r.valid ? [[r.ac3, 'Ac3', 'start'], [r.ac1, 'Ac1', 'start'], [r.ms, 'Ms', 'start']] : []) as [number, string, string][]) {
           if (t < y0 || t > y1) continue;
