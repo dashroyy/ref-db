@@ -1,0 +1,70 @@
+---
+// Flaws and the zones of a case-bonded grain, in a half-section along its length: the port above, the propellant, the
+// liner and insulation and the case below. The band next to the bore has the highest strain: a void or a crack there
+// is a reject. Small voids deep in the web are accepted by size and count. An unbond at the end of the bond is open to
+// the port, so the gas gets behind the grain at ignition. Schematic.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-accent)', ok = 'var(--rd-ok)';
+const x0 = 40, x1 = 400, yb = 62, yc = 182; // grain ends, bore surface, bond
+const crack = `M302,${yb} L307,${yb + 8} L302,${yb + 15} L309,${yb + 25}`;
+const deep = [[146, 128], [160, 141], [137, 146], [171, 124], [152, 157]];
+const cross = (cx: number, cy: number, s: number) => `M${cx - s},${cy - s} L${cx + s},${cy + s} M${cx - s},${cy + s} L${cx + s},${cy - s}`;
+---
+
+<figure class="viz flm">
+  <p class="viz-title">Flaws and the zones of a grain</p>
+  <svg viewBox="0 0 440 250" role="img" aria-labelledby="flm-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="flm-desc">
+      A half-section of a case-bonded grain along its length: the gas in the port at the top, the propellant below it,
+      then the liner and insulation and the case. A band of propellant next to the bore is shaded: there the strain is
+      highest, and a void or a crack in it is a reject. A void in that band and a crack running from the bore into it
+      are marked as rejects. A few small voids deep in the web are marked as accepted by size and count. At the aft end
+      of the grain the propellant has come away from the liner, and the gap opens to the end face, so the gas reaches
+      the insulation behind the grain at ignition.
+    </desc>
+    <defs>
+      <marker id="flm-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={hot}></path></marker>
+    </defs>
+    <!-- port, grain, bond line, case -->
+    <rect x={x0} y="34" width={x1 - x0} height={yb - 34} fill="var(--rd-panel)" stroke="none"></rect>
+    <text x={x0 + 6} y="28" font-size="10" fill={muted}>port</text>
+    <rect x={x0} y={yb} width={x1 - x0} height={yc - yb} fill="var(--rd-propellant)" fill-opacity="0.35"></rect>
+    <rect x={x0} y={yb} width={x1 - x0} height="18" fill={hot} fill-opacity="0.14"></rect>
+    <line x1={x0} y1={yb + 18} x2={x1} y2={yb + 18} stroke={hot} stroke-width="1" stroke-dasharray="4 3"></line>
+    <text x={x0 + 6} y={yb + 13} font-size="10" fill={ink}>highest strain</text>
+    <rect x={x0} y={yc} width={x1 - x0} height="7" fill="var(--rd-steel)" fill-opacity="0.5"></rect>
+    <line x1={x0 - 12} y1={yc + 10} x2={x1 + 12} y2={yc + 10} stroke={ink} stroke-width="3"></line>
+    <line x1={x0} y1={yb} x2={x0} y2={yc} stroke={ink} stroke-width="2"></line>
+    <line x1={x1} y1={yb} x2={x1} y2={yc} stroke={ink} stroke-width="2"></line>
+    <line x1={x0} y1={yb} x2={x1} y2={yb} stroke={ink} stroke-width="1.6"></line>
+    <!-- the ends of the bond -->
+    <rect x={x0} y={yc - 16} width="34" height="16" fill="none" stroke={hot} stroke-dasharray="3 2"></rect>
+    <rect x={x1 - 34} y={yc - 16} width="34" height="16" fill="none" stroke={hot} stroke-dasharray="3 2"></rect>
+    <!-- a void near the bore, and a crack at the bore: rejects -->
+    <circle cx="250" cy={yb + 9} r="4" fill="var(--rd-panel)" stroke={hot} stroke-width="1.6"></circle>
+    <path d={cross(250, yb + 9, 7)} stroke={hot} stroke-width="1.4"></path>
+    <path d={crack} fill="none" stroke={hot} stroke-width="2.2"></path>
+    <text x="154" y="52" font-size="11" fill={hot}>a void near the bore</text>
+    <line x1="246" y1="55" x2="249" y2={yb + 3} stroke={hot}></line>
+    <text x="318" y="52" font-size="11" fill={hot}>a crack</text>
+    <line x1="322" y1="55" x2="306" y2={yb + 2} stroke={hot}></line>
+    <!-- small voids deep in the web: accepted by size and count -->
+    {deep.map(([cx, cy]) => <circle cx={cx} cy={cy} r="3" fill="var(--rd-panel)" stroke={ok} stroke-width="1.4"></circle>)}
+    <!-- an unbond at the aft end, open to the end face -->
+    <rect x="318" y={yc - 3} width={x1 - 318} height="3.5" fill="var(--rd-panel)" stroke={hot} stroke-width="1"></rect>
+    <line x1={x1 + 22} y1={yc - 22} x2={x1 + 4} y2={yc - 4} stroke={hot} stroke-width="1.8" marker-end="url(#flm-a)"></line>
+    <text x={x1 + 26} y={yc - 30} text-anchor="end" font-size="10" fill={hot}>gas</text>
+    <!-- labels below the case -->
+    <text x={x0} y="213" font-size="11" fill={ok}>small voids deep in the web:</text>
+    <text x={x0} y="228" font-size="11" fill={ok}>accepted by size and count</text>
+    <line x1="120" y1="203" x2="148" y2="161" stroke={ok}></line>
+    <text x="434" y="213" text-anchor="end" font-size="11" fill={hot}>an unbond open at the end:</text>
+    <text x="434" y="228" text-anchor="end" font-size="11" fill={hot}>gas behind the grain</text>
+    <line x1="360" y1="203" x2="352" y2={yc + 2} stroke={hot}></line>
+    <text x={x0} y="244" font-size="10" fill={muted}>dashed boxes: the ends of the bond, where no unbond is accepted</text>
+  </svg>
+  <figcaption>
+    A half-section of a case-bonded grain. Next to the bore the strain is highest, so a void or a crack there is a
+    reject. Small voids deep in the web are accepted by size and count. At the ends of the bond, an unbond is open to the
+    port and the gas gets behind the grain at ignition. Schematic.
+  </figcaption>
+</figure>

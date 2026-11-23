@@ -25,7 +25,8 @@ test('every source is complete, in a known category, and its patterns compile', 
     assert.ok(s.find.length > 0, `${s.id}: a pattern`);
     for (const f of s.find) assert.doesNotThrow(() => new RegExp(f), `${s.id}: ${f}`);
     if (s.url) assert.match(s.url, /^https:\/\//, `${s.id}: url`);
-    assert.doesNotMatch(s.title, /ignit|initiat|explosiv|formulat/i, `${s.id}: outside the scope of the site`);
+    // energetic ignition and initiation are outside the scope; the initiation of a crack in fracture mechanics is not
+    assert.doesNotMatch(s.title, /ignit|(?<!crack )initiat|explosiv|formulat/i, `${s.id}: outside the scope of the site`);
   }
   for (const c of CATS) assert.ok(SOURCES.some((s) => s.cat === c.key), `${c.key} has sources`);
 });
@@ -58,6 +59,7 @@ test('citations are found in the text of the pages that cite them', () => {
     ['lenoir', 'motor/erosive-burning'], ['mukunda', 'motor/erosive-burning'], ['kuo', 'motor/erosive-burning'], ['kibbey', 'motor/erosive-burning'],
     ['culick66', 'motor/erosive-burning'], ['shapiro', 'motor/erosive-burning'], ['sp8076', 'motor/erosive-burning'],
     ['s120', 'motor/mass-properties'], ['naca467', 'motor/mass-properties'], ['thomson', 'motor/mass-properties'], ['sp8114', 'motor/mass-properties'],
+    ['goodier', 'make/grain-flaws'], ['schapery', 'make/grain-flaws'], ['sp8073', 'make/grain-flaws'], ['anderson', 'make/grain-flaws'], ['mil1823', 'make/grain-flaws'],
   ];
   for (const [id, page] of cited) assert.ok(pages(id).includes(page), `${id} on ${page}`);
   // no pattern is so loose that it finds a source on most pages
@@ -65,7 +67,7 @@ test('citations are found in the text of the pages that cite them', () => {
 });
 
 test('the numbers that the page states', () => {
-  assert.equal(SOURCES.length, 107, 'the page says 107 sources');
+  assert.equal(SOURCES.length, 109, 'the page says 109 sources');
   assert.equal(CATS.length, 10, 'in ten subjects');
   assert.equal(SOURCES.filter((s) => s.start && s.free).length, 2, 'two of the start set are free');
   const casePath = PATHS.find((p) => p.key === 'case')!;

@@ -1,0 +1,248 @@
+---
+title: Flaws in the grain
+description: Voids, cracks and unbonds in a case-bonded grain. The burning area that each one adds, the pressure and the insulation exposure that follow, the zones of the grain where a flaw is acceptable, and how to set the acceptance criteria that the inspection works to, with a calculator and a worked example.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import FlawMap from '../../../components/FlawMap.astro';
+import FlawCalc from '../../../components/FlawCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A small void deep in the web does nothing; the same void next to the bore can crack the grain, and an unbond at the end of the bond lets the gas get behind the grain at ignition. Set the acceptance criteria by zone, from the effect of each flaw, and make sure the inspection finds the ones that matter.</div>
+  <div><b>Before this</b><a href="../../motor/propellant-grain/#part-2-structural-integrity">Propellant grain: structural integrity</a> · <a href="../../motor/bondlines/">Bondlines</a> · <a href="../ndt/">NDT</a></div>
+  <div><b>Leads to</b><a href="../../motor/insulation/#exposure-time-sets-the-thickness">Insulation</a>, for the exposure behind a flaw · <a href="../../verify/storage-ageing/">Storage & ageing</a>, for flaws that grow</div>
+</div>
+
+## Why this matters
+
+- **Every loaded motor is inspected,** by radiography or computed tomography, and the inspection finds voids, cracks
+  and unbonds. Someone must decide which ones a motor can fly with, and the criteria must exist before the first motor
+  is cast.
+- **A flaw that the flame reaches is new burning surface:** more gas and a higher pressure, amplified by $1/(1-n)$.
+- **A crack can grow at ignition,** when the gas fills it and the bore stretches. More crack is more surface, more
+  pressure and more growth.
+- **An unbond lets the gas get behind the grain.** The insulation there is often sized for a short exposure at the end
+  of the burn, and it can see the whole burn.
+- **Both errors are expensive.** Criteria that are too strict scrap good motors; criteria that are too loose fly a motor
+  that fails.
+
+## The intuition: a split log
+
+<Analogy title="A split log">
+  A log with a split burns from inside the split as well as from outside: the fire has more surface, and it gets deep
+  into the wood. A small knot hole deep in the log makes no difference. A grain is the same. The flaws that matter are
+  the ones at the surface and at the ends; the small ones deep inside do not. Its acceptance criteria follow from where
+  each flaw is.
+</Analogy>
+
+<FlawMap />
+
+## The flaws
+
+| Flaw | Where it comes from | What it does |
+| --- | --- | --- |
+| Voids and porosity | Gas trapped in the cast and the cure | Extra burning surface when the flame reaches them; a strain concentration near the bore |
+| Cracks | Cool-down, temperature cycling, handling loads, ageing | Two new faces, open to the flame; can grow at ignition |
+| Unbonds | A bond that did not form (a contaminated surface, a liner outside its cure window), or one that separated in a cool-down at a termination | Gas behind the grain; the web burns from both sides |
+| Inclusions | Foreign material in the propellant | A local change of the burn rate and of the strength |
+| Low-density zones | Poor flow or settling in the cast | A local change of the burn rate: the grain burns unevenly |
+
+## The effect on the pressure
+
+The pressure follows the burning area, $p \propto A_b^{1/(1-n)}$. A flaw that adds $\Delta A$ when the flame reaches it
+raises the pressure by
+
+$$
+\frac{p'}{p} = \left(1 + \frac{\Delta A}{A_b}\right)^{1/(1-n)}
+$$
+
+### A void adds its own area
+
+- **When the flame reaches a closed void,** the void fills with hot gas and burns outward, ahead of the main front. The
+  front then carries a bump as high as the void is wide.
+- **Huygens' construction gives the extra area of the bump exactly:** $\pi(R + h)^2$, where $R$ is the radius of the
+  burning sphere and $h$ the height of its centre above the main front. $R + h$ stays equal to the void diameter $d$,
+  so the extra area stays $\pi d^2$, the surface area of the void, until the bump reaches the case.
+- **So voids add little.** Ten 5 mm voids add 785 mm², 0.16% of the burning area of the 300 mm grain at that point.
+- **The bump reaches the case $d$ early,** so the insulation behind it sees the gas for a little longer.
+
+### A crack adds its two faces
+
+A crack open to the bore adds its two faces, $2cl$ for a depth $c$ and a length $l$. The faces lead the bore by $c$ until
+the tip reaches the case. A shallow crack adds little. A crack through the web adds much more, and the gas reaches the
+insulation behind it at ignition.
+
+### An unbond at the end of the bond is the worst
+
+- **An unbond in the middle of the cylinder is closed.** The gas cannot get into it until the web burns through, so it
+  changes little.
+- **An unbond at a termination is open to the port from ignition.** The gas burns the outer surface of the grain over
+  its area, so that slice burns from both sides.
+- **At ignition it adds its own area,** $2\pi b\,l$ for a band of length $l$ all round. At half the web the slice has
+  gone, with its share of the bore surface, and the grain then has less area than before.
+- **The insulation behind it sees the gas for the whole burn.** In the cylinder this is often the thinnest insulation in
+  the motor, because the grain normally covers it until the tail-off
+  ([Insulation](../../motor/insulation/#exposure-time-sets-the-thickness)).
+
+### The shape of the trace decides
+
+- **In a progressive grain** the early pressure is low. A rise at ignition does not set MEOP, but the exposure of the
+  insulation still matters.
+- **In a neutral or regressive grain** the same rise is on the peak, and it goes directly into MEOP.
+
+## The effect on the structure
+
+### The strain falls into the web
+
+In a case-bonded tube, the hoop strain from the cool-down and from ignition is highest at the bore and falls into the
+web:
+
+$$
+\varepsilon(r) = \varepsilon_\text{bore}\left(\frac{a}{r}\right)^2
+$$
+
+One bore radius into the web, it is a quarter of the bore value
+([Propellant grain](../../motor/propellant-grain/#part-2-structural-integrity)).
+
+### A void concentrates the strain
+
+- **A spherical void in an incompressible solid raises the strain around it.** From Goodier's elastic solution, the
+  strain at its surface is $23/12 = 1.92$ times the remote strain in uniaxial tension, and $5/3 = 1.67$ times in shear.
+  A void near a surface, a long void and a cluster concentrate more. Get the value for your flaw shapes from FEA.
+- **A void is acceptable where its strain, with the factor, is within the capability.** Inside a depth $y_0$ below the
+  bore it is not:
+
+$$
+y_0 = a\left(\sqrt{\frac{K\,\text{SF}\,\varepsilon_\text{bore}}{\varepsilon_\text{cap}}} - 1\right)
+$$
+
+- **Add one void diameter,** because a thin ligament between a void and the bore concentrates more.
+- **A sealed void deep in the web is squeezed at ignition** by the pressure. In cold storage, with no pressure, it sees
+  the cool-down strain.
+
+### A crack at the bore grows
+
+- **At ignition the gas fills the crack and the bore stretches.** The stress that opens the crack is the hoop stress net
+  of the gas pressure on its faces. For an incompressible grain it is
+  $\sigma = \tfrac43\,(E_\text{relaxed}\,\varepsilon_\text{cool-down} + E_\text{ignition}\,\varepsilon_\text{ignition})$.
+- **A shallow crack of depth $c$ then has an energy release rate**
+
+$$
+G = \frac{1.12^2\,\pi\,\sigma^2\,c}{E'}
+\qquad
+E' = \tfrac43\,E_\text{ignition}
+$$
+
+- **It grows when $G$ reaches the fracture energy $G_c$** of the propellant at the rate and the temperature of the cold
+  ignition.
+- **The propellant is viscoelastic.** Its fracture energy and its modulus change with the rate and the temperature, and
+  a crack can also grow slowly under a held strain (Schapery). Use this screen for its scale, and test your propellant.
+- **The usual result is that no crack at the bore is acceptable.** The critical depth at a cold ignition is about a
+  millimetre, smaller than radiography finds with confidence. Inspect the bore surface directly.
+
+## Setting the acceptance criteria
+
+- **Divide the grain into zones:** the bore surface and the band under it, the terminations and the flaps, the rest of
+  the web, and the bondline in the cylinder. Each zone gets its own limits.
+- **For each zone, find the critical flaw for each effect:** the pressure, the structure and the insulation. The
+  smallest one governs.
+- **Apply your programme's factor and write the limits:** the size of one flaw, the number of flaws in a volume, the
+  spacing between them, and the area of an unbond.
+- **Check that the inspection finds them.** A flaw that the criteria reject must be larger than the flaw that the
+  inspection finds with 90% probability at 95% confidence ([NDT](../ndt/#probability-of-detection)). A limit that the
+  inspection cannot find is not a limit.
+- **Write what happens to a reject:** a repair that the design allows, an analysis of that motor, or scrap.
+- **Inspect again after events that can open flaws:** temperature cycling, transport, drops, and ageing
+  ([Storage & ageing](../../verify/storage-ageing/)).
+
+## Calculator
+
+<FlawCalc />
+
+**Pressure and exposure** burns a tubular grain with a cluster of voids, a crack at the bore and an unbond at the case,
+and gives the pressure against time with and without them, and how long the insulation behind each flaw sees the gas.
+**Where a flaw is acceptable** gives the strain across the web, the depth from the bore inside which no void is
+acceptable, and the critical crack at the bore. The criteria and the test values start blank: enter your own, or push
+**Load worked example**.
+
+## Worked example: the radiographs of the 300 mm grain
+
+The grain is that of the [grain example](../../motor/propellant-grain/#worked-example-htpb-grain-in-the-d6ac-case): a
+tube with a 100 mm bore and a 300 mm OD, 1000 mm long, with the propellant of the grain page. As a tube it is
+progressive. A 56.8 mm throat makes it peak at the nominal 8.8 MPa of the
+[MEOP build-up](../../motor/propellant/#worked-example-building-the-10-mpa-meop), and the burn takes 14.9 s. The
+radiographs show three findings (illustrative): ten voids of 5 mm, 30 mm below the bore; a crack at the bore, 5 mm deep
+and 100 mm long; and an unbond at the aft end, 50 mm long all round, open to the aft end face. The criteria and the test
+values are **for this example only**: a 2% allowed pressure rise, 1 s of exposure for the cylinder insulation, the
+illustrative capability of 39.6% from the grain page, a factor of 1.5, a modulus at the cold ignition of 40 MPa, and a
+fracture energy of 1000 J/m². Push **Load worked example**.
+
+1. **The voids, for the pressure:** $10 \times \pi \times 5^2 = 785$ mm² when the flame reaches them at 27.5 mm of web,
+   0.16% of the area there. The pressure rises by 0.25%. Their bumps reach the case 5 mm early, so the insulation behind
+   them sees the gas for 0.58 s.
+2. **The voids, for the structure:** with $K = 2.0$, the cold-ignition bore strain of 16.1% and the factor, no void is
+   acceptable within 5.2 mm of the bore. At 30 mm the strain is $16.1\% \times (50/80)^2 = 6.3\%$, and 12.6% at a void:
+   MS = +1.10. **Accept.**
+3. **The crack, for the pressure:** its faces add 1000 mm², 0.32% of the area at ignition. The pressure rises by 0.49%:
+   small.
+4. **The crack, for the structure:** the opening stress at the cold ignition is
+   $\tfrac43(3.6 \times 0.104 + 40 \times 0.057) = 3.54$ MPa. The critical depth is 1.08 mm, and 0.48 mm with the factor
+   on the stress. The 5 mm crack has MS = −0.69: it grows at the cold ignition. **Reject.** No crack at the bore that
+   radiography can find is acceptable.
+5. **The unbond:** the gas gets in at ignition. The extra area is $2\pi \times 150 \times 50 = 47\,100$ mm², 15% of the
+   area at ignition, so the pressure at ignition goes from 1.62 to 2.01 MPa: +24% (2.02 MPa with the crack as well,
+   as the calculator shows with all three findings). At half the web the slice has gone,
+   and the final peak is 7.6% lower, at 8.13 MPa. MEOP is safe, but the insulation behind the unbond sees the gas for
+   14.7 s, the whole burn, against the 1 s that it is sized for. **Reject,** unless the insulation there is made to last
+   the whole burn.
+6. **If the crack grows through the web,** 100 mm deep over the same length, its faces add 20,000 mm² at ignition: +10%.
+   The gas also reaches the insulation behind it at ignition, for the whole burn.
+
+<Aside type="tip" title="What the example shows">
+  The flaw that looks worst on a radiograph is not always the one that matters. The voids are accepted. The small crack
+  is a reject for the structure, not for its area. The unbond is a reject for the insulation, not for the pressure. Each
+  zone and each effect gives its own limit.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="Screening, not disposition">
+  These relations give the scale of each effect and the shape of the criteria. The disposition of a real flaw needs the
+  analysis of that motor, the test data of its propellant, and the authority of its programme.
+</Aside>
+
+- **The flame entering a crack.** A narrow crack may not let the flame in, but the gas still fills it and loads its tip.
+  When a crack does burn, it can grow fast. This needs test data and specialist analysis.
+- **Crack growth during the burn,** and the coupling between the growth and the pressure.
+- **Slow crack growth in storage** under the held cool-down strain, and damage from temperature cycles.
+- **Flaws near the grain ends, in flaps and at star points,** where the strain field is not that of a long tube: FEA.
+- **Inclusions and low-density zones,** which make the grain burn unevenly, and move its centre of gravity off the axis
+  ([Mass properties](../../motor/mass-properties/#a-bore-off-the-axis)).
+- **The ignition transient.**
+
+## On the drawing and in the specifications
+
+- **The zones of the grain,** on the drawing.
+- **For each zone:** the largest flaw, the number of flaws in a volume, their spacing, and the largest unbond.
+- **The inspection:** the method, the coverage, the sensitivity, and the demonstrated probability of detection.
+- **The disposition of rejects,** and who may approve a repair.
+- **The inspections after events** (cycling, transport, drops) and in surveillance.
+
+## References and further reading
+
+- NASA SP-8073, *Solid Propellant Grain Structural Integrity Analysis* (1973) (free on NTRS).
+- J. N. Goodier, "Concentration of stress around spherical and cylindrical inclusions and flaws", *Journal of Applied
+  Mechanics* 1 (1933).
+- R. A. Schapery, "A theory of crack initiation and growth in viscoelastic media, I. Theoretical development",
+  *International Journal of Fracture* 11 (1975), pp. 141–159.
+- T. L. Anderson, *Fracture Mechanics: Fundamentals and Applications*, 4th ed., CRC Press (2017).
+- US Department of Defense, MIL-HDBK-1823A, *Nondestructive Evaluation System Reliability Assessment* (2009).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the tests of your propellant and
+  the approval of the responsible stress, ballistics and safety authorities control the real design.
+</Aside>

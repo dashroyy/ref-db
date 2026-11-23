@@ -1,0 +1,349 @@
+---
+// Flaws in a grain: the pressure and the insulation exposure that voids, a crack at the bore and an unbond at the case
+// give through the burn of a tubular grain, and the zones of the web where a flaw is acceptable (the strain field, the
+// concentration at a void, and the critical crack at the bore). The calculations live in src/lib/grainflaws.ts
+// (unit-tested); this file is UI only.
+---
+
+<div class="calc flcalc" data-flcalc>
+  <div class="calc-head">
+    <span>Flaws in the grain</span>
+    <span class="head-btns">
+      <span>0-D burn · Goodier · <span class="nc">G</span></span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="burn" aria-selected="true">Pressure and exposure</button>
+    <button type="button" role="tab" class="chip" data-tab="zone" aria-selected="false">Where a flaw is acceptable</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Grain</legend>
+        <div class="row2">
+          <label>Bore diameter (mm)<input name="bore" type="number" min="1" step="any" value="100" /></label>
+          <label>Grain OD (mm)<input name="od" type="number" min="1" step="any" value="300" /></label>
+          <label>Length (mm)<input name="L" type="number" min="1" step="any" value="1000" /></label>
+        </div>
+        <p class="hint">A tube that burns from its bore, bonded to the case, with inhibited ends.</p>
+      </fieldset>
+      <fieldset data-panel="burn">
+        <legend>Propellant</legend>
+        <div class="row2">
+          <label>a (mm/s at 1 MPa)<input name="a" type="number" min="0.1" step="any" value="4.05" /></label>
+          <label>n<input name="n" type="number" min="0" max="0.95" step="0.01" value="0.35" /></label>
+          <label>Density (kg/m³)<input name="rho" type="number" min="100" step="any" value="1770" /></label>
+          <label>c* (m/s)<input name="cstar" type="number" min="100" step="any" value="1540" /></label>
+          <label>Nominal peak pressure (MPa)<input name="pk" type="number" min="0.1" step="any" value="8.8" /></label>
+        </div>
+        <p class="hint">Illustrative values, as on the Propellant grain page. The throat is sized so that the grain with no flaws peaks at this pressure.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Flaws</legend>
+        <div class="row2">
+          <label>Void diameter (mm)<input name="vd" type="number" min="0" step="any" value="5" /></label>
+          <label>Void depth below the bore (mm)<input name="vy" type="number" min="0" step="any" value="30" /></label>
+          <label data-panel="burn">Number of such voids<input name="vn" type="number" min="0" step="1" value="10" /></label>
+          <label>Crack at the bore: depth (mm)<input name="cc" type="number" min="0" step="any" value="5" /></label>
+          <label data-panel="burn">Crack length along the axis (mm)<input name="cl" type="number" min="0" step="any" value="100" /></label>
+          <label data-panel="burn">Unbond at the case: length (mm)<input name="ul" type="number" min="0" step="any" value="50" /></label>
+          <label data-panel="burn">Unbond: arc of the circumference (°)<input name="ua" type="number" min="0" max="360" step="any" value="360" /></label>
+          <label data-panel="burn">Unbond open to the port at ignition
+            <select name="uo"><option value="yes">Yes: at a termination</option><option value="no">No: closed, in the cylinder</option></select>
+          </label>
+        </div>
+        <p class="hint">A size of 0 removes that flaw. The depth of a void is that of its centre. An unbond at a termination is open to the port from ignition; one in the middle of the cylinder is closed until the web burns through.</p>
+      </fieldset>
+      <fieldset data-panel="zone" hidden>
+        <legend>The web at the worst case</legend>
+        <div class="row2">
+          <label>Bore strain, cool-down (%)<input name="eth" type="number" min="0" step="any" value="10.4" /></label>
+          <label>Bore strain, ignition (%)<input name="eig" type="number" min="0" step="any" value="5.7" /></label>
+          <label>Relaxed modulus (MPa)<input name="er" type="number" min="0" step="any" value="3.6" /></label>
+          <label>Modulus at ignition, cold (MPa)<input name="ef" type="number" min="0" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label>Strain concentration at a void<input name="kv" type="number" min="1" step="any" value="2.0" /></label>
+        </div>
+        <p class="hint">The bore strains of the cold ignition, from the Propellant grain page. A spherical void in an incompressible solid concentrates the strain by 1.7 to 1.9 (Goodier); a void near a surface, or a long one, by more. Get it for your flaw shapes from FEA.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Your criteria</legend>
+        <div class="row2">
+          <label data-panel="burn">Allowed pressure rise from flaws (%)<input name="dp" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label data-panel="burn">Exposure the cylinder insulation is sized for (s)<input name="ex" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label data-panel="zone" hidden>Strain capability (%)<input name="cap" type="number" min="0" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label data-panel="zone" hidden>Factor of safety<input name="sf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+          <label data-panel="zone" hidden>Fracture energy (J/m²)<input name="gc" type="number" min="0" step="any" placeholder="your test value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">The allowed rise and the factor come from your programme; the exposure from the insulation design; the capability and the fracture energy from tests of your propellant at the rate and the temperature of the load.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="fl-out">
+      <div data-out="burn">
+        <dl class="readouts">
+          <div class="readout primary" data-risebox><dt>Largest pressure rise</dt><dd data-r="rise">—</dd></div>
+          <div class="readout"><dt>At ignition</dt><dd data-r="ign">—</dd></div>
+          <div class="readout"><dt>Peak pressure</dt><dd data-r="pk">—</dd></div>
+          <div class="readout" data-expbox><dt>Insulation behind a flaw</dt><dd data-r="exp">—</dd></div>
+          <div class="readout"><dt>Burn time</dt><dd data-r="tb">—</dd></div>
+        </dl>
+        <figure class="fl-fig">
+          <svg data-pchart role="img" aria-label="Chamber pressure against time with and without the flaws"></svg>
+          <figcaption>The pressure with the flaws (solid) and without them (dashed). An unbond open at ignition lifts the early pressure; once its slice has burned through, the grain has less surface than before.</figcaption>
+        </figure>
+      </div>
+      <div data-out="zone" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-voidbox><dt>No voids within</dt><dd data-r="vf">—</dd></div>
+          <div class="readout" data-vbox><dt>The void in the web</dt><dd data-r="v">—</dd></div>
+          <div class="readout"><dt>Opening stress at the bore</dt><dd data-r="sig">—</dd></div>
+          <div class="readout" data-cbox><dt>Critical crack at the bore</dt><dd data-r="cr">—</dd></div>
+        </dl>
+        <figure class="fl-fig">
+          <svg data-zchart role="img" aria-label="Hoop strain across the web, and at a void, against the depth below the bore"></svg>
+          <figcaption>The hoop strain falls from the bore as (a/r)². At a void it is higher by the concentration. Where the strain at a void is above your capability over the factor, no void is acceptable: that zone is shaded.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. Pressure: 0-D, quasi-steady, every surface burns at r = a·pⁿ; a closed void adds
+    its own area once the flame reaches it (Huygens), a crack open to the bore adds its two faces, and an unbond open to
+    the port burns its slice from both sides. Zones: the elastic strain field of an incompressible thick cylinder, a
+    concentration factor at a void, and the energy release rate of a shallow crack at the bore. Not included: the flame
+    entering a narrow crack, crack growth during the burn, viscoelastic crack growth over time, flaws near the grain
+    ends, and the ignition transient.
+  </div>
+</div>
+
+<style is:global>
+  .fl-out { min-width: 0; }
+  .fl-out > div > * { min-width: 0; }
+  .fl-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { burnWithFlaws, strainAt, voidFreeDepth, openingStress, criticalCrack, crackMargin, type Flaw } from '../lib/grainflaws';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−') : '—');
+  const pct = (v: number, d = 1) => `${v < 0 ? '−' : '+'}${f(Math.abs(v) * 100, d)}%`;
+  const ms = (v: number) => (Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : '−'}${f(Math.abs(v), 2)}`);
+  const msClass = (v: number) => (v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+  /** The decimals that a tick step needs: 2.5 needs one, 0.25 two. */
+  const dec = (s: number) => { let d = 0; while (d < 4 && Math.abs(Math.round(s * 10 ** d) - s * 10 ** d) > 1e-9) d++; return d; };
+  /** A tick label: zero as a plain 0, so that the two axes do not crowd the corner. */
+  const tick = (v: number, s: number) => (Math.abs(v) < 1e-9 ? '0' : f(v, dec(s)));
+
+  document.querySelectorAll<HTMLElement>('[data-flcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'burn';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const ticks = (span: number, n = 4) => { const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((k) => k * p).find((k) => k >= raw) ?? 10 * p; };
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('.fl-fig svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function run() {
+      const a0 = num('bore') / 2, b = num('od') / 2, L = num('L');
+      if (!(a0 > 0 && b > a0 && L > 0)) { clear('Enter a bore smaller than the grain OD, and a length.'); return; }
+      const notes: [string, string][] = [];
+      if (mode === 'burn') runBurn(notes, { a0, b, L }); else runZone(notes, a0, b);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    function flaws(): Flaw[] {
+      const out: Flaw[] = [];
+      if (num('vd') > 0 && num('vn') > 0) out.push({ kind: 'void', d: num('vd'), depth: num('vy') || 0, count: Math.round(num('vn')) });
+      if (num('cc') > 0 && num('cl') > 0) out.push({ kind: 'crack', c: num('cc'), l: num('cl') });
+      if (num('ul') > 0 && num('ua') > 0) out.push({ kind: 'unbond', l: num('ul'), arc: Math.min(360, num('ua')), open: field('uo').value === 'yes' });
+      return out;
+    }
+    const names: Record<string, string> = { void: 'the voids', crack: 'the crack', unbond: 'the unbond' };
+
+    function runBurn(notes: [string, string][], tube: { a0: number; b: number; L: number }) {
+      const prop = { rhoP: num('rho'), a: num('a'), n: num('n'), cStar: num('cstar') };
+      if (!(prop.rhoP > 0 && prop.a > 0 && prop.n >= 0 && prop.n < 1 && prop.cStar > 0 && num('pk') > 0)) { clear('Enter the propellant: a, n below 1, the density, c* and the nominal peak.'); return; }
+      const fl = flaws();
+      const web = tube.b - tube.a0;
+      if (fl.some((x) => x.kind === 'void' && x.depth + x.d / 2 > web)) notes.push(['warn', 'The void reaches past the case: check its depth and size.']);
+      const bw = burnWithFlaws(tube, prop, num('pk'), fl);
+      let mx = 1, at = 0;
+      bw.p.forEach((v, i) => { const q = v / bw.p0[i]; if (q > mx) { mx = q; at = i; } });
+      const lim = readFactor(field('dp').value, 0);
+      r('rise').innerHTML = fl.length
+        ? `${pct(mx - 1, 2)} <small>${mx > 1 + 1e-9 ? `at ${f(bw.t[at], 2)} s, ${f(bw.y[at], 1)} mm of web burned, on the same web without flaws` : 'no rise over the burn'}${lim !== null ? ` · your limit is ${f(lim, 1)}%` : ''}</small>`
+        : '— <small>no flaws entered</small>';
+      $('[data-risebox]').className = `readout primary${lim !== null && fl.length ? ((mx - 1) * 100 > lim ? ' bad' : ' ok') : ''}`;
+      r('ign').innerHTML = `${f(bw.ign, 2)} MPa <small>${pct(bw.ign / bw.ign0 - 1, 1)} on ${f(bw.ign0, 2)} MPa without flaws · throat ${f(bw.throat, 2)} mm</small>`;
+      r('pk').innerHTML = `${f(bw.peak, 2)} MPa <small>at ${f(bw.tPeak, 2)} s · ${f(bw.peak0, 2)} MPa without flaws (${pct(bw.peak / bw.peak0 - 1, 1)})</small>`;
+      const ex = readFactor(field('ex').value, 0);
+      if (fl.length) {
+        const k = bw.exposure.indexOf(Math.max(...bw.exposure));
+        r('exp').innerHTML = `${f(bw.exposure[k], 2)} s <small>behind ${names[fl[k].kind]}: the gas reaches the insulation there before the web burns through${ex !== null ? ` · it is sized for ${f(ex, 2)} s` : ''}</small>`;
+        $('[data-expbox]').className = `readout${ex !== null ? (bw.exposure[k] > ex ? ' bad' : ' ok') : ''}`;
+      } else { r('exp').innerHTML = '— <small>no flaws entered</small>'; $('[data-expbox]').className = 'readout'; }
+      r('tb').innerHTML = `${f(bw.end, 2)} s <small>${f(bw.t0[bw.t0.length - 1], 2)} s without flaws</small>`;
+      if (lim === null || ex === null) notes.push(['warn', `The effects are shown. ${awaitingMessage(['allowed pressure rise', 'insulation exposure'], 'the checks')}`]);
+      const u = fl.find((x) => x.kind === 'unbond');
+      if (u && u.kind === 'unbond' && u.open) notes.push(['bad', `The unbond is open to the port, so the gas burns the outer surface of the grain from ignition. The insulation behind it sees the gas for ${f(bw.exposure[fl.indexOf(u)], 1)} s, the whole burn, where the grain normally covers it until the web burns through. Reject it, or show that the insulation there is sized for the whole burn.`]);
+      if (u && u.kind === 'unbond' && !u.open) notes.push(['', 'A closed unbond in the cylinder does nothing to the pressure until the web burns through. It still matters if a crack or a termination can connect it to the port.']);
+      if (fl.some((x) => x.kind !== 'unbond') && mx < 1.01) notes.push(['', 'A void or a small crack adds little burning area: its effect on the pressure is small. Its risk is structural: see the second tab.']);
+      notes.push(['', 'In a progressive tube the early pressure is low, so a rise at ignition does not set MEOP. In a neutral or regressive grain the same rise is a rise on the peak.']);
+      drawBurn(bw);
+    }
+
+    function drawBurn(bw: ReturnType<typeof burnWithFlaws>) {
+      const svg = root.querySelector<SVGSVGElement>('[data-pchart]')!;
+      const W = width(svg), Lm = 46, R = 14, B = 34;
+      const out: string[] = [];
+      const items: [string, string, string][] = [['with the flaws', 'var(--rd-accent)', ''], ['without', 'var(--rd-muted)', '6 4']];
+      let lx = 8, ly = 12;
+      for (const [name, col, dash] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"${dash ? ` stroke-dasharray="${dash}"` : ''}/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T = ly + 22, H = T + 180;
+      const tMax = Math.max(bw.end, bw.t0[bw.t0.length - 1]) * 1.03, pMax = Math.max(bw.peak, bw.peak0) * 1.12;
+      const X = (t: number) => Lm + (t / tMax) * (W - Lm - R), Y = (p: number) => T + (1 - p / pMax) * (H - T - B);
+      const ps = ticks(pMax, 4), ts = ticks(tMax, W < 420 ? 4 : 6);
+      for (let v = 0; v <= pMax + 1e-9; v += ps) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${tick(v, ps)}</text>`);
+      for (let t = 0; t <= tMax + 1e-9; t += ts) out.push(`<text x="${X(t).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${tick(t, ts)}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">time, s</text><text x="4" y="${T - 8}" font-size="10" fill="var(--rd-ink)">MPa</text>`);
+      const line = (ts2: number[], ps2: number[], col: string, w: number, dash = '') => `<polyline points="${ts2.map((t, i) => `${X(t).toFixed(1)},${Y(ps2[i]).toFixed(1)}`).join(' ')} ${X(ts2[ts2.length - 1]).toFixed(1)},${Y(0).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
+      out.push(line(bw.t0, bw.p0, 'var(--rd-muted)', 1.8, '6 4'));
+      out.push(line(bw.t, bw.p, 'var(--rd-accent)', 2.4));
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    function runZone(notes: [string, string][], a0: number, b: number) {
+      const eth = num('eth') / 100, eig = num('eig') / 100, K = num('kv');
+      if (!(eth >= 0 && eig >= 0 && K >= 1)) { clear('Enter the two bore strains (zero or more) and a concentration of 1 or more.'); return; }
+      const eps = eth + eig, web = b - a0;
+      const cap = readFactor(field('cap').value, 1e-9), sf = readFactor(field('sf').value), Ef = readFactor(field('ef').value, 1e-9), Gc = readFactor(field('gc').value, 1e-9);
+      const vd = num('vd'), vy = num('vy');
+      let yFree = NaN;
+      if (cap !== null && sf !== null) {
+        yFree = voidFreeDepth(eps, a0, K, sf, cap / 100);
+        r('vf').innerHTML = yFree > 0
+          ? `${f(yFree, 1)} mm <small>of the bore: there ${f(K, 2)} × ${f(eps * 100, 1)}% × ${f(sf, 2)} is above the ${f(cap, 1)}% capability. Add one void diameter, because a thin ligament concentrates more</small>`
+          : `0 mm <small>the strain at a void is within the capability over the factor everywhere in the web</small>`;
+        $('[data-voidbox]').className = 'readout primary';
+      } else {
+        r('vf').innerHTML = '<small>needs your capability and factor</small>';
+        $('[data-voidbox]').className = 'readout primary';
+        notes.push(['warn', `The strain field is shown. ${awaitingMessage(['strain capability', 'factor of safety'], 'the void-free zone')}`]);
+      }
+      if (vd > 0 && Number.isFinite(vy)) {
+        const ev = K * strainAt(eps, a0, vy);
+        const m = cap !== null && sf !== null ? cap / 100 / (sf * ev) - 1 : NaN;
+        r('v').innerHTML = `${f(ev * 100, 1)}% <small>at a void ${f(vy, 0)} mm below the bore: ${f(K, 2)} × ${f(strainAt(eps, a0, vy) * 100, 2)}%${Number.isFinite(m) ? ` · MS ${ms(m)}` : ''}</small>`;
+        $('[data-vbox]').className = `readout${Number.isFinite(m) ? ` ${msClass(m)}` : ''}`;
+        if (Number.isFinite(m) && m < 0) notes.push(['bad', `A void ${f(vy, 0)} mm below the bore is inside the zone where no void is acceptable. Reject the grain, or show by FEA and tests that this void does not crack.`]);
+      } else { r('v').innerHTML = '— <small>no void entered</small>'; $('[data-vbox]').className = 'readout'; }
+      if (Ef !== null) {
+        const s = openingStress(num('er'), eth, Ef, eig);
+        r('sig').innerHTML = `${f(s, 2)} MPa <small>(4/3)(E<sub>relaxed</sub>·ε<sub>cool-down</sub> + E<sub>ignition</sub>·ε<sub>ignition</sub>), net of the gas on the crack faces</small>`;
+        if (Gc !== null) {
+          const cc = criticalCrack(s, Ef, Gc), c = num('cc');
+          const allow = sf !== null ? cc / (sf * sf) : NaN, m = sf !== null && c > 0 ? crackMargin(c, cc, sf) : NaN;
+          r('cr').innerHTML = `${f(cc, 2)} mm <small>deep: there the energy release rate reaches ${f(Gc, 0)} J/m²${Number.isFinite(allow) ? ` · allowable ${f(allow, 2)} mm with the factor on the stress` : ''}${Number.isFinite(m) ? ` · the ${f(c, 1)} mm crack: MS ${ms(m)}` : ''}</small>`;
+          $('[data-cbox]').className = `readout${Number.isFinite(m) ? ` ${msClass(m)}` : ''}`;
+          if (Number.isFinite(m) && m < 0) notes.push(['bad', `The ${f(c, 1)} mm crack at the bore grows at the cold ignition. Reject it: a crack that grows becomes new burning surface, and the pressure follows.`]);
+          if (Number.isFinite(allow) && allow < 1) notes.push(['warn', `The allowable crack at the bore is ${f(allow, 2)} mm: below what radiography finds with confidence. In practice, accept no crack at the bore, and inspect the bore surface directly.`]);
+        } else { r('cr').innerHTML = '<small>needs your fracture energy</small>'; $('[data-cbox]').className = 'readout'; }
+      } else {
+        r('sig').innerHTML = '<small>needs the modulus at ignition</small>'; r('cr').innerHTML = '<small>needs the modulus at ignition and the fracture energy</small>'; $('[data-cbox]').className = 'readout';
+        notes.push(['warn', 'Enter the modulus of the propellant at the rate and the temperature of the cold ignition, and its fracture energy, from your tests, to screen a crack at the bore.']);
+      }
+      notes.push(['', `The strain falls as (a/r)²: one bore radius into the web it is a quarter of the bore value. Acceptance criteria are by zone: strict at the bore and the terminations, relaxed deep in the web.`]);
+      drawZone(a0, web, eps, K, cap !== null && sf !== null ? cap / 100 / sf : NaN, yFree, vd > 0 ? vy : NaN);
+    }
+
+    function drawZone(a0: number, web: number, eps: number, K: number, allow: number, yFree: number, vy: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-zchart]')!;
+      const W = width(svg), Lm = 46, R = 14, B = 34;
+      const out: string[] = [];
+      const items: [string, string, string][] = [['at a void', 'var(--rd-accent)', ''], ['in the web', 'var(--rd-blue)', '']];
+      if (Number.isFinite(allow)) items.push(['capability ÷ factor', 'var(--rd-ok)', '6 4']);
+      let lx = 8, ly = 12;
+      for (const [name, col, dash] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"${dash ? ` stroke-dasharray="${dash}"` : ''}/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T = ly + 22, H = T + 176;
+      const sMax = Math.max(K * eps, Number.isFinite(allow) ? allow : 0) * 100 * 1.12;
+      const X = (y: number) => Lm + (y / web) * (W - Lm - R), Y = (s: number) => T + (1 - s / sMax) * (H - T - B);
+      if (Number.isFinite(yFree) && yFree > 0) out.push(`<rect x="${Lm}" y="${T}" width="${(X(Math.min(yFree, web)) - Lm).toFixed(1)}" height="${H - T - B}" fill="var(--rd-accent)" fill-opacity="0.12"/>`);
+      const ss = ticks(sMax, 4), ys = ticks(web, W < 420 ? 4 : 5);
+      for (let v = 0; v <= sMax + 1e-9; v += ss) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${f(v, 0)}</text>`);
+      for (let y = 0; y <= web + 1e-9; y += ys) out.push(`<text x="${X(y).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${f(y, 0)}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">depth below the bore, mm</text><text x="4" y="${T - 8}" font-size="10" fill="var(--rd-ink)">hoop strain, %</text>`);
+      const N = 120, pts = (k: number) => Array.from({ length: N + 1 }, (_, i) => (web * i) / N).map((y) => `${X(y).toFixed(1)},${Y(k * strainAt(eps, a0, y) * 100).toFixed(1)}`).join(' ');
+      if (Number.isFinite(allow)) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(allow * 100).toFixed(1)}" y2="${Y(allow * 100).toFixed(1)}" stroke="var(--rd-ok)" stroke-width="1.6" stroke-dasharray="6 4"/>`);
+      out.push(`<polyline points="${pts(1)}" fill="none" stroke="var(--rd-blue)" stroke-width="2.2"/><polyline points="${pts(K)}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      if (Number.isFinite(yFree) && yFree > 0) out.push(`<text x="${(X(Math.min(yFree, web)) + 6).toFixed(1)}" y="${(Y(sMax * 0.9) + 4).toFixed(1)}" font-size="10" fill="var(--rd-accent)" ${halo}>no voids to ${f(yFree, 1)} mm</text>`);
+      if (Number.isFinite(vy) && vy <= web) out.push(`<circle cx="${X(vy).toFixed(1)}" cy="${Y(K * strainAt(eps, a0, vy) * 100).toFixed(1)}" r="4.5" fill="var(--rd-panel)" stroke="var(--rd-accent)" stroke-width="2"/>`);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const show = () => {
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+    };
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      show();
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['dp', 'ex', 'cap', 'sf', 'gc', 'ef'],
+      note: 'Worked-example criteria and test values loaded: a 2% allowed rise, a 1 s insulation exposure, 39.6% strain capability, a factor of 1.5, a modulus at ignition of 40 MPa and a fracture energy of 1000 J/m², all illustrative',
+      values: {
+        bore: '100', od: '300', L: '1000', a: '4.05', n: '0.35', rho: '1770', cstar: '1540', pk: '8.8',
+        vd: '5', vy: '30', vn: '10', cc: '5', cl: '100', ul: '50', ua: '360', uo: 'yes',
+        eth: '10.4', eig: '5.7', er: '3.6', ef: '40', kv: '2.0', dp: '2', ex: '1', cap: '39.6', sf: '1.5', gc: '1000',
+      },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.fl-out')!);
+    }
+    show();
+    run();
+  });
+</script>
