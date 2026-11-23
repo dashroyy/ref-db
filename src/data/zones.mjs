@@ -142,16 +142,19 @@ export const PRIMERS = [
 ];
 
 /**
- * The key topics: the zones and primers that the site shows first, for learning and for everyday work on a solid
- * motor. ADVANCED shows the specialised ones too. The route order still sets their order.
+ * The key topics: the zones and primers that the site shows first, for learning and for everyday design work on a
+ * solid motor and its hardware, from the motor itself to the drawing and the release. ADVANCED shows the specialised
+ * ones too. The route order still sets their order.
  */
 export const CORE = [
-  'home', 'primer-srm', 'worked', 'read',
-  'materials',
+  'home', 'primer-srm', 'duty', 'metal', 'fatigue', 'worked', 'read',
+  'materials', 'trade', 'sheet',
   'rocket', 'propellant', 'pv', 'primer-composite', 'primer-closures', 'grain', 'ablative', 'primer-nozzle',
-  'margins', 'proof', 'primer-firing', 'ageing',
-  'sealstrat', 'oring',
-  'ndt',
+  'margins', 'proof', 'primer-firing', 'feamat', 'ageing',
+  'gdt', 'gdtprac', 'fits', 'stack', 'surf',
+  'threads', 'locking', 'sealstrat', 'oring',
+  'cost', 'ndt', 'leak', 'matspec', 'certs',
+  'standards', 'guides', 'release',
 ];
 
 /** Briefing pages outside the route. */

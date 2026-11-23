@@ -17,7 +17,7 @@ test('the map: the overview is the sun, each phase a planet, every other zone a 
   for (const x of moons.filter((y) => !y.v2)) assert.match(x.href, /legacy\/\?z=/, `${x.key} opens the v1 archive`);
 });
 
-test('ADVANCED off: the key topics only, the page you are on kept, empty phases left out and the rest numbered in sequence', () => {
+test('ADVANCED off: the key topics only, the page you are on kept, only the phases with key topics, numbered in sequence', () => {
   const core = route().filter((z) => z.core);
   const m = buildMap('/', {}, { keyOnly: true });
   const moons = m.planets.flatMap((p) => p.moons);
@@ -25,10 +25,13 @@ test('ADVANCED off: the key topics only, the page you are on kept, empty phases 
   assert.ok(moons.every((x) => core.some((z) => z.key === x.key)));
   assert.ok(m.planets.every((p) => p.moons.length > 0), 'no empty phase');
   assert.deepEqual(m.planets.map((p) => p.index), m.planets.map((_, i) => i), 'the phases drawn are numbered in sequence');
-  assert.ok(!m.planets.some((p) => p.k === 'detail'), 'a phase without key topics is not drawn');
+  assert.deepEqual(m.planets.map((p) => p.k), PHASES.filter((p) => core.some((z) => z.phase === p.k && z.key !== 'home')).map((p) => p.k),
+    'a phase without key topics is not drawn');
   assert.ok(m.keyOnly); assert.equal(m.shown, core.length); assert.equal(m.all, route().length);
-  const kept = buildMap('/', {}, { keyOnly: true, keep: 'gdt' });
-  assert.ok(kept.planets.find((p) => p.k === 'detail')?.moons.some((x) => x.key === 'gdt'), 'the page you are on stays on the map');
+  const extra = route().find((z) => !z.core)!; // a specialised page
+  assert.ok(!moons.some((x) => x.key === extra.key));
+  const kept = buildMap('/', {}, { keyOnly: true, keep: extra.key });
+  assert.ok(kept.planets.find((p) => p.k === extra.phase)?.moons.some((x) => x.key === extra.key), 'the page you are on stays on the map');
 });
 
 test('a site under a base path links inside it', () => {
