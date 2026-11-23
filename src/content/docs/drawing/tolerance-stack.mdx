@@ -238,7 +238,7 @@ added to the drawing:
 ### The nozzle alignment
 
 The result is the offset of the thrust line at the centre of gravity of the vehicle. At ignition, this point is 700 mm
-forward of the aft joint (illustrative value). The thrust is 29.5 kN, from the
+forward of the aft joint (from the [mass properties example](../../motor/mass-properties/#worked-example-the-300-mm-motor-and-its-payload)). The thrust is 29.5 kN, from the
 [load-path page](../../joints/load-paths/#worked-example-the-300-mm-motors-load-path). The closure pilot fit is from the
 [datums page](../datums-and-position/#worked-example-the-closure-the-cmm-rejected). The other tolerances are
 illustrative. The requirement is that 99.73% of motors are within 0.45 mm.
@@ -274,7 +274,7 @@ illustrative. The requirement is that 99.73% of motors are within 0.45 mm.
 - **Linear sensitivities** in the linear tab. Nonlinear results need their own function. The Monte Carlo in the library
   permits this.
 - **One lever arm for all tilts** in the radial tab. Tilts about points far apart need their own lever arms. Also, the
-  centre of gravity moves as the propellant burns.
+  centre of gravity moves as the propellant burns ([Mass properties](../../motor/mass-properties/#the-centre-of-gravity-moves)).
 - **Geometry only.** Loads, pressure, deflection and temperature also change gaps. See the joint opening on the O-ring
   page, and [Differential expansion](../../joints/differential-expansion/) for temperature. Thrust misalignment also
   comes from the flow and from nozzle erosion. Tolerances do not include these. On a vehicle with a movable nozzle,

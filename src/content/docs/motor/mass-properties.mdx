@@ -1,0 +1,261 @@
+---
+title: Mass properties through the burn
+description: The mass, the centre of gravity and the moments of inertia of a solid motor from ignition to burnout. How to build the mass properties table, why the centre of gravity moves, how a small offset of the bore grows into a lateral offset at burnout, what the steering and the handling need, and how mass properties are measured, with a calculator and a worked example.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import CgTravel from '../../../components/CgTravel.astro';
+import MassCalc from '../../../components/MassCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A solid motor loses most of its mass in seconds. Its centre of gravity moves, its inertia falls by half or more, and a small offset of the bore grows into a lateral offset at burnout. The vehicle steers with these numbers: predict them, control them and measure them.</div>
+  <div><b>Before this</b><a href="../hardware/">Rocket motor</a>, for the mass budget · <a href="../thrust-vector-control/">Thrust vector control</a></div>
+  <div><b>Leads to</b><a href="../../drawing/tolerance-stack/#the-nozzle-alignment">Tolerance stack</a>, for the thrust line at the CG · <a href="../../verify/handling-and-transport/">Handling & transport</a>, for the lift points</div>
+</div>
+
+## Why this matters
+
+- **The vehicle turns about its centre of gravity.** The steering moment is the side force times the arm from the
+  nozzle pivot to the CG ([Thrust vector control](../thrust-vector-control/#side-force-and-what-it-costs)). The arm
+  changes through the burn.
+- **The inertia sets how fast it turns.** It falls by half or more through the burn. The control system needs the
+  inertia at each instant, not one value.
+- **An offset makes a disturbing moment.** A lateral offset of the CG and an offset of the thrust line make a moment
+  that the steering must hold for the full burn
+  ([Tolerance stack](../../drawing/tolerance-stack/#the-nozzle-alignment)).
+- **Loads and handling use them.** The flight loads, the lift points, the cradles and the test stand all start from the
+  mass and the CG ([Load paths](../../joints/load-paths/), [Handling & transport](../../verify/handling-and-transport/)).
+- **Spinning stages must be balanced.** A CG or a principal axis off the spin axis makes the stage wobble.
+
+## The intuition: a pole with a bucket
+
+<Analogy title="A pole with a bucket of water">
+  Carry a long pole with a full bucket of water hung at one end. The balance point is near the bucket, and the pole is
+  hard to swing. Let the water run out: the balance point moves back toward the middle of the pole, and the pole swings
+  easily. A motor does the same as it burns. The propellant is the water.
+</Analogy>
+
+<CgTravel />
+
+## The mass properties table
+
+Each part is one line: its mass, the position of its CG along the axis and across it, and its moments of inertia about
+its own CG. Then
+
+$$
+m = \sum m_i
+\qquad
+\bar x = \frac{\sum m_i\,x_i}{m}
+\qquad
+\bar y = \frac{\sum m_i\,y_i}{m}
+\qquad
+I = \sum \left( I_i + m_i\,d_i^2 \right)
+$$
+
+where $d_i$ is the distance from the CG of each part to the axis through the CG of the whole (the parallel-axis
+theorem). A radius of gyration $k$ is a short way to give an inertia: $I = m k^2$.
+
+| Shape | Roll, about its own axis | Pitch, about a transverse axis through its CG |
+| --- | --- | --- |
+| Thin cylindrical shell, radius $R$, length $L$ | $m R^2$ | $m\left(\frac{R^2}{2} + \frac{L^2}{12}\right)$ |
+| Tube, bore radius $a$, outer radius $b$, length $L$ | $\frac{m}{2}\left(a^2 + b^2\right)$ | $m\left(\frac{a^2 + b^2}{4} + \frac{L^2}{12}\right)$ |
+| Thin hemispherical dome, radius $R$, with its CG $R/2$ from its base | $\frac{2}{3} m R^2$ | $\frac{5}{12} m R^2$ |
+| Solid cylinder: the tube with $a = 0$ | $\frac{1}{2} m R^2$ | $m\left(\frac{R^2}{4} + \frac{L^2}{12}\right)$ |
+
+- **Fix the reference.** State the origin and the directions on the drawing: a datum of the case, with aft positive,
+  or the axes of the vehicle from the ICD ([Requirements & ICD](../../fundamentals/requirements/)).
+- **Give each line a status:** estimated, calculated from the model, or weighed. Carry a growth allowance on the lines
+  that are not weighed yet. ANSI/AIAA S-120A sets out the allowances by status, and the mass properties control plan
+  of a programme.
+- **The burn changes three lines:** the propellant, the insulation that chars and erodes, and the nozzle that erodes.
+  The propellant is by far the largest.
+
+## Through the burn
+
+### The centre of gravity moves
+
+- **A tube with inhibited ends** burns from its bore. Its own CG stays at its middle, but its mass falls, so the total
+  CG moves toward the CG of the inert parts. With a heavy nozzle, the CG of the motor moves aft.
+- **In the vehicle, the propellant is aft of the CG** of the whole, because the payload is forward. As the propellant
+  burns, the CG of the vehicle moves forward: the other way from the motor's.
+- **An end burner** burns from its aft face, so its own CG moves forward through the whole burn. It has the largest
+  travel of any grain.
+- **A grain that burns faster at one end** (fins at one end, a tapered port,
+  [erosive burning](../erosive-burning/#the-aft-end-burns-through-first)) moves its CG away from that end.
+
+### The inertia falls
+
+The propellant is most of the mass, and it is near the CG of the motor. At burnout, the inertia is that of the case,
+the nozzle, the closures and the payload. In the 300 mm motor below, the pitch inertia of the vehicle falls by half,
+and that of the motor alone by two thirds. The angular acceleration for a nozzle angle $\delta$,
+
+$$
+\ddot\theta = \frac{F \sin\delta \; L}{I}
+$$
+
+rises by more than the inertia falls, because the arm $L$ also grows.
+
+### A bore off the axis
+
+Let the axis of the bore be a distance $e$ from the axis of the case. The propellant is the disc of the case less the
+hole, so its first moment about the axis is that of the hole, with the other sign:
+
+$$
+m_p\,\bar y_p = -\,\rho_p\,L\,\pi a^2\,e
+$$
+
+- **It grows as the bore burns open,** with $a^2$, while the mass of the motor falls. The lateral offset of the CG of
+  the motor grows from a very small value at ignition to its largest when the web first burns through, on the thin
+  side.
+- **Then a sliver is left** on the thick side: a crescent with its CG about half a radius off the axis. As the sliver
+  burns, the offset goes away.
+- **At web burnout,** $a = R - e$, and the offset of the motor is
+
+$$
+\bar y = \frac{\rho_p\,L\,\pi\,(R - e)^2\,e}{m_\text{burnout}}
+$$
+
+- **So the position tolerance of the bore sets the lateral offset at burnout,** not at ignition. Other causes act in
+  the same way: a case wall that is thicker on one side, insulation of uneven thickness, a propellant density that is
+  not uniform, and a burn rate that is higher on one side, for example in a motor that the sun heats on one side before
+  launch.
+
+## Steering, misalignment and trim
+
+The steering must hold the moment of the thrust about the CG:
+
+$$
+M = F\,(d + \bar y)
+\qquad\qquad
+\delta_\text{trim} = \arcsin\frac{d + \bar y}{L}
+$$
+
+Here $d$ is the offset of the thrust line at the CG ([Tolerance stack](../../drawing/tolerance-stack/#the-nozzle-alignment)),
+$\bar y$ the lateral offset of the CG, and $L$ the arm from the pivot to the CG. All three change through the burn.
+Check the trim at ignition, at the largest offset and at burnout.
+
+- **A vehicle without thrust vector control** has no trim. The misalignment turns the vehicle, and the guidance, the
+  fins or a spin must correct it.
+- **Spinning stages** spin to average the misalignment out. They must be balanced: a CG off the spin axis (static
+  unbalance) and a principal axis tilted from the spin axis (dynamic unbalance) make the stage cone. A spin balance
+  machine measures both, and small masses correct them.
+- **The spin axis must be stable.** A rigid body spins steadily about its axis of largest or of smallest inertia. If the
+  body loses energy, through liquids or flexible parts, only the axis of largest inertia is stable (Thomson). The burn
+  changes the inertias, so check their ratio through the burn.
+
+## Measuring mass properties
+
+- **Mass.** Weigh on calibrated load cells. Weigh the inert motor before the cast and the loaded motor after it: the
+  difference is the propellant, and it checks the casting.
+- **Axial CG.** Weigh on two supports (or three), with the readings net of the fixture:
+
+$$
+\bar x = \frac{W_1\,x_1 + W_2\,x_2}{W_1 + W_2}
+$$
+
+- **Lateral CG: the reversal.** Read the offset, turn the motor 180° about its axis on the fixture, and read again. The
+  error of the fixture is the same in both readings: half the difference is the motor, and half the sum is the fixture.
+- **Moments of inertia: pendulums.** On a filar pendulum, the motor hangs on two or three parallel wires of length $h$,
+  each a distance $r$ from the vertical axis through its CG, and swings about that axis with a period $T$:
+
+$$
+I = \frac{m\,g\,r^2\,T^2}{4\pi^2\,h}
+$$
+
+  Swing the fixture alone and subtract it. A compound pendulum, swung about a pivot a distance $d$ from the CG, gives
+  $I = m g d\,T^2/(4\pi^2) - m d^2$. These are the methods of NACA Report 467, for aircraft.
+- **Uncertainty.** $T$ and $r$ enter squared. Time many cycles, measure $r$ between the attachment points of the wires,
+  and keep the fixture light: its inertia is subtracted, but its uncertainty stays.
+- **Spin balance machines** measure the lateral CG and the products of inertia of spinning stages.
+- **A loaded motor is an explosive article.** Measure it under the explosive-safety rules of the facility, with fixtures
+  and lifts that the facility has approved ([Handling & transport](../../verify/handling-and-transport/)).
+
+## Calculator
+
+<MassCalc />
+
+**Through the burn** takes a table of inert parts, the grain and a payload, and follows the CG, the inertias and the
+lateral offset from ignition to burnout, with the arm and the trim for the steering. **Measure** reduces the weighing,
+the reversal and a filar pendulum, with the uncertainty of the moment of inertia. The inputs start at the worked example
+with the bore on the axis. The limits start blank: enter your own, or push **Load worked example**.
+
+## Worked example: the 300 mm motor and its payload
+
+The masses are those of the [hardware page](../hardware/#worked-example-the-300-mm-motor-from-the-other-pages): the
+case 11.77 kg, the insulation 4.84 kg, the propellant 111.2 kg, the nozzle 6 kg and other hardware 4 kg. The domes are
+taken 75 mm deep, so the case is 1150 mm long over its domes, as on the
+[handling page](../../verify/handling-and-transport/). x is measured aft from the apex of the forward dome. The
+positions of the nozzle and the other hardware are illustrative. The 50 kg payload is at x = −120 mm, and the nozzle
+pivot is at the aft joint, x = 1110 mm. The limits are **for this example only**: a lateral offset of 1.0 mm for the CG
+of the vehicle, and an uncertainty of 1% (k = 2) on the moments of inertia. Push **Load worked example**.
+
+1. **The table at ignition.** The case and insulation are 16.61 kg at 575 mm, the propellant 111.21 kg at 575 mm, the
+   nozzle 6 kg at 1170 mm, and the forward and aft hardware 2 kg each at 60 and 1110 mm. The motor is 137.82 kg with
+   its CG at 601.2 mm. With the payload, the vehicle is 187.82 kg at 409.2 mm: 700.8 mm forward of the pivot. This is
+   the 700 mm that the [TVC example](../thrust-vector-control/#worked-example-a-flexible-bearing-for-the-300-mm-motor)
+   and the [tolerance stack](../../drawing/tolerance-stack/#the-nozzle-alignment) assumed.
+2. **At burnout,** the motor is 26.61 kg at 710.7 mm: its CG moves 109 mm aft, toward the heavy nozzle. The vehicle is
+   76.61 kg at 168.5 mm: its CG moves 241 mm forward. The arm grows from 701 to 941 mm.
+3. **Inertia.** The pitch inertia of the vehicle falls from 35.6 to 18.2 kg·m², and that of the motor alone from 15.6 to
+   5.24 kg·m². With 29.5 kN of thrust, 1° of nozzle angle turns the vehicle at 10.1 rad/s² at ignition and at
+   26.7 rad/s² at burnout: 2.6 times more. The control gains must follow the burn.
+4. **A bore 0.5 mm off the axis** (illustrative). At ignition, the CG of the motor is 0.050 mm off the axis. The web
+   first burns through when 99.25% of the propellant has burned. A sliver of 0.83 kg is then left, with its CG 74.6 mm
+   off the axis, and the CG of the motor is 2.26 mm off the axis: 45 times its value at ignition. The CG of the vehicle
+   goes from 0.037 to 0.80 mm: 80% of the 1.0 mm limit, so it passes.
+5. **Trim.** With the 0.45 mm thrust line offset of the tolerance stack, the trim is 0.040° at ignition and 0.077° at
+   web burnout, and the disturbing moment goes from 14.4 to 36.9 N·m. The TVC example allowed 1 mm of CG offset and
+   0.12° of trim, so this bore tolerance fits inside it.
+6. **Weighing.** On supports at 200 and 1000 mm, with a fixture tare of 10 kg at each, the loaded motor reads 78.71 and
+   79.12 kg: 137.83 kg with its CG at 601.2 mm. The reversal reads 0.42 mm, then 0.32 mm: the motor is 0.05 mm off the
+   axis, and the fixture 0.37 mm.
+7. **The pendulum.** On wires 400 mm from the axis and 2500 mm long, with a 20 kg fixture, the motor swings in 2.587 s
+   and the fixture alone in 1.943 s. That gives 15.59 ± 0.10 kg·m² (k = 2, ±0.63%), inside the 1%. The radius of the
+   wires gives 64% of the variance and the period 28%: here, 0.5 mm on r costs more than 2 ms on T.
+
+<Aside type="tip" title="What the example shows">
+  The motor and the vehicle move their CGs in opposite directions, and the steering needs the vehicle's. The inertia
+  halves while the arm grows, so the response to the nozzle more than doubles. And a 0.5 mm bore offset that is
+  invisible at ignition gives the largest lateral offset of the flight, at web burnout.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A rigid, one-axis table">
+  These are the mass properties of rigid parts on one axis, with a grain that burns at a uniform rate. They are the
+  start of a mass properties analysis, not the record of a real motor, which comes from its model and its measurements.
+</Aside>
+
+- **Products of inertia,** offsets in two planes, and the dynamic balance of spinning stages.
+- **Real burn-back:** slivers of star and slotted grains, erosive burning, and a burn rate that is not uniform.
+- **The insulation and the nozzle** lose mass as they char and erode, and the gas in the case has mass too.
+- **Jet damping:** the flow through the nozzle carries away angular momentum and damps the turning a little (Thomson).
+- **Grain slump and deformation** under acceleration move the CG a little.
+- **Pendulum corrections:** large angles, the stiffness of the wires, and the air, which adds mass and damping to the
+  swing of a large part.
+
+## On the drawing and in the specifications
+
+- **The mass and the CG,** with their tolerances, and the reference for x and y.
+- **The position of the bore** relative to the axis of the case, with the tolerance that the lateral CG budget allows.
+- **The measurement:** which motors (each one or a sample), which properties, the method, and the uncertainty.
+- **The CG marked on the motor** for handling.
+- **For spinning stages:** the balance requirement and the balance masses.
+
+## References and further reading
+
+- ANSI/AIAA S-120A-2015 (R2019), *Mass Properties Control for Space Systems*, AIAA.
+- SAWE RP A-3, *Mass Properties Control for Space Systems*, Society of Allied Weight Engineers (2016).
+- H. A. Soulé & M. P. Miller, *The Experimental Determination of the Moments of Inertia of Airplanes*, NACA Report 467
+  (1933) (free on NTRS).
+- W. T. Thomson, *Introduction to Space Dynamics*, Wiley (1961); Dover (1986).
+- NASA SP-8114, *Solid Rocket Thrust Vector Control* (1974) (free on NTRS).
+- G. P. Sutton & O. Biblarz, *Rocket Propulsion Elements*, 9th ed., Wiley (2017).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the measurements of your motor and
+  the approval of the responsible mass properties, guidance and safety authorities control the real design.
+</Aside>

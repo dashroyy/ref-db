@@ -1,0 +1,93 @@
+---
+// Mass properties through the burn, as a picture. Top: the vehicle (payload, motor, nozzle) to scale along the axis,
+// with its centre of gravity at ignition and at burnout and the moment arm from each to the nozzle pivot. Bottom: a
+// section through a grain whose bore is off the axis (exaggerated), at ignition and when the web first burns through:
+// the hole has grown, and the sliver that is left pulls the CG off the axis. Positions from the worked example.
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', hot = 'var(--rd-accent)', blue = 'var(--rd-blue)';
+const s = 0.249, X = (mm: number) => 14 + (mm + 320) * s; // mm along the axis, from the forward reference, to px
+const ay = 70, Rp = 150 * s, rb = 50 * s; // axis, case and bore radii in px
+const cgI = X(409.2), cgB = X(168.5), piv = X(1110);
+const halo = { stroke: 'var(--rd-panel)', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' };
+// the CG symbol: a circle with two opposite quarters filled
+const quarters = (cx: number, cy: number, r: number) =>
+  `M${cx},${cy} L${cx + r},${cy} A${r} ${r} 0 0 1 ${cx},${cy + r} Z M${cx},${cy} L${cx - r},${cy} A${r} ${r} 0 0 1 ${cx},${cy - r} Z`;
+const fwdDome = `M${X(75)},${ay - Rp} A${75 * s} ${Rp} 0 0 0 ${X(75)},${ay + Rp}`;
+const aftDome = `M${X(1075)},${ay - Rp} A${75 * s} ${Rp} 0 0 1 ${X(1075)},${ay + Rp}`;
+const cone = (k: number) => `M${X(1132)},${ay + k * 10} L${X(1160)},${ay + k * 5} L${X(1340)},${ay + k * 21}`;
+// the sections: case radius 36 px, bore off the axis by 4 px (exaggerated)
+const S1 = { x: 70, y: 212 }, S2 = { x: 186, y: 212 }, Rc = 36, e = 4;
+---
+
+<figure class="viz cgt">
+  <p class="viz-title">The centre of gravity through the burn</p>
+  <svg viewBox="0 0 440 266" role="img" aria-labelledby="cgt-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="cgt-desc">
+      Top: a vehicle drawn along its axis: a payload at the front, then the motor case with its domes, the grain with a
+      round bore, and the nozzle at the back. Two centre-of-gravity symbols on the axis show the vehicle at ignition
+      and at burnout: at burnout it is further forward, toward the payload. Dimension lines below the motor show the
+      moment arm from each centre of gravity to the nozzle pivot: the arm is longer at burnout. Bottom: two sections
+      through a grain with its bore off the axis, exaggerated. At ignition the hole is small. When the web first burns
+      through, the hole touches the case on one side, and a thin crescent of propellant is left on the other side,
+      with its centre of gravity far off the axis.
+    </desc>
+    <defs>
+      <marker id="cgt-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill={muted}></path></marker>
+      <marker id="cgt-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={hot}></path></marker>
+    </defs>
+    <!-- the vehicle -->
+    <rect x={X(-320)} y={ay - 34} width={300 * s} height="68" rx="6" fill="var(--rd-steel)" fill-opacity="0.35" stroke={muted}></rect>
+    <text x={X(-170)} y={ay + 4} text-anchor="middle" font-size="11" fill={ink}>payload</text>
+    <rect x={X(75)} y={ay - Rp + 1.5} width={1000 * s} height={Rp - rb - 1.5} fill="var(--rd-propellant)" fill-opacity="0.35"></rect>
+    <rect x={X(75)} y={ay + rb} width={1000 * s} height={Rp - rb - 1.5} fill="var(--rd-propellant)" fill-opacity="0.35"></rect>
+    <path d={fwdDome} fill="none" stroke={ink} stroke-width="2.2"></path>
+    <path d={aftDome} fill="none" stroke={ink} stroke-width="2.2"></path>
+    <line x1={X(75)} y1={ay - Rp} x2={X(1075)} y2={ay - Rp} stroke={ink} stroke-width="2.2"></line>
+    <line x1={X(75)} y1={ay + Rp} x2={X(1075)} y2={ay + Rp} stroke={ink} stroke-width="2.2"></line>
+    <path d={cone(-1)} fill="none" stroke={ink} stroke-width="2"></path>
+    <path d={cone(1)} fill="none" stroke={ink} stroke-width="2"></path>
+    <line x1={X(-330)} y1={ay} x2={X(1350)} y2={ay} stroke={muted} stroke-dasharray="8 3 2 3"></line>
+    <circle cx={piv} cy={ay} r="3.5" fill="var(--rd-panel)" stroke={ink} stroke-width="1.6"></circle>
+    <!-- the CG at ignition and at burnout -->
+    <line x1={cgI} y1="26" x2={cgI} y2={ay - 8} stroke={hot} stroke-dasharray="2 2"></line>
+    <line x1={cgB} y1="26" x2={cgB} y2={ay - 8} stroke={hot} stroke-dasharray="2 2"></line>
+    <line x1={cgI - 2} y1="24" x2={cgB + 4} y2="24" stroke={hot} stroke-width="1.8" marker-end="url(#cgt-b)"></line>
+    <text x={cgI - 4} y="14" font-size="11" fill={hot}>CG at ignition</text>
+    <text x={cgB + 2} y="14" text-anchor="end" font-size="11" fill={hot}>at burnout</text>
+    {[cgI, cgB].map((cx, k) => (
+      <>
+        <circle cx={cx} cy={ay} r="6" fill="var(--rd-panel)" stroke={k ? hot : ink} stroke-width="1.6"></circle>
+        <path d={quarters(cx, ay, 6)} fill={k ? hot : ink}></path>
+      </>
+    ))}
+    <!-- the moment arms to the pivot -->
+    {[cgB, cgI, piv].map((x) => <line x1={x} y1={ay + Rp + 3} x2={x} y2="146" stroke={muted}></line>)}
+    <line x1={cgI} y1="124" x2={piv} y2="124" stroke={muted} marker-start="url(#cgt-a)" marker-end="url(#cgt-a)"></line>
+    <line x1={cgB} y1="141" x2={piv} y2="141" stroke={muted} marker-start="url(#cgt-a)" marker-end="url(#cgt-a)"></line>
+    <text x={(cgI + piv) / 2} y="120" text-anchor="middle" font-size="10" fill={ink}>arm at ignition</text>
+    <text x={(cgB + piv) / 2 + 30} y="137" text-anchor="middle" font-size="10" fill={ink}>arm at burnout: longer</text>
+    <text x={piv} y="157" text-anchor="middle" font-size="10" fill={muted}>nozzle pivot</text>
+    <!-- a bore off the axis -->
+    <text x="8" y="168" font-size="11" fill={ink}>a bore off the axis, exaggerated:</text>
+    <circle cx={S1.x} cy={S1.y} r={Rc} fill="var(--rd-propellant)" fill-opacity="0.35" stroke={ink} stroke-width="2"></circle>
+    <circle cx={S1.x + e} cy={S1.y} r="12" fill="var(--rd-panel)" stroke={ink} stroke-width="1.2"></circle>
+    <circle cx={S2.x} cy={S2.y} r={Rc} fill="var(--rd-propellant)" fill-opacity="0.35" stroke={ink} stroke-width="2"></circle>
+    <circle cx={S2.x + e} cy={S2.y} r={Rc - e} fill="var(--rd-panel)" stroke={ink} stroke-width="1.2"></circle>
+    <line x1={S1.x - Rc - 4} y1={S1.y} x2={S2.x + Rc + 4} y2={S2.y} stroke={muted} stroke-dasharray="8 3 2 3"></line>
+    <circle cx={S2.x - Rc / 2} cy={S2.y} r="4.5" fill="var(--rd-panel)" stroke={hot} stroke-width="1.4"></circle>
+    <path d={quarters(S2.x - Rc / 2, S2.y, 4.5)} fill={hot}></path>
+    <line x1="141" y1="230" x2="152" y2="226" stroke={muted}></line>
+    <text x="139" y="236" text-anchor="end" font-size="10" fill={ink} {...halo}>sliver</text>
+    <text x={S1.x} y="262" text-anchor="middle" font-size="11" fill={ink}>at ignition</text>
+    <text x={S2.x} y="262" text-anchor="middle" font-size="11" fill={ink}>web burnout</text>
+    <text x="242" y="196" font-size="11" fill={muted}>The hole grows and the</text>
+    <text x="242" y="211" font-size="11" fill={muted}>mass falls: the CG moves</text>
+    <text x="242" y="226" font-size="11" fill={muted}>off the axis, most when</text>
+    <text x="242" y="241" font-size="11" fill={muted}>the web burns through.</text>
+  </svg>
+  <figcaption>
+    Top: the vehicle's centre of gravity moves forward as the aft propellant burns, so the arm to the nozzle pivot gets
+    longer. The motor's own centre of gravity moves the other way, toward its nozzle. Bottom: a bore off the axis. The
+    hole grows and the mass falls, so the centre of gravity moves off the axis; when the web first burns through, a
+    crescent of propellant is left on one side. The offset is exaggerated.
+  </figcaption>
+</figure>

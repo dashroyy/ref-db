@@ -1,0 +1,361 @@
+---
+// Mass properties through the burn (a table of inert parts, a burning grain and a payload: the CG, the inertias, the
+// lateral offset from a bore off the axis, the steering arm and the trim), and the reduction of the measurements
+// (two-support weighing, the 180° reversal, a filar pendulum with its uncertainty). The calculations live in
+// src/lib/massprops.ts (unit-tested); this file is UI only.
+const rows = [
+  { key: 'case', label: 'Case and insulation', m: '16.61', x: '575', kr: '141.9', kp: '384.4' },
+  { key: 'noz', label: 'Nozzle', m: '6', x: '1170', kr: '45', kp: '70' },
+  { key: 'fwd', label: 'Forward boss, igniter, skirt', m: '2', x: '60', kr: '100', kp: '60' },
+  { key: 'aft', label: 'Aft boss and skirt', m: '2', x: '1110', kr: '120', kp: '60' },
+  { key: 'oth', label: 'Other', m: '0', x: '0', kr: '0', kp: '0' },
+  { key: 'pay', label: 'Payload (the vehicle)', m: '50', x: '-120', kr: '106', kp: '138' },
+];
+---
+
+<div class="calc mpcalc" data-mpcalc>
+  <div class="calc-head">
+    <span>Mass properties through the burn</span>
+    <span class="head-btns">
+      <span>CG · inertia · offset</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="burn" aria-selected="true">Through the burn</button>
+    <button type="button" role="tab" class="chip" data-tab="meas" aria-selected="false">Measure</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="burn">
+        <legend>Inert parts</legend>
+        <div class="mp-head" aria-hidden="true"><span>kg</span><span>CG x, mm</span><span><span class="nc">k</span> roll, mm</span><span><span class="nc">k</span> pitch, mm</span></div>
+        {rows.map((r) => (
+          <div class="mp-row">
+            <span class="mp-name">{r.label}</span>
+            <div class="mp-cells">
+              <input name={`${r.key}_m`} type="number" step="any" min="0" value={r.m} aria-label={`${r.label}: mass, kg`} />
+              <input name={`${r.key}_x`} type="number" step="any" value={r.x} aria-label={`${r.label}: CG from the forward reference, mm`} />
+              <input name={`${r.key}_kr`} type="number" step="any" min="0" value={r.kr} aria-label={`${r.label}: radius of gyration in roll, mm`} />
+              <input name={`${r.key}_kp`} type="number" step="any" min="0" value={r.kp} aria-label={`${r.label}: radius of gyration in pitch, mm`} />
+            </div>
+          </div>
+        ))}
+        <p class="hint">x from the forward reference of your drawing, aft positive. The radii of gyration are about the part's own CG: I = m·k². A mass of 0 removes a line; a payload of 0 gives the motor alone.</p>
+      </fieldset>
+      <fieldset data-panel="burn">
+        <legend>Propellant grain</legend>
+        <label>Grain
+          <select name="kind">
+            <option value="radial">Tube: burns from its bore, ends inhibited</option>
+            <option value="end">End burner: burns from its aft face</option>
+          </select>
+        </label>
+        <div class="row2">
+          <label>Grain OD (mm)<input name="od" type="number" min="1" step="any" value="300" /></label>
+          <label data-radial>Bore diameter (mm)<input name="bore" type="number" min="0" step="any" value="100" /></label>
+          <label>Length (mm)<input name="L" type="number" min="1" step="any" value="1000" /></label>
+          <label>Forward end at x (mm)<input name="x0" type="number" step="any" value="75" /></label>
+          <label>Density (kg/m³)<input name="rho" type="number" min="1" step="any" value="1770" /></label>
+          <label data-radial>Bore off the axis (mm)<input name="e" type="number" min="0" step="any" value="0" /></label>
+        </div>
+        <p class="hint">The bore offset is how far the axis of the bore is from the axis of the case: the position tolerance of the bore, or a measured value.</p>
+      </fieldset>
+      <fieldset data-panel="burn">
+        <legend>Steering</legend>
+        <div class="row2">
+          <label>Nozzle pivot at x (mm)<input name="piv" type="number" step="any" value="1110" /></label>
+          <label>Thrust (kN)<input name="F" type="number" min="0" step="any" value="29.5" /></label>
+          <label>Thrust line offset at the CG (mm)<input name="d" type="number" min="0" step="any" value="0.45" /></label>
+          <label>Lateral CG limit (mm)<input name="lim" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">The thrust line offset is the result of the nozzle alignment stack (Tolerance stack page). The limit on the lateral offset of the CG comes from your vehicle requirements.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+      <fieldset data-panel="meas" hidden>
+        <legend>Weighing on two supports</legend>
+        <div class="row2">
+          <label>Support 1 at x (mm)<input name="x1" type="number" step="any" value="200" /></label>
+          <label>Support 2 at x (mm)<input name="x2" type="number" step="any" value="1000" /></label>
+          <label>Reading 1 (kg)<input name="r1" type="number" step="any" value="78.71" /></label>
+          <label>Reading 2 (kg)<input name="r2" type="number" step="any" value="79.12" /></label>
+          <label>Fixture tare 1 (kg)<input name="t1" type="number" step="any" value="10" /></label>
+          <label>Fixture tare 2 (kg)<input name="t2" type="number" step="any" value="10" /></label>
+          <label>Offset read at 0° (mm)<input name="y0" type="number" step="any" value="0.42" /></label>
+          <label>Offset read at 180° (mm)<input name="y180" type="number" step="any" value="0.32" /></label>
+        </div>
+        <p class="hint">The readings are the support loads in kg, with the fixture on the supports. The two offsets are the lateral offset that the fixture reads before and after the motor is turned 180° about its axis.</p>
+      </fieldset>
+      <fieldset data-panel="meas" hidden>
+        <legend>Filar pendulum</legend>
+        <div class="row2">
+          <label>Motor mass (kg)<input name="pm" type="number" min="0" step="any" value="137.82" /></label>
+          <label>Fixture mass (kg)<input name="pmf" type="number" min="0" step="any" value="20" /></label>
+          <label>Wires from the axis, <span class="nc">r</span> (mm)<input name="pr" type="number" min="1" step="any" value="400" /></label>
+          <label>Wire length, <span class="nc">h</span> (mm)<input name="ph" type="number" min="1" step="any" value="2500" /></label>
+          <label>Period, motor on fixture (s)<input name="pT" type="number" min="0" step="any" value="2.5871" /></label>
+          <label>Period, fixture alone (s)<input name="pTf" type="number" min="0" step="any" value="1.9427" /></label>
+          <label>u of each period (ms)<input name="uT" type="number" min="0" step="any" value="2" /></label>
+          <label>u of <span class="nc">r</span> (mm)<input name="ur" type="number" min="0" step="any" value="0.5" /></label>
+          <label>u of <span class="nc">h</span> (mm)<input name="uh" type="number" min="0" step="any" value="2" /></label>
+          <label>u of each mass (kg)<input name="um" type="number" min="0" step="any" value="0.05" /></label>
+          <label>Your required uncertainty (%)<input name="req" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Bifilar or trifilar: the motor hangs on parallel wires, with its CG on the axis of the swing. Time many cycles for each period. The u values are standard uncertainties; the result is given at k = 2.</p>
+      </fieldset>
+    </form>
+
+    <div class="mp-out">
+      <div data-out="burn">
+        <dl class="readouts">
+          <div class="readout primary"><dt>Centre of gravity</dt><dd data-r="cg">—</dd></div>
+          <div class="readout"><dt>Mass</dt><dd data-r="m">—</dd></div>
+          <div class="readout"><dt>Pitch and roll inertia</dt><dd data-r="ip">—</dd></div>
+          <div class="readout"><dt>Moment arm</dt><dd data-r="arm">—</dd></div>
+          <div class="readout" data-latbox><dt>Lateral offset of the CG</dt><dd data-r="lat">—</dd></div>
+          <div class="readout"><dt>Trim</dt><dd data-r="trim">—</dd></div>
+        </dl>
+        <figure class="mp-fig">
+          <svg data-bchart role="img" aria-label="Centre of gravity along the axis and its lateral offset against the propellant burned"></svg>
+          <figcaption>Top: the CG along the axis as the propellant burns, for the vehicle and for the motor alone. Bottom: the lateral offset of the CG. A bore off the axis makes it grow until the web burns through, and the sliver then takes it away.</figcaption>
+        </figure>
+      </div>
+      <div data-out="meas" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>Mass and <span class="nc">CG</span></dt><dd data-r="w">—</dd></div>
+          <div class="readout"><dt>Lateral offset</dt><dd data-r="flip">—</dd></div>
+          <div class="readout" data-ibox><dt>Moment of inertia</dt><dd data-r="I">—</dd></div>
+          <div class="readout"><dt>Share of the fixture</dt><dd data-r="sw">—</dd></div>
+        </dl>
+        <figure class="mp-fig">
+          <svg data-uchart role="img" aria-label="The terms of the uncertainty of the moment of inertia"></svg>
+          <figcaption>The share of each term in the variance of the moment of inertia. The periods and the radius of the wires enter squared.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. Rigid parts on one axis, each with its mass, its CG and its radii of gyration;
+    lateral offsets in one plane. The grain burns at a uniform rate: a tube from its bore with inhibited ends (exact for a
+    round bore off the axis, with the inertias of the concentric tube of the same section), or an end burner from its aft
+    face. The thrust line offset and the thrust are constant. Not included: grain deformation and slump, erosion of the
+    insulation and the nozzle, gas in the case, products of inertia and dynamic balance, and jet damping.
+  </div>
+</div>
+
+<style is:global>
+  .mp-out { min-width: 0; }
+  .mp-out > div > * { min-width: 0; }
+  .mp-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .mp-head, .mp-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
+  .mp-head { margin: 0 0 0.2rem !important; font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .mp-row { margin: 0 0 0.45rem !important; }
+  .mp-name { display: block; font-size: var(--sl-text-xs); color: var(--rd-ink); margin-bottom: 0.15rem; }
+  .mp-cells input { width: 100%; min-width: 0; }
+</style>
+
+<script>
+  import { throughBurn, trimAngle, weighTwo, flip180, filarMotor, type Part, type Grain } from '../lib/massprops';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−') : '—');
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+  const ROWS = ['case', 'noz', 'fwd', 'aft', 'oth'];
+
+  document.querySelectorAll<HTMLElement>('[data-mpcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'burn';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const ticks = (span: number, n = 4) => { const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((k) => k * p).find((k) => k >= raw) ?? 10 * p; };
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('.mp-fig svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function run() {
+      root.querySelectorAll<HTMLElement>('[data-radial]').forEach((el) => (el.hidden = field('kind').value !== 'radial'));
+      const notes: [string, string][] = [];
+      if (mode === 'burn') runBurn(notes); else runMeas(notes);
+    }
+
+    const part = (k: string): Part | string => {
+      const m = num(`${k}_m`), x = num(`${k}_x`), kr = num(`${k}_kr`), kp = num(`${k}_kp`);
+      if (!(m >= 0 && Number.isFinite(x) && kr >= 0 && kp >= 0)) return 'Enter a mass, a CG position and two radii of gyration (zero or more) on each line.';
+      return { m, x, kr, kp };
+    };
+
+    function runBurn(notes: [string, string][]) {
+      const inert: Part[] = [];
+      for (const k of ROWS) { const p = part(k); if (typeof p === 'string') { clear(p); return; } if (p.m > 0) inert.push(p); }
+      const pay = part('pay');
+      if (typeof pay === 'string') { clear(pay); return; }
+      const payload = pay.m > 0 ? [pay] : [];
+      const kind = field('kind').value as Grain['kind'];
+      const R = num('od') / 2, a0 = kind === 'radial' ? num('bore') / 2 : 0, e = kind === 'radial' ? num('e') : 0;
+      const g: Grain = { kind, R, a0, L: num('L'), x0: num('x0'), rho: num('rho'), e };
+      if (!(R > 0 && g.L > 0 && g.rho > 0 && Number.isFinite(g.x0) && a0 >= 0 && e >= 0)) { clear('Enter the grain: OD, length, position, density, and for a tube the bore and its offset (zero or more).'); return; }
+      if (kind === 'radial' && !(a0 + e < R)) { clear('The bore, with its offset, must be inside the grain OD.'); return; }
+      if (!inert.length) { clear('Enter at least one inert part: a burnt-out motor is not nothing.'); return; }
+      const piv = num('piv'), F = num('F'), d = num('d');
+      if (!(Number.isFinite(piv) && F >= 0 && d >= 0)) { clear('Enter the pivot position, the thrust and the thrust line offset (zero or more).'); return; }
+      const b = throughBurn(inert, g, { payload });
+      const veh = payload.length > 0, ref = (p: (typeof b.points)[number]) => p.vehicle ?? p.motor;
+      const i0 = ref(b.ignition), i1 = ref(b.end), pk = ref(b.peak);
+      const who = veh ? 'vehicle' : 'motor';
+      const dx = i1.x - i0.x;
+      r('cg').innerHTML = `${f(i0.x, 0)} → ${f(i1.x, 0)} mm <small>the ${who}, ignition to burnout: ${f(Math.abs(dx), 0)} mm ${dx < 0 ? 'forward' : 'aft'}${veh ? ` · the motor alone: ${f(b.ignition.motor.x, 0)} → ${f(b.end.motor.x, 0)} mm, ${f(Math.abs(b.end.motor.x - b.ignition.motor.x), 0)} mm ${b.end.motor.x < b.ignition.motor.x ? 'forward' : 'aft'}` : ''}</small>`;
+      r('m').innerHTML = `${f(b.ignition.motor.m, 2)} → ${f(b.end.motor.m, 2)} kg <small>the motor: ${f(b.ignition.motor.m - b.end.motor.m, 2)} kg of propellant, a propellant fraction of ${f((b.ignition.motor.m - b.end.motor.m) / b.ignition.motor.m, 3)}${veh ? ` · the vehicle: ${f(b.ignition.vehicle!.m, 2)} → ${f(b.end.vehicle!.m, 2)} kg` : ''}</small>`;
+      r('ip').innerHTML = `${f(i0.Ip, 2)} → ${f(i1.Ip, 2)} kg·m² <small>pitch, about the CG of the ${who}: × ${f(i1.Ip / i0.Ip, 2)} · roll ${f(i0.Ir, 3)} → ${f(i1.Ir, 3)} kg·m²</small>`;
+      const arm0 = piv - i0.x, arm1 = piv - i1.x;
+      const alpha = (p: typeof i0) => (F * 1000 * Math.sin(Math.PI / 180) * (piv - p.x)) / 1000 / p.Ip;
+      r('arm').innerHTML = arm0 > 0 && arm1 > 0
+        ? `${f(arm0, 0)} → ${f(arm1, 0)} mm <small>from the CG to the pivot · 1° of nozzle angle turns the ${who} at ${f(alpha(i0), 1)} → ${f(alpha(i1), 1)} rad/s², × ${f(alpha(i1) / alpha(i0), 2)}</small>`
+        : '— <small>the pivot must be aft of the CG</small>';
+      const lim = readFactor(field('lim').value, 1e-9);
+      const yPk = Math.abs(pk.y), y0 = Math.abs(i0.y);
+      r('lat').innerHTML = yPk < 1e-9
+        ? `0 mm <small>the bore is on the axis and the parts have no lateral offsets${lim !== null ? ` · within your ${f(lim, 2)} mm limit` : ''}</small>`
+        : `${f(yPk, yPk < 0.1 ? 3 : 2)} mm <small>${b.peak === b.ignition ? 'at ignition' : `at ${f(b.peak.burned * 100, 2)}% burned, when the web first burns through`} · ${f(y0, y0 < 0.1 ? 3 : 2)} mm at ignition${veh ? ` · the motor alone: ${f(Math.abs(b.peak.motor.y), 2)} mm` : ''}${lim !== null ? ` · ${f((yPk / lim) * 100, 0)}% of your ${f(lim, 2)} mm limit` : ''}</small>`;
+      $('[data-latbox]').className = `readout${lim !== null ? (yPk > lim ? ' bad' : yPk > 0.9 * lim ? ' warn' : ' ok') : ''}`;
+      const t0 = trimAngle(d, i0.y, arm0), tPk = trimAngle(d, pk.y, piv - pk.x);
+      r('trim').innerHTML = `${f(Math.max(t0, tPk), 3)}° <small>${f(t0, 3)}° at ignition, ${f(tPk, 3)}° at the largest offset · the disturbing moment is ${f(F * (d + y0), 1)} → ${f(F * (d + yPk), 1)} N·m</small>`;
+      if (lim === null) notes.push(['warn', `The offsets are shown. ${awaitingMessage(['limit on the lateral offset of the CG'], 'the check')}`]);
+      else if (yPk > lim) notes.push(['bad', `The lateral offset of the ${who} CG, ${f(yPk, 2)} mm, is over your ${f(lim, 2)} mm limit at web burnout. Tighten the position of the bore, add a balance mass, or ask for the limit to apply to the burnout CG.`]);
+      if (kind === 'radial' && e > 0) notes.push(['', `The bore is ${f(e, 2)} mm off the axis. The hole grows and the mass falls, so the lateral offset of the ${who} grows from ${f(y0, 3)} mm at ignition to ${f(yPk, 2)} mm when the web first burns through: ${f(yPk / Math.max(y0, 1e-12), 0)} times. The position tolerance of the bore sets the offset at burnout, not at ignition.`]);
+      if (veh && Math.sign(dx) !== Math.sign(b.end.motor.x - b.ignition.motor.x)) notes.push(['', `The motor's own CG moves ${b.end.motor.x > b.ignition.motor.x ? 'aft, toward its nozzle' : 'forward'}, but the vehicle's moves ${dx < 0 ? 'forward, toward the payload' : 'aft'}: the propellant was ${dx < 0 ? 'aft' : 'forward'} of the vehicle CG. Use the vehicle values for the steering, and the motor values for handling and the test stand.`]);
+      if (kind === 'end') notes.push(['', 'An end burner burns from its aft face toward the head end, so the CG of the propellant moves forward through the whole burn. Its CG travel is the largest of any grain.']);
+      notes.push(['', `The pitch inertia falls to ${f((i1.Ip / i0.Ip) * 100, 0)}% of its value at ignition, and the arm grows. The same nozzle angle turns the ${who} ${f(alpha(i1) / alpha(i0), 1)} times faster at burnout: the steering gains must follow the burn.`]);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+      drawBurn(b, veh, lim);
+    }
+
+    function drawBurn(b: ReturnType<typeof throughBurn>, veh: boolean, lim: number | null) {
+      const svg = root.querySelector<SVGSVGElement>('[data-bchart]')!;
+      const W = width(svg), Lm = 50, R = 14, B = 34;
+      const out: string[] = [];
+      const items: [string, string, string][] = veh ? [['vehicle', 'var(--rd-accent)', ''], ['motor alone', 'var(--rd-blue)', '']] : [['motor', 'var(--rd-blue)', '']];
+      if (lim !== null) items.push(['your limit', 'var(--rd-ok)', '6 4']);
+      let lx = 8, ly = 12;
+      for (const [name, col, dash] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"${dash ? ` stroke-dasharray="${dash}"` : ''}/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T1 = ly + 30, H1 = 110, gap = 40, T2 = T1 + H1 + gap, H2 = 96, H = T2 + H2 + B;
+      const X = (u: number) => Lm + u * (W - Lm - R);
+      const series = (sel: (p: (typeof b.points)[number]) => number) => b.points.map((p) => ({ u: p.burned, v: sel(p) }));
+      const sets = veh ? [series((p) => p.vehicle!.x), series((p) => p.motor.x)] : [series((p) => p.motor.x)];
+      const allX = sets.flat().map((q) => q.v), xLo = Math.min(...allX), xHi = Math.max(...allX), xs = Math.max(xHi - xLo, 20);
+      const lo1 = xLo - 0.1 * xs, hi1 = xHi + 0.1 * xs;
+      const Y1 = (v: number) => T1 + ((v - lo1) / (hi1 - lo1)) * H1; // forward (smaller x) at the top
+      const lats = veh ? [series((p) => Math.abs(p.vehicle!.y)), series((p) => Math.abs(p.motor.y))] : [series((p) => Math.abs(p.motor.y))];
+      const yMax = Math.max(...lats.flat().map((q) => q.v), lim ?? 0);
+      const yHi = (yMax > 1e-9 ? yMax : 1) * 1.12; // nothing off the axis: show 0 to 1 mm, not a scale of zeros
+      const Y2 = (v: number) => T2 + (1 - v / yHi) * H2;
+      const s1 = ticks(hi1 - lo1, 4), s2 = ticks(yHi, 3);
+      for (let v = Math.ceil(lo1 / s1) * s1; v <= hi1 + 1e-9; v += s1) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y1(v).toFixed(1)}" y2="${Y1(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y1(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${f(v, 0)}</text>`);
+      for (let v = 0; v <= yHi + 1e-12; v += s2) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y2(v).toFixed(1)}" y2="${Y2(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y2(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${f(v, s2 < 0.01 ? 3 : s2 < 0.1 ? 2 : 1)}</text>`);
+      for (let k = 0; k <= 4; k++) out.push(`<text x="${X(k / 4).toFixed(1)}" y="${T2 + H2 + 15}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${k * 25}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 5}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">propellant burned, %</text>`);
+      out.push(`<text x="4" y="${T1 - 10}" font-size="10" fill="var(--rd-ink)">CG from the forward reference, mm (forward up)</text><text x="4" y="${T2 - 10}" font-size="10" fill="var(--rd-ink)">lateral offset of the CG, mm</text>`);
+      const cols = veh ? ['var(--rd-accent)', 'var(--rd-blue)'] : ['var(--rd-blue)'];
+      const line = (pts: { u: number; v: number }[], Y: (v: number) => number, col: string) => `<polyline points="${pts.map((q) => `${X(q.u).toFixed(1)},${Y(q.v).toFixed(1)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+      sets.forEach((s, k) => out.push(line(s, Y1, cols[k])));
+      if (lim !== null) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y2(lim).toFixed(1)}" y2="${Y2(lim).toFixed(1)}" stroke="var(--rd-ok)" stroke-width="1.6" stroke-dasharray="6 4"/>`);
+      lats.forEach((s, k) => out.push(line(s, Y2, cols[k])));
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    function runMeas(notes: [string, string][]) {
+      const x1 = num('x1'), x2 = num('x2'), w1 = num('r1') - num('t1'), w2 = num('r2') - num('t2');
+      if (!(Number.isFinite(x1) && Number.isFinite(x2) && x2 !== x1 && w1 + w2 > 0)) { clear('Enter two different support positions, and readings above the fixture tares.'); return; }
+      const w = weighTwo(w1, x1, w2, x2);
+      r('w').innerHTML = `${f(w.m, 2)} kg at ${f(w.x, 1)} mm <small>net of the fixture: ${f(w1, 2)} kg at ${f(x1, 0)} mm and ${f(w2, 2)} kg at ${f(x2, 0)} mm</small>`;
+      if (w.x < Math.min(x1, x2) || w.x > Math.max(x1, x2)) notes.push(['warn', 'The CG is outside the two supports: the motor would tip. Move the supports so that they are on each side of the CG.']);
+      const fl = flip180(num('y0'), num('y180'));
+      r('flip').innerHTML = Number.isFinite(fl.y) ? `${f(fl.y, 3)} mm <small>half the difference of the two readings · the fixture reads ${f(fl.fixture, 3)} mm, and the reversal removes it</small>` : '—';
+      const run = {
+        m: num('pm'), mf: num('pmf'), r: num('pr') / 1000, h: num('ph') / 1000, T: num('pT'), Tf: num('pTf'),
+        uT: num('uT') / 1000, uTf: num('uT') / 1000, ur: num('ur') / 1000, uh: num('uh') / 1000, um: num('um'),
+      };
+      if (!(run.m > 0 && run.mf >= 0 && run.r > 0 && run.h > 0 && run.T > 0 && run.Tf >= 0 && run.uT >= 0 && run.ur >= 0 && run.uh >= 0 && run.um >= 0)) { r('I').textContent = '—'; r('sw').textContent = '—'; notes.push(['bad', 'Enter the pendulum: the masses, r, h, the two periods and the uncertainties.']); $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join(''); root.querySelector<SVGSVGElement>('[data-uchart]')!.innerHTML = ''; return; }
+      const fm = filarMotor(run);
+      const req = readFactor(field('req').value, 1e-9);
+      const U = 2 * fm.u, Urel = 2 * fm.rel * 100;
+      r('I').innerHTML = `${f(fm.I, 3)} ± ${f(U, 3)} kg·m² <small>k = 2, ±${f(Urel, 2)}% · motor and fixture ${f(fm.It, 3)}, fixture alone ${f(fm.If, 3)} kg·m²${req !== null ? ` · ${Urel <= req ? 'meets' : 'does not meet'} your ${f(req, 2)}%` : ''}</small>`;
+      $('[data-ibox]').className = `readout${req !== null ? (Urel <= req ? ' ok' : ' bad') : ''}`;
+      const share = Object.entries(fm.terms).map(([k, v]) => [k, (v * v) / (fm.u * fm.u)] as const).sort((a, b) => b[1] - a[1]);
+      const names: Record<string, string> = { T: 'period, motor on fixture', Tf: 'period, fixture alone', r: 'radius of the wires', h: 'length of the wires', m: 'mass of the motor', mf: 'mass of the fixture' };
+      r('sw').innerHTML = `${f(fm.If / fm.It * 100, 1)}% <small>of the measured inertia is the fixture · the largest term is the ${names[share[0][0]]}, ${f(share[0][1] * 100, 0)}% of the variance</small>`;
+      if (fm.If / fm.It > 0.3) notes.push(['warn', 'The fixture is more than 30% of the measured inertia. The subtraction then makes the result much less certain than either swing. Use a lighter fixture, or a stiffer suspension that is close to the motor.']);
+      if (req === null) notes.push(['warn', `The uncertainty is shown. ${awaitingMessage(['required uncertainty'], 'the check', false)}`]);
+      notes.push(['', 'The period and the radius of the wires enter squared. Time many cycles with a light gate, and measure r between the wire attachments, not to the edge of the clamps.']);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+      drawU(share.map(([k, v]) => [names[k], v]));
+    }
+
+    function drawU(rows: [string, number][]) {
+      const svg = root.querySelector<SVGSVGElement>('[data-uchart]')!;
+      const W = width(svg), Lm = 8, R = 50, T = 8, rowH = 32, H = T + rows.length * rowH + 6;
+      const out: string[] = [];
+      rows.forEach(([name, v], k) => {
+        const y = T + k * rowH, wBar = Math.max(1, v * (W - Lm - R));
+        out.push(`<text x="${Lm}" y="${y + 11}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        out.push(`<rect x="${Lm}" y="${y + 17}" width="${wBar.toFixed(1)}" height="9" rx="2" fill="var(--rd-accent)" fill-opacity="${(0.35 + 0.65 * v).toFixed(2)}"/>`);
+        out.push(`<text x="${(Lm + wBar + 6).toFixed(1)}" y="${y + 25.5}" font-size="10" fill="var(--rd-muted)">${f(v * 100, 0)}%</text>`);
+      });
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['lim', 'req'],
+      note: 'Worked-example criteria loaded: a lateral CG limit of 1.0 mm, and a required uncertainty of 1% on the moment of inertia',
+      values: {
+        case_m: '16.61', case_x: '575', case_kr: '141.9', case_kp: '384.4', noz_m: '6', noz_x: '1170', noz_kr: '45', noz_kp: '70',
+        fwd_m: '2', fwd_x: '60', fwd_kr: '100', fwd_kp: '60', aft_m: '2', aft_x: '1110', aft_kr: '120', aft_kp: '60',
+        oth_m: '0', oth_x: '0', oth_kr: '0', oth_kp: '0', pay_m: '50', pay_x: '-120', pay_kr: '106', pay_kp: '138',
+        kind: 'radial', od: '300', bore: '100', L: '1000', x0: '75', rho: '1770', e: '0.5', piv: '1110', F: '29.5', d: '0.45', lim: '1.0',
+        x1: '200', x2: '1000', r1: '78.71', r2: '79.12', t1: '10', t2: '10', y0: '0.42', y180: '0.32',
+        pm: '137.82', pmf: '20', pr: '400', ph: '2500', pT: '2.5871', pTf: '1.9427', uT: '2', ur: '0.5', uh: '2', um: '0.05', req: '1',
+      },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.mp-out')!);
+    }
+    run();
+  });
+</script>

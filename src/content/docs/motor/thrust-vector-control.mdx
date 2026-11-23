@@ -58,8 +58,9 @@ M = F L \sin\delta
 \Delta F_\text{axial} = F\,(1 - \cos\delta)
 $$
 
-where $L$ is the distance from the pivot to the centre of gravity of the vehicle. The axial loss is small: 0.38% at
-5°, and only while the nozzle is turned.
+where $L$ is the distance from the pivot to the centre of gravity of the vehicle. It changes through the burn
+([Mass properties](../mass-properties/#the-centre-of-gravity-moves)). The axial loss is small: 0.38% at 5°, and only
+while the nozzle is turned.
 
 Part of the angle is not available to steer. The vehicle must also hold itself against the misalignment of the motor.
 A thrust line offset by $d_m$ at the centre of gravity, and a lateral offset $y_{cg}$ of the centre of gravity, need
@@ -226,7 +227,8 @@ shims, and a 12 kN actuator) are **for this example only**. Push **Load worked e
    ±13.1 mm, the rate is 79 mm/s at 30°/s, and the peak power is 0.76 kW.
 7. **Authority.** At 5°, the side force is 2.75 kN, a moment of 1.92 kN·m about the centre of gravity 700 mm forward.
    The 0.45 mm of the alignment stack and a 1 mm offset of the centre of gravity need 0.12° of trim: 2.4% of the
-   angle.
+   angle. The [mass properties example](../mass-properties/#worked-example-the-300-mm-motor-and-its-payload) shows
+   where such an offset comes from: a bore 0.5 mm off the axis gives 0.80 mm at web burnout.
 
 <Aside type="tip" title="What the example shows">
   The limit of the rubber came from the load, not from the turn. Thinner pads fixed it, and the torque did not change.
