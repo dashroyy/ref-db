@@ -1,0 +1,64 @@
+---
+// Same central factor, different reliability. Two failure modes with the mean capability 1.5 times the mean load:
+// a steel case at burst (small scatter) and an illustrative bond (large scatter). Lognormal load and capability,
+// computed at build time with the same formulas as the calculator (src/lib/reliability.ts).
+import { interference } from '../lib/reliability';
+
+const ink = 'var(--rd-ink)', muted = 'var(--rd-muted)', cap = 'var(--rd-blue)', bad = 'var(--rd-hot)';
+const X0 = 20, X1 = 420, k0 = 0.4, k1 = 2.6; // x scale: load and capability ÷ mean load
+const X = (k: number) => X0 + ((k - k0) / (k1 - k0)) * (X1 - X0);
+const pdf = (x: number, mu: number, cov: number) => {
+  const s = Math.sqrt(Math.log(1 + cov * cov)), m = Math.log(mu / Math.sqrt(1 + cov * cov));
+  return Math.exp(-((Math.log(x) - m) ** 2) / (2 * s * s)) / (x * s * Math.sqrt(2 * Math.PI));
+};
+const xs = Array.from({ length: 881 }, (_, i) => k0 + ((k1 - k0) * i) / 880);
+const panels = [
+  { y: 112, title: 'steel case at burst: scatter 2% and 3%', cvL: 0.02, cvS: 0.03 },
+  { y: 240, title: 'an illustrative bond: scatter 10% and 20%', cvL: 0.1, cvS: 0.2 },
+].map((p) => {
+  const L = xs.map((x) => pdf(x, 1, p.cvL)), S = xs.map((x) => pdf(x, 1.5, p.cvS));
+  const top = Math.max(...L, ...S), h = (v: number) => p.y - (v / top) * 76;
+  const path = (v: number[]) => xs.map((x, i) => `${i ? 'L' : 'M'}${X(x).toFixed(1)},${h(v[i]).toFixed(1)}`).join(' ');
+  const over = xs.map((x, i) => `L${X(x).toFixed(1)},${h(Math.min(L[i], S[i])).toFixed(1)}`).join(' ');
+  const it = interference(1, p.cvL, 1.5, p.cvS);
+  return { ...p, load: path(L), capa: path(S), overlap: `M${X(k0)},${p.y} ${over} L${X(k1)},${p.y} Z`, beta: it.beta, oneIn: Math.round(1 / it.pf) };
+});
+const [steel, bond] = panels;
+---
+
+<figure class="viz msc">
+  <p class="viz-title">The same factor of safety, two different reliabilities</p>
+  <svg viewBox="0 0 440 280" role="img" aria-labelledby="msc-desc" style="max-width: 640px; margin: 0 auto;">
+    <desc id="msc-desc">
+      Two pairs of curves. Each pair is the scatter of a load and of a capability, with the mean capability 1.5 times the
+      mean load. Top: a steel case at burst, where both curves are narrow and do not meet. Bottom: an illustrative bond,
+      where both curves are wide and overlap. The overlap is where the load is larger than the capability: about one bond
+      in {bond.oneIn} fails.
+    </desc>
+    {panels.map((p) => (
+      <g>
+        {[1, 1.5].map((k) => <line x1={X(k)} y1={p.y - 80} x2={X(k)} y2={p.y} stroke={muted} stroke-dasharray="4 3"></line>)}
+        <path d={p.overlap} fill={bad} fill-opacity="0.45"></path>
+        <path d={p.load} fill="none" stroke={ink} stroke-width="1.8"></path>
+        <path d={p.capa} fill="none" stroke={cap} stroke-width="2.2"></path>
+        <line x1={X0} y1={p.y} x2={X1} y2={p.y} stroke={muted}></line>
+        <text x={X0} y={p.y - 92} font-size="11" fill={ink}>{p.title}</text>
+      </g>
+    ))}
+    <text x={X(1.5) + 40} y={steel.y - 46} font-size="10" fill={ink}>β = {steel.beta.toFixed(0)}:</text>
+    <text x={X(1.5) + 40} y={steel.y - 33} font-size="10" fill={ink}>the curves never meet</text>
+    <text x={X(1.5) + 52} y={bond.y - 46} font-size="10" fill={bad}>β = {bond.beta.toFixed(1)}:</text>
+    <text x={X(1.5) + 52} y={bond.y - 33} font-size="10" fill={bad}>about 1 in {bond.oneIn} fails</text>
+    <text x={X(1)} y={bond.y + 15} text-anchor="middle" font-size="10" fill={ink}>mean load</text>
+    <text x={X(1.5)} y={bond.y + 15} text-anchor="middle" font-size="10" fill={cap}>mean capability</text>
+    <text x={X(1) - 30} y={steel.y - 60} text-anchor="end" font-size="10" fill={ink}>load</text>
+    <text x={X(1.5) - 22} y={steel.y - 26} text-anchor="end" font-size="10" fill={cap}>capability</text>
+  </svg>
+  <figcaption>
+    Two failure modes with the same central factor: the mean capability is 1.5 times the mean load. Top: a steel case at
+    burst, where the pressure scatters by 2% and the burst strength by 3%. The curves never meet. Bottom: an
+    illustrative bond, where the load scatters by 10% and the strength by 20%. The shaded overlap is where a load can be
+    larger than a capability, and about one bond in {bond.oneIn} fails. Lognormal scatter, from the formulas of the
+    calculator; illustrative values.
+  </figcaption>
+</figure>

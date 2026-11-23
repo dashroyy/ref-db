@@ -64,6 +64,8 @@ test('citations are found in the text of the pages that cite them', () => {
     ['icrpg', 'motor/propellant-tests'], ['ferry', 'motor/propellant-tests'], ['cmh17', 'motor/propellant-tests'],
     ['carslaw', 'verify/thermal-cycles'], ['carslaw', 'motor/transient-thermal'], ['miner', 'verify/thermal-cycles'], ['miner', 'fundamentals/fatigue'],
     ['agard586', 'verify/thermal-cycles'], ['hdbk310', 'verify/thermal-cycles'], ['sp8073', 'verify/thermal-cycles'],
+    ['clopper', 'verify/reliability'], ['kapur', 'verify/reliability'], ['oconnor', 'verify/reliability'], ['hdbk338', 'verify/reliability'],
+    ['z14', 'verify/reliability'], ['std5001', 'verify/reliability'],
   ];
   for (const [id, page] of cited) assert.ok(pages(id).includes(page), `${id} on ${page}`);
   // no pattern is so loose that it finds a source on most pages
@@ -71,7 +73,7 @@ test('citations are found in the text of the pages that cite them', () => {
 });
 
 test('the numbers that the page states', () => {
-  assert.equal(SOURCES.length, 114, 'the page says 114 sources');
+  assert.equal(SOURCES.length, 119, 'the page says 119 sources');
   assert.equal(CATS.length, 10, 'in ten subjects');
   assert.equal(SOURCES.filter((s) => s.start && s.free).length, 2, 'two of the start set are free');
   const casePath = PATHS.find((p) => p.key === 'case')!;

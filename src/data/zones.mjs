@@ -136,6 +136,7 @@ export const PRIMERS = [
   { key: 'primer-heating', phase: 'size', after: 'thermal', slug: 'motor/external-heating', label: 'EXTERNAL HEATING', ico: '✦' },
   { key: 'primer-handling', phase: 'verify', after: 'vibration', slug: 'verify/handling-and-transport', label: 'HANDLING & TRANSPORT', ico: '✦' },
   { key: 'primer-firing', phase: 'verify', after: 'proof', slug: 'verify/static-firing', label: 'STATIC FIRING', ico: '✦' },
+  { key: 'primer-reliability', phase: 'verify', after: 'proof', slug: 'verify/reliability', label: 'RELIABILITY', ico: '✦' },
   { key: 'primer-cycles', phase: 'verify', after: 'ageing', slug: 'verify/thermal-cycles', label: 'THERMAL CYCLES & DAMAGE', ico: '✦' },
   { key: 'primer-flaws', phase: 'make', after: 'ndt', slug: 'make/grain-flaws', label: 'GRAIN FLAWS', ico: '✦' },
 ];

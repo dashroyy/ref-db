@@ -1,0 +1,214 @@
+---
+title: Reliability and qualification
+description: What a set of firings can prove about the reliability of a motor that fires once, and what it cannot. The binomial bound and the firings that a requirement needs, margin and scatter as a reliability index, the motor as a chain of failure modes, and what qualification and lot acceptance tests show, with a calculator and a worked example.
+sidebar:
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import MarginScatter from '../../../components/MarginScatter.astro';
+import ReliabilityCalc from '../../../components/ReliabilityCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A motor fires once, and no programme can fire enough motors to prove 0.99. A few firings show that no failure mode is missing; the margins and their scatter, process control and inspection carry the number.</div>
+  <div><b>Before this</b><a href="../static-firing/">Static test firing</a> · <a href="../margin-policy/">Margin policy</a></div>
+  <div><b>Leads to</b><a href="../storage-ageing/">Storage &amp; ageing</a>, for a reliability that lasts the service life</div>
+</div>
+
+## Why this matters
+
+- **A requirement says 0.99 or 0.999.** It is a probability, and the programme must show it, usually at a stated
+  confidence.
+- **Firings are few and expensive.** Ten firings with no failure demonstrate 79% at 90% confidence, not 99%.
+- **A factor of safety is not a reliability.** The same ratio of capability to load gives very different
+  reliabilities for a steel case and for a bond.
+- **A chain fails at its weakest link.** A motor has many failure modes, and the requirement applies to all of them
+  together.
+
+## The intuition: ten good cakes
+
+<Analogy title="Ten good cakes">
+  Ten good cakes from a new recipe tell you that it usually works. They cannot tell you that it fails only once in a
+  thousand: for that you would have to bake thousands. A baker who knows why the recipe works, and keeps every step
+  the same, can be sure of it after far fewer cakes.
+</Analogy>
+
+<MarginScatter />
+
+## Words you need
+
+- **Reliability:** the probability that the motor does its function, within its specification, in the stated
+  conditions. For a motor that fires once, it is the chance that one firing succeeds.
+- **Confidence:** how sure the statement is. "99% at 90% confidence" names a method that gives a lower bound, and
+  that bound is below the true reliability nine times in ten.
+- **Demonstrated and predicted:** demonstrated from the results of tests; predicted from analysis and data.
+- **Attributes and variables:** a test that only passes or fails gives an attribute. A test that measures a margin,
+  such as a burst pressure or a strain at failure, gives a variable, and a variable says much more.
+
+## What firings can show
+
+- **With no failure in n firings,** the lower bound on the reliability at confidence C is the success-run bound:
+
+$$
+R_L = (1 - C)^{1/n}
+\qquad\text{so}\qquad
+n = \frac{\ln(1 - C)}{\ln R}
+$$
+
+- **The numbers grow fast.** These are the firings with no failure that each requirement needs:
+
+| Required reliability | 50% confidence | 90% confidence | 95% confidence |
+| --- | --- | --- | --- |
+| 90% | 7 | 22 | 29 |
+| 99% | 69 | 230 | 299 |
+| 99.9% | 693 | 2,302 | 2,995 |
+
+- **A failure costs more than one firing.** With one failure, 99% at 90% confidence needs 388 firings, not 231. The
+  binomial distribution gives the bound for any number of failures (Clopper and Pearson). It is the same statistics as
+  the [29-of-29 demonstration](../../make/ndt/#demonstration-29-of-29) of a probability of detection.
+- **A firing counts only if it is of the flight design,** built by the production process, at the conditions that the
+  requirement names. A firing after a design change counts only for the failure modes that the change did not touch.
+- **Development firings find failure modes.** Their failures are expected. Each fix removes a mode, and the
+  reliability grows.
+- **Earlier motors of a similar design can help.** Bayesian methods put their record into the estimate, if the motors
+  are truly similar. The calculator does not do this.
+
+## Margin and scatter
+
+- **Each failure mode has a load and a capability,** and both scatter. The mode fails when the load is larger than
+  the capability. With the scatter of each known, the probability of failure follows. For a lognormal load and
+  capability with medians $\tilde L$ and $\tilde S$:
+
+$$
+\beta = \frac{\ln(\tilde S / \tilde L)}{\sqrt{\sigma_{\ln S}^2 + \sigma_{\ln L}^2}},
+\qquad
+P_f = \Phi(-\beta)
+$$
+
+  $\beta$ is the reliability index: the number of standard deviations of the combined scatter between the load and
+  the capability (Kapur and Lamberson).
+
+| β | Probability of failure | Reliability |
+| --- | --- | --- |
+| 2 | 1 in 44 | 97.7% |
+| 3 | 1 in 740 | 99.87% |
+| 4 | 1 in 32,000 | 99.997% |
+| 5 | 1 in 3.5 million | 99.99997% |
+
+- **The same ratio, different reliability.** With the mean capability 1.5 times the mean load, a steel case with 2%
+  and 3% scatter has β = 11: it does not fail by burst. A bond with 10% and 20% scatter has β = 1.8, and about one in
+  26 fails (the figure above).
+- **The scatter is a design variable.** Process control, inspection and proof tests make the capability narrower;
+  better analysis and firing data make the load narrower. Less scatter can do what a much larger factor does, at no
+  mass.
+- **Where the scatters come from:** the [MEOP build-up](../../motor/propellant/#building-meop) and the firings give
+  the scatter of the pressure. [Allowables](../../materials/allowables/#the-statistics-behind-them) and burst tests
+  give the strength of the metal. [Propellant tests](../../motor/propellant-tests/#from-the-curve-to-an-allowable) and
+  bond tests give the grain and the bonds.
+- **Do not trust the far tails.** At β = 5 the probability is 3 in 10 million, but no test reaches that deep, and
+  there the normal and lognormal shapes differ by orders of magnitude. A β above about 4.5 says that the mode is not a
+  concern. It does not give a number to quote.
+
+## The motor is a chain
+
+- **The motor works only if every failure mode does.** With independent modes, $R = R_1 R_2 \cdots R_m$. A few weak
+  links set the result.
+- **Share the requirement among the modes.** With equal shares, each of $m$ modes needs $R^{1/m}$. For 0.99 over 8
+  critical modes, each needs 99.874%: a β of 3.0.
+- **The list of modes comes from the DFMEA**
+  ([Criticality and DFMEA](../../fundamentals/criticality/#a-design-fmea-that-is-useful)): the case, the closures and
+  their seals, the insulation, the nozzle, the grain and its bonds. The igniter and the safe-and-arm device are
+  outside the scope of this site; your energetics specialists give their share.
+- **Common causes break the chain rule.** One bad lot of material, one process change or one cold season can make
+  many motors fail together ([Redundancy and common cause](../../fundamentals/criticality/#redundancy-and-common-cause)).
+  Process control and lot acceptance are there for these.
+
+## What a qualification programme shows
+
+- **Development:** firings and tests that find the failure modes and fix them. Then the design is frozen.
+- **Qualification:** motors of the frozen design, built by the production process, tested at the limits. They are
+  fired hot and cold ([Static test firing](../static-firing/)) after the environment sequence of transport, vibration,
+  shock and thermal cycles ([Duty cycle](../../fundamentals/duty-cycle/), [Random vibration](../random-vibration/),
+  [Thermal cycles](../thermal-cycles/)). Parts are also tested beyond the limits to measure the margin: a case to
+  burst, a closure to failure.
+- **Test to failure where you can.** A pass at the limit shows that the margin is positive. A failure above the limit
+  measures the margin, and it gives a variable instead of an attribute.
+- **Acceptance:** each unit is inspected and proof tested ([Proof testing](../proof-testing/), [NDT](../../make/ndt/)),
+  and units from each lot are fired or tested. A few acceptance firings check the process: they catch a lot that is
+  mostly bad, but they do not screen motors.
+- **Surveillance:** aged motors are fired over the service life ([Storage & ageing](../storage-ageing/#surveillance)).
+- **The claim rests on all of it:** margins with known scatter for each mode, firings that show that no mode is
+  missing, and process control that keeps the scatter at its qualified value.
+
+## Calculator
+
+<ReliabilityCalc />
+
+**Firings** gives the reliability that a set of firings demonstrates, and the firings that a requirement needs.
+**Margin and scatter** gives the probability of failure of one failure mode, and its share of the requirement.
+**Lot acceptance** gives the chance that a lot passes a sampling plan. The requirement, the confidence, the test data
+and the plan start blank: enter your own, or push **Load worked example**.
+
+## Worked example: the 300 mm motor programme
+
+The requirement, the confidence and the values are **for this example only**: the motor must work with a reliability
+of 0.99 at 90% confidence, and the DFMEA lists 8 critical failure modes. Push **Load worked example**.
+
+1. **The firings.** The programme fires 12 motors of the final design with no failure. They demonstrate 82.5% at 90%
+   confidence. To demonstrate 99% with firings alone needs 230 firings with no failure, or 388 if one fails.
+2. **The shares.** Over 8 modes, each needs 99.874%: a β of 3.02.
+3. **The case at burst.** At the hot limit, the peak pressure has a mean of 9.53 MPa and a scatter of 1.7%: the 5.14%
+   of the [MEOP build-up](../../motor/propellant/#worked-example-building-the-10-mpa-meop), taken as three standard
+   deviations. The design burst of 12.5 MPa ([Case sizing](../../motor/case-sizing/#worked-example)) is a minimum.
+   With a scatter of 3%, the mean burst is about 8% higher: 13.5 MPa. Then β = 10.1, and the case does not fail by
+   burst.
+4. **A bond.** An illustrative bond has a mean capability 1.5 times its mean load, with a scatter of 10% on the load
+   and 20% on the capability. β = 1.76: about one bond in 26 fails, far short of its share.
+5. **Two ways out.** A central factor of 1.98 meets the share with these scatters. Or make the capability scatter
+   10% with process control and inspection: then a factor of 1.53 is enough. With normal scatter instead of
+   lognormal, the factor would have to be 2.60: the shape of the tail matters.
+6. **Lot acceptance.** Two motors fired from each lot, with no failure allowed, pass a lot with 5% defective motors
+   90% of the time. The plan rejects a lot nine times in ten only when 68% of it is defective.
+
+<Aside type="tip" title="What the example shows">
+  Twelve clean firings cannot carry 0.99, and no programme can fire 230 motors. The claim rests on the margins of each
+  failure mode. The weak links are not the steel: they are the parts with a large scatter, such as the bonds. There,
+  process control and inspection buy as much reliability as a larger factor, at no mass.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A planning tool">
+  The calculator gives the statistics of tests and margins. It does not know your failure modes, your data or the
+  rules of your programme.
+</Aside>
+
+- **Independence.** The binomial and the chain rule assume independent motors and modes. Common causes break both.
+- **The tails.** Far into the tails, stress–strength results depend on the shape that you assume, not on data.
+- **The conditions.** A firing demonstrates reliability only at its own conditions.
+- **Bayesian methods and reliability growth** are not calculated.
+- **The igniter and the safe-and-arm device** are outside the scope of this site.
+- **Unknown failure modes** are in no calculation. Firings, design reviews and the DFMEA are there to find them.
+
+## On the drawing and in the specifications
+
+- **The reliability requirement,** with its confidence and the conditions that it applies to.
+- **The verification method** for each requirement: test, analysis, inspection or similarity.
+- **The qualification test plan:** the motors, the conditions, the sequence and the pass criteria.
+- **The lot acceptance plan,** and the critical characteristics from the DFMEA with their inspection.
+
+## References and further reading
+
+- C. J. Clopper & E. S. Pearson, "The use of confidence or fiducial limits illustrated in the case of the binomial",
+  *Biometrika* 26 (1934) 404–413.
+- K. C. Kapur & L. R. Lamberson, *Reliability in Engineering Design*, Wiley (1977).
+- P. D. T. O'Connor & A. Kleyner, *Practical Reliability Engineering*, 5th ed., Wiley (2012).
+- US Department of Defense, MIL-HDBK-338B, *Electronic Reliability Design Handbook* (1998).
+- ANSI/ASQ Z1.4, *Sampling Procedures and Tables for Inspection by Attributes* (current edition).
+- NASA-STD-5001, *Structural Design and Test Factors of Safety for Spaceflight Hardware* (current revision).
+
+<Aside type="note">
+  These are screening values for planning. The requirements of your programme, your test data and the approval of
+  the responsible reliability and safety authorities control the real programme.
+</Aside>

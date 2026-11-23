@@ -1,0 +1,384 @@
+---
+// Reliability and qualification: what a set of firings demonstrates (the binomial lower bound), what a margin with a
+// known scatter predicts for one failure mode (stress–strength interference), and what a lot acceptance plan can catch
+// (its operating characteristic). The calculations live in src/lib/reliability.ts (unit-tested); this file is UI only.
+---
+
+<div class="calc relcalc" data-relcalc>
+  <div class="calc-head">
+    <span>Reliability and qualification</span>
+    <span class="head-btns">
+      <span>binomial · stress–strength · sampling</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="fire" aria-selected="true">Firings</button>
+    <button type="button" role="tab" class="chip" data-tab="marg" aria-selected="false">Margin and scatter</button>
+    <button type="button" role="tab" class="chip" data-tab="lot" aria-selected="false">Lot acceptance</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset data-panel="fire marg">
+        <legend>The requirement</legend>
+        <div class="row2">
+          <label>Required reliability of the motor (%)<input name="req" type="number" min="1" max="99.9999" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+      </fieldset>
+      <fieldset data-panel="fire">
+        <legend>Firings of the flight design</legend>
+        <div class="row2">
+          <label>Firings<input name="n" type="number" min="1" step="1" value="12" /></label>
+          <label>Failures<input name="f" type="number" min="0" step="1" value="0" /></label>
+          <label>Confidence (%)<input name="conf" type="number" min="1" max="99.9" step="any" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Count only firings of the flight design, built by the production process, at the conditions that the requirement names. A failure is any result outside the specification. The requirement and the confidence come from your programme, not from this site.</p>
+      </fieldset>
+      <fieldset data-panel="marg" hidden>
+        <legend>One failure mode: load and capability</legend>
+        <div class="row2">
+          <label>Distribution<select name="dist"><option value="lognormal">Lognormal</option><option value="normal">Normal</option></select></label>
+          <label>Critical failure modes in the motor<input name="m" type="number" min="1" step="1" value="1" /></label>
+          <label>Mean load<input name="muL" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Scatter of the load (%)<input name="cvL" type="number" min="0" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Mean capability<input name="muS" type="number" min="0" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label>Scatter of the capability (%)<input name="cvS" type="number" min="0" step="any" placeholder="your test value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">Use one unit for the load and the capability (MPa, kN, % strain). The scatter is the coefficient of variation: the standard deviation divided by the mean. The load scatter comes from the analysis and the firings; the capability scatter from tests of parts or of the material.</p>
+      </fieldset>
+      <fieldset data-panel="lot" hidden>
+        <legend>Lot acceptance plan</legend>
+        <div class="row2">
+          <label>Units tested from each lot<input name="ln" type="number" min="1" step="1" placeholder="your value" autocomplete="off" /></label>
+          <label>Failures allowed<input name="lc" type="number" min="0" step="1" placeholder="your value" autocomplete="off" /></label>
+          <label>Lot defective rate to check (%)<input name="lp" type="number" min="0.001" max="100" step="any" value="5" /></label>
+        </div>
+        <p class="hint">The plan comes from your programme or a sampling standard. A unit is defective if it would fail its test; the lot passes if no more than the allowed number of tested units fail.</p>
+      </fieldset>
+      <p class="hint example-note" data-example-note hidden></p>
+    </form>
+
+    <div class="rl-out">
+      <div data-out="fire">
+        <dl class="readouts">
+          <div class="readout primary" data-box="fire"><dt>Demonstrated reliability</dt><dd data-r="rl">—</dd></div>
+          <div class="readout"><dt>Observed</dt><dd data-r="obs">—</dd></div>
+          <div class="readout"><dt>Firings needed</dt><dd data-r="need">—</dd></div>
+        </dl>
+        <figure class="rl-fig">
+          <svg data-chart="fire" role="img" aria-label="Demonstrated reliability against the number of firings, with no failure, one failure and two failures"></svg>
+          <figcaption>The reliability that the firings demonstrate at your confidence, against the number of firings, with no failure, one and two. Both scales are logarithmic. The circle is your programme.</figcaption>
+        </figure>
+      </div>
+      <div data-out="marg" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-box="marg"><dt>Probability of failure</dt><dd data-r="pf">—</dd></div>
+          <div class="readout"><dt>Reliability index</dt><dd data-r="beta">—</dd></div>
+          <div class="readout"><dt>Central factor</dt><dd data-r="cf">—</dd></div>
+          <div class="readout"><dt>For the requirement</dt><dd data-r="alloc">—</dd></div>
+        </dl>
+        <figure class="rl-fig">
+          <svg data-chart="marg" role="img" aria-label="Probability of failure against the central factor of safety, for several amounts of scatter"></svg>
+          <figcaption>Probability of failure against the central factor (mean capability ÷ mean load). Faint: lognormal capability with a total scatter of 5, 10, 20 and 30%, from left to right. Solid: your scatters. The circle is your failure mode.</figcaption>
+        </figure>
+      </div>
+      <div data-out="lot" hidden>
+        <dl class="readouts">
+          <div class="readout primary"><dt>The lot you check passes</dt><dd data-r="pa">—</dd></div>
+          <div class="readout"><dt>Lots that usually pass</dt><dd data-r="p95">—</dd></div>
+          <div class="readout"><dt>Lots that usually fail</dt><dd data-r="p10">—</dd></div>
+        </dl>
+        <figure class="rl-fig">
+          <svg data-chart="lot" role="img" aria-label="Probability that a lot passes against the fraction of the lot that is defective"></svg>
+          <figcaption>The chance that a lot passes, against the fraction of it that is defective (logarithmic). Faint: 1, 2, 5, 10 and 20 units tested with no failure allowed, from right to left. Solid: your plan.</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for planning. Firings: the one-sided lower confidence bound of Clopper and Pearson on a binomial
+    success probability. Margin: stress–strength interference with independent normal or lognormal load and
+    capability; far into the tails the result depends on the shape that you assume. The motor: independent failure
+    modes in series, with equal allocation. Lot acceptance: the binomial operating characteristic (lots large against
+    the sample). Not included: common-cause failures, Bayesian use of earlier motors, and reliability growth.
+  </div>
+</div>
+
+<style is:global>
+  .rl-out { min-width: 0; }
+  .rl-out > div > * { min-width: 0; }
+  .rl-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+</style>
+
+<script>
+  import { lowerBound, trialsNeeded, interference, factorForBeta, betaFor, allocate, acceptance, defectiveAt, type Dist } from '../lib/reliability';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−') : '—');
+  const pct = (R: number) => `${(R * 100).toLocaleString('en-GB', { maximumFractionDigits: R >= 0.9999 ? 4 : R >= 0.99 ? 3 : 1 })}%`;
+  const sup = (e: number) => String(e).replace('-', '−').split('').map((c) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+c] ?? (c === '−' ? '⁻' : c)).join('');
+  const sci = (v: number) => {
+    if (!(v > 0)) return '0';
+    if (v >= 0.01) return `${f(v * 100, v >= 0.1 ? 1 : 2)}%`;
+    const e = Math.floor(Math.log10(v)), m = v / 10 ** e;
+    return `${f(m, 1)} × 10<sup>${String(e).replace('-', '−')}</sup>`;
+  };
+  const oneIn = (pf: number) => {
+    const N = 1 / pf;
+    if (N < 100) return f(N, 0);
+    if (N < 1e6) return Number(N.toPrecision(2)).toLocaleString('en-GB');
+    if (N < 1e9) return `${f(N / 1e6, N < 1e7 ? 1 : 0)} million`;
+    return `${f(N / 1e9, N < 1e10 ? 1 : 0)} billion`;
+  };
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+  const txt = (x: number, y: number, s: string, fill = 'var(--rd-muted)', anchor = 'start', extra = '') =>
+    `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${fill}" ${extra}>${s}</text>`;
+  const line = (x1: number, y1: number, x2: number, y2: number, stroke = 'var(--rd-line)', extra = '') =>
+    `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${stroke}" ${extra}/>`;
+
+  document.querySelectorAll<HTMLElement>('[data-relcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const chart = (k: string) => root.querySelector<SVGSVGElement>(`[data-chart="${k}"]`)!;
+    let mode = 'fire';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+    const percent = (name: string) => { const v = readFactor(field(name).value, 1e-9); return v !== null && v < 100 ? v / 100 : null; };
+
+    function run() {
+      const notes: [string, string][] = [];
+      if (mode === 'fire') runFire(notes);
+      else if (mode === 'marg') runMarg(notes);
+      else runLot(notes);
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    // ---------- firings ----------
+    function runFire(notes: [string, string][]) {
+      const n = Math.round(num('n')), fl = Math.round(num('f'));
+      const C = percent('conf'), R = percent('req');
+      const box = $('[data-box="fire"]');
+      box.className = 'readout primary';
+      if (!(n >= 1 && fl >= 0 && fl <= n)) {
+        ['rl', 'obs', 'need'].forEach((k) => (r(k).textContent = '—'));
+        chart('fire').innerHTML = '';
+        notes.push(['bad', 'Enter the number of firings and the number of failures (not more than the firings).']);
+        return;
+      }
+      r('obs').innerHTML = `${n - fl} of ${n} <small>${f((100 * (n - fl)) / n, 0)}% of the firings passed: this is what happened, not what is proved</small>`;
+      if (C === null) {
+        r('rl').innerHTML = '<small>needs your confidence</small>';
+        r('need').innerHTML = '<small>needs your requirement and confidence</small>';
+        notes.push(['warn', awaitingMessage(R === null ? ['required reliability', 'confidence'] : ['confidence'], 'what these firings demonstrate')]);
+      } else {
+        const rl = lowerBound(n, fl, C);
+        r('rl').innerHTML = fl >= n ? '<small>nothing: every firing failed</small>'
+          : `${pct(rl)} <small>at ${f(C * 100, 0)}% confidence: the firings rule out only failure rates above ${f((1 - rl) * 1000, (1 - rl) * 1000 < 10 ? 1 : 0)} in 1000</small>`;
+        if (R !== null) {
+          box.className = `readout primary ${rl >= R ? 'ok' : 'bad'}`;
+          const need = [0, 1, 2].map((k) => trialsNeeded(R, C, k));
+          r('need').innerHTML = `${need[0].toLocaleString('en-GB')} <small>firings with no failure for ${pct(R)} at ${f(C * 100, 0)}% confidence; ${need[1].toLocaleString('en-GB')} if one fails, ${need[2].toLocaleString('en-GB')} if two fail</small>`;
+          if (rl >= R) notes.push(['', `The firings demonstrate ${pct(R)} at ${f(C * 100, 0)}% confidence.`]);
+          else notes.push(['warn', `The firings do not demonstrate ${pct(R)} at ${f(C * 100, 0)}% confidence, and few programmes can fire ${need[0].toLocaleString('en-GB')} motors. Carry the claim on the margins of each failure mode (second tab), on process control and on inspection. The firings then show that no failure mode is missing.`]);
+        } else {
+          r('need').innerHTML = '<small>needs your requirement</small>';
+          notes.push(['warn', awaitingMessage(['required reliability'], 'how many firings the requirement needs')]);
+        }
+      }
+      notes.push(['', 'A firing after a design change counts only for the failure modes that the change did not touch. One lot, one test cell or one season can hide a common cause: spread the firings over lots and conditions.']);
+      drawFire(n, fl, C, R);
+    }
+
+    function drawFire(n: number, fl: number, C: number | null, R: number | null) {
+      const svg = chart('fire');
+      const W = width(svg), Lm = 52, Rm = 14, B = 34;
+      const out: string[] = [];
+      const cols = ['var(--rd-ok)', 'var(--rd-blue)', '#9b7fd4'], names = ['no failure', '1 failure', '2 failures'];
+      let lx = 8, ly = 12;
+      names.forEach((name, i) => {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(`<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${cols[i]}" stroke-width="2.2"/>${txt(lx + 20, ly, name, 'var(--rd-ink)')}`);
+        lx += wd + 10;
+      });
+      const T = ly + 26, H = T + 190;
+      const y0 = Math.log10(2), y1 = 4; // 50% to 99.99%
+      const X = (v: number) => Lm + (Math.log10(v) / 4) * (W - Lm - Rm);
+      const Y = (rel: number) => { const q = Math.min(y1, Math.max(y0, -Math.log10(Math.max(1e-12, 1 - rel)))); return T + (1 - (q - y0) / (y1 - y0)) * (H - T - B); };
+      for (const [q, lab] of [[0.5, '50%'], [0.9, '90%'], [0.99, '99%'], [0.999, '99.9%'], [0.9999, '99.99%']] as const) out.push(line(Lm, Y(q), W - Rm, Y(q)), txt(Lm - 6, Y(q) + 3, lab, 'var(--rd-muted)', 'end'));
+      for (const v of [1, 10, 100, 1000, 10000]) out.push(line(X(v), T, X(v), H - B), txt(X(v), H - B + 14, v.toLocaleString('en-GB'), 'var(--rd-muted)', v === 1 ? 'start' : v === 10000 ? 'end' : 'middle'));
+      out.push(txt((Lm + W - Rm) / 2, H - 4, 'firings', 'var(--rd-ink)', 'middle'), txt(4, T - 10, 'demonstrated reliability', 'var(--rd-ink)'));
+      if (C === null) out.push(txt((Lm + W - Rm) / 2, (T + H - B) / 2, 'enter the confidence', 'var(--rd-muted)', 'middle', halo));
+      else {
+        [0, 1, 2].forEach((k) => {
+          const pts: string[] = [];
+          for (let i = 0; i <= 160; i++) {
+            const v = 10 ** ((4 * i) / 160);
+            if (v < k + 1) continue;
+            const rl = lowerBound(v, k, C);
+            if (rl < 0.5) continue;
+            pts.push(`${X(v).toFixed(1)},${Y(rl).toFixed(1)}`);
+          }
+          if (pts.length > 1) out.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="${cols[k]}" stroke-width="2"/>`);
+        });
+        if (R !== null) out.push(line(Lm, Y(R), W - Rm, Y(R), 'var(--rd-ink)', 'stroke-dasharray="6 4"'), txt(Lm + 4, Y(R) - 5, `required ${pct(R)}`, 'var(--rd-ink)', 'start', halo));
+        if (fl < n) {
+          const rl = lowerBound(n, fl, C);
+          if (rl >= 0.5 && n <= 10000) out.push(`<circle cx="${X(n).toFixed(1)}" cy="${Y(rl).toFixed(1)}" r="5" fill="var(--rd-panel)" stroke="var(--rd-accent)" stroke-width="2.5"/>`);
+        }
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // ---------- margin and scatter ----------
+    function runMarg(notes: [string, string][]) {
+      const dist = (field('dist') as unknown as HTMLSelectElement).value as Dist;
+      const muL = readFactor(field('muL').value, 1e-12), muS = readFactor(field('muS').value, 1e-12);
+      const cvL = readFactor(field('cvL').value, 0), cvS = readFactor(field('cvS').value, 0);
+      const m = Math.max(1, Math.round(num('m') || 1)), R = percent('req');
+      const box = $('[data-box="marg"]');
+      box.className = 'readout primary';
+      const target = R === null ? null : allocate(R, m), betaT = target === null ? null : betaFor(1 - target);
+      if (muL === null || muS === null || cvL === null || cvS === null) {
+        ['pf', 'beta', 'cf', 'alloc'].forEach((k) => (r(k).innerHTML = '<small>needs your load and capability</small>'));
+        if (target !== null) r('alloc').innerHTML = `${pct(target)} <small>for each of ${m} failure mode${m === 1 ? '' : 's'}: a reliability index of ${f(betaT!, 2)}</small>`;
+        notes.push(['warn', 'Enter the mean and the scatter of the load and of the capability of one failure mode, from your analysis and your tests. Or press “Load worked example”.']);
+        drawMarg(null, target, dist);
+        return;
+      }
+      const vL = cvL / 100, vS = cvS / 100;
+      const it = vL === 0 && vS === 0 ? { beta: muS > muL ? Infinity : -Infinity, pf: muS > muL ? 0 : 1, R: muS > muL ? 1 : 0, central: muS / muL } : interference(muL, vL, muS, vS, dist);
+      const tiny = it.pf < 1e-12;
+      r('pf').innerHTML = tiny ? `below 10<sup>−12</sup> <small>no measurable chance: the tails of the distributions decide, and no test reaches them</small>`
+        : `${sci(it.pf)} <small>about 1 in ${oneIn(it.pf)} fails · a reliability of ${pct(1 - it.pf)}</small>`;
+      r('beta').innerHTML = `${Number.isFinite(it.beta) ? f(it.beta, 2) : '∞'} <small>standard deviations of the combined scatter between the load and the capability</small>`;
+      r('cf').innerHTML = `${f(it.central, 2)} <small>mean capability ÷ mean load</small>`;
+      if (target !== null) {
+        const k = factorForBeta(betaT!, vL, vS, dist);
+        const ok = it.pf <= 1 - target;
+        box.className = `readout primary ${ok ? 'ok' : 'bad'}`;
+        r('alloc').innerHTML = `${pct(target)} <small>for each of ${m} mode${m === 1 ? '' : 's'}: β of ${f(betaT!, 2)}, a central factor of ${Number.isFinite(k) ? f(k, 2) : 'more than any'} with these scatters</small>`;
+        if (!ok) notes.push(['bad', `This mode is short of its share of the requirement. Raise the central factor to ${Number.isFinite(k) ? f(k, 2) : 'a value no normal capability reaches'}, or cut the scatter: process control and inspection narrow the capability, and a better analysis narrows the load.`]);
+        else notes.push(['', `This mode meets its share of the requirement: ${pct(target)} for each of ${m}.`]);
+      } else {
+        r('alloc').innerHTML = '<small>needs your requirement</small>';
+        notes.push(['warn', awaitingMessage(['required reliability'], 'the share of this failure mode')]);
+      }
+      if (it.beta > 4.5) notes.push(['', 'A reliability index above about 4.5 says that this mode is not a concern. Do not quote its probability: at that depth the tails of the distributions are assumptions, not data.']);
+      else notes.push(['', 'Try the other distribution: far into the tails, normal and lognormal shapes give very different answers. Lognormal suits a load or a strength that cannot be negative.']);
+      drawMarg(it.pf > 0 ? { central: it.central, pf: it.pf, vL, vS } : null, target, dist);
+    }
+
+    function drawMarg(pt: { central: number; pf: number; vL: number; vS: number } | null, target: number | null, dist: Dist) {
+      const svg = chart('marg');
+      const W = width(svg), Lm = 46, Rm = 14, T = 30, B = 34, H = 230;
+      const out: string[] = [];
+      const X = (k: number) => Lm + ((k - 1) / 2) * (W - Lm - Rm);
+      const Y = (pf: number) => T + (Math.min(9, Math.max(0, -Math.log10(Math.max(pf, 1e-300)))) / 9) * (H - T - B);
+      for (const [e, lab] of [[0, '1'], [3, '10⁻³'], [6, '10⁻⁶'], [9, '10⁻⁹']] as const) out.push(line(Lm, Y(10 ** -e), W - Rm, Y(10 ** -e)), txt(Lm - 6, Y(10 ** -e) + 3, lab, 'var(--rd-muted)', 'end'));
+      for (const k of [1, 1.5, 2, 2.5, 3]) out.push(line(X(k), T, X(k), H - B), txt(X(k), H - B + 14, f(k, 1), 'var(--rd-muted)', k === 1 ? 'start' : k === 3 ? 'end' : 'middle'));
+      out.push(txt((Lm + W - Rm) / 2, H - 4, 'central factor', 'var(--rd-ink)', 'middle'), txt(4, 14, 'probability of failure', 'var(--rd-ink)'));
+      const curve = (vL: number, vS: number, d: Dist) => {
+        const pts: string[] = [];
+        for (let i = 0; i <= 200; i++) {
+          const k = 1 + (2 * i) / 200, pf = interference(1, vL, k, vS, d).pf;
+          pts.push(`${X(k).toFixed(1)},${Y(pf).toFixed(1)}`);
+          if (pf < 1e-9) break;
+        }
+        return pts.join(' ');
+      };
+      for (const v of [0.05, 0.1, 0.2, 0.3]) out.push(`<polyline points="${curve(0, v, 'lognormal')}" fill="none" stroke="var(--rd-muted)" stroke-opacity="0.55" stroke-width="1.4"/>`);
+      if (target !== null) out.push(line(Lm, Y(1 - target), W - Rm, Y(1 - target), 'var(--rd-ink)', 'stroke-dasharray="6 4"'), txt(W - Rm - 4, Y(1 - target) - 5, 'share of the requirement', 'var(--rd-ink)', 'end', halo));
+      if (pt) {
+        out.push(`<polyline points="${curve(pt.vL, pt.vS, dist)}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+        if (pt.central >= 1 && pt.central <= 3 && pt.pf >= 1e-9) out.push(`<circle cx="${X(pt.central).toFixed(1)}" cy="${Y(pt.pf).toFixed(1)}" r="5" fill="var(--rd-panel)" stroke="var(--rd-accent)" stroke-width="2.5"/>`);
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    // ---------- lot acceptance ----------
+    function runLot(notes: [string, string][]) {
+      const nRaw = readFactor(field('ln').value, 1), cRaw = readFactor(field('lc').value, 0);
+      const p = num('lp') / 100;
+      const plan = nRaw !== null && cRaw !== null ? { n: Math.round(nRaw), c: Math.round(cRaw) } : null;
+      if (!(p > 0 && p <= 1)) { notes.push(['bad', 'Enter a lot defective rate between 0 and 100%.']); }
+      if (plan === null) {
+        ['pa', 'p95', 'p10'].forEach((k) => (r(k).innerHTML = '<small>needs your plan</small>'));
+        notes.push(['warn', awaitingMessage(['sampling plan (units tested and failures allowed)'], 'what it catches')]);
+      } else if (plan.c >= plan.n) {
+        ['pa', 'p95', 'p10'].forEach((k) => (r(k).innerHTML = '<small>every lot passes</small>'));
+        notes.push(['bad', 'The plan allows as many failures as it tests, so it cannot reject a lot.']);
+      } else {
+        const pa = acceptance(plan.n, plan.c, p), p95 = defectiveAt(plan.n, plan.c, 0.95), p10 = defectiveAt(plan.n, plan.c, 0.1);
+        r('pa').innerHTML = `${f(pa * 100, 1)}% <small>of the time, with ${f(p * 100, p < 0.01 ? 2 : 1)}% of its units defective</small>`;
+        r('p95').innerHTML = `up to ${f(p95 * 100, p95 < 0.01 ? 2 : 1)}% <small>defective: they pass 95% of the time</small>`;
+        r('p10').innerHTML = `${f(p10 * 100, p10 < 0.01 ? 2 : 1)}% <small>defective or more: they pass only 10% of the time</small>`;
+        notes.push(['', `This plan catches a lot that is ${f(p10 * 100, 0)}% defective nine times in ten. It checks the process; it does not screen the units. Inspection and proof tests screen units.`]);
+      }
+      drawLot(plan, p);
+    }
+
+    function drawLot(plan: { n: number; c: number } | null, p: number) {
+      const svg = chart('lot');
+      const W = width(svg), Lm = 46, Rm = 14, T = 30, B = 34, H = 220;
+      const out: string[] = [];
+      const X = (q: number) => Lm + ((Math.log10(Math.max(q, 1e-3)) + 3) / 3) * (W - Lm - Rm);
+      const Y = (pa: number) => T + (1 - pa) * (H - T - B);
+      for (const pa of [0, 0.5, 1]) out.push(line(Lm, Y(pa), W - Rm, Y(pa)), txt(Lm - 6, Y(pa) + 3, `${pa * 100}%`, 'var(--rd-muted)', 'end'));
+      for (const [q, lab] of [[0.001, '0.1%'], [0.01, '1%'], [0.1, '10%'], [1, '100%']] as const) out.push(line(X(q), T, X(q), H - B), txt(X(q), H - B + 14, lab, 'var(--rd-muted)', q === 0.001 ? 'start' : q === 1 ? 'end' : 'middle'));
+      out.push(txt((Lm + W - Rm) / 2, H - 4, 'fraction of the lot defective', 'var(--rd-ink)', 'middle'), txt(4, 14, 'chance that the lot passes', 'var(--rd-ink)'));
+      const oc = (n: number, c: number) => Array.from({ length: 151 }, (_, i) => 10 ** (-3 + (3 * i) / 150)).map((q) => `${X(q).toFixed(1)},${Y(acceptance(n, c, q)).toFixed(1)}`).join(' ');
+      for (const n of [1, 2, 5, 10, 20]) out.push(`<polyline points="${oc(n, 0)}" fill="none" stroke="var(--rd-muted)" stroke-opacity="0.55" stroke-width="1.4"/>`);
+      if (p > 0 && p <= 1) out.push(line(X(p), T, X(p), H - B, 'var(--rd-ink)', 'stroke-dasharray="4 3"'));
+      if (plan && plan.c < plan.n) {
+        out.push(`<polyline points="${oc(plan.n, plan.c)}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+        if (p > 0 && p <= 1) out.push(`<circle cx="${X(p).toFixed(1)}" cy="${Y(acceptance(plan.n, plan.c, p)).toFixed(1)}" r="5" fill="var(--rd-panel)" stroke="var(--rd-accent)" stroke-width="2.5"/>`);
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const show = () => {
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = !el.dataset.panel!.split(' ').includes(mode)));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+    };
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      show();
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['req', 'conf', 'muL', 'cvL', 'muS', 'cvS', 'ln', 'lc'],
+      note: 'Worked-example values loaded: a required reliability of 99% at 90% confidence, an illustrative bond (the capability 1.5 times the load, with a scatter of 10% on the load and 20% on the capability) and two motors fired from each lot with no failure allowed, all for this example only',
+      values: { req: '99', n: '12', f: '0', conf: '90', dist: 'lognormal', m: '8', muL: '1', cvL: '10', muS: '1.5', cvS: '20', ln: '2', lc: '0', lp: '5' },
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.rl-out')!);
+    }
+    show();
+    run();
+  });
+</script>
