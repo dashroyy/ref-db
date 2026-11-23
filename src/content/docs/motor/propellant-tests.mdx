@@ -1,0 +1,194 @@
+---
+title: Propellant mechanical tests
+description: The tests that give a grain analysis its numbers, and how they become a strain allowable. Tensile tests over rates and temperatures, relaxation, bulk modulus, expansion, biaxial and pressurised tests, bond and fracture tests; the shift of the results onto one master curve, its fit and its statistical lower bound, and the corrections for the stress state, the pressure and the age, with a calculator and a worked example.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Analogy from '../../../components/Analogy.astro';
+import Dogbone from '../../../components/Dogbone.astro';
+import PropTestCalc from '../../../components/PropTestCalc.astro';
+
+<div class="glance">
+  <div><b>In one line</b>A grain margin is only as good as the capability behind it. Test over the rates and temperatures of the loads, shift the tests onto one master curve, take a statistical lower bound, and correct it for the stress state, the pressure and the age. Each step down is modest; together they can take a grain that passes below zero.</div>
+  <div><b>Before this</b><a href="../propellant/#strength-and-strain-capability">Propellant: strength and strain capability</a> · <a href="../../materials/allowables/">Allowables</a></div>
+  <div><b>Leads to</b><a href="../propellant-grain/#part-2-structural-integrity">Propellant grain</a>, where the allowable is used · <a href="../../verify/storage-ageing/">Storage & ageing</a>, for the end of life</div>
+</div>
+
+## Why this matters
+
+- **Every structural check of a grain compares an analysis with a test.** The bore at a cold ignition, the bond at a
+  termination and a crack at the bore are each compared with a capability from tests
+  ([Propellant grain](../propellant-grain/#part-2-structural-integrity), [Bondlines](../bondlines/),
+  [Flaws in the grain](../../make/grain-flaws/)).
+- **There is no single capability.** It changes with the rate, the temperature, the stress state, the pressure and the
+  age of the propellant.
+- **The margins of a grain are often small,** so the steps from a test result to the number in the margin decide the
+  answer.
+- **The [Propellant page](../propellant/#part-2-mechanical-properties) explains why** the properties behave as they do.
+  This page gives the test programme, and the steps from the results to an allowable.
+
+## The intuition: designing for the weather
+
+<Analogy title="Designing for the weather">
+  One thermometer reading does not tell you the climate. You collect readings over the seasons and the hours, put them
+  on one chart, and design the house for the cold extreme, not for the average. Propellant capability is the same:
+  tests over rates and temperatures, put on one master curve, and the design uses its lower bound at the condition of
+  each load.
+</Analogy>
+
+<Dogbone />
+
+## The test programme
+
+| Test | What it gives | Used for |
+| --- | --- | --- |
+| Uniaxial tension at a constant rate, over a matrix of temperatures and rates | $\sigma_m$, $\varepsilon_m$, $\varepsilon_b$ and the initial modulus | The capability master curve and the failure envelope; the margins of the bore |
+| Stress relaxation at several temperatures | The relaxation modulus and the shift factor $a_T$ | The relaxed and the ignition moduli ([Propellant](../propellant/#explorer)) |
+| Tension under superimposed pressure | The capability with dewetting held back | A credit at ignition, where the programme accepts one |
+| Strip biaxial | The capability under strain in two directions | The correction from uniaxial tests to the bore |
+| Poker chip: a thin disc bonded between two plates | Failure under triaxial tension | The grain near the bond and at terminations |
+| Dilatometer | The bulk modulus and the thermal expansion | The pressure and cool-down strains |
+| Bond tests: tension, peel and shear | Bond strength and the failure mode | [Bondlines](../bondlines/#how-a-bond-is-tested) |
+| Fracture tests | The fracture energy and the rate of crack growth | [Flaws in the grain](../../make/grain-flaws/#a-crack-at-the-bore-grows) |
+| Cyclic and constant-strain tests | Damage, and the time to failure under a held strain | Temperature cycles and long storage |
+| Aged specimens | The change of each property with time | End-of-life margins ([Storage & ageing](../../verify/storage-ageing/)) |
+| Hardness and density | Quick checks of a batch | Batch acceptance |
+
+- **The specimens come from the propellant of the motor:** blocks cast with the motor batch, or pieces cut from a
+  motor that is taken apart. They are machined and tested under the explosive-safety rules of the facility.
+- **Condition each specimen** at the test temperature until it is soaked through, and control the humidity. A composite
+  propellant can absorb moisture, and moisture changes its properties.
+- **Test replicates:** at least three to five at each condition, and more where the margin is small.
+
+## The tensile test
+
+- **The specimen.** The JANNAF test methods use a dogbone: wide tabs for the grips and a narrow gauge section
+  (CPIA Publication 21). Their quick Class C method takes the strain as the crosshead travel over an effective gauge
+  length of 68.5 mm; the more accurate methods measure the strain in the gauge section.
+- **The strain rate** is the crosshead speed over the effective gauge length: 50 mm/min over 68.5 mm is 0.012 per
+  second.
+- **The results:** the maximum stress $\sigma_m$, the strain $\varepsilon_m$ at it, the strain at break
+  $\varepsilon_b$, and the initial modulus. The programme states which strain its margins use.
+- **The test matrix** goes from the coldest to the hottest condition of the motor, and from slow rates near those of a
+  cool-down to fast rates near those of ignition. A cold ignition is both fast and cold, so it needs fast tests at cold
+  temperatures.
+
+## From the tests to a master curve
+
+- **Shift each test to its reduced rate:** $\dot\varepsilon_r = \dot\varepsilon\,a_T$, with the WLF shift
+  $\log_{10} a_T = -C_1\,(T - T_s)/(C_2 + T - T_s)$. Cold and fast have the same effect, so a cold test moves to a
+  higher reduced rate.
+- **Plot the capability against the log of the reduced rate.** For a composite propellant, the strain at maximum
+  stress follows a broad curve: low at very slow rates, where the binder is soft and weak, highest in the middle, and
+  low again at fast rates, where the binder becomes glassy.
+- **Fit a smooth curve through the tests,** and measure the scatter about it.
+- **Read each load at its own reduced rate:** a cool-down over hours, a daily cycle, and an ignition over tens of
+  milliseconds, each at its own temperature.
+- **Stay inside the data.** A fit is a poor guide outside the rates of the tests, and the cold ignition is often near
+  the edge.
+- **Stress has its own master curve.** The stress and the strain at failure together form the failure envelope
+  (Smith, 1963), which programmes with stress criteria use.
+
+## From the curve to an allowable
+
+- **Take a statistical lower bound:** the curve less $k$ times the scatter, with $k$ for the fraction and the
+  confidence that your programme specifies, as for the A- and B-basis values of metals
+  ([Allowables](../../materials/allowables/)). For a fitted curve the bound is wider away from the centre of the data,
+  so a load at the edge of the tests gets a larger $k$.
+- **Correct for the stress state.** The bore is strained in two directions, and the biaxial capability is lower than the
+  uniaxial. Strip-biaxial tests give the ratio.
+- **Correct for the age.** Use the capability at the end of life, from accelerated and real-time ageing and from
+  surveillance.
+- **Take a credit for pressure only with evidence.** Pressure holds dewetting back, so the capability at ignition is
+  higher than in a test at one atmosphere. Take the credit only from tests under pressure that your programme accepts.
+- **Then the margin** against the analysis strain, with your factor of safety:
+
+$$
+\text{MS} = \frac{\varepsilon_\text{allowable}}{\text{SF}\;\varepsilon_\text{analysis}} - 1
+$$
+
+## Calculator
+
+<PropTestCalc />
+
+**Master curve** shifts each test to its reduced rate, fits the curve, and reads it at a cold ignition and in cold
+storage, with a lower bound from the tolerance factor of the fit. **Allowable and margin** applies the corrections and
+the factor, and shows each step down from the curve to the allowable. The tests are illustrative, not a real
+propellant. The corrections and the factor start blank: enter your own, or push **Load worked example**.
+
+## Worked example: an allowable for the 300 mm grain
+
+The tests are the eight illustrative tensile tests of the calculator, from 74 °C to −54 °C and from 0.5 to 500 mm/min.
+The shift uses $T_s = -20$ °C and the general WLF constants, as on the Propellant page. The loads are those of the
+[grain example](../propellant-grain/#worked-example-htpb-grain-in-the-d6ac-case): 16.1% at a cold ignition at −40 °C,
+with a strain rate of about 2 per second, and 10.4% from the cool-down to −40 °C in storage over eight hours,
+$3.6 \times 10^{-6}$ per second. The values are **for this example only**: a biaxial ratio of 0.85, 75% of the
+capability left at the end of life (as on the [Storage & ageing](../../verify/storage-ageing/) page), no pressure
+credit, a factor of safety of 1.5, and the B-basis bound. Push **Load worked example**.
+
+1. **The shift.** At −40 °C, $\log_{10} a_T = 8.86 \times 20 / 81.6 = 2.17$, so the cold ignition is at a reduced rate of
+   $2 \times 10^{2.17} = 297$ per second. The test at −40 °C and 500 mm/min is at $10^{1.26}$, and the fastest test, at
+   −54 °C, at $10^{3.54}$.
+2. **The fit.** The quadratic through the eight tests peaks at 43.9% at a reduced rate of $10^{-1.13}$ per second, with a
+   scatter of 1.15% about the curve (5 degrees of freedom).
+3. **The cold ignition.** The curve gives 39.3%: almost the 39.6% that the grain page assumed. On this mean, the margin
+   is +0.63.
+4. **The lower bound.** The cold ignition is near the fast end of the data, so $k = 3.36$, against 2.58 for a plain
+   sample of eight. The B-basis bound is 35.5%.
+5. **The corrections.** × 0.85 for the biaxial bore gives 30.2%, and × 0.75 for the end of life 22.6%. The analysis needs
+   $1.5 \times 16.1 = 24.2\%$. **MS = −0.06: the grain fails at a cold ignition.**
+6. **Cold storage passes.** The cool-down is at a reduced rate of $10^{-3.27}$, near the middle of the data: 42.3% on the
+   curve, 38.7% as the bound, and 24.7% after the corrections, against 15.6%. MS = +0.58.
+7. **The ways back.** A credit of 1.10 for the pressure of ignition, from tests under pressure, gives +0.03. Tests near
+   the ignition rate would make the bound tighter. A warmer minimum firing temperature lowers both the strain and the
+   reduced rate of the ignition.
+
+<Aside type="tip" title="What the example shows">
+  The grain that passes at +0.64 on the grain page fails at −0.06 here, with the same strain and almost the same mean
+  capability. Nothing is wrong with either analysis. The statistical bound, the biaxial state and the end of life each
+  take a modest share, and together they take 42% of the capability. Know which of these steps your programme applies
+  before you report a margin.
+</Aside>
+
+## Where this stops
+
+<Aside type="caution" title="A screen of the method">
+  The calculator shows the method on a small set of illustrative tests. A real allowable comes from a full
+  characterisation of your propellant, with the methods and the statistics that your programme specifies.
+</Aside>
+
+- **One scatter for all rates.** Real scatter changes with the rate and the temperature.
+- **The WLF constants.** Fit them to your relaxation tests: the general constants are only a start, and ageing can
+  move them.
+- **Strain criteria only.** Stress criteria, the failure envelope, and cumulative damage for temperature cycles and
+  long storage are not included.
+- **A specimen is not the grain.** The cure, the residual stress and the size of a specimen from a block differ from
+  those in a grain. Correlate with motors that are taken apart.
+- **The form of the fit.** A quadratic is a convenient fit, not a law: use the form that your data supports.
+
+## On the drawing and in the specifications
+
+- **The propellant specification:** the acceptance tests of each batch (for example, $\sigma_m$ and
+  $\varepsilon_m$ at one condition, the density and the hardness), with their limits.
+- **The characterisation:** the test matrix, the methods, the number of replicates, and the report.
+- **The allowables:** the basis, the corrections, and how the grain analysis applies them.
+- **The surveillance plan:** the specimens that are kept with the motors, and the schedule of their tests.
+
+## References and further reading
+
+- *ICRPG/JANNAF Solid Propellant Mechanical Behavior Manual*, CPIA Publication 21.
+- NASA SP-8073, *Solid Propellant Grain Structural Integrity Analysis* (1973) (free on NTRS).
+- M. L. Williams, R. F. Landel & J. D. Ferry, "The temperature dependence of relaxation mechanisms in amorphous
+  polymers and other glass-forming liquids", *J. Am. Chem. Soc.* 77 (1955) 3701–3707.
+- T. L. Smith, "Ultimate tensile properties of elastomers. I. Characterization by a time and temperature independent
+  failure envelope", *J. Polymer Science A* 1 (1963) 3597–3615.
+- J. D. Ferry, *Viscoelastic Properties of Polymers*, 3rd ed., Wiley (1980).
+- SAE International, *Composite Materials Handbook (CMH-17)*, Volume 1 (the statistics of basis values).
+- A. Davenas (ed.), *Solid Rocket Propulsion Technology*, Pergamon (1993).
+
+<Aside type="note">
+  These are screening values for early design. The requirements of your programme, the tests of your propellant and
+  the approval of the responsible stress and safety authorities control the real design.
+</Aside>

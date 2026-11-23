@@ -60,6 +60,8 @@ test('citations are found in the text of the pages that cite them', () => {
     ['culick66', 'motor/erosive-burning'], ['shapiro', 'motor/erosive-burning'], ['sp8076', 'motor/erosive-burning'],
     ['s120', 'motor/mass-properties'], ['naca467', 'motor/mass-properties'], ['thomson', 'motor/mass-properties'], ['sp8114', 'motor/mass-properties'],
     ['goodier', 'make/grain-flaws'], ['schapery', 'make/grain-flaws'], ['sp8073', 'make/grain-flaws'], ['anderson', 'make/grain-flaws'], ['mil1823', 'make/grain-flaws'],
+    ['wlf55', 'motor/propellant-tests'], ['wlf55', 'motor/propellant'], ['smith63', 'motor/propellant-tests'], ['smith63', 'motor/propellant'],
+    ['icrpg', 'motor/propellant-tests'], ['ferry', 'motor/propellant-tests'], ['cmh17', 'motor/propellant-tests'],
   ];
   for (const [id, page] of cited) assert.ok(pages(id).includes(page), `${id} on ${page}`);
   // no pattern is so loose that it finds a source on most pages
@@ -67,7 +69,7 @@ test('citations are found in the text of the pages that cite them', () => {
 });
 
 test('the numbers that the page states', () => {
-  assert.equal(SOURCES.length, 109, 'the page says 109 sources');
+  assert.equal(SOURCES.length, 111, 'the page says 111 sources');
   assert.equal(CATS.length, 10, 'in ten subjects');
   assert.equal(SOURCES.filter((s) => s.start && s.free).length, 2, 'two of the start set are free');
   const casePath = PATHS.find((p) => p.key === 'case')!;

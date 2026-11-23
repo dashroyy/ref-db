@@ -1,0 +1,318 @@
+---
+// From tensile tests to a strain allowable: shift each test to its reduced strain rate, fit the capability master
+// curve, read it at the cold ignition and in cold storage with a regression tolerance bound, and apply the corrections
+// and the factor. The calculations live in src/lib/proptests.ts (unit-tested); this file is UI only.
+const tests = [
+  [74, 0.5, 27.2], [49, 5, 32.6], [21, 50, 40.3], [21, 500, 40.8], [-18, 50, 44.5], [-40, 50, 42.9], [-40, 500, 43.2], [-54, 500, 35.5],
+];
+---
+
+<div class="calc ptcalc" data-ptcalc>
+  <div class="calc-head">
+    <span>From tensile tests to a strain allowable</span>
+    <span class="head-btns">
+      <span>WLF · master curve · tolerance bound</span>
+      <button type="button" class="chip" data-load-example>Load worked example</button>
+      <button type="button" class="chip" data-share>Copy link to these inputs</button>
+    </span>
+  </div>
+  <div class="hc-tabs" role="tablist" aria-label="Tool">
+    <button type="button" role="tab" class="chip" data-tab="curve" aria-selected="true">Master curve</button>
+    <button type="button" role="tab" class="chip" data-tab="allow" aria-selected="false">Allowable and margin</button>
+  </div>
+  <div class="calc-body">
+    <form data-form onsubmit="return false">
+      <fieldset>
+        <legend>Tensile tests</legend>
+        <div class="pt-head" aria-hidden="true"><span>Test</span><span>°C</span><span>mm/min</span><span><span class="nc">ε</span><sub>m</sub>, %</span></div>
+        {tests.map((t, i) => (
+          <div class="pt-row">
+            <span class="pt-n">{i + 1}</span>
+            <input name={`t${i}`} type="number" step="any" value={t[0]} aria-label={`Test ${i + 1}: temperature, °C`} />
+            <input name={`r${i}`} type="number" step="any" min="0" value={t[1]} aria-label={`Test ${i + 1}: crosshead speed, mm/min`} />
+            <input name={`e${i}`} type="number" step="any" min="0" value={t[2]} aria-label={`Test ${i + 1}: strain at maximum stress, %`} />
+          </div>
+        ))}
+        <p class="hint">Illustrative results, not a real propellant. One line for each condition: the mean of its replicates, or each replicate on its own line. Leave a line blank to drop it.</p>
+      </fieldset>
+      <fieldset data-panel="curve">
+        <legend>The shift</legend>
+        <div class="row2">
+          <label>Reference temperature <span class="nc">T</span><sub>s</sub> (°C)<input name="Ts" type="number" step="any" value="-20" /></label>
+          <label>C<sub>1</sub><input name="C1" type="number" step="any" value="8.86" /></label>
+          <label>C<sub>2</sub> (K)<input name="C2" type="number" step="any" value="101.6" /></label>
+          <label>Effective gauge length (mm)<input name="Leff" type="number" min="1" step="any" value="68.5" /></label>
+        </div>
+        <p class="hint">The general WLF constants, as on the Propellant page; fit your own to the relaxation tests. 68.5 mm is the gauge length that the ICRPG manual assumes for its quick Class C test.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Load cases</legend>
+        <div class="row2">
+          <label>Cold ignition: temperature (°C)<input name="Ti" type="number" step="any" value="-40" /></label>
+          <label>Cold ignition: strain rate (1/s)<input name="ri" type="number" min="0" step="any" value="2" /></label>
+          <label>Cold storage: temperature (°C)<input name="Tc" type="number" step="any" value="-40" /></label>
+          <label>Cold storage: strain rate (1/s)<input name="rc" type="number" min="0" step="any" value="3.6e-6" /></label>
+          <label data-panel="allow" hidden>Strain at the cold ignition (%)<input name="si" type="number" min="0" step="any" value="16.1" /></label>
+          <label data-panel="allow" hidden>Strain in cold storage (%)<input name="sc" type="number" min="0" step="any" value="10.4" /></label>
+        </div>
+        <p class="hint">The rate of each load: a pressure rise over tens of milliseconds at ignition, and a cool-down over hours in storage. The strains are those of your grain analysis at the bore.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Basis and your criteria</legend>
+        <div class="row2">
+          <label>Lower bound
+            <select name="basis">
+              <option value="0.9">90% of values, at 95% confidence (B)</option>
+              <option value="0.99">99% of values, at 95% confidence (A)</option>
+            </select>
+          </label>
+          <label data-panel="allow" hidden>Biaxial ÷ uniaxial capability<input name="bx" type="number" min="0" max="2" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label data-panel="allow" hidden>Capability left at end of life<input name="ag" type="number" min="0" max="2" step="any" placeholder="your test value" autocomplete="off" /></label>
+          <label data-panel="allow" hidden>Credit for pressure at ignition<input name="pc" type="number" min="0" max="3" step="any" placeholder="1 = none" autocomplete="off" /></label>
+          <label data-panel="allow" hidden>Factor of safety<input name="sf" type="number" min="1" step="0.01" placeholder="your value" autocomplete="off" /></label>
+        </div>
+        <p class="hint">The basis and the factor come from your programme. The biaxial ratio from strip-biaxial tests, the end-of-life fraction from ageing and surveillance tests, and a pressure credit only from tests under pressure that your programme accepts.</p>
+        <p class="hint example-note" data-example-note hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="pt-out">
+      <div data-out="curve">
+        <dl class="readouts">
+          <div class="readout primary"><dt>Capability at the cold ignition</dt><dd data-r="ci">—</dd></div>
+          <div class="readout"><dt>Capability in cold storage</dt><dd data-r="cc">—</dd></div>
+          <div class="readout"><dt>Peak of the curve</dt><dd data-r="pk">—</dd></div>
+          <div class="readout"><dt>Scatter about the fit</dt><dd data-r="s">—</dd></div>
+        </dl>
+        <figure class="pt-fig">
+          <svg data-cchart role="img" aria-label="Strain at maximum stress against the reduced strain rate: the tests, the fitted master curve and its lower bound"></svg>
+          <figcaption>Each test at its reduced rate, the fitted master curve, and its lower bound (dashed). The bound is wider away from the centre of the data. The two loads are marked.</figcaption>
+        </figure>
+      </div>
+      <div data-out="allow" hidden>
+        <dl class="readouts">
+          <div class="readout primary" data-ibox><dt>Margin at the cold ignition</dt><dd data-r="mi">—</dd></div>
+          <div class="readout" data-cbox><dt>Margin in cold storage</dt><dd data-r="mc">—</dd></div>
+          <div class="readout"><dt>From the mean to the allowable</dt><dd data-r="kd">—</dd></div>
+        </dl>
+        <figure class="pt-fig">
+          <svg data-wchart role="img" aria-label="The steps from the mean capability to the allowable at the cold ignition, against the strain with the factor"></svg>
+          <figcaption>At the cold ignition: the mean capability of the fit, then each step down to the allowable, against the strain that the grain analysis gives times the factor (the line).</figcaption>
+        </figure>
+      </div>
+      <ul class="pv-notes" data-notes></ul>
+    </div>
+  </div>
+  <div class="calc-foot">
+    Screening values for early design. Time–temperature superposition with the WLF shift; a least-squares quadratic in
+    the log of the reduced rate; a one-sided tolerance bound on the regression, with the noncentral t, for a normal
+    scatter of constant size; and corrections as factors on the capability. Not included: the failure envelope and the
+    stress criteria, cumulative damage, the difference between a specimen and the grain, the effect of humidity, and
+    the shift of the WLF constants with ageing.
+  </div>
+</div>
+
+<style is:global>
+  .pt-out { min-width: 0; }
+  .pt-out > div > * { min-width: 0; }
+  .pt-fig svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-mono); }
+  .pt-head, .pt-row { display: grid; grid-template-columns: 2.2rem repeat(3, minmax(0, 1fr)); gap: 0.35rem; align-items: center; }
+  .pt-head { margin: 0 0 0.2rem !important; font-size: var(--sl-text-xs); color: var(--rd-muted); }
+  .pt-row { margin: 0 0 0.3rem !important; }
+  .pt-n { font-size: var(--sl-text-xs); color: var(--rd-muted); text-align: center; }
+  .pt-row input { width: 100%; min-width: 0; }
+</style>
+
+<script>
+  import { strainRate, logReducedRate, fitCapability, capabilityAt, allowable, type Fit } from '../lib/proptests';
+  import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
+  import { toleranceFactor } from '../lib/allowables';
+
+  const f = (v: number, d = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/^-/, '−') : '—');
+  const ms = (v: number) => (Math.abs(v) < 5e-4 ? '0.00' : `${v > 0 ? '+' : '−'}${f(Math.abs(v), 2)}`);
+  const msClass = (v: number) => (v < 0 ? 'bad' : v < 0.1 ? 'warn' : 'ok');
+  const halo = 'stroke="var(--rd-panel)" stroke-width="4" paint-order="stroke" stroke-linejoin="round"';
+  const N = 8;
+
+  document.querySelectorAll<HTMLElement>('[data-ptcalc]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const num = (n: string) => (field(n).value.trim() === '' ? NaN : +field(n).value);
+    const r = (k: string) => root.querySelector<HTMLElement>(`[data-r="${k}"]`)!;
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    let mode = 'curve';
+
+    try { for (const [k, v] of new URLSearchParams(location.search)) { const el = field(k); if (el) el.value = v; } } catch {}
+
+    const width = (svg: SVGSVGElement) => Math.round(Math.min(640, Math.max(280, svg.clientWidth || 560)));
+
+    function clear(msg: string) {
+      root.querySelectorAll<HTMLElement>('[data-r]').forEach((el) => (el.textContent = '—'));
+      root.querySelectorAll<SVGSVGElement>('.pt-fig svg').forEach((s) => (s.innerHTML = ''));
+      $('[data-notes]').innerHTML = `<li class="bad">${msg}</li>`;
+    }
+
+    function run() {
+      const shift = { Ts: num('Ts'), C1: num('C1'), C2: num('C2'), Leff: num('Leff') };
+      if (!(Number.isFinite(shift.Ts) && shift.C1 > 0 && shift.C2 > 0 && shift.Leff > 0)) { clear('Enter the reference temperature, positive WLF constants and the effective gauge length.'); return; }
+      const pts: { L: number; em: number; i: number }[] = [];
+      for (let i = 0; i < N; i++) {
+        const T = num(`t${i}`), rate = num(`r${i}`), em = num(`e${i}`);
+        if (!(Number.isFinite(T) && rate > 0 && em > 0)) continue;
+        if (T - shift.Ts <= -shift.C2 + 1) continue; // below the WLF singularity
+        pts.push({ L: logReducedRate(strainRate(rate, shift.Leff), T, shift), em, i });
+      }
+      const fit = fitCapability(pts.map((q) => q.L), pts.map((q) => q.em));
+      if (!fit) { clear('Enter at least four tests, at three reduced rates or more, to fit the master curve.'); return; }
+      const p = +field('basis').value, bas = p > 0.95 ? 'A' : 'B';
+      const Li = logReducedRate(num('ri'), num('Ti'), shift), Lc = logReducedRate(num('rc'), num('Tc'), shift);
+      if (!(Number.isFinite(Li) && Number.isFinite(Lc))) { clear('Enter the temperature and the strain rate of each load case.'); return; }
+      const ci = capabilityAt(fit, Li, p), cc = capabilityAt(fit, Lc, p);
+      const notes: [string, string][] = [];
+      if (mode === 'curve') runCurve(notes, fit, pts, { Li, Lc, ci, cc, bas, p });
+      else runAllow(notes, { ci, cc, bas });
+      for (const [name, c, L] of [['cold ignition', ci, Li], ['cold storage', cc, Lc]] as const) {
+        if (!c.inside) notes.push(['warn', `The ${name} is outside the reduced rates of the tests (${f(fit.range[0], 1)} to ${f(fit.range[1], 1)}); it is at ${f(L, 1)}. The curve is extrapolated there, and the bound grows fast: add tests at that rate or temperature.`]);
+      }
+      $('[data-notes]').innerHTML = notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('');
+    }
+
+    type Cap = ReturnType<typeof capabilityAt>;
+    function runCurve(notes: [string, string][], fit: Fit, pts: { L: number; em: number; i: number }[], o: { Li: number; Lc: number; ci: Cap; cc: Cap; bas: string; p: number }) {
+      r('ci').innerHTML = `${f(o.ci.mean, 1)}% <small>on the curve · ${o.bas}-basis lower bound ${f(o.ci.lower, 1)}% (k ${f(o.ci.k, 2)}) · reduced rate 10<sup>${f(o.Li, 2)}</sup>/s</small>`;
+      r('cc').innerHTML = `${f(o.cc.mean, 1)}% <small>on the curve · ${o.bas}-basis lower bound ${f(o.cc.lower, 1)}% (k ${f(o.cc.k, 2)}) · reduced rate 10<sup>${f(o.Lc, 2)}</sup>/s</small>`;
+      r('pk').innerHTML = fit.peak ? `${f(fit.peak.em, 1)}% <small>at a reduced rate of 10<sup>${f(fit.peak.L, 2)}</sup>/s: slower is softer and weaker, faster is glassier</small>` : '— <small>no maximum inside the data</small>';
+      r('s').innerHTML = `${f(fit.s, 2)}% <small>of strain, from ${fit.n} tests with ${fit.nu} degrees of freedom · for comparison, k for a plain sample of ${fit.n} values is ${f(toleranceFactor(fit.n, o.p), 2)}</small>`;
+      notes.push(['', `The bound at the cold ignition uses k = ${f(o.ci.k, 2)}, because that load is ${o.ci.h > 2 / fit.n ? 'far from the centre of the data' : 'near the centre of the data'}. Tests near the rate and the temperature of a load make its bound tighter.`]);
+      drawCurve(fit, pts, o);
+    }
+
+    function drawCurve(fit: Fit, pts: { L: number; em: number }[], o: { Li: number; Lc: number; p: number; bas: string }) {
+      const svg = root.querySelector<SVGSVGElement>('[data-cchart]')!;
+      const W = width(svg), Lm = 42, R = 14, B = 34;
+      const out: string[] = [];
+      const items: [string, string, string][] = [['tests', 'var(--rd-blue)', ''], ['master curve', 'var(--rd-accent)', ''], [`${o.bas}-basis bound`, 'var(--rd-accent)', '5 4']];
+      let lx = 8, ly = 12;
+      for (const [name, col, dash] of items) {
+        const wd = 24 + name.length * 6.6;
+        if (lx > 8 && lx + wd > W - 8) { lx = 8; ly += 15; }
+        out.push(name === 'tests'
+          ? `<circle cx="${lx + 8}" cy="${ly - 3}" r="3.5" fill="var(--rd-panel)" stroke="${col}" stroke-width="2"/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`
+          : `<line x1="${lx}" x2="${lx + 16}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="2.2"${dash ? ` stroke-dasharray="${dash}"` : ''}/><text x="${lx + 20}" y="${ly}" font-size="10" fill="var(--rd-ink)">${name}</text>`);
+        lx += wd + 10;
+      }
+      const T = ly + 24, H = T + 186;
+      const xs = [fit.range[0], fit.range[1], o.Li, o.Lc];
+      const x0 = Math.floor(Math.min(...xs) - 0.5), x1 = Math.ceil(Math.max(...xs) + 0.5);
+      const grid = Array.from({ length: 121 }, (_, k) => x0 + ((x1 - x0) * k) / 120);
+      const lower = grid.map((L) => capabilityAt(fit, L, o.p).lower);
+      const ys = [...pts.map((q) => q.em), ...grid.map((L) => fit.predict(L)), ...lower].filter(Number.isFinite);
+      const y0 = Math.max(0, Math.floor(Math.min(...ys) / 5) * 5), y1 = Math.ceil(Math.max(...ys) / 5) * 5 + 2;
+      const X = (L: number) => Lm + ((L - x0) / (x1 - x0)) * (W - Lm - R), Y = (e: number) => T + (1 - (e - y0) / (y1 - y0)) * (H - T - B);
+      const ys2 = y1 - y0 > 30 ? 10 : 5;
+      for (let v = Math.ceil(y0 / ys2) * ys2; v <= y1; v += ys2) out.push(`<line x1="${Lm}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--rd-line)"/><text x="${Lm - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--rd-muted)">${v}</text>`);
+      const xs2 = x1 - x0 > 10 ? 2 : 1;
+      for (let L = Math.ceil(x0 / xs2) * xs2; L <= x1; L += xs2) out.push(`<text x="${X(L).toFixed(1)}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="var(--rd-muted)">${L}</text>`);
+      out.push(`<text x="${(Lm + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--rd-ink)">log₁₀ reduced strain rate, 1/s</text><text x="4" y="${T - 10}" font-size="10" fill="var(--rd-ink)">strain at maximum stress, %</text>`);
+      out.push(`<rect x="${X(fit.range[0]).toFixed(1)}" y="${T}" width="${(X(fit.range[1]) - X(fit.range[0])).toFixed(1)}" height="${H - T - B}" fill="var(--rd-blue)" fill-opacity="0.06"/>`);
+      out.push(`<polyline points="${grid.map((L) => `${X(L).toFixed(1)},${Y(fit.predict(L)).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-width="2.4"/>`);
+      out.push(`<polyline points="${grid.map((L, k) => `${X(L).toFixed(1)},${Y(lower[k]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rd-accent)" stroke-width="1.6" stroke-dasharray="5 4"/>`);
+      for (const q of pts) out.push(`<circle cx="${X(q.L).toFixed(1)}" cy="${Y(q.em).toFixed(1)}" r="3.8" fill="var(--rd-panel)" stroke="var(--rd-blue)" stroke-width="2"/>`);
+      const marks: [number, string][] = [[o.Lc, 'storage'], [o.Li, 'ignition']];
+      marks.sort((a, b) => a[0] - b[0]).forEach(([L, name], k) => {
+        out.push(`<line x1="${X(L).toFixed(1)}" x2="${X(L).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--rd-ink)" stroke-dasharray="2 3"/>`);
+        const right = X(L) < (Lm + W - R) / 2;
+        // one label height apart, so that two loads close together keep their labels apart
+        out.push(`<text x="${(X(L) + (right ? 5 : -5)).toFixed(1)}" y="${(H - B - 8 - 14 * k).toFixed(1)}" text-anchor="${right ? 'start' : 'end'}" font-size="10" fill="var(--rd-ink)" ${halo}>${name}</text>`);
+      });
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    function runAllow(notes: [string, string][], o: { ci: Cap; cc: Cap; bas: string }) {
+      const bx = readFactor(field('bx').value, 1e-9), ag = readFactor(field('ag').value, 1e-9), pcIn = readFactor(field('pc').value, 1e-9), sf = readFactor(field('sf').value);
+      const si = num('si'), sc = num('sc');
+      if (!(si > 0 && sc > 0)) { clear('Enter the strains of the two load cases from your grain analysis.'); return; }
+      const pc = pcIn ?? 1;
+      if (bx === null || ag === null || sf === null) {
+        r('mi').innerHTML = '<small>needs your criteria</small>'; r('mc').innerHTML = '<small>needs your criteria</small>';
+        $('[data-ibox]').className = 'readout primary'; $('[data-cbox]').className = 'readout';
+        r('kd').innerHTML = `${f(o.ci.mean, 1)}% → ${f(o.ci.lower, 1)}% <small>the ${o.bas}-basis bound at the cold ignition; the corrections need your values</small>`;
+        notes.push(['warn', awaitingMessage(['biaxial ratio', 'end-of-life fraction', 'factor of safety'], 'the allowable and the margins')]);
+        drawWaterfall(o.ci.mean, [{ name: `${o.bas}-basis`, v: o.ci.lower }], NaN);
+        return;
+      }
+      const c = { biaxial: bx, ageing: ag, pressure: pc };
+      const ai = allowable(o.ci.lower, c, si, sf), ac = allowable(o.cc.lower, c, sc, sf);
+      r('mi').innerHTML = `MS ${ms(ai.ms)} <small>allowable ${f(ai.allow, 1)}% against ${f(si, 1)}% × ${f(sf, 2)} = ${f(ai.required, 1)}%</small>`;
+      $('[data-ibox]').className = `readout primary ${msClass(ai.ms)}`;
+      r('mc').innerHTML = `MS ${ms(ac.ms)} <small>allowable ${f(ac.allow, 1)}% against ${f(sc, 1)}% × ${f(sf, 2)} = ${f(ac.required, 1)}%</small>`;
+      $('[data-cbox]').className = `readout ${msClass(ac.ms)}`;
+      const total = 1 - ai.allow / o.ci.mean;
+      r('kd').innerHTML = `−${f(total * 100, 0)}% <small>at the cold ignition: ${f(o.ci.mean, 1)}% on the curve → ${f(o.ci.lower, 1)}% ${o.bas}-basis → × ${f(bx, 2)} biaxial → × ${f(ag, 2)} end of life${pc !== 1 ? ` → × ${f(pc, 2)} pressure` : ''} = ${f(ai.allow, 1)}%</small>`;
+      const onMean = o.ci.mean / ai.required - 1;
+      if (ai.ms < 0) notes.push(['bad', `The grain fails at the cold ignition with the knockdowns, although it has MS ${ms(onMean)} on the mean capability. Each step is modest; together they remove ${f(total * 100, 0)}% of the capability. Tests near the ignition rate, a pressure credit from tests under pressure, or a warmer minimum firing temperature are the usual ways back.`]);
+      else notes.push(['', `On the mean capability the margin would be ${ms(onMean)}. The knockdowns take ${f(total * 100, 0)}% of the capability before the factor is applied.`]);
+      if (pcIn === null) notes.push(['', 'No credit is taken for the pressure of ignition. Tests under superimposed pressure usually show more capability; take credit only if your programme accepts those tests.']);
+      drawWaterfall(o.ci.mean, ai.steps.filter((s) => s.name !== 'pressure' || pc !== 1).map((s) => ({ name: s.name === 'lower bound' ? `${o.bas}-basis` : s.name, v: s.v })), ai.required);
+    }
+
+    function drawWaterfall(mean: number, steps: { name: string; v: number }[], required: number) {
+      const svg = root.querySelector<SVGSVGElement>('[data-wchart]')!;
+      const W = width(svg), Lm = 96, R = 46, T = 10, rowH = 30;
+      const rows = [{ name: 'on the curve', v: mean }, ...steps];
+      const H = T + rows.length * rowH + 26;
+      const vMax = Math.max(mean, Number.isFinite(required) ? required : 0) * 1.08;
+      const X = (v: number) => Lm + (v / vMax) * (W - Lm - R);
+      const out: string[] = [];
+      rows.forEach((q, k) => {
+        const y = T + k * rowH;
+        out.push(`<text x="${Lm - 8}" y="${y + 15}" text-anchor="end" font-size="10" fill="var(--rd-ink)">${q.name}</text>`);
+        out.push(`<rect x="${Lm}" y="${y + 5}" width="${Math.max(1, X(q.v) - Lm).toFixed(1)}" height="14" rx="2" fill="${k === 0 ? 'var(--rd-blue)' : 'var(--rd-accent)'}" fill-opacity="${k === 0 ? 0.7 : (0.45 + (0.5 * k) / rows.length).toFixed(2)}"/>`);
+        out.push(`<text x="${(X(q.v) + 5).toFixed(1)}" y="${y + 16}" font-size="10" fill="var(--rd-muted)">${f(q.v, 1)}%</text>`);
+      });
+      if (Number.isFinite(required)) {
+        out.push(`<line x1="${X(required).toFixed(1)}" x2="${X(required).toFixed(1)}" y1="${T}" y2="${T + rows.length * rowH}" stroke="var(--rd-ink)" stroke-width="1.6" stroke-dasharray="4 3"/>`);
+        out.push(`<text x="${X(required).toFixed(1)}" y="${T + rows.length * rowH + 14}" text-anchor="middle" font-size="10" fill="var(--rd-ink)" ${halo}>strain × factor ${f(required, 1)}%</text>`);
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out.join('');
+    }
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const show = () => {
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== mode));
+      root.querySelectorAll<HTMLElement>('[data-out]').forEach((el) => (el.hidden = el.dataset.out !== mode));
+    };
+    tabs.forEach((bt) => bt.addEventListener('click', () => {
+      mode = bt.dataset.tab!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+      show();
+      run();
+    }));
+    form.addEventListener('input', run);
+    form.addEventListener('change', run);
+    root.querySelector('[data-share]')!.addEventListener('click', async (ev) => {
+      const q = new URLSearchParams();
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) if (el.name && el.value) q.set(el.name, el.value);
+      const url = `${location.origin}${location.pathname}?${q}#calculator`;
+      try { history.replaceState(null, '', url); } catch {}
+      const btn = ev.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied'; } catch { btn.textContent = 'Link in address bar'; }
+      setTimeout(() => (btn.textContent = 'Copy link to these inputs'), 2000);
+    });
+    const ex: Record<string, string> = { Ts: '-20', C1: '8.86', C2: '101.6', Leff: '68.5', Ti: '-40', ri: '2', Tc: '-40', rc: '3.6e-6', si: '16.1', sc: '10.4', basis: '0.9', bx: '0.85', ag: '0.75', pc: '', sf: '1.5' };
+    [[74, 0.5, 27.2], [49, 5, 32.6], [21, 50, 40.3], [21, 500, 40.8], [-18, 50, 44.5], [-40, 50, 42.9], [-40, 500, 43.2], [-54, 500, 35.5]].forEach(([t, rr, e], i) => { ex[`t${i}`] = String(t); ex[`r${i}`] = String(rr); ex[`e${i}`] = String(e); });
+    wireWorkedExample({
+      root, onLoad: run, factorFields: ['bx', 'ag', 'pc', 'sf'],
+      note: 'Worked-example values loaded: a biaxial ratio of 0.85, 75% of the capability left at end of life, no pressure credit and a factor of safety of 1.5, all for this example only',
+      values: ex,
+    });
+    if ('ResizeObserver' in window) {
+      let w = 0;
+      new ResizeObserver(([en]) => { const nw = Math.round(en.contentRect.width); if (Math.abs(nw - w) > 8) { w = nw; run(); } }).observe(root.querySelector('.pt-out')!);
+    }
+    show();
+    run();
+  });
+</script>

@@ -124,6 +124,7 @@ export const REBUILT = {
 /** Primers: v2-only learning pages that sit in a phase without taking a zone number. */
 export const PRIMERS = [
   { key: 'primer-srm', phase: 'orient', after: 'home', slug: 'fundamentals/how-a-solid-motor-works', label: 'HOW A SOLID MOTOR WORKS', ico: '✦' },
+  { key: 'primer-proptests', phase: 'size', after: 'propellant', slug: 'motor/propellant-tests', label: 'PROPELLANT TESTS', ico: '✦' },
   { key: 'primer-composite', phase: 'size', after: 'pv', slug: 'motor/composite-cases', label: 'COMPOSITE CASES', ico: '✦' },
   { key: 'primer-closures', phase: 'size', after: 'pv', slug: 'motor/closures', label: 'CASE CLOSURES', ico: '✦' },
   { key: 'primer-bond', phase: 'size', after: 'grain', slug: 'motor/bondlines', label: 'BONDLINES', ico: '✦' },

@@ -43,6 +43,7 @@ test('route numbering derives from the plan; primers are unnumbered', () => {
   assert.equal(r.find((x) => x.key === 'oring')!.tag, 'Z51');
   assert.equal(r.find((x) => x.primer)!.num, null);
   assert.deepEqual(r.filter((x) => x.primer).map((x) => x.tag), PRIMERS.map((_, i) => `P${i + 1}`), 'primers numbered once, in route order');
+  assert.equal(r[r.findIndex((x) => x.key === 'propellant') + 1].key, 'primer-proptests', 'the propellant-tests primer follows the propellant');
   assert.equal(r[r.findIndex((x) => x.key === 'pv') + 1].key, 'primer-composite', 'the composite primer follows case sizing');
   assert.equal(r[r.findIndex((x) => x.key === 'pv') + 2].key, 'primer-closures', 'then the closures primer');
   assert.equal(r[r.findIndex((x) => x.key === 'grain') + 1].key, 'primer-bond', 'the bondline primer follows the grain');
