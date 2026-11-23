@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PHASES, ZONE_PLAN, REBUILT, PRIMERS, BRIEFING, route, hrefOf } from '../src/data/zones.mjs';
+import { PHASES, ZONE_PLAN, REBUILT, PRIMERS, BRIEFING, CORE, route, around, hrefOf } from '../src/data/zones.mjs';
 
 const DOCS = fileURLToPath(new URL('../src/content/docs/', import.meta.url));
 const pageExists = (slug: string) =>
@@ -34,6 +34,23 @@ test('every docs page is reachable from the route or the briefing', () => {
       return /\.mdx?$/.test(f) ? [`${pre}${f.replace(/\.mdx?$/, '')}`.replace(/^index$/, '')] : [];
     });
   for (const slug of walk(DOCS)) assert.ok(known.has(slug), `orphan page: ${slug}`);
+});
+
+test('the key topics: real route items, the smaller part of the route, with their own previous and next', () => {
+  const r = route();
+  assert.equal(new Set(CORE).size, CORE.length, 'no key topic listed twice');
+  for (const k of CORE) assert.ok(r.some((z) => z.key === k), `${k} is on the route`);
+  assert.deepEqual(r.filter((z) => z.core).map((z) => z.key).sort(), [...CORE].sort());
+  assert.ok(r.find((z) => z.key === 'home')!.core && r.find((z) => z.key === 'primer-srm')!.core, 'the home page and How a solid motor works are key topics');
+  assert.ok(CORE.length < r.length / 2, 'the key topics are the smaller part of the route');
+  const key = (z: { core: boolean }) => z.core;
+  assert.deepEqual([around('home', key).prev, around('home', key).next?.key], [null, 'primer-srm']);
+  assert.deepEqual([around('pv', key).prev?.key, around('pv', key).next?.key], ['propellant', 'primer-composite']);
+  // from a specialised page: the nearest key topics on each side, or the next pages on the route
+  assert.deepEqual([around('thermal', key).prev?.key, around('thermal', key).next?.key], ['primer-nozzle', 'margins']);
+  assert.deepEqual([around('thermal').prev?.key, around('thermal').next?.key], ['primer-mass', 'primer-heating']);
+  assert.equal(around(CORE[CORE.length - 1], key).next, null, 'the last key topic has no next key topic');
+  assert.deepEqual(around('not-a-zone'), { prev: null, next: null });
 });
 
 test('route numbering derives from the plan; primers are unnumbered', () => {

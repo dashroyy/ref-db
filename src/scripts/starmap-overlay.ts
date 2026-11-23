@@ -1,7 +1,8 @@
 // The star map as an optional overlay, opened from the STAR MAP button beside the theme switch. Nothing of it loads
 // with a page: the first click loads this module, three.js, the scene (./starmap-scene.ts), the styles and the page
 // descriptions (/star-map.json). The page behind is hidden while the map is open; its sky and black hole stay as the
-// backdrop. The map opens on the planet of the page you are on, with that zone marked.
+// backdrop. The map opens on the planet of the page you are on, with that zone marked. It shows the same topics as
+// the rail: the key topics with ADVANCED off, every zone with it on. A change of ADVANCED builds the map again.
 import '../styles/starmap.css';
 import { buildMap, EMBLEMS, TASKS, type MapData } from '../lib/starmap';
 import { route, hrefOf, BRIEFING } from '../data/zones.mjs';
@@ -11,16 +12,19 @@ const base = import.meta.env.BASE_URL;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const two = (n: number) => String(n).padStart(2, '0');
 const page = (path: string) => path.replace(/index\.html$/, '').replace(/\/?$/, '/');
+const topics = (n: number) => `${n} ${n === 1 ? 'TOPIC' : 'TOPICS'}`;
+const advanced = () => document.documentElement.classList.contains('adv');
 
 let root: HTMLElement | null = null, building: Promise<HTMLElement> | null = null;
 let opener: HTMLElement | null = null, savedHash = '';
+let cleanup: (() => void) | null = null;
 
 /** The HUD of the map: the console frame, the phase panels, the briefing on the sun, the route strip. */
 function hud(map: MapData) {
   const items = route();
-  const pct = Math.round((map.v2 / map.total) * 100);
-  const tasks = TASKS.map((t) => ({ ...t, item: items.find((i) => i.key === t.z) })).filter((t) => t.item);
+  const tasks = TASKS.map((t) => ({ ...t, item: items.find((i) => i.key === t.z) })).filter((t) => t.item && (!map.keyOnly || t.item.core));
   const brief = (slug: string) => `${base.replace(/\/$/, '')}/${slug}/`;
+  const shown = map.keyOnly ? `${map.shown} KEY TOPICS` : `ALL ${map.shown} TOPICS`;
   return `
   <canvas class="sm-canvas" data-gl aria-hidden="true"></canvas>
   <div class="sm-vignette" aria-hidden="true"></div>
@@ -35,17 +39,18 @@ function hud(map: MapData) {
     </div>
     <div class="sm-right">
       <dl class="sm-stats">
-        <div><dt>ZONES IN v2</dt><dd>${map.v2}<small>/${map.total}</small></dd></div>
+        <div><dt>${map.keyOnly ? 'KEY TOPICS' : 'TOPICS'}</dt><dd>${map.shown}${map.keyOnly ? `<small>/${map.all}</small>` : ''}</dd></div>
         <div><dt>PHASES</dt><dd>${map.planets.length}</dd></div>
-        <div class="bar"><dt>REBUILD ${pct}%</dt><dd><i style="width:${pct}%"></i></dd></div>
       </dl>
+      <button type="button" class="sm-close sm-adv" data-adv-set="${map.keyOnly ? 'on' : 'off'}"
+        title="${map.keyOnly ? `Turn on ADVANCED: show all ${map.all} topics` : 'Turn off ADVANCED: show the key topics only'}">${map.keyOnly ? 'SHOW ALL' : 'KEY ONLY'}</button>
       <button type="button" class="sm-close" data-close aria-label="Close the star map">✕ CLOSE</button>
     </div>
   </header>
   <aside class="sm-panel sm-plate" data-panel hidden aria-label="The zones of this phase">
     ${map.planets.map((p) => `
     <section data-phase="${p.k}" hidden style="--pc:${p.color}">
-      <p class="k">PHASE ${p.index + 1} OF ${map.planets.length} · ${p.moons.filter((m) => !m.primer).length} ZONES</p>
+      <p class="k">PHASE ${p.index + 1} OF ${map.planets.length} · ${topics(p.moons.length)}</p>
       <h2>${esc(p.n)}</h2>
       <p class="s">${esc(p.sub)}</p>
       <p class="d">${esc(p.d)}</p>
@@ -66,6 +71,7 @@ function hud(map: MapData) {
     <ul class="tasks">${tasks.map((t) => `<li style="--pc: var(--ph-${t.item!.phase})"><a href="${hrefOf(t.item!, base)}"><b>${t.item!.tag}</b>${esc(t.q)}</a></li>`).join('')}</ul>
     <h3>How every page works</h3>
     <p class="seq">Intuition → analogy → diagram → equations → interactive tool → worked example → where it stops → on the drawing → references.</p>
+    <p class="note">${map.keyOnly ? `The map shows the key topics. SHOW ALL turns on ADVANCED and shows all ${map.all}.` : `The map shows all ${map.all} topics. KEY ONLY turns off ADVANCED and shows the key topics.`}</p>
     <p class="note">Reference aid only: typical guidance for early design and learning. Verify against the current standard and your programme's approved data before release.</p>
     <p class="links"><a href="${map.sun.href}">Overview page</a> · ${BRIEFING.map((x) => `<a href="${brief(x.slug)}">${esc(x.label)}</a>`).join(' · ')}</p>
   </aside>
@@ -83,7 +89,7 @@ function hud(map: MapData) {
   <p class="sm-live" data-live aria-live="polite"></p>
   <canvas class="sm-warp" data-warp hidden aria-hidden="true"></canvas>
   <div class="sm-index">
-    <p class="sm-index-head">THE ROUTE · ${map.v2}/${map.total} ZONES IN v2 <button type="button" class="sm-close" data-close>✕ CLOSE</button></p>
+    <p class="sm-index-head">THE ROUTE · ${shown} <button type="button" class="sm-close" data-close>✕ CLOSE</button></p>
     <a class="sun" href="${map.sun.href}"><b>${map.sun.tag}</b> ${esc(map.sun.label)}</a>
     ${map.planets.map((p) => `<div style="--pc:${p.color}"><p class="ph"><b>${two(p.index + 1)}</b> ${esc(p.n)} <span>${esc(p.sub)}</span></p>
       <ul>${p.moons.map((m) => `<li><a href="${m.href}" class="${m.v2 ? '' : 'v1'}"><b>${m.primer ? '✦' : m.tag}</b> ${esc(m.label)}</a></li>`).join('')}</ul></div>`).join('')}
@@ -104,7 +110,10 @@ async function build() {
     const r = await fetch(`${base.replace(/\/$/, '')}/star-map.json`);
     if (r.ok) descs = ((await r.json()) as { descs?: Record<string, string> }).descs ?? {};
   } catch { /* the map works without the descriptions */ }
-  const map = buildMap(base, descs);
+  // the page you are on stays on the map when ADVANCED is off and it is not a key topic
+  const now = page(location.pathname);
+  const keep = route().find((i) => i.slug !== null && page(hrefOf(i, base)) === now)?.key ?? null;
+  const map = buildMap(base, descs, { keyOnly: !advanced(), keep });
   const el = document.createElement('section');
   el.className = 'sm'; el.tabIndex = -1; el.dataset.mode = 'system';
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Star map: the route through REF·DB');
@@ -114,19 +123,39 @@ async function build() {
   document.body.appendChild(el);
   el.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => closeStarMap()));
   el.querySelector('[data-to-tasks]')?.addEventListener('click', (e) => { e.preventDefault(); el.querySelector('#sm-tasks')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  let scene: { dispose(): void } | null = null;
   try {
-    initStarMap(el, map, { here: hereOf(map), close: () => closeStarMap() });
+    scene = initStarMap(el, map, { here: hereOf(map), close: () => closeStarMap() });
   } catch (e) {
     el.classList.add('sm-nogl'); // no WebGL: the plain index of every phase and zone
     try { console.warn('Star map: no 3D view.', (e as Error).message); } catch { /* console may be absent */ }
   }
   // Escape goes back a level inside the map (the scene handles that) and closes it from the system view
-  document.addEventListener('keydown', (e) => {
+  const onKey = (e: KeyboardEvent) => {
     if (e.key !== 'Escape' || el.hidden || e.defaultPrevented) return;
     if (el.dataset.mode === 'system' || el.classList.contains('sm-nogl')) { e.preventDefault(); closeStarMap(); }
-  });
+  };
+  document.addEventListener('keydown', onKey);
+  cleanup = () => { scene?.dispose(); document.removeEventListener('keydown', onKey); };
   return el;
 }
+
+/** Remove the map and free the scene, so that the next open builds it again. */
+function destroy() {
+  if (!root) return;
+  cleanup?.(); cleanup = null;
+  root.remove(); root = null; building = null;
+  document.documentElement.classList.remove('sm-open');
+  expanded(false);
+}
+
+// ADVANCED changed: build the map again for the new set of topics, and open it again if it was open
+document.addEventListener('refdb:advanced', () => {
+  if (!root) return;
+  const open = !root.hidden, hash = savedHash;
+  destroy();
+  if (open) toggleStarMap(opener).then(() => { savedHash = hash; }).catch(() => { /* the page stays usable without the map */ });
+});
 
 const expanded = (open: boolean) => document.querySelectorAll('[data-starmap-open]').forEach((b) => b.setAttribute('aria-expanded', String(open)));
 
@@ -140,7 +169,7 @@ export async function toggleStarMap(button?: HTMLElement | null, fromLink = fals
   try { if (menu?.matches(':popover-open')) menu.hidePopover(); } catch { /* no popover support: the menu is not open */ }
   if (document.body.hasAttribute('data-mobile-menu-expanded')) document.querySelector<HTMLButtonElement>('starlight-menu-button button')?.click();
   document.documentElement.classList.add('sm-loading');
-  try { root ??= await (building ??= build()); } catch (e) { document.documentElement.classList.remove('sm-open'); throw e; } finally { document.documentElement.classList.remove('sm-loading'); }
+  try { root ??= await (building ??= build()); } catch (e) { document.documentElement.classList.remove('sm-open'); building = null; throw e; } finally { document.documentElement.classList.remove('sm-loading'); }
   root.hidden = false;
   document.documentElement.classList.add('sm-open');
   expanded(true);

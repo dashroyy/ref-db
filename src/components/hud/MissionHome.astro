@@ -1,7 +1,8 @@
 ---
 // Home: three ways in, the systems-status board (one station per phase, live
 // counts from the zone plan), and the v1 task cards. All derived — no zone
-// numbers are written here.
+// numbers are written here. With ADVANCED off, the board and the tasks show the
+// key topics only (CORE in src/data/zones.mjs).
 import { PHASES, route, hrefOf } from '../../data/zones.mjs';
 
 const base = import.meta.env.BASE_URL;
@@ -23,36 +24,46 @@ const TASKS = [
   { q: 'Can these two metals touch?', z: 'galvanic', d: 'Anodic index, area ratio and the environment' },
 ].map((t) => ({ ...t, item: items.find((i) => i.key === t.z)! })).filter((t) => t.item);
 
-const firstOf = (k: string) => items.find((i) => i.phase === k && i.slug !== null) ?? items.find((i) => i.phase === k)!;
+// a station opens the first key topic of its phase (never the home page itself), or its first zone
+const inPhase = (k: string) => items.filter((i) => i.phase === k && i.key !== 'home');
+const firstOf = (k: string) => inPhase(k).find((i) => i.core) ?? inPhase(k)[0];
+const start = items.find((i) => i.key === 'primer-srm')!;
+const core = items.filter((i) => i.core);
+const corePhases = PHASES.filter((p) => core.some((z) => z.phase === p.k));
+const words = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT'];
 ---
 
 <section class="mh-ways" aria-label="Three ways in">
+  <a class="mh-way" href={hrefOf(start, base)}>
+    <span class="mh-way-k">01 · START HERE</span>
+    <span class="mh-way-t">You are new to solid motors</span>
+    <span class="mh-way-d">Read how a solid motor works, then push NEXT to go through the {core.length} key topics in sequence.</span>
+  </a>
   <button type="button" class="mh-way" data-open-search>
-    <span class="mh-way-k">01 · SEARCH</span>
+    <span class="mh-way-k">02 · SEARCH</span>
     <span class="mh-way-t">You know the word</span>
     <span class="mh-way-d">Press <kbd>/</kbd> or <kbd>Ctrl</kbd>+<kbd>K</kbd> and type it: alloys, standards, equations, tools.</span>
   </button>
   <a class="mh-way" href="#start-a-task">
-    <span class="mh-way-k">02 · START A TASK</span>
+    <span class="mh-way-k">03 · START A TASK</span>
     <span class="mh-way-t">You know the job</span>
     <span class="mh-way-d">Pick the question you are trying to answer; it lands on the tool, not a menu.</span>
-  </a>
-  <a class="mh-way" href="#the-route-through">
-    <span class="mh-way-k">03 · FOLLOW THE ROUTE</span>
-    <span class="mh-way-t">You want the whole picture</span>
-    <span class="mh-way-d">Eight phases in the order a component is actually designed, from the problem to the release.</span>
   </a>
 </section>
 
 <h2 id="the-route-through">The route through</h2>
 <div class="mh-board" role="list">
-  <div class="mh-board-head" aria-hidden="true"><span>SYSTEMS STATUS · EIGHT PHASES · SELECT A STATION</span><span class="go">ALL STATIONS GO</span></div>
+  <div class="mh-board-head" aria-hidden="true">
+    <span class="core-only">KEY TOPICS · {words[corePhases.length]} PHASES · SELECT A STATION</span>
+    <span class="adv-only">ALL TOPICS · {words[PHASES.length]} PHASES · SELECT A STATION</span>
+    <span class="go">ALL STATIONS GO</span>
+  </div>
   {PHASES.map((p, i) => {
-    const zs = items.filter((z) => z.phase === p.k && !z.primer);
-    const v2 = zs.filter((z) => z.slug !== null);
-    const primers = items.filter((z) => z.phase === p.k && z.primer);
+    const zs = inPhase(p.k);
+    const key = zs.filter((z) => z.core);
+    const ci = corePhases.findIndex((c) => c.k === p.k); // the number of the phase among those with key topics
     return (
-      <a role="listitem" class="mh-station" href={hrefOf(firstOf(p.k), base)} style={`--pc: var(--ph-${p.k})`}>
+      <a role="listitem" class:list={['mh-station', { 'adv-only': key.length === 0 }]} href={hrefOf(firstOf(p.k), base)} style={`--pc: var(--ph-${p.k})`}>
         <svg class="mh-planet" viewBox="0 0 48 48" aria-hidden="true">
           <defs>
             <radialGradient id={`mhP_${p.k}`} cx=".35" cy=".35" r=".75">
@@ -62,14 +73,12 @@ const firstOf = (k: string) => items.find((i) => i.phase === k && i.slug !== nul
           <ellipse cx="24" cy="24" rx="22" ry="7" fill="none" stroke={`var(--ph-${p.k})`} stroke-width="1" opacity=".5" transform="rotate(-18 24 24)"></ellipse>
           <circle cx="24" cy="24" r="13" fill={`url(#mhP_${p.k})`}></circle>
         </svg>
-        <span class="mh-st-k">PHASE {i + 1} · {p.ico}</span>
+        <span class="mh-st-k">{ci >= 0 && <span class="core-only">PHASE {ci + 1}</span>}<span class="adv-only">PHASE {i + 1}</span> · {p.ico}</span>
         <span class="mh-st-n">{p.n}</span>
         <span class="mh-st-s">{p.sub}</span>
-        <span class="mh-st-bar" aria-hidden="true"><i style={`width:${(v2.length / zs.length) * 100}%`}></i></span>
-        <span class="mh-st-c">{v2.length}/{zs.length} zones in v2{primers.length ? ` · ${primers.length} primer` : ''}</span>
+        <span class="mh-st-c"><span class="core-only">{key.length} key {key.length === 1 ? 'topic' : 'topics'} of {zs.length}</span><span class="adv-only">{zs.length} topics</span></span>
         <span class="mh-st-list">
-          {v2.map((z) => <span>{z.tag} {z.label}</span>)}
-          {primers.map((z) => <span>{z.tag} {z.label}</span>)}
+          {zs.map((z) => <span class={z.core ? undefined : 'adv-only'}>{z.tag} {z.label}</span>)}
         </span>
       </a>
     );
@@ -79,7 +88,7 @@ const firstOf = (k: string) => items.find((i) => i.phase === k && i.slug !== nul
 <h2 id="start-a-task">Start a task</h2>
 <div class="mh-tasks">
   {TASKS.map((t) => (
-    <a class:list={['mh-task', t.item.slug !== null ? 'v2' : 'v1']} href={hrefOf(t.item, base)} style={`--pc: var(--ph-${t.item.phase})`}>
+    <a class:list={['mh-task', t.item.slug !== null ? 'v2' : 'v1', { 'adv-only': !t.item.core }]} href={hrefOf(t.item, base)} style={`--pc: var(--ph-${t.item.phase})`}>
       <span class="mh-task-k">{t.item.tag} · {t.item.label}{t.item.slug === null ? ' · v1' : ''}</span>
       <span class="mh-task-q">{t.q}</span>
       <span class="mh-task-d">{t.d}</span>
@@ -119,9 +128,7 @@ const firstOf = (k: string) => items.find((i) => i.phase === k && i.slug !== nul
   .mh-st-k { font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.14em; color: var(--sl-color-gray-3); }
   .mh-st-n { font-family: var(--sl-font-mono); font-size: 1rem; font-weight: 600; letter-spacing: 0.1em; color: var(--pc); }
   .mh-st-s { font-size: var(--sl-text-sm); color: var(--sl-color-white); }
-  .mh-st-bar { height: 3px; background: var(--hud-edge); margin-top: 0.35rem; border-radius: 2px; overflow: hidden; }
-  .mh-st-bar i { display: block; height: 100%; background: var(--pc); box-shadow: 0 0 6px var(--pc); }
-  .mh-st-c { font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--sl-color-gray-3); }
+  .mh-st-c { margin-top: 0.35rem; font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--sl-color-gray-3); }
   .mh-st-list { display: grid; gap: 0.1rem; margin-top: 0.3rem; font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.04em; color: var(--sl-color-gray-2); }
 
   .mh-tasks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.6rem; }

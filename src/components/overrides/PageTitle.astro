@@ -1,10 +1,10 @@
 ---
-// Zone banner + title. Derived entirely from the zone plan (src/data/zones.mjs):
-// phase planet, PHASE x OF 8 · STEP y OF z, a dot per zone in the phase (filled =
-// rebuilt in v2, hollow = v1 archive), and prev/next through the v2 pages.
-// The home page gets the mission-control hero instead.
+// Zone banner + title. Derived entirely from the zone plan (src/data/zones.mjs): phase planet, where the page sits,
+// a dot per zone in the phase, and prev/next. With ADVANCED off the banner counts the key topics (KEY TOPIC x OF y),
+// shows their dots only, and prev/next go through them; with ADVANCED on it shows PHASE x OF 8 · STEP y OF z, every
+// dot, and prev/next go through all the v2 pages. The home page gets the mission-control hero instead.
 const PAGE_TITLE_ID = '_top'; // Starlight's title anchor (the table of contents links to it)
-import { PHASES, ZONE_PLAN, BRIEFING, route, hrefOf, toSlug } from '../../data/zones.mjs';
+import { PHASES, BRIEFING, route, around, hrefOf, toSlug } from '../../data/zones.mjs';
 
 const base = import.meta.env.BASE_URL;
 const title = Astro.locals.starlightRoute.entry.data.title;
@@ -17,11 +17,15 @@ const briefing = BRIEFING.find((b) => b.slug === slug);
 const ph = here ? PHASES.find((p) => p.k === here.phase)! : null;
 const inPhase = here ? items.filter((z) => z.phase === here.phase) : [];
 const step = here ? inPhase.filter((z) => !z.primer).findIndex((z) => z.key === here.key) + 1 : 0;
-const v2 = items.filter((z) => z.slug !== null);
-const at = here ? v2.findIndex((z) => z.key === here.key) : -1;
-const prev = at > 0 ? v2[at - 1] : null;
-const next = at >= 0 && at < v2.length - 1 ? v2[at + 1] : null;
-const v2Count = items.filter((z) => !z.primer && z.slug !== null).length;
+const core = items.filter((z) => z.core);
+const coreAt = here ? core.findIndex((z) => z.key === here.key) + 1 : 0;
+const navs = here
+  ? [
+      { cls: 'core-only', ...around(here.key, (z) => z.core) },
+      { cls: 'adv-only', ...around(here.key) },
+    ]
+  : [];
+const corePhases = PHASES.filter((p) => core.some((z) => z.phase === p.k)).length;
 const rev = new Date().toISOString().slice(0, 10);
 ---
 
@@ -35,8 +39,9 @@ const rev = new Date().toISOString().slice(0, 10);
     </p>
     <dl class="hero-meta">
       <div><dt>REV</dt><dd>v2 · {rev}</dd></div>
-      <div><dt>ZONES</dt><dd>{v2Count}/{ZONE_PLAN.length} rebuilt</dd></div>
-      <div><dt>PHASES</dt><dd>{PHASES.length}</dd></div>
+      <div class="core-only"><dt>SHOWN</dt><dd>{core.length} key topics of {items.length}</dd></div>
+      <div class="adv-only"><dt>SHOWN</dt><dd>all {items.length} topics</dd></div>
+      <div><dt>PHASES</dt><dd><span class="core-only">{corePhases}</span><span class="adv-only">{PHASES.length}</span></dd></div>
       <div><dt>SCALE</dt><dd>NTS · THIRD ANGLE</dd></div>
     </dl>
   </header>
@@ -54,24 +59,29 @@ const rev = new Date().toISOString().slice(0, 10);
           <circle cx="20" cy="20" r="11.5" fill="url(#zbGrad)"></circle>
         </svg>
         <div class="zb-txt">
-          <span class="zb-phase">
+          <span class="zb-phase core-only">
+            {ph.n} · {here.tag} · {here.core ? `KEY TOPIC ${coreAt} OF ${core.length}` : 'ADVANCED TOPIC'}
+          </span>
+          <span class="zb-phase adv-only">
             PHASE {PHASES.indexOf(ph) + 1} OF {PHASES.length} · {ph.n} · {here.primer ? 'PRIMER' : `STEP ${step} OF ${inPhase.filter((z) => !z.primer).length}`} · {here.tag}
           </span>
           <span class="zb-sub">{ph.sub}: {ph.d}</span>
           <span class="zb-steps">
             {inPhase.map((z) => (
-              <a href={hrefOf(z, base)} class:list={[z.slug !== null ? 'v2' : 'v1', { here: z.key === here.key, primer: z.primer }]}
+              <a href={hrefOf(z, base)} class:list={[z.slug !== null ? 'v2' : 'v1', { here: z.key === here.key, primer: z.primer, 'adv-only': !z.core && z.key !== here.key }]}
                 title={`${z.tag} ${z.label}${z.slug === null ? ' (v1 archive)' : ''}`}
                 aria-label={`${z.tag} ${z.label}${z.key === here.key ? ' (this page)' : ''}${z.slug === null ? ', v1 archive' : ''}`}></a>
             ))}
           </span>
         </div>
-        <div class="zb-nav">
-          {prev ? <a href={hrefOf(prev, base)} title={`${prev.tag} ${prev.label}`}><span>‹ PREV</span><small>{prev.tag}</small></a>
-                : <span class="off">‹ PREV</span>}
-          {next ? <a href={hrefOf(next, base)} title={`${next.tag} ${next.label}`}><span>NEXT ›</span><small>{next.tag}</small></a>
-                : <span class="off">NEXT ›</span>}
-        </div>
+        {navs.map(({ cls, prev, next }) => (
+          <div class={`zb-nav ${cls}`}>
+            {prev ? <a href={hrefOf(prev, base)} title={`${prev.tag} ${prev.label}`}><span>‹ PREV</span><small>{prev.tag}</small></a>
+                  : <span class="off">‹ PREV</span>}
+            {next ? <a href={hrefOf(next, base)} title={`${next.tag} ${next.label}`}><span>NEXT ›</span><small>{next.tag}</small></a>
+                  : <span class="off">NEXT ›</span>}
+          </div>
+        ))}
       </nav>
     )}
     {briefing && (

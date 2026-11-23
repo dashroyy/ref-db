@@ -141,6 +141,19 @@ export const PRIMERS = [
   { key: 'primer-flaws', phase: 'make', after: 'ndt', slug: 'make/grain-flaws', label: 'GRAIN FLAWS', ico: '✦' },
 ];
 
+/**
+ * The key topics: the zones and primers that the site shows first, for learning and for everyday work on a solid
+ * motor. ADVANCED shows the specialised ones too. The route order still sets their order.
+ */
+export const CORE = [
+  'home', 'primer-srm', 'worked', 'read',
+  'materials',
+  'rocket', 'propellant', 'pv', 'primer-composite', 'primer-closures', 'grain', 'ablative', 'primer-nozzle',
+  'margins', 'proof', 'primer-firing', 'ageing',
+  'sealstrat', 'oring',
+  'ndt',
+];
+
 /** Briefing pages outside the route. */
 export const BRIEFING = [
   { slug: 'start/how-to-use', label: 'How to use' },
@@ -149,7 +162,7 @@ export const BRIEFING = [
 
 /**
  * @typedef {{ key: string, phase: string, label: string, ico: string, num: number | null, tag: string,
- *   slug: string | null, primer: boolean }} RouteItem
+ *   slug: string | null, primer: boolean, core: boolean }} RouteItem
  */
 
 /** The full route in order: every zone (numbered as v1) with primers slotted in after their anchor, numbered P1, P2… in route order. */
@@ -159,12 +172,23 @@ export function route() {
   let primers = 0;
   ZONE_PLAN.forEach(([phase, key, label, ico], i) => {
     const slug = key in REBUILT ? REBUILT[/** @type {keyof typeof REBUILT} */ (key)] : null;
-    out.push({ key, phase, label, ico, num: i + 1, tag: `Z${i + 1}`, slug, primer: false });
+    out.push({ key, phase, label, ico, num: i + 1, tag: `Z${i + 1}`, slug, primer: false, core: CORE.includes(key) });
     PRIMERS.filter((p) => p.after === key).forEach((p) => {
-      out.push({ key: p.key, phase: p.phase, label: p.label, ico: p.ico, num: null, tag: `P${++primers}`, slug: p.slug, primer: true });
+      out.push({ key: p.key, phase: p.phase, label: p.label, ico: p.ico, num: null, tag: `P${++primers}`, slug: p.slug, primer: true, core: CORE.includes(p.key) });
     });
   });
   return out;
+}
+
+/**
+ * The pages before and after `key` on the route, among the pages that `keep` accepts. The page itself does not have to
+ * be one of them: from a specialised page, the key-topic neighbours are the nearest key topics on each side.
+ */
+export function around(/** @type {string} */ key, keep = (/** @type {RouteItem} */ _z) => true) {
+  const r = route().filter((z) => z.slug !== null);
+  const i = r.findIndex((z) => z.key === key);
+  if (i < 0) return { prev: null, next: null };
+  return { prev: r.slice(0, i).reverse().find(keep) ?? null, next: r.slice(i + 1).find(keep) ?? null };
 }
 
 export const phaseOf = (/** @type {string} */ k) => PHASES.find((p) => p.k === k);

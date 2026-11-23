@@ -1,5 +1,6 @@
 // The star map: the route through REF·DB drawn as a solar system. The sun is the overview (Z1). Each phase is a
 // planet, in route order from the sun outwards. Each zone of the phase is a moon, and its surface shows its topic.
+// With ADVANCED off the map shows the key topics only, as the rail does.
 // Pure data, derived from the zone plan: the 3D scene is in src/scripts/starmap-scene.ts.
 import { PHASES, route, hrefOf } from '../data/zones.mjs';
 
@@ -62,32 +63,36 @@ export interface MapPlanet { k: string; n: string; sub: string; d: string; color
 export interface MapData {
   sun: { tag: string; label: string; href: string; desc: string };
   planets: MapPlanet[];
-  v2: number; total: number;
+  /** key topics only (ADVANCED off); the topics on the map (the sun and the moons); all the topics of the route */
+  keyOnly: boolean; shown: number; all: number;
 }
 
 /**
  * The map for a site at `base`. `descs` maps a page slug to its description ('' is the home page). The overview
- * (zone 1) is the sun, so it is not a moon of ORIENT.
+ * (zone 1) is the sun, so it is not a moon of ORIENT. `keyOnly` (ADVANCED off): only the key topics, and the zone
+ * `keep` (the page you are on) when it is not one of them; a phase with none of these is not drawn, and the phases
+ * that are drawn are numbered in sequence.
  */
-export function buildMap(base: string, descs: Record<string, string>): MapData {
+export function buildMap(base: string, descs: Record<string, string>, opts: { keyOnly?: boolean; keep?: string | null } = {}): MapData {
   const items = route();
   const home = items.find((i) => i.key === 'home')!;
-  const zones = items.filter((i) => !i.primer);
-  const planets = PHASES.map((p, index) => ({
-    k: p.k, n: p.n, sub: p.sub, d: p.d, color: p.dark, index, emblem: EMBLEMS[p.k]?.model ?? 'gyro',
-    moons: items
-      .filter((i) => i.phase === p.k && i.key !== 'home')
-      .map((i) => ({
+  const show = (i: (typeof items)[number]) => !opts.keyOnly || i.core || i.key === opts.keep;
+  const planets = PHASES.map((p) => ({ p, zs: items.filter((i) => i.phase === p.k && i.key !== 'home' && show(i)) }))
+    .filter(({ zs }) => zs.length > 0)
+    .map(({ p, zs }, index) => ({
+      k: p.k, n: p.n, sub: p.sub, d: p.d, color: p.dark, index, emblem: EMBLEMS[p.k]?.model ?? 'gyro',
+      moons: zs.map((i) => ({
         key: i.key, tag: i.primer ? 'PRIMER' : i.tag, label: i.label, ico: i.ico, href: hrefOf(i, base),
         v2: i.slug !== null, primer: i.primer,
         desc: i.slug !== null ? descs[i.slug] ?? '' : 'Opens the v1 reference at this zone while v2 is rebuilt.',
         motif: MOTIFS.indexOf(motifOf(i.key)),
       })),
-  }));
+    }));
   return {
     sun: { tag: home.tag, label: home.label, href: hrefOf(home, base), desc: descs[''] ?? '' },
     planets,
-    v2: zones.filter((z) => z.slug !== null).length,
-    total: zones.length,
+    keyOnly: !!opts.keyOnly,
+    shown: 1 + planets.reduce((n, p) => n + p.moons.length, 0),
+    all: items.length,
   };
 }

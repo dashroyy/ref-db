@@ -1,50 +1,60 @@
 ---
-// Route footer: what comes next on the route, and the rest of this phase.
-// Replaces Starlight's pagination, which followed the sidebar config instead of the zone plan.
+// Route footer: what comes next on the route, and the rest of this phase. With ADVANCED off, previous and next go
+// through the key topics and the phase list shows its key topics, with a button that shows the rest; with ADVANCED
+// on, they go through every v2 page. Replaces Starlight's pagination, which followed the sidebar config instead of the
+// zone plan.
 import LastUpdated from '@astrojs/starlight/components/LastUpdated.astro';
-import { PHASES, route, hrefOf, toSlug } from '../../data/zones.mjs';
+import { PHASES, route, around, hrefOf, toSlug } from '../../data/zones.mjs';
 
 const base = import.meta.env.BASE_URL;
 const slug = toSlug(Astro.url.pathname, base);
 const items = route();
 const here = items.find((r) => r.slug !== null && r.slug === slug);
-const v2 = items.filter((z) => z.slug !== null);
-const at = here ? v2.findIndex((z) => z.key === here.key) : -1;
-const prev = at > 0 ? v2[at - 1] : null;
-const next = at >= 0 && at < v2.length - 1 ? v2[at + 1] : null;
+const navs = here
+  ? [
+      { cls: 'core-only', what: 'KEY TOPIC', ...around(here.key, (z) => z.core) },
+      { cls: 'adv-only', what: '', ...around(here.key) },
+    ]
+  : [];
 const ph = here ? PHASES.find((p) => p.k === here.phase)! : null;
 const phaseRest = here ? items.filter((z) => z.phase === here.phase && z.key !== here.key) : [];
+const hidden = phaseRest.filter((z) => !z.core).length;
 const phaseOfItem = (k: string) => PHASES.find((p) => p.k === k)!;
 ---
 
 <footer class="route-foot">
   <div class="rf-meta"><LastUpdated /></div>
-  {(prev || next) && (
-    <nav class="rf-pager" aria-label="Previous and next on the route">
+  {navs.filter((n) => n.prev || n.next).map(({ cls, what, prev, next }) => (
+    <nav class={`rf-pager ${cls}`} aria-label={`Previous and next ${what ? 'key topic' : 'on the route'}`}>
       {prev ? (
         <a class="rf-card prev" href={hrefOf(prev, base)} style={`--pc: var(--ph-${prev.phase})`}>
-          <span class="rf-k">‹ PREVIOUS · {phaseOfItem(prev.phase).n} · {prev.tag}</span>
+          <span class="rf-k">‹ PREVIOUS{what && ` ${what}`} · {phaseOfItem(prev.phase).n} · {prev.tag}</span>
           <span class="rf-t">{prev.label}</span>
         </a>
       ) : <span></span>}
       {next && (
         <a class="rf-card next" href={hrefOf(next, base)} style={`--pc: var(--ph-${next.phase})`}>
-          <span class="rf-k">NEXT ON THE ROUTE · {phaseOfItem(next.phase).n} · {next.tag} ›</span>
+          <span class="rf-k">NEXT {what || 'ON THE ROUTE'} · {phaseOfItem(next.phase).n} · {next.tag} ›</span>
           <span class="rf-t">{next.label}</span>
         </a>
       )}
     </nav>
-  )}
+  ))}
   {ph && phaseRest.length > 0 && (
     <section class="rf-phase" style={`--pc: var(--ph-${ph.k})`}>
       <p class="rf-k">ALSO IN {ph.n}: {ph.sub.toUpperCase()}</p>
       <div class="rf-chips">
         {phaseRest.map((z) => (
-          <a href={hrefOf(z, base)} class:list={['rf-chip', z.slug !== null ? 'v2' : 'v1']}
+          <a href={hrefOf(z, base)} class:list={['rf-chip', z.slug !== null ? 'v2' : 'v1', { 'adv-only': !z.core }]}
             title={z.slug === null ? 'Opens in the v1 archive' : undefined}>
             <span class="zn">{z.tag}</span>{z.label}{z.slug === null && <span class="tag">v1</span>}
           </a>
         ))}
+        {hidden > 0 && (
+          <button type="button" class="rf-chip rf-more core-only" data-adv-set="on" title="Turn on ADVANCED to show the specialised zones">
+            +{hidden} more · ADVANCED
+          </button>
+        )}
       </div>
     </section>
   )}

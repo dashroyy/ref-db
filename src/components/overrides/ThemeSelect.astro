@@ -1,5 +1,8 @@
 ---
-// STAR MAP, then the MODE switch in the v1 style: dark ⇄ light, dark by default.
+// STAR MAP, the MODE switch in the v1 style (dark ⇄ light, dark by default), and the script of ADVANCED: off by
+// default, the rail, the banners, the route footer, the home page and the star map show the key topics (CORE in
+// src/data/zones.mjs); on, they show every zone and primer. Its switch is at the top of the rail (Sidebar.astro); the
+// script is here because the header is on every page. The class is set before first paint by ThemeProvider.
 import StarMapButton from '../hud/StarMapButton.astro';
 ---
 
@@ -21,4 +24,27 @@ import StarMapButton from '../hud/StarMapButton.astro';
   document.querySelectorAll('[data-mode-switch]').forEach((b) =>
     b.addEventListener('click', () => set(root.dataset.theme === 'light' ? 'dark' : 'light')),
   );
+
+  // ADVANCED. [data-adv-switch] toggles it; [data-adv-set="on" | "off"] sets it (the "show all" buttons in the rail
+  // and the route footer). Other scripts listen for the 'refdb:advanced' event.
+  const AKEY = 'refdb-advanced';
+  const label = (on: boolean) => document.querySelectorAll('[data-adv-switch]').forEach((el) => el.setAttribute('aria-pressed', String(on)));
+  const setAdv = (on: boolean, save = true) => {
+    if (on === root.classList.contains('adv')) return;
+    root.classList.toggle('adv', on);
+    if (save) try { localStorage.setItem(AKEY, on ? 'on' : 'off'); } catch {}
+    label(on);
+    document.dispatchEvent(new CustomEvent('refdb:advanced', { detail: { on } }));
+  };
+  label(root.classList.contains('adv'));
+  document.addEventListener('click', (e) => {
+    const b = (e.target as Element | null)?.closest<HTMLElement>('[data-adv-switch], [data-adv-set]');
+    if (!b) return;
+    const on = b.dataset.advSet ? b.dataset.advSet === 'on' : !root.classList.contains('adv');
+    setAdv(on);
+    // a "show all" button hides itself: give the focus to what it showed, so the keyboard does not lose its place
+    if (b.offsetParent === null) b.parentElement?.querySelector<HTMLElement>(on ? '.adv-only' : '.core-only')?.focus();
+  });
+  // another tab changed it
+  addEventListener('storage', (e) => { if (e.key === AKEY) setAdv(e.newValue === 'on', false); });
 </script>

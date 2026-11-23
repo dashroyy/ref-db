@@ -41,6 +41,7 @@ html.sm-open .page > .main-frame, html.sm-open .page > .sidebar { visibility: hi
 .sm-stats { display: flex; gap: 1px; margin: 0; align-self: start; background: var(--sm-line); border: 1px solid var(--sm-line); }
 .sm-close { font: 600 0.8em/1 var(--sl-font-mono); letter-spacing: 0.14em; color: var(--sm-ink); background: var(--sm-plate); border: 1px solid var(--sm-line); padding: 0 1em; height: 3.4em; cursor: pointer; }
 .sm-close:hover, .sm-close:focus-visible { border-color: var(--sm-cyan); color: var(--sm-cyan); outline: none; }
+.sm-adv { white-space: nowrap; }
 .sm-stats div { background: var(--sm-plate); padding: 0.5em 0.85em; margin: 0; display: grid; gap: 0.25em; }
 .sm-stats dt { font-size: 0.68em; letter-spacing: 0.16em; color: var(--sm-muted); }
 .sm-stats dd { margin: 0; font-size: 1.25em; font-weight: 600; letter-spacing: 0.08em; }
@@ -169,8 +170,8 @@ html.sm-open .page > .main-frame, html.sm-open .page > .sidebar { visibility: hi
   .sm-id { padding: 0.45em 0.7em; }
   .sm-id .t { font-size: 1.15em; }
   .sm-id .k { display: none; }
-  .sm-stats div { padding: 0.4em 0.6em; }
-  .sm-stats div:not(:first-child) { display: none; }
+  /* the SHOW ALL / KEY ONLY button says which topics are on the map: the counts give way to it */
+  .sm-stats { display: none; }
   .sm-close { height: 2.9em; padding: 0 0.8em; }
   .sm-panel, .sm-brief { left: 12px; right: 12px; width: auto; top: auto; bottom: calc(16px + 3.2em); max-height: 44%; }
   .sm-card { right: 12px; left: 12px; width: auto; bottom: calc(16px + 3.2em); }

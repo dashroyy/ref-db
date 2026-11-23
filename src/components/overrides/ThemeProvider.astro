@@ -1,6 +1,6 @@
 ---
 // Dark is the default (REF·DB rule): only an explicit 'light' choice changes it.
-// Motion preference is applied here too, before first paint. Storage is guarded:
+// Motion and ADVANCED preferences are applied here too, before first paint. Storage is guarded:
 // it throws in opaque origins and some file:// contexts.
 ---
 
@@ -10,6 +10,8 @@
     const root = document.documentElement;
     root.dataset.theme = get('starlight-theme') === 'light' ? 'light' : 'dark';
     if (get('refdb-motion') === 'off') root.classList.add('motion-off');
+    // ADVANCED: the specialised zones are shown as well as the key ones (src/data/zones.mjs CORE)
+    if (get('refdb-advanced') === 'on') root.classList.add('adv');
     // Starlight components call this; our theme switch keeps its own state.
     window.StarlightThemeProvider = { updatePickers() {} };
   })();

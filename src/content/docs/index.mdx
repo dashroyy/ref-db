@@ -6,6 +6,10 @@ tableOfContents: false
 
 import { Aside } from '@astrojs/starlight/components';
 import MissionHome from '../../components/hud/MissionHome.astro';
+import { route } from '../../data/zones.mjs';
+
+export const topics = route();
+export const key = topics.filter((z) => z.core).length;
 
 <MissionHome />
 
@@ -21,9 +25,11 @@ drawing → references.** The calculations use unit-tested code, and the same te
   tolerance only as tight as the function needs, and give the standard that applies.
 </Aside>
 
-<Aside type="note" title="v2 is rebuilt zone by zone">
-  Zones with the mark **v1** in the rail open the complete original reference at that zone, so no content is lost
-  while the other zones are rebuilt. The [roadmap](start/roadmap/) shows the sequence.
+<Aside type="note" title="Key topics first">
+  The menu shows the {key} key topics: the parts of a solid motor, the propellant and the grain, the materials, the
+  margins, the tests and the seals. Push **ADVANCED** at the top of the menu to show all {topics.length} topics,
+  with the specialised zones such as bondlines, combustion instability, GD&T, welding and the standards. The site
+  remembers your selection, and search always finds every page.
 </Aside>
 
 <Aside type="caution" title="Reference aid only">

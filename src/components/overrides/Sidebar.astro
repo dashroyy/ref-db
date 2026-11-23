@@ -1,8 +1,8 @@
 ---
-// Mission rail: the whole route, every zone title always visible (REF·DB rule),
-// grouped by phase with phase colours, an orbit map on top, and the current
-// zone centred on load. Rebuilt zones open their v2 page; the rest open the
-// v1 archive at that zone. Everything derives from src/data/zones.mjs.
+// Mission rail: the route, grouped by phase with phase colours, an orbit map on top, and the current zone centred on
+// load. With ADVANCED off it shows the key topics (CORE in src/data/zones.mjs) and only the phases that have them;
+// with ADVANCED on, every zone title is visible (REF·DB rule). The page you are on always shows. Rebuilt zones open
+// their v2 page; the rest open the v1 archive at that zone. Everything derives from src/data/zones.mjs.
 import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
 import StarMapButton from '../hud/StarMapButton.astro';
 import { PHASES, BRIEFING, route, hrefOf, toSlug } from '../../data/zones.mjs';
@@ -11,81 +11,96 @@ const base = import.meta.env.BASE_URL;
 const slug = toSlug(Astro.url.pathname, base);
 const items = route();
 const here = items.find((r) => r.slug !== null && r.slug === slug);
+const shown = (z: (typeof items)[number]) => z.core || z.key === here?.key; // with ADVANCED off
+const coreCount = items.filter((z) => z.core).length;
 
-// Orbit map geometry (v1 proportions)
+// Orbit map geometry (v1 proportions). Two maps: the phases with key topics (ADVANCED off) and all eight.
 const W = 266, H = 160, cx = W / 2, cy = 76, rx = 104, ry = 44;
-const planets = PHASES.map((p, i) => {
-  const a = -Math.PI / 2 + (i / PHASES.length) * Math.PI * 2;
-  const zones = items.filter((z) => z.phase === p.k && !z.primer);
-  return {
-    ...p, x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), here: here?.phase === p.k,
-    total: zones.length, v2: zones.filter((z) => z.slug !== null).length,
-  };
-});
 const herePhaseIdx = here ? PHASES.findIndex((p) => p.k === here.phase) : -1;
-const v2Count = items.filter((z) => !z.primer && z.slug !== null).length;
+const orbits = [
+  { id: 'k', cls: 'core-only', phases: PHASES.filter((p) => items.some((z) => z.phase === p.k && shown(z))),
+    where: `${coreCount} KEY TOPICS OF ${items.length}` },
+  { id: 'a', cls: 'adv-only', phases: PHASES,
+    where: here && herePhaseIdx >= 0 ? `PHASE ${herePhaseIdx + 1}/8 · ALL ${items.length} TOPICS` : `ALL ${items.length} TOPICS` },
+].map((o) => ({
+  ...o,
+  planets: o.phases.map((p, i) => {
+    const a = -Math.PI / 2 + (i / o.phases.length) * Math.PI * 2;
+    const cnt = items.filter((z) => z.phase === p.k && (o.id === 'a' || shown(z))).length;
+    return { ...p, x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), here: here?.phase === p.k, cnt };
+  }),
+}));
 ---
 
 <!-- on a phone the map button also heads the menu, where it is found without scrolling the whole rail -->
 <div class="md:sl-hidden rail-map"><StarMapButton /></div>
 
 <div class="rail">
+  <!-- the switch stays in one place: the links that only ADVANCED shows go on a row of their own -->
   <div class="rail-brief">
-    {BRIEFING.map((b) => (
+    {BRIEFING.slice(0, 1).map((b) => (
       <a href={`${base}${b.slug}/`} aria-current={slug === b.slug ? 'page' : undefined}>{b.label}</a>
     ))}
-    <a href={`${base}legacy/`} title="The complete v1 reference, all 64 zones">v1 archive</a>
+    <button type="button" class="rail-adv" data-adv-switch aria-pressed="false"
+      title={`ADVANCED off: the ${coreCount} key topics. On: all ${items.length} topics, with the specialised zones`}>
+      <span class="k">ADVANCED</span><span class="v"><span class="core-only">OFF</span><span class="adv-only">ON</span></span>
+    </button>
+    <div class="rail-brief-more adv-only">
+      {BRIEFING.slice(1).map((b) => (
+        <a href={`${base}${b.slug}/`} aria-current={slug === b.slug ? 'page' : undefined}>{b.label}</a>
+      ))}
+      <a href={`${base}legacy/`} title="The complete v1 reference, all 64 zones">v1 archive</a>
+    </div>
   </div>
 
-  <figure class="rail-orbit" aria-label="Workflow phases">
-    <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Eight workflow phases. Select one to go to it in the list">
-      <defs>
-        <radialGradient id="railSun"><stop offset="0" stop-color="#fff6d8"></stop><stop offset=".45" stop-color="#ffb347"></stop><stop offset="1" stop-color="#ff6a00" stop-opacity="0"></stop></radialGradient>
-        {PHASES.map((p) => (
-          <radialGradient id={`railP_${p.k}`} cx=".35" cy=".35" r=".75">
-            <stop offset="0" stop-color="#fff" stop-opacity=".9"></stop><stop offset=".38" stop-color={`var(--ph-${p.k})`}></stop><stop offset="1" stop-color="#000"></stop>
-          </radialGradient>
-        ))}
-      </defs>
-      <ellipse class="orb-path" cx={cx} cy={cy} rx={rx} ry={ry}></ellipse>
-      <circle cx={cx} cy={cy} r="19" fill="url(#railSun)"></circle>
-      <text class="orb-sun-label" x={cx} y={cy + 4}>{here ? here.tag : '—'}</text>
-      {planets.map((p) => {
-        const r = p.here ? 10 : 7.5;
-        return (
-          <a href={`#rail-${p.k}`} class:list={['orb-p', { here: p.here }]} data-phase={p.k}
-            aria-label={`${p.n}: ${p.sub}, ${p.v2} of ${p.total} zones rebuilt${p.here ? ', current phase' : ''}`}>
-            <title>{`${p.n} · ${p.sub} · ${p.v2}/${p.total} rebuilt`}</title>
-            {p.here && <circle class="orb-ring" cx={p.x} cy={p.y} r={r + 5} stroke={`var(--ph-${p.k})`}></circle>}
-            <circle cx={p.x} cy={p.y} r={r} fill={`url(#railP_${p.k})`}></circle>
-            <text x={p.x} y={p.y + (p.y > cy ? r + 12 : -r - 5)}>{p.n}</text>
-          </a>
-        );
-      })}
-      <text class="orb-where" x={cx} y={H - 3}>
-        {here && herePhaseIdx >= 0 ? `PHASE ${herePhaseIdx + 1}/8 · ${v2Count} OF 64 ZONES IN v2` : `${v2Count} OF 64 ZONES IN v2`}
-      </text>
-    </svg>
-  </figure>
+  {orbits.map((o) => (
+    <figure class:list={['rail-orbit', o.cls]} aria-label="Workflow phases">
+      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${o.planets.length} workflow phases. Select one to go to it in the list`}>
+        <defs>
+          <radialGradient id={`railSun_${o.id}`}><stop offset="0" stop-color="#fff6d8"></stop><stop offset=".45" stop-color="#ffb347"></stop><stop offset="1" stop-color="#ff6a00" stop-opacity="0"></stop></radialGradient>
+          {o.planets.map((p) => (
+            <radialGradient id={`railP_${o.id}_${p.k}`} cx=".35" cy=".35" r=".75">
+              <stop offset="0" stop-color="#fff" stop-opacity=".9"></stop><stop offset=".38" stop-color={`var(--ph-${p.k})`}></stop><stop offset="1" stop-color="#000"></stop>
+            </radialGradient>
+          ))}
+        </defs>
+        <ellipse class="orb-path" cx={cx} cy={cy} rx={rx} ry={ry}></ellipse>
+        <circle cx={cx} cy={cy} r="19" fill={`url(#railSun_${o.id})`}></circle>
+        <text class="orb-sun-label" x={cx} y={cy + 4}>{here ? here.tag : '—'}</text>
+        {o.planets.map((p) => {
+          const r = p.here ? 10 : 7.5;
+          return (
+            <a href={`#rail-${p.k}`} class:list={['orb-p', { here: p.here }]} data-phase={p.k}
+              aria-label={`${p.n}: ${p.sub}, ${p.cnt === 1 ? '1 topic' : `${p.cnt} topics`}${p.here ? ', current phase' : ''}`}>
+              <title>{`${p.n} · ${p.sub} · ${p.cnt === 1 ? '1 topic' : `${p.cnt} topics`}`}</title>
+              {p.here && <circle class="orb-ring" cx={p.x} cy={p.y} r={r + 5} stroke={`var(--ph-${p.k})`}></circle>}
+              <circle cx={p.x} cy={p.y} r={r} fill={`url(#railP_${o.id}_${p.k})`}></circle>
+              <text x={p.x} y={p.y + (p.y > cy ? r + 12 : -r - 5)}>{p.n}</text>
+            </a>
+          );
+        })}
+        <text class="orb-where" x={cx} y={H - 3}>{o.where}</text>
+      </svg>
+    </figure>
+  ))}
 
   {PHASES.map((p) => {
     const zs = items.filter((z) => z.phase === p.k);
-    const v2 = zs.filter((z) => !z.primer && z.slug !== null).length;
-    const n = zs.filter((z) => !z.primer).length;
+    const key = zs.filter(shown).length;
     return (
-      <section class="rail-phase" id={`rail-${p.k}`} style={`--pc: var(--ph-${p.k})`}>
+      <section class:list={['rail-phase', { 'adv-only': key === 0 }]} id={`rail-${p.k}`} style={`--pc: var(--ph-${p.k})`}>
         <h2 class="rail-ph-head">
           <span class="orb" aria-hidden="true"></span>
           <span class="ph-ico" aria-hidden="true">{p.ico}</span>
           <span class="ph-name">{p.n}</span>
           <span class="ph-sub">{p.sub}</span>
-          <span class="ph-cnt" title={`${v2} of ${n} zones rebuilt in v2`}>{v2}/{n}</span>
+          <span class="ph-cnt" title={`${zs.length} topics in this phase`}><span class="core-only">{key}</span><span class="adv-only">{zs.length}</span></span>
         </h2>
         <ul>
           {zs.map((z) => {
             const isHere = here?.key === z.key;
             return (
-              <li>
+              <li class={shown(z) ? undefined : 'adv-only'}>
                 <a href={hrefOf(z, base)} class:list={['rail-z', z.slug !== null ? 'v2' : 'v1', { primer: z.primer, here: isHere }]}
                   aria-current={isHere ? 'page' : undefined}
                   title={z.slug === null ? `${z.tag} ${z.label}: opens in the v1 archive` : undefined}>
@@ -101,6 +116,11 @@ const v2Count = items.filter((z) => !z.primer && z.slug !== null).length;
       </section>
     );
   })}
+
+  <div class="rail-more">
+    <button type="button" class="core-only" data-adv-set="on">Show all {items.length} topics</button>
+    <button type="button" class="adv-only" data-adv-set="off">Show the {coreCount} key topics only</button>
+  </div>
 </div>
 
 <div class="md:sl-hidden">
@@ -126,6 +146,8 @@ const v2Count = items.filter((z) => !z.primer && z.slug !== null).length;
   pane?.addEventListener('toggle', (e) => {
     if ((e as ToggleEvent).newState === 'open') requestAnimationFrame(() => centre(document.querySelector('.rail-z.here')));
   });
+  // ADVANCED changes the length of the rail: keep the current zone in view
+  document.addEventListener('refdb:advanced', () => requestAnimationFrame(() => centre(document.querySelector('.rail-z.here'))));
   document.querySelectorAll<HTMLAnchorElement>('.rail-orbit .orb-p').forEach((a) =>
     a.addEventListener('click', (e) => {
       e.preventDefault();

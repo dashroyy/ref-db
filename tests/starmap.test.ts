@@ -10,11 +10,25 @@ test('the map: the overview is the sun, each phase a planet, every other zone a 
   const moons = m.planets.flatMap((p) => p.moons);
   assert.equal(moons.length, ZONE_PLAN.length - 1 + PRIMERS.length, 'every zone but the overview, and the primers');
   assert.ok(!moons.some((x) => x.key === 'home'));
-  assert.equal(m.total, ZONE_PLAN.length);
-  assert.equal(m.v2, route().filter((z) => !z.primer && z.slug !== null).length);
+  assert.equal(m.keyOnly, false);
+  assert.equal(m.all, route().length); assert.equal(m.shown, route().length, 'ADVANCED on: every topic is on the map');
   const cryo = moons.find((x) => x.key === 'cryo')!;
   assert.equal(cryo.href, '/materials/cryogenic/'); assert.equal(cryo.desc, 'Cryogenic design.'); assert.equal(MOTIFS[cryo.motif], 'ice');
   for (const x of moons.filter((y) => !y.v2)) assert.match(x.href, /legacy\/\?z=/, `${x.key} opens the v1 archive`);
+});
+
+test('ADVANCED off: the key topics only, the page you are on kept, empty phases left out and the rest numbered in sequence', () => {
+  const core = route().filter((z) => z.core);
+  const m = buildMap('/', {}, { keyOnly: true });
+  const moons = m.planets.flatMap((p) => p.moons);
+  assert.equal(moons.length + 1, core.length, 'every key topic but the overview (the sun) is a moon');
+  assert.ok(moons.every((x) => core.some((z) => z.key === x.key)));
+  assert.ok(m.planets.every((p) => p.moons.length > 0), 'no empty phase');
+  assert.deepEqual(m.planets.map((p) => p.index), m.planets.map((_, i) => i), 'the phases drawn are numbered in sequence');
+  assert.ok(!m.planets.some((p) => p.k === 'detail'), 'a phase without key topics is not drawn');
+  assert.ok(m.keyOnly); assert.equal(m.shown, core.length); assert.equal(m.all, route().length);
+  const kept = buildMap('/', {}, { keyOnly: true, keep: 'gdt' });
+  assert.ok(kept.planets.find((p) => p.k === 'detail')?.moons.some((x) => x.key === 'gdt'), 'the page you are on stays on the map');
 });
 
 test('a site under a base path links inside it', () => {

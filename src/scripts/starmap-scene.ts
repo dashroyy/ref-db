@@ -453,6 +453,7 @@ interface PlanetObj {
 type Body = { kind: 'sun' } | { kind: 'planet'; p: PlanetObj } | { kind: 'moon'; m: MoonObj };
 
 /** `here`: the zone of the page the map was opened from (a moon key, or 'home'); `close`: close the map. */
+/** Draw the map in `root`. Returns `dispose`, which stops the scene and frees its WebGL context. */
 export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: string | null; close?: () => void } = {}) {
   const canvas = root.querySelector<HTMLCanvasElement>('[data-gl]')!;
   const labels = root.querySelector<HTMLElement>('[data-labels]')!;
@@ -562,7 +563,7 @@ export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: str
     const label = document.createElement('button');
     label.type = 'button'; label.className = 'sm-plabel off'; label.tabIndex = -1;
     label.style.setProperty('--pc', pd.color);
-    label.innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b> ${pd.n}<small>${pd.moons.filter((m) => !m.primer).length}</small>`;
+    label.innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b> ${pd.n}<small>${pd.moons.length}</small>`;
     labels.appendChild(label);
     const pObj: PlanetObj = { data: pd, anchor, body, mesh, atmo, r, color, moons: [], rings, moonOrbits, label, emblemPivot, emblemTick: em.tick, orbitLine: null as unknown as THREE.Line };
     let k = 0;
@@ -780,11 +781,11 @@ export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: str
     card.hidden = false;
     if (b.kind === 'sun') {
       card.style.setProperty('--pc', '#ffb35c');
-      card.innerHTML = `<span class="k">${data.sun.tag} · THE SUN</span><span class="t">${data.sun.label}</span><span class="d">Three ways in, how every page works, and the status of the rebuild.</span><span class="go">SELECT TO OPEN THE BRIEFING</span>`;
+      card.innerHTML = `<span class="k">${data.sun.tag} · THE SUN</span><span class="t">${data.sun.label}</span><span class="d">Three ways in, the tasks, and how every page works.</span><span class="go">SELECT TO OPEN THE BRIEFING</span>`;
     } else if (b.kind === 'planet') {
-      const p = b.p.data, z = p.moons.filter((m) => !m.primer), v2 = z.filter((m) => m.v2).length;
+      const p = b.p.data, n = p.moons.length;
       card.style.setProperty('--pc', p.color);
-      card.innerHTML = `<span class="k">PHASE ${p.index + 1} OF ${data.planets.length}</span><span class="t">${p.n}</span><span class="s">${fmt(p.sub)}</span><span class="d">${fmt(p.d)}</span><span class="go">${v2}/${z.length} ZONES IN v2 · SELECT TO APPROACH</span>`;
+      card.innerHTML = `<span class="k">PHASE ${p.index + 1} OF ${data.planets.length}</span><span class="t">${p.n}</span><span class="s">${fmt(p.sub)}</span><span class="d">${fmt(p.d)}</span><span class="go">${n} ${n === 1 ? 'TOPIC' : 'TOPICS'} · SELECT TO APPROACH</span>`;
     } else {
       const m = b.m.data;
       card.style.setProperty('--pc', b.m.planet.data.color);
@@ -1043,14 +1044,16 @@ export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: str
     if (!el || !focus || mode === 'warp') return;
     const m = focus.moons.find((x) => x.label === el); if (m) setHover({ kind: 'moon', m });
   });
-  document.addEventListener('keydown', (e) => {
+  const onKey = (e: KeyboardEvent) => {
     if (e.key !== 'Escape' || mode === 'system' || mode === 'warp' || !visible) return;
     const a = document.activeElement;
     if (a && a !== document.body && !root.contains(a)) return; // the search dialog and other controls keep their Escape
     e.preventDefault(); goSystem();
-  });
+  };
+  document.addEventListener('keydown', onKey);
   // back from the zone page: the browser may restore this page as it was, mid-warp
-  addEventListener('pageshow', (e) => { if ((e as PageTransitionEvent).persisted) resetWarp(); });
+  const onShow = (e: PageTransitionEvent) => { if (e.persisted) resetWarp(); };
+  addEventListener('pageshow', onShow);
   function resetWarp() {
     if (mode !== 'warp' && !warped) return;
     warped = false; warpCv.hidden = true; canvas.style.transform = ''; canvas.style.filter = '';
@@ -1059,11 +1062,13 @@ export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: str
   }
 
   // --- the loop
-  let visible = true, last = performance.now(), t = 0;
+  let visible = true, last = performance.now(), t = 0, dead = false;
   const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; }, { threshold: 0.01 });
   io.observe(root);
-  new ResizeObserver(() => resize()).observe(root);
-  new MutationObserver(() => { dirty = true; }).observe(doc, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+  const ro = new ResizeObserver(() => resize());
+  ro.observe(root);
+  const mo = new MutationObserver(() => { dirty = true; });
+  mo.observe(doc, { attributes: true, attributeFilter: ['class', 'data-theme'] });
 
   const SYS_RATE = TAU / 420; // one turn of the system in 7 minutes
   let sunGlowLevel = 1;
@@ -1085,6 +1090,7 @@ export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: str
   // creeps back when they are quick
   let gapAvg = 33, frames = 0, lastDraw = 0;
   function frame(now: number) {
+    if (dead) return;
     requestAnimationFrame(frame);
     if (!visible || document.hidden) { last = now; lastDraw = 0; return; }
     if (mode !== 'warp' && now - lastDraw < 1000 / 31) return;
@@ -1186,4 +1192,13 @@ export function initStarMap(root: HTMLElement, data: MapData, opts: { here?: str
   view.target.copy(want.target); view.dist = want.dist; view.theta = want.theta; view.phi = want.phi;
   canvas.style.cursor = 'grab';
   requestAnimationFrame(frame);
+  return {
+    dispose() {
+      dead = true;
+      io.disconnect(); ro.disconnect(); mo.disconnect();
+      document.removeEventListener('keydown', onKey);
+      removeEventListener('pageshow', onShow);
+      renderer.dispose(); renderer.forceContextLoss();
+    },
+  };
 }

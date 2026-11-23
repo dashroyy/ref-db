@@ -172,6 +172,7 @@ site-search button[data-open-modal] {
   padding: 0.25rem 0.5rem;
 }
 .rail-brief a:hover, .rail-brief a[aria-current='page'] { color: var(--sl-color-accent); border-color: var(--sl-color-accent); }
+.rail-brief-more { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
 .rail-orbit { margin: 0.25rem 0 0.25rem; }
 .rail-orbit svg { width: 100%; height: auto; display: block; overflow: visible; }
@@ -484,3 +485,31 @@ mobile-starlight-toc .display-current { color: var(--pc, var(--sl-color-accent))
   box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.85), 0 0 34px -6px color-mix(in srgb, var(--pc, var(--sl-color-accent)) 65%, transparent);
 }
 html.motion-off .tilt { transform: none !important; }
+
+/* =====================================================================
+   ADVANCED: off (the default) shows the key topics, on shows every zone and primer. The class is set on <html>
+   before first paint (ThemeProvider); the lists in zones.mjs decide which items carry adv-only.
+   ===================================================================== */
+html:not(.adv) .adv-only, html.adv .core-only { display: none !important; }
+.rail-adv {
+  margin-left: auto; display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; background: transparent;
+  font-family: var(--sl-font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--sl-color-gray-3);
+  border: 1px solid var(--hud-edge-strong); border-radius: 3px; padding: 0.25rem 0.5rem;
+}
+.rail-adv .v { color: var(--sl-color-white); }
+.rail-adv:hover, .rail-adv:focus-visible, .rail-adv[aria-pressed='true'] { border-color: var(--sl-color-accent); }
+.rail-adv:hover .v, .rail-adv[aria-pressed='true'] .v { color: var(--sl-color-accent); }
+.rail-more { padding: 0.35rem 0 0 0.75rem; }
+.rail-more button {
+  width: 100%; font-family: var(--sl-font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--sl-color-gray-2); background: transparent; border: 1px dashed var(--hud-edge-strong); border-radius: 3px;
+  padding: 0.45rem 0.6rem; cursor: pointer;
+}
+.rail-more button:hover, .rail-more button:focus-visible { color: var(--sl-color-accent); border-color: var(--sl-color-accent); }
+.rf-more { background: transparent; border-style: dashed; cursor: pointer; text-transform: uppercase; }
+/* narrow desktops: the search button keeps only its icon, so that the header controls fit */
+@media (min-width: 50rem) and (max-width: 56rem) {
+  site-search button[data-open-modal] > :is(span, kbd) { display: none !important; }
+}
+/* the phone menu footer: every chip keeps its own height when the row wraps */
+.mobile-preferences { align-items: center; row-gap: 0.5rem; }
