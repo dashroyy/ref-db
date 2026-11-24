@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { alloyKeys, sameAlloy, galvanicFor, derived } from '../src/lib/datasheet.ts';
-import { material, DEFAULTS } from '../src/lib/materials.ts';
+import { material, DEFAULTS, MATERIALS, has } from '../src/lib/materials.ts';
 import xref from '../src/data/xref.json' with { type: 'json' };
 import specs from '../src/data/specs.json' with { type: 'json' };
 
@@ -43,4 +43,18 @@ test('derived figures for D6AC', () => {
   close(d.critCrack!, (1 / Math.PI) * (70 / (1.12 * 870)) ** 2 * 1000, 1e-6);
   close(d.endurance!, 700, 1e-9, 'steels cap at 700 MPa above 1400 MPa UTS');
   assert.equal(derived(material(DEFAULTS.epdm)!).endurance, undefined);
+});
+
+test('every brass has the properties the tools use, its ratings and a row in the designations table', () => {
+  const brasses = MATERIALS.filter((m) => m.family === 'cu' && /brass/i.test(m.name));
+  assert.ok(brasses.length >= 17, `${brasses.length} brasses`);
+  for (const m of brasses) {
+    assert.ok(has(m, ['rho', 'E', 'Fty', 'Ftu', 'alpha', 'k', 'kic']), `${m.name}: a property is missing`);
+    assert.ok(m.machinability && m.corrosion && m.price, `${m.name}: a rating or the price is missing`);
+    assert.ok(m.spec.length > 80, `${m.name}: the spec text must give the temper and the basis of the strengths`);
+    assert.ok(xref.rows.some((r) => sameAlloy(m, r)), `${m.name}: no row in xref.json`);
+    assert.equal(galvanicFor(m)?.key, 'brass', `${m.name}: galvanic row`);
+  }
+  // the leaded free-machining brasses dezincify: they are not rated with the DZR and aluminium brasses
+  assert.equal(material('Brass CZ121 (CW614N)')!.corrosion, 3);
 });

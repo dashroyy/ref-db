@@ -1,6 +1,6 @@
 ---
 title: Specifying materials
-description: Change a material selection into a drawing callout that an inspector can accept or reject. Alloy and condition, product-form standard and finish, with a builder for 27 specification sheets.
+description: Change a material selection into a drawing callout that an inspector can accept or reject. Alloy and condition, product-form standard and finish, peripheral coarse grain, and a builder for 27 specification sheets with their manufacturing considerations.
 sidebar:
   order: 3
 ---
@@ -56,10 +56,45 @@ two results for the drawing:
 - **Give the grain direction** when it is important. A grain-direction note on the drawing and on the forging drawing
   removes the uncertainty.
 
+## Peripheral coarse grain
+
+The heat-treatable aluminium alloys (2xxx, 6xxx and 7xxx) can grow a layer of coarse, recrystallised grains at the
+surface of extrusions and forgings. This is **peripheral coarse grain (PCG)**. It starts during extrusion or forging and
+grows during the solution heat treatment. Its depth can be a fraction of a millimetre or several millimetres. The die
+design, the ram speed, the section thickness and the heat treatment set the depth, so it is a process control of the
+supplier as much as a design item.
+
+The layer is weaker than the core. It lowers the fatigue strength (cracks start in it), the fracture toughness, the
+resistance to stress-corrosion cracking and the quality of a machined or anodised surface. The 7xxx alloys are the most
+susceptible, and stress-corrosion cracking is already their weak point.
+
+Where your programme does not permit PCG on the finished part, the drawing must say three things:
+
+1. **No peripheral coarse grain on the finished part.**
+2. **The minimum stock to remove from every as-supplied surface.** It must be more than the deepest layer that the mill
+   guarantees. Agree that depth with the mill when you order.
+3. **How to verify it:** usually a macro-etch of a sacrificial end or a test piece from the same batch, to a process
+   specification.
+
+<Aside type="caution" title="The stock removal is not free">
+  The machining allowance sets the minimum section that you buy, adds machining time, and can make you buy a larger bar
+  or a thicker plate. Decide the requirement before you size the part. If you do not, the finished wall can be too thin
+  after the skin comes off.
+</Aside>
+
+- **Clad sheet is the opposite case.** On clad 2024 sheet the cladding is the corrosion protection. Never machine or
+  abrade through it. State the product form clearly, because the instruction for an extrusion is the reverse.
+- **Other materials have their own surface concern.** The 5xxx alloys are not heat treated, so they do not grow PCG.
+  Titanium has alpha case, PH stainless steels have delta ferrite in heavy sections, and nickel alloys need grain-size
+  control. The builder below gives the concern of each material.
+
 ## Builder
 
-Select a sheet, then each of the three parts. The builder makes the block from the standards on that sheet. The example
-below it shows how REF·DB v1 wrote a complete callout for the same material.
+Select a sheet, then each of the three parts. The builder makes the block from the standards on that sheet. The extra
+lines add heat treatment with furnace pyrometry, the hydrogen-embrittlement bake after plating a steel, penetrant
+inspection, the edge condition, the grain direction and the peripheral coarse grain requirement. The PCG lines are on by
+default for the alloys that can grow it. Below the callout are the manufacturing considerations for the material, and an
+example of how REF·DB v1 wrote a complete callout for it.
 
 <SpecBuilder />
 

@@ -8,6 +8,8 @@ export interface SpecFinish { name: string; spec: string; note: string; }
 export interface SpecSheet {
   name: string; designation: string; family: string; base: string; composition: string;
   forms: SpecForm[]; tempers: SpecTemper[]; finishes: SpecFinish[]; callout: string; tips: string[];
+  /** manufacturing considerations (src/data/specs-mfg.mjs); pcg: the alloy can grow peripheral coarse grain */
+  mfg?: { pcg: boolean; notes: string[] };
 }
 
 const stripNotes = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();
@@ -37,10 +39,23 @@ export interface CalloutChoice {
   afterFinish: boolean;
   traceability: boolean;
   certificate: boolean;
+  // optional lines, as in the v1 builder
+  heatTreat?: boolean; // the condition by a process specification, with furnace pyrometry
+  hydrogenBake?: boolean; // embrittlement relief after plating a steel
+  ndt?: boolean; // penetrant inspection of the finished part
+  pcg?: { stock: number; macro: boolean } | null; // no peripheral coarse grain on the finished part
+  edges?: boolean; // edge condition to ISO 13715
+  grainDirection?: boolean;
 }
 
 const pad = (k: string) => (k + ':').padEnd(10, ' ');
 const CONT = ' '.repeat(10);
+
+/** True when a finish is an electroplating that can put hydrogen into a steel (not hot-dip galvanising or electropolishing). */
+export const isPlating = (finishName: string) => /plat|electro(?!polish)|zinc|cadmium/i.test(finishName) && !/galvani[sz]|hot.dip/i.test(finishName);
+/** The hydrogen-bake line applies by default to a plated steel, unless the finish specification already calls for the bake. */
+export const needsBake = (sheet: SpecSheet, finish: SpecFinish | null) =>
+  !!finish && ['steel', 'ss', 'ni'].includes(sheet.family) && isPlating(finish.name) && !/embrittlement/i.test(finish.spec);
 
 export function buildCallout(c: CalloutChoice) {
   const s = c.sheet;
@@ -59,9 +74,21 @@ export function buildCallout(c: CalloutChoice) {
     if (temper) lines.push(`${CONT}CONDITION: ${temperCode(temper.code).toUpperCase()}`);
   }
   for (const t of tolerances) lines.push(`${CONT}TOLERANCES TO ${t}`);
+  if (c.heatTreat && temper) lines.push(`${CONT}HEAT TREAT TO ${temperCode(temper.code).toUpperCase()} PER <PROCESS SPEC>`, `${CONT}FURNACE PYROMETRY TO AMS 2750`);
   if (finish) lines.push(`${pad('FINISH')}${finish.name.toUpperCase()} TO ${finishSpec(finish.spec)}`);
+  if (finish && c.hydrogenBake) lines.push(`${CONT}HYDROGEN EMBRITTLEMENT RELIEF BAKE TO AMS 2759/9 OR BS EN ISO 9588`, `${CONT}START THE BAKE WITHIN <TIME> OF PLATING`);
+  if (c.ndt) lines.push(`${pad('NDT')}PENETRANT INSPECTION TO BS EN ISO 3452-1, SENSITIVITY LEVEL 3`, `${CONT}ACCEPTANCE TO <PROGRAMME SPEC>`);
   if (c.certificate) lines.push(`${pad('CERTS')}SUPPLY WITH BS EN 10204 TYPE 3.1 INSPECTION CERTIFICATE`);
   if (c.traceability) lines.push(`${pad('MARK')}BATCH / HEAT NO. BY <METHOD> AT <LOCATION>`, `${CONT}NO STAMPING ON FRACTURE-CRITICAL SURFACES`);
-  if (c.afterFinish && finish) lines.push(`${pad('NOTE')}DIMENSIONS APPLY AFTER FINISH`);
+  if (c.pcg) {
+    lines.push(`${pad('GRAIN')}NO PERIPHERAL COARSE GRAIN ON THE FINISHED PART`);
+    if (c.pcg.stock > 0) lines.push(`${CONT}REMOVE MIN ${c.pcg.stock.toFixed(1)} mm FROM ALL AS-SUPPLIED SURFACES`);
+    if (c.pcg.macro) lines.push(`${CONT}VERIFY BY MACRO-ETCH OF A SACRIFICIAL SAMPLE PER <PROCESS SPEC>`);
+  }
+  const notes: string[] = [];
+  if (c.afterFinish && finish) notes.push('DIMENSIONS APPLY AFTER FINISH');
+  if (c.edges) notes.push('EDGES TO ISO 13715 -0.1/-0.5, NO BURRS');
+  if (c.grainDirection) notes.push('GRAIN DIRECTION AS SHOWN');
+  notes.forEach((n, i) => lines.push(`${i === 0 ? pad('NOTE') : CONT}${n}`));
   return lines.join('\n');
 }

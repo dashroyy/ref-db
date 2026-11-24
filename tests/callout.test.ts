@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStandard, temperCode, finishSpec, buildCallout, type SpecSheet } from '../src/lib/callout.ts';
+import { parseStandard, temperCode, finishSpec, buildCallout, needsBake, isPlating, type SpecSheet } from '../src/lib/callout.ts';
+import { MFG } from '../src/data/specs-mfg.mjs';
 import data from '../src/data/specs.json' with { type: 'json' };
 import { SPECS_V2 } from '../src/data/specs-v2.mjs';
 
@@ -44,3 +45,47 @@ test('v2 case-steel sheets are present and complete', () => {
     assert.ok(s.tips.length >= 3);
   }
 });
+
+test('manufacturing considerations: every entry has a sheet, and the PCG flag marks the heat-treatable aluminium alloys', () => {
+  for (const [name, m] of Object.entries(MFG)) {
+    const s = sheets.find((x) => x.name === name);
+    assert.ok(s, `${name}: no specification sheet of that name`);
+    assert.ok(m.notes.length >= 3 && m.notes.every((n) => n.length > 20), `${name}: notes`);
+    assert.equal(m.pcg, s!.family === 'al' && /\b[267]\d{3}/.test(name), `${name}: the PCG flag`);
+  }
+  // every aluminium sheet of a heat-treatable series has its notes, with the PCG warning first
+  for (const s of sheets.filter((x) => x.family === 'al' && /\b[267]\d{3}/.test(x.name))) {
+    assert.ok(MFG[s.name]?.pcg, `${s.name}: PCG notes`);
+    assert.match(MFG[s.name].notes[0], /^Peripheral coarse grain/);
+  }
+});
+
+test('callout: the peripheral coarse grain, heat-treatment, NDT and note lines', () => {
+  const s = sheet('Aluminium 7075');
+  const out = buildCallout({ sheet: s, formIndex: 0, standard: parseStandard(s.forms[0].standard).alternatives[0], temperIndex: 0, finishIndex: 0, afterFinish: true, traceability: false, certificate: false, heatTreat: true, ndt: true, edges: true, grainDirection: true, pcg: { stock: 1.5, macro: true } });
+  const lines = out.split('\n');
+  assert.ok(lines.includes('          FURNACE PYROMETRY TO AMS 2750'));
+  assert.ok(lines.some((l) => /^ {10}HEAT TREAT TO T\d+ PER <PROCESS SPEC>$/.test(l)));
+  assert.ok(lines.includes('NDT:      PENETRANT INSPECTION TO BS EN ISO 3452-1, SENSITIVITY LEVEL 3'));
+  const g = lines.indexOf('GRAIN:    NO PERIPHERAL COARSE GRAIN ON THE FINISHED PART');
+  assert.ok(g > 0);
+  assert.equal(lines[g + 1], '          REMOVE MIN 1.5 mm FROM ALL AS-SUPPLIED SURFACES');
+  assert.equal(lines[g + 2], '          VERIFY BY MACRO-ETCH OF A SACRIFICIAL SAMPLE PER <PROCESS SPEC>');
+  assert.deepEqual(lines.slice(-3), ['NOTE:     DIMENSIONS APPLY AFTER FINISH', '          EDGES TO ISO 13715 -0.1/-0.5, NO BURRS', '          GRAIN DIRECTION AS SHOWN']);
+  // without stock or macro-etch, only the requirement line
+  const bare = buildCallout({ sheet: s, formIndex: 0, standard: 'X', temperIndex: 0, finishIndex: -1, afterFinish: true, traceability: false, certificate: false, pcg: { stock: 0, macro: false } });
+  assert.match(bare, /GRAIN: {4}NO PERIPHERAL COARSE GRAIN ON THE FINISHED PART$/);
+});
+
+test('hydrogen-embrittlement bake: on for a plated steel, off when the finish already calls for it', () => {
+  assert.ok(isPlating('Zinc plating') && isPlating('Zinc-nickel electroplate') && isPlating('Cadmium / zinc-nickel plating') && isPlating('Silver plate'));
+  assert.ok(!isPlating('Electropolish') && !isPlating('Hot dip galvanize') && !isPlating('Passivation') && !isPlating('Phosphate + oil'));
+  const s4130 = sheet('4130'), zinc = s4130.finishes.find((f) => /^Zinc plating/.test(f.name))!;
+  assert.ok(needsBake(s4130, zinc));
+  const d6 = sheet('D6AC'), zn = d6.finishes.find((f) => /electroplate/i.test(f.name))!;
+  assert.ok(!needsBake(d6, zn), 'the D6AC finish specification already calls for the bake');
+  assert.ok(!needsBake(sheet('Aluminium 6082'), sheet('Aluminium 6082').finishes[0]));
+  const out = buildCallout({ sheet: s4130, formIndex: 0, standard: 'X', temperIndex: 0, finishIndex: s4130.finishes.indexOf(zinc), afterFinish: false, traceability: false, certificate: false, hydrogenBake: true });
+  assert.match(out, /HYDROGEN EMBRITTLEMENT RELIEF BAKE TO AMS 2759\/9 OR BS EN ISO 9588\n {10}START THE BAKE WITHIN <TIME> OF PLATING/);
+});
+

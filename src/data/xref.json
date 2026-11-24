@@ -702,6 +702,86 @@
       "note": "Aluminium brass: seawater tube."
     },
     {
+      "name": "Brass CZ124",
+      "family": "cu",
+      "en": "CuZn36Pb3 (EN 12164)",
+      "enNo": "CW603N",
+      "legacyBs": "BS 2874 CZ124",
+      "uns": "C36000",
+      "aero": "ASTM B16",
+      "note": "Free-cutting brass: the US machinability reference."
+    },
+    {
+      "name": "Brass CZ119",
+      "family": "cu",
+      "en": "CuZn37Pb2 (EN 1652)",
+      "enNo": "CW606N",
+      "legacyBs": "BS 2870 CZ119",
+      "uns": "C35300 (similar)",
+      "aero": "ASTM B121",
+      "note": "Leaded brass plate: engraving and machining."
+    },
+    {
+      "name": "Brass CW713R",
+      "family": "cu",
+      "en": "CuZn37Mn3Al2PbSi (EN 12164)",
+      "enNo": "CW713R",
+      "legacyBs": "—",
+      "uns": "—",
+      "aero": "EN 12164",
+      "note": "Special brass for wear: bushes, slides and guides."
+    },
+    {
+      "name": "Brass CW724R",
+      "family": "cu",
+      "en": "CuZn21Si3P (EN 12164)",
+      "enNo": "CW724R",
+      "legacyBs": "—",
+      "uns": "C69300",
+      "aero": "ASTM B371",
+      "note": "Lead-free silicon brass."
+    },
+    {
+      "name": "Brass CZ111",
+      "family": "cu",
+      "en": "CuZn28Sn1As (EN 12451)",
+      "enNo": "CW706R",
+      "legacyBs": "BS 2871 CZ111",
+      "uns": "C44300",
+      "aero": "ASTM B111",
+      "note": "Admiralty brass: condenser tube."
+    },
+    {
+      "name": "Brass CZ102",
+      "family": "cu",
+      "en": "CuZn15 (EN 1652)",
+      "enNo": "CW502L",
+      "legacyBs": "BS 2870 CZ102",
+      "uns": "C23000",
+      "aero": "ASTM B36",
+      "note": "Red brass 85/15."
+    },
+    {
+      "name": "Brass HTB3",
+      "family": "cu",
+      "en": "CuZn25Al5Mn4Fe3-C (EN 1982)",
+      "enNo": "CC762S",
+      "legacyBs": "BS 1400 HTB3",
+      "uns": "C86300 (similar)",
+      "aero": "EN 1982",
+      "note": "Cast high-tensile brass: the strongest."
+    },
+    {
+      "name": "Brass HTB1",
+      "family": "cu",
+      "en": "CuZn35Mn2Al1Fe1-C (EN 1982)",
+      "enNo": "CC765S",
+      "legacyBs": "BS 1400 HTB1",
+      "uns": "C86500 (similar)",
+      "aero": "EN 1982",
+      "note": "Cast high-tensile brass."
+    },
+    {
       "name": "Beryllium copper",
       "family": "cu",
       "en": "CuBe2 (EN 12163)",

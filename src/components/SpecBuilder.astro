@@ -1,11 +1,13 @@
 ---
-// Material specification builder: v1's 25 spec sheets plus the v2 case steels.
+// Material specification builder: v1's 25 spec sheets plus the v2 case steels, with v1's manufacturing considerations
+// (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface and process concerns of each material).
 // Callout assembly lives in src/lib/callout.ts (unit-tested).
 import data from '../data/specs.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
+import { MFG } from '../data/specs-mfg.mjs';
 
 const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper' };
-const sheets = [...SPECS_V2, ...data.specs];
+const sheets = [...SPECS_V2, ...data.specs].map((s) => ({ ...s, mfg: MFG[s.name] }));
 const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i) => ({ s, i })).filter(({ s }) => s.family === k) })).filter((g) => g.items.length);
 ---
 
@@ -42,9 +44,21 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       </fieldset>
       <fieldset>
         <legend>Extra lines</legend>
+        <label class="inline"><input type="checkbox" name="heat" /> Heat treatment by process specification, with furnace pyrometry</label>
+        <label class="inline"><input type="checkbox" name="bake" /> Hydrogen embrittlement relief bake after plating</label>
+        <label class="inline"><input type="checkbox" name="ndt" /> Penetrant inspection of the finished part</label>
         <label class="inline"><input type="checkbox" name="cert" checked /> Inspection certificate (BS EN 10204 3.1)</label>
         <label class="inline"><input type="checkbox" name="trace" /> Batch marking and traceability</label>
         <label class="inline"><input type="checkbox" name="after" checked /> Dimensions apply after finish</label>
+        <label class="inline"><input type="checkbox" name="edges" /> Edge condition (ISO 13715)</label>
+        <label class="inline"><input type="checkbox" name="graindir" /> Grain direction as shown</label>
+      </fieldset>
+      <fieldset>
+        <legend>Peripheral coarse grain</legend>
+        <label class="inline"><input type="checkbox" name="pcg" /> No peripheral coarse grain on the finished part</label>
+        <label class="inline sb-stock">Minimum stock removal <input type="number" name="stock" value="1.5" min="0" step="0.1" inputmode="decimal" /> mm</label>
+        <label class="inline"><input type="checkbox" name="macro" /> Verify by macro-etch of a sacrificial sample</label>
+        <p class="hint">On by default for the alloys that can grow it. The stock must be more than the deepest layer that the mill guarantees: agree the depth and the check when you order.</p>
       </fieldset>
     </form>
     <div>
@@ -53,6 +67,11 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       <p class="hint">Placeholders in &lt;angle brackets&gt; are yours to fill. Check every standard is the issue your programme invokes.</p>
       <p class="pv-sub">How v1 wrote it for this material</p>
       <pre class="sb-out sb-ex" data-ex></pre>
+      <div data-mfgbox>
+        <p class="pv-sub">Manufacturing considerations</p>
+        <p class="sb-pcg" data-pcg></p>
+        <ul class="sb-tips" data-mfg></ul>
+      </div>
       <p class="pv-sub">Practical tips</p>
       <ul class="sb-tips" data-tips></ul>
     </div>
@@ -72,10 +91,15 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
   }
   .sb-ex { color: var(--sl-color-gray-2); border-left-color: var(--hud-edge-strong); }
   .sb-tips { font-size: var(--sl-text-sm); padding-left: 1.1rem; margin: 0 !important; }
+  .specb .sb-stock input { width: 5.5rem; }
+  .sb-pcg { margin: 0 0 0.5rem !important; padding: 0.45rem 0.7rem; font-size: var(--sl-text-sm); border-left: 3px solid var(--rd-ok); border-radius: 0 4px 4px 0; background: color-mix(in srgb, var(--rd-ok) 8%, transparent); }
+  .sb-pcg.risk { border-left-color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 9%, transparent); }
+  /* the status text is written by the script, so its heading is outside the scope of these styles */
+  .sb-pcg :global(b) { display: block; font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.08em; text-transform: uppercase; }
 </style>
 
 <script>
-  import { parseStandard, buildCallout, type SpecSheet } from '../lib/callout';
+  import { parseStandard, buildCallout, needsBake, type SpecSheet } from '../lib/callout';
 
   document.querySelectorAll<HTMLElement>('[data-specb]').forEach((root) => {
     const sheets = JSON.parse(root.querySelector('[data-data]')!.textContent!) as SpecSheet[];
@@ -97,7 +121,23 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       q('base').textContent = `${s.base}${s.composition ? ` · ${s.composition}` : ''}`;
       q('ex').textContent = s.callout || '—';
       q('tips').innerHTML = s.tips.map((t) => `<li>${t}</li>`).join('');
+      // manufacturing considerations, and the peripheral coarse grain lines on for the alloys that can grow it
+      q('mfgbox').hidden = !s.mfg;
+      if (s.mfg) {
+        const p = q('pcg');
+        p.classList.toggle('risk', s.mfg.pcg); // toggle, so that the scoping of the element stays
+        p.innerHTML = s.mfg.pcg
+          ? '<b>Peripheral coarse grain: a risk</b>This alloy and its extrusions and forgings can grow a recrystallised coarse-grain layer at the surface. Where your programme does not permit it, the drawing states the minimum stock removal from every as-supplied surface and how to verify it.'
+          : '<b>No peripheral coarse grain</b>This material does not grow peripheral coarse grain. Its own surface or process concern is in the first note.';
+        q('mfg').innerHTML = s.mfg.notes.map((t) => `<li>${t}</li>`).join('');
+      }
+      (field('pcg') as HTMLInputElement).checked = !!s.mfg?.pcg;
       loadForm();
+    }
+    /** The hydrogen-bake line follows the finish: on for a plated steel, unless the finish specification calls for it. */
+    function setBake() {
+      const s = sheet(), ni = +field('finish').value;
+      (field('bake') as HTMLInputElement).checked = needsBake(s, ni >= 0 ? s.finishes[ni] : null);
     }
     function loadForm() {
       const f = sheet().forms[+field('form').value];
@@ -113,16 +153,21 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       q('formnote').textContent = `${f.standard}${f.note ? ': ' + f.note : ''}`;
       q('tempnote').textContent = ti >= 0 ? s.tempers[ti].note : 'Leaving the condition off the drawing leaves it to the supplier.';
       q('finnote').textContent = ni >= 0 ? `${s.finishes[ni].spec}: ${s.finishes[ni].note}` : 'No finish called up.';
+      const on = (n: string) => (field(n) as HTMLInputElement).checked;
+      const stock = Math.max(0, Number(field('stock').value) || 0);
       q('out').textContent = buildCallout({
         sheet: s, formIndex: fi, standard: std, temperIndex: ti, finishIndex: ni,
-        afterFinish: (field('after') as HTMLInputElement).checked, traceability: (field('trace') as HTMLInputElement).checked,
-        certificate: (field('cert') as HTMLInputElement).checked,
+        afterFinish: on('after'), traceability: on('trace'), certificate: on('cert'),
+        heatTreat: on('heat'), hydrogenBake: on('bake'), ndt: on('ndt'), edges: on('edges'), grainDirection: on('graindir'),
+        pcg: on('pcg') ? { stock, macro: on('macro') } : null,
       });
     }
 
-    field('sheet').addEventListener('change', loadSheet);
+    field('sheet').addEventListener('change', () => { loadSheet(); setBake(); run(); });
     field('form').addEventListener('change', loadForm);
+    field('finish').addEventListener('change', setBake);
     form.addEventListener('change', (e) => { if (!['sheet', 'form'].includes((e.target as HTMLElement).getAttribute('name') ?? '')) run(); });
+    field('stock').addEventListener('input', run);
     root.querySelector('[data-copy]')!.addEventListener('click', async (e) => {
       const b = e.currentTarget as HTMLButtonElement;
       try { await navigator.clipboard.writeText(q('out').textContent ?? ''); b.textContent = 'Copied'; }
@@ -130,5 +175,7 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       setTimeout(() => (b.textContent = 'Copy callout'), 1800);
     });
     loadSheet();
+    setBake();
+    run();
   });
 </script>
