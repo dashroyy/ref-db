@@ -21,8 +21,20 @@ export const GRADES = [
   { key: '8.8', name: 'Class 8.8 (d ≤ 16)', Rp: 640, Rm: 800 },
   { key: '10.9', name: 'Class 10.9', Rp: 940, Rm: 1040 },
   { key: '12.9', name: 'Class 12.9', Rp: 1100, Rm: 1220 },
-  { key: 'A4-70', name: 'Stainless A4-70', Rp: 450, Rm: 700 },
-  { key: 'A4-80', name: 'Stainless A4-80', Rp: 600, Rm: 800 },
+  { key: 'A4-70', name: 'Stainless A2-70 or A4-70', Rp: 450, Rm: 700 },
+  { key: 'A4-80', name: 'Stainless A2-80 or A4-80', Rp: 600, Rm: 800 },
+] as const;
+
+/** Typical friction (thread and head) by surface condition, from REF·DB v1: screening values. Measure it for your
+ *  lubricant and coating when the preload matters. */
+export const FRICTION = [
+  { key: 'dry', name: 'Dry, as received (steel)', mu: 0.14 },
+  { key: 'oiled', name: 'Lightly oiled', mu: 0.12 },
+  { key: 'mos2', name: 'MoS₂ or dry film lubricant', mu: 0.1 },
+  { key: 'zinc', name: 'Zinc plated, dry', mu: 0.16 },
+  { key: 'ssdry', name: 'Stainless, no lubricant (galling risk)', mu: 0.23 },
+  { key: 'ssas', name: 'Stainless with anti-seize', mu: 0.14 },
+  { key: 'ptfe', name: 'PTFE coated or waxed', mu: 0.08 },
 ] as const;
 
 /** Elastic modulus (MPa) and expansion coefficient (1/°C) at room temperature: the metals of the material library. */

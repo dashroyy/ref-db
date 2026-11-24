@@ -10,6 +10,25 @@ export interface SpecSheet {
   forms: SpecForm[]; tempers: SpecTemper[]; finishes: SpecFinish[]; callout: string; tips: string[];
   /** manufacturing considerations (src/data/specs-mfg.mjs); pcg: the alloy can grow peripheral coarse grain */
   mfg?: { pcg: boolean; notes: string[] };
+  /** a library material with no sheet yet: placeholders for the form, standard, condition and finish */
+  skeleton?: boolean;
+}
+
+/** A skeleton sheet for a library metal that has no specification sheet: its designation, if the designations table
+ *  knows it, and placeholders for everything else. Nothing is invented. */
+export function skeletonSheet(m: { name: string; family: string; summary: string; spec: string }, x?: { en: string; enNo: string } | null): SpecSheet {
+  const en = x?.en ? x.en.split(' / ')[0].replace(/\s*\([^)]*\)\s*/g, ' ').trim() : '';
+  const hint = x?.en?.match(/\(((?:BS )?EN [^)]+|AMS [^)]+|ASTM [^)]+)\)/)?.[1];
+  const no = x?.enNo && x.enNo !== '—' && !en.includes(x.enNo) ? ` (${x.enNo})` : '';
+  const std = hint ? `${/^EN /.test(hint) ? 'BS ' + hint : hint} / <PRODUCT STANDARD>` : '<PRODUCT STANDARD>';
+  return {
+    name: m.name, designation: en ? en + no : m.name, family: m.family, skeleton: true,
+    base: `${m.summary}. No specification sheet yet: the callout is a skeleton with placeholders.`, composition: '',
+    forms: [{ form: '<PRODUCT FORM>', standard: std, note: hint ? `The designations table gives ${hint} for this alloy: confirm that it covers your product form.` : 'Give the product form and its standard (bar, plate, tube, forging or casting each have their own).' }],
+    tempers: [{ code: '<CONDITION>', note: 'State the temper or heat treatment, with a minimum strength or hardness that an inspector can test.' }],
+    finishes: [{ name: '<FINISH>', spec: '<FINISH SPEC>', note: 'State the finish with its own specification, or none.' }],
+    callout: '', tips: m.spec ? [m.spec] : [],
+  };
 }
 
 const stripNotes = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();
@@ -66,7 +85,7 @@ export function buildCallout(c: CalloutChoice) {
   const FORM = form.form.toUpperCase().replace(/&/g, 'AND');
   const lines: string[] = [];
 
-  if (s.family === 'al' && temper) {
+  if (s.family === 'al' && temper && !temper.code.startsWith('<')) {
     // EN aluminium: the temper is part of the designation (EN AW-6082-T6)
     lines.push(`${pad('MATERIAL')}${s.designation}-${temperCode(temper.code)} ${FORM} TO ${c.standard}`);
   } else {

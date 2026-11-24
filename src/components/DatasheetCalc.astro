@@ -8,15 +8,23 @@ import { MATERIALS, DEFAULTS as D } from '../lib/materials';
 import { derived, galvanicFor, sameAlloy } from '../lib/datasheet';
 import xref from '../data/xref.json';
 import specs from '../data/specs.json';
+import { SPECS_V2 } from '../data/specs-v2.mjs';
+import { SPECS_CU } from '../data/specs-cu.mjs';
+import domains from '../data/domains.json';
 
 type XRow = { name: string; family: string; en: string; enNo: string; legacyBs: string; uns: string; aero: string; note: string };
+type Sheet = { name: string; family: string; designation: string; forms: unknown[]; tempers: unknown[] };
+const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU] as Sheet[];
+const DOM = domains.domains as Record<string, { name: string }>, DOM_OF = domains.materials as Record<string, [string, string]>;
 const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
   name: m.name, family: m.family, familyName: m.familyName, kind: m.kind, summary: m.summary, spec: m.spec,
   p: { rho: m.rho, E: m.E, nu: m.nu, Fty: m.Fty, Ftu: m.Ftu, eu: m.eu, kic: m.kic, alpha: m.alpha, k: m.k, kz: m.kz, cp: m.cp, maxT: m.maxT, tPyro: m.tPyro, erosion: m.erosion, corrosion: m.corrosion, machinability: m.machinability, price: m.price },
   weldable: m.weldable, kicDefault: m.kicDefault, defaults: m.defaults,
   d: derived(m), galv: galvanicFor(m),
   xref: (xref.rows as XRow[]).filter((r) => sameAlloy(m, r)).slice(0, 3).map((r) => ({ name: r.name, en: r.en, enNo: r.enNo, uns: r.uns, aero: r.aero, legacyBs: r.legacyBs })),
-  spec: (specs.specs as { name: string; family: string; designation: string; forms: unknown[]; tempers: unknown[] }[]).filter((s) => sameAlloy(m, s)).slice(0, 1).map((s) => ({ name: s.name, designation: s.designation, forms: s.forms.length, tempers: s.tempers.length }))[0] ?? null,
+  // the spec-builder sheet: its own key, so that it does not replace the library text in `spec`
+  sheet: SHEETS.filter((s) => sameAlloy(m, s)).slice(0, 1).map((s) => ({ name: s.name, designation: s.designation, forms: s.forms.length, tempers: s.tempers.length }))[0] ?? null,
+  domain: DOM_OF[m.name] ? { name: DOM[DOM_OF[m.name][0]].name, note: DOM_OF[m.name][1] } : null,
   caseOk: ['steel', 'ss', 'ti', 'al', 'ni'].includes(m.family) && !!m.Fty && !!m.Ftu && !!m.rho,
 }]));
 ---
@@ -85,7 +93,7 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
 <script>
   const NS = 'http://www.w3.org/2000/svg';
   type P = Record<string, number | undefined>;
-  type M = { name: string; family: string; familyName: string; kind: string; summary: string; spec: string; p: P; weldable?: boolean; kicDefault: boolean; defaults: string[]; d: P; galv: { key: string; name: string; index: number } | null; xref: Record<string, string>[]; spec: { name: string; designation: string; forms: number; tempers: number } | null; caseOk: boolean };
+  type M = { name: string; family: string; familyName: string; kind: string; summary: string; spec: string; p: P; weldable?: boolean; kicDefault: boolean; defaults: string[]; d: P; galv: { key: string; name: string; index: number } | null; xref: Record<string, string>[]; sheet: { name: string; designation: string; forms: number; tempers: number } | null; domain: { name: string; note: string } | null; caseOk: boolean };
   const esc = (s: string) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
   const sig = (v: number | undefined, n = 3) => (v === undefined || !Number.isFinite(v) ? '—' : Math.abs(v) >= 10 ** n ? Math.round(v).toLocaleString('en-GB') : Number(v.toPrecision(n)).toLocaleString('en-GB', { maximumSignificantDigits: n }));
 
@@ -136,15 +144,15 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
     function run() {
       const a = DATA[sel('a').value], bKey = sel('b').value, b = bKey ? DATA[bKey] : null;
       if (!a) return;
-      const T: string[] = [`MATERIAL DATASHEET: ${a.name}${b ? ` (compared with ${b.name})` : ''}`, `Family: ${a.familyName}`, a.spec ? `Specification: ${a.spec}` : '', ''].filter((x, i) => x || i === 3);
+      const T: string[] = [`MATERIAL DATASHEET: ${a.name}${b ? ` (compared with ${b.name})` : ''}`, `Family: ${a.familyName}`, a.spec ? `Specification: ${a.spec}` : '', a.domain ? `Domain: ${a.domain.name}. ${a.domain.note}` : '', ''].filter((x, i, all) => x || i === all.length - 1);
       root.querySelector('[data-id]')!.innerHTML = `<h4>${esc(a.name)}<span>${esc(a.familyName)}</span>${a.p.maxT !== undefined ? `<span>to ${a.p.maxT} °C</span>` : ''}${a.weldable === false ? '<span>not weldable</span>' : a.weldable ? '<span>weldable</span>' : ''}</h4>
-        ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}${a.spec ? `<p>${esc(a.spec)}</p>` : ''}${b ? `<p class="vs">Compared with <b>${esc(b.name)}</b> (${esc(b.familyName)}): its column is blue, and B/A is its ratio to the first material.</p>` : ''}`;
+        ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}${a.spec ? `<p>${esc(a.spec)}</p>` : ''}${a.domain ? `<p class="dom"><b>${esc(a.domain.name)}.</b> ${esc(a.domain.note)}</p>` : ''}${b ? `<p class="vs">Compared with <b>${esc(b.name)}</b> (${esc(b.familyName)}): its column is blue, and B/A is its ratio to the first material.</p>` : ''}`;
       const aKey = sel('a').value;
       root.querySelector('[data-links]')!.innerHTML = [
         a.caseOk ? `<a href="../../motor/case-sizing/?m=${encodeURIComponent(aKey)}#calculator">Size a case with it →</a>` : '',
         `<a href="../selection/#calculator">See it on the selection chart →</a>`,
         `<a href="../../verify/fea-cards/#calculator">Make an FEA card →</a>`,
-        a.spec || DATA[aKey].spec ? `<a href="../specification/#calculator">Build the callout →</a>` : '',
+        a.kind === 'metal' ? `<a href="../specification/#calculator">Build the callout →</a>` : '',
       ].filter(Boolean).join('');
 
       // property tables
@@ -180,7 +188,7 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
       const g = (m: M | null) => (m?.galv ? `${m.galv.index.toFixed(2)} V` : '—');
       html += `<section class="ds-sec"><h5>Galvanic and specification</h5><div class="ds-tw"><table><tbody>
         <tr><td>Anodic index</td><td>${g(a)}</td>${b ? `<td class="b">${g(b)}</td><td>${a.galv && b.galv ? `${Math.abs(a.galv.index - b.galv.index).toFixed(2)} V apart` : '—'}</td>` : ''}<td class="u">${a.galv ? esc(a.galv.name) : 'not in the galvanic table'}</td></tr>
-        <tr><td>Spec builder</td><td>${a.spec ? 'yes' : 'no'}</td>${b ? `<td class="b">${b.spec ? 'yes' : 'no'}</td><td></td>` : ''}<td class="u">${a.spec ? `${esc(a.spec.designation)}: ${a.spec.forms} product forms, ${a.spec.tempers} conditions` : ''}</td></tr>
+        <tr><td>Spec builder</td><td>${a.sheet ? 'full sheet' : a.kind === 'metal' ? 'skeleton' : 'no'}</td>${b ? `<td class="b">${b.sheet ? 'full sheet' : b.kind === 'metal' ? 'skeleton' : 'no'}</td><td></td>` : ''}<td class="u">${a.sheet ? `${esc(a.sheet.designation)}: ${a.sheet.forms} product forms, ${a.sheet.tempers} conditions` : (a.kind === 'metal' ? 'no sheet yet: the builder gives a skeleton callout' : 'metals only')}</td></tr>
       </tbody></table></div></section>`;
       if (a.galv) T.push(`ANODIC INDEX: ${a.galv.index.toFixed(2)} V (${a.galv.name})`);
       root.querySelector('[data-tables]')!.innerHTML = html;

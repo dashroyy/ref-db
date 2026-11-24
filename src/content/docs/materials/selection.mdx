@@ -108,6 +108,12 @@ row) to make it the reference for the guideline. Hover to see the values.
   - **Fatigue.** For metals, an estimated fatigue strength from the ultimate, with the Marin factors for surface,
     loading, size and reliability ([Fatigue](../../fundamentals/fatigue/)), and a Goodman reduction for a mean stress.
     The two fatigue indices rank materials for parts that cycle many times. These are mean estimates, not allowables.
+- **Cost indices** rank by strength or by stiffness for each pound spent: for tooling, fixtures, rigs and ground
+  equipment, where cost and not mass is the driver. The prices are indicative only.
+- **Heat conduction** ranks on k, for a cooled liner or a heat sink. Yield is on the other axis, so that you can keep
+  only the materials that are strong enough.
+- **The detail card** of a material also gives its domain (space, defence, both, or ground equipment) where REF·DB v1
+  recorded one.
 
 <MaterialChart />
 
@@ -148,6 +154,22 @@ temperature of at least 150 °C, and metallic (for this example). **Free variabl
   cost in other properties. Use engineering judgement for all the items that the chart cannot plot: supply, process,
   cost, compatibility and previous use. A [trade study](../trade-study/) puts them on one page.
 </Aside>
+
+## Space, defence and ground equipment
+
+The same material class can be the correct choice in one domain and the incorrect one in another, because the drivers
+are different. REF·DB v1 sorted the library into four domains:
+
+- **Space launch.** Performance first, cost tolerant, small production runs and qualification of each lot. Mass is the
+  main currency; cryogenic compatibility, outgassing in vacuum and fracture control (NASA-STD-5019) are important, and
+  small lots make exotic alloys economic.
+- **Defence and tactical.** Storage life first, mass produced and rugged. A storage life of 10 to 20 years with no
+  maintenance, a wide storage envelope (typically −54 to +71 °C, MIL-STD-810), the insensitive-munitions response
+  (STANAG 4439) and the unit cost drive the choice.
+- **Both domains.** Materials with an established history on both sides: a broad supply base, well-populated
+  allowables (MMPDS, CMH-17), and familiar to inspectors and stress authorities. Usually the practical default.
+- **Ground and test equipment.** Test stands, ground support equipment, tooling and handling hardware. Cost,
+  availability from stock, weldability and repair on site govern; mass is nearly unimportant.
 
 ## Where this stops
 

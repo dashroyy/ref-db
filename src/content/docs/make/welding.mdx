@@ -130,6 +130,8 @@ preheat.
 | Electron beam (51) | Very low, deep and narrow | Very low (vacuum) | Deep welds with little distortion, in high-strength alloys | Fit-up; needs a vacuum chamber |
 | Laser (52) | Very low | Low | Thin parts, small welds | Fit-up; fast cooling of the HAZ |
 | Friction stir (43) | Solid state, no melting | None | Aluminium alloys, including 2219 and Al-Li | Large forces and fixtures; a keyhole at the end |
+| Resistance spot (21) | Very local and short | None | Sheet assemblies, brackets and enclosures | The nugget size cannot be seen: check it by peel or chisel tests of samples |
+| Brazing (91, 92) | The parent metal does not melt | None (flux or vacuum) | Dissimilar metals, tube-to-fitting joints, heat exchangers, thin to thick | The capillary gap sets the strength: a wider gap is weaker, not stronger |
 
 Each process has a different heat input and a different set of flaws. Choose the process with the joint, not after.
 
@@ -144,6 +146,9 @@ loss of the vehicle. The class sets the NDT, as in [NDT](../ndt/).
 
 - **Planar flaws are the dangerous ones.** Lack of fusion and cracks are sharp. Porosity is round and usually less
   important for strength, but it shows a process that is not under control.
+- **Solidification cracking** (hot cracking) runs along the centre of the weld as it freezes. The causes are a
+  susceptible composition, a deep narrow bead, high restraint or a crater at the stop. Choose the filler and the bead
+  shape against it: 6xxx aluminium welded without filler cracks nearly every time (use 4043 or 5356 filler).
 - **A repair weld is a new weld.** It has its own heat cycle, residual stress and HAZ, often in a part that was
   already heat-treated. Limit the number of repairs at one location, and repeat the NDT.
 
@@ -219,6 +224,22 @@ and pulls its diameter in at the weld. Thus:
 - **Add the shrinkage to the cut length,** and take it into the length stack ([Tolerance stack](../../drawing/tolerance-stack/)).
 - **Machine the datums after welding** and after the heat treatment, where the tolerances are tight.
 - **Weld in a balanced sequence,** in a fixture, and control the interpass temperature.
+
+## Weldability by material
+
+| Material | Weldability | What to do |
+| --- | --- | --- |
+| Low-carbon steel (S355, thin 4130) | Good | Below a carbon equivalent of approximately 0.4, usually no preheat. 4130 is near the limit: preheat above approximately 3 mm, and consider a stress relief after welding. |
+| High-strength steel (4340, 300M, D6AC) | Poor | A hard HAZ that is very sensitive to hydrogen cracking. Preheat, low-hydrogen consumables and heat treatment after welding are mandatory. Designs usually avoid welds. |
+| Weldable low-alloy steel (15CDV6) | Very good | Welds in the hardened condition with a modest preheat: the reason that the alloy exists. |
+| Austenitic stainless (304L, 316L, 321) | Very good | Use the L grades, or stabilised 321 or 347, against sensitisation. Expect approximately 50% more distortion than carbon steel. |
+| Martensitic and PH stainless (17-4PH, 15-5PH) | Fair | Weld in the solution-annealed condition, then age. Welding aged material destroys the local properties and can crack. |
+| Aluminium 5xxx and 6xxx | Good | Fusion welds easily, but the HAZ softens to near annealed strength: design the joint for that. 6xxx needs 4043 or 5356 filler. |
+| Aluminium 2xxx and 7xxx | Poor | Severe solidification cracking in fusion welds, except 2219. Friction stir welding changes this completely. |
+| Titanium | Fair | Weldable, with full shielding of both sides (trailing shield and back purge). The colour shows contamination. |
+| Nickel superalloys (718, 625) | Fair | Weld solution annealed, then heat treat. Gamma-prime alloys such as Waspaloy and René 41 are prone to strain-age cracking; Haynes 282 was designed against it. |
+| Magnesium | Fair | TIG in an inert atmosphere. The fire risk and the porosity make it specialist work. |
+| Dissimilar metals | Poor | Usually brittle intermetallic compounds at the interface. Braze, use a transition joint, or bolt. Aluminium to steel needs friction-welded or explosion-bonded transition pieces. |
 
 ## Welding motor hardware
 

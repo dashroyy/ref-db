@@ -208,6 +208,29 @@ transition temperature, and absorbed moisture decreases that temperature. Thus:
 The low softening temperature is also an advantage. In a fire, a wound case loses strength early and vents before the
 propellant reacts violently. See [Designing the case to fail gently](../hardware/#designing-the-case-to-fail-gently).
 
+### Lay-up and knockdown for screening
+
+For a first comparison with a metal, REF·DB v1 gave the fraction of the unidirectional (UD) strength and stiffness that
+a lay-up keeps, and typical knockdowns for damage and environment. They are typical magnitudes from the open
+literature, not design factors. Design values come from tests of your laminate in the conditions of your programme
+(for example by the methods of CMH-17).
+
+| Lay-up | Strength, fraction of UD | Stiffness, fraction of UD | Use |
+| --- | --- | --- | --- |
+| Unidirectional [0] | 1.00 | 1.00 | Every main load along the fibres: struts, ties, spar caps |
+| Cross-ply [0/90] | 0.50 | 0.52 | Half the fibres in each direction; not weak across the load |
+| Quasi-isotropic [0/±45/90] | 0.36 | 0.38 | Near-equal properties in the plane: the fair comparison with a metal |
+| Filament wound, helical and hoop | 0.62 | 0.60 | Matched to the 2:1 hoop-to-axial stress of a pressure vessel |
+| Filament wound, 55° | 0.55 | 0.54 | A closed cylinder under pressure, carried by the wind angle alone |
+| Angle-ply [±45] | 0.28 | 0.30 | Shear and torsion panels; poor in direct tension |
+
+| Condition | Strength, fraction of pristine | Note |
+| --- | --- | --- |
+| Pristine coupon | 1.00 | A laboratory value: never a design condition |
+| Barely visible impact damage (BVID) | 0.65 | The usual compression design condition for aerospace laminates |
+| Hot and wet | 0.80 | Moisture and temperature soften the resin, so the matrix-dominated properties fall |
+| BVID with hot and wet | 0.55 | The combined case that most aerospace composite structure is sized to |
+
 ### Stress rupture
 
 Under a sustained load, a fibre can break after some time at a stress below its short-term strength. Glass and aramid

@@ -1,0 +1,78 @@
+{
+  "source": "REF·DB v1 (MAT_DOMAIN and MAT_DOM), in the plain style of the site",
+  "domains": {
+    "space": {
+      "name": "Space launch",
+      "d": "NASA, ESA and commercial launch: performance first, cost tolerant, small production runs and qualification of each lot.",
+      "drivers": ["Mass is the main currency: each kilogram saved is payload gained", "Compatibility with LOX, LH2 and LCH4 in cryogenic systems", "Outgassing in vacuum, and long-duration thermal cycles", "Fracture control of pressurised and rotating hardware (NASA-STD-5019)", "Small lots make exotic alloys economic"]
+    },
+    "defence": {
+      "name": "Defence and tactical",
+      "d": "Solid motors for defence: storage life first, mass produced, rugged, and subject to insensitive-munitions requirements.",
+      "drivers": ["A storage life of 10 to 20 years with no maintenance", "A wide storage envelope, typically −54 to +71 °C (MIL-STD-810)", "The insensitive-munitions response (STANAG 4439) drives the case and liner choice", "Unit cost is important: production runs are large", "Ruggedness in handling, transport and vibration"]
+    },
+    "both": {
+      "name": "Both domains",
+      "d": "Materials with an established history on both sides: usually the practical default.",
+      "drivers": ["A broad supply base with several qualified sources", "Allowables well populated in MMPDS or CMH-17", "Familiar to inspectors and stress authorities on both sides"]
+    },
+    "ground": {
+      "name": "Ground and test equipment",
+      "d": "Test stands, ground support equipment, tooling and handling hardware: cost and availability govern, and mass is nearly unimportant.",
+      "drivers": ["Availability from stock is better than optimisation", "Weldability and repair on site", "Standard structural sections and stock sizes"]
+    }
+  },
+  "materials": {
+    "Al-Li 2195": ["space", "The alloy of the Shuttle External Tank and the SLS core barrel. Cryogenic tankage with a weight saving that pays only when mass is the currency. Friction stir welding is effectively mandatory."],
+    "Al 2219-T87": ["space", "The classic weldable cryogenic tank alloy (Saturn, Shuttle, Delta). It keeps its toughness at LH2 temperature and it fusion welds, which Al-Li mostly does not."],
+    "Al-Li 2050 / 2099": ["space", "Modern damage-tolerant Al-Li plate for machined launch-vehicle structure."],
+    "GRCop-42 (Cu-4Cr-2Nb)": ["space", "Developed by NASA for printed, regeneratively cooled chamber liners. A launch-vehicle material: no tactical motor is regeneratively cooled."],
+    "GRCop-84 (Cu-8Cr-4Nb)": ["space", "As GRCop-42. A bimetallic liner with a superalloy jacket."],
+    "NARloy-Z (Cu-3Ag-0.5Zr)": ["space", "The heritage SSME chamber liner, here for understanding legacy hardware."],
+    "NASA HR-1": ["space", "Developed for turbomachinery in hydrogen and for regeneratively cooled nozzles."],
+    "JBK-75": ["space", "Hydrogen turbopump housings. Cryogenic liquid propulsion only."],
+    "GRX-810 (NiCoCr ODS)": ["space", "NASA oxide-dispersion-strengthened superalloy for printed hot-section hardware. New, with a limited supply base."],
+    "C-103 Niobium (Nb-10Hf-1Ti)": ["space", "Radiation-cooled nozzle extensions on upper stages and in-space thrusters. It needs a silicide coating and a vacuum to work."],
+    "Rhenium (with Ir coating)": ["space", "Long-life apogee and station-keeping thrusters. Very expensive, with a constrained supply."],
+    "Iridium-coated rhenium": ["space", "As above: satellite propulsion, not launch."],
+    "PICA (phenolic impregnated carbon)": ["space", "Heatshields for planetary entry and capsules."],
+    "AVCOAT 5026-39/HC-G": ["space", "Heatshields of the Apollo and Orion crew capsules."],
+    "SLA-561V (cork/silicone)": ["space", "Backshells of planetary landers, and entry surfaces at low heat flux."],
+    "Reinforced carbon-carbon (RCC)": ["space", "Leading edges and nose caps of reusable spacecraft."],
+    "Alumina enhanced thermal barrier": ["space", "Tile thermal protection of reusable spacecraft. Very low density and fragile: usable only where it is never handled in service and never sees rain or impact."],
+    "301 stainless (full hard)": ["space", "Large cryogenic tank structure on reusable launch vehicles: cheap, tough when cold, and work hardened to a useful strength."],
+    "304L / 316L (cryogenic)": ["space", "Cryogenic plumbing, dewars and vacuum jackets on launch and ground systems."],
+    "Invar 36 (FeNi36)": ["space", "Composite lay-up tooling and metering structures where dimensional stability governs."],
+    "Beryllium (S-200F)": ["space", "Optical benches and inertial platforms. The toxicity of machining it limits the supply base severely."],
+    "AlBeMet AM162 (Al-62Be)": ["space", "Satellite structure, optical mounts and guidance parts where specific stiffness governs. The beryllium brings controls on machining and a very narrow supply base."],
+    "M55J high-modulus carbon/epoxy": ["space", "Satellite antenna booms and metering structures where stiffness, not strength, governs."],
+    "Zylon PBO/epoxy": ["space", "Very light overwrap for composite pressure vessels. Creep and sensitivity to UV limit it to controlled environments."],
+    "SiC/SiC CMC": ["space", "Reusable nozzle extensions and the next generation of turbine hardware."],
+    "ZrB2-SiC UHTC": ["space", "Hypersonic leading edges and extreme throat inserts. A research-stage supply base."],
+    "D6AC (AMS 6431)": ["defence", "The classic solid-motor case steel: high strength, deep hardening, proven in large defence motors. It needs tight control of the heat treatment and of hydrogen."],
+    "Maraging 18Ni-250": ["defence", "Motor cases where the simple heat treatment and the low distortion suit production quantities."],
+    "Maraging 18Ni-300": ["defence", "Higher-strength maraging steel for cases and highly loaded fittings."],
+    "AerMet 100": ["defence", "Ultra-high-strength landing gear and ballistic-tolerant fittings. Expensive."],
+    "300M": ["defence", "Landing gear and highly stressed shafts, with a long defence history."],
+    "HP 9-4-30": ["defence", "Weldable ultra-high-strength steel for fracture-critical structure."],
+    "EPDM insulation": ["defence", "Internal case insulation and stress-relief boots for solid motors."],
+    "EPDM insulation (silica filled)": ["defence", "Silica-filled internal insulation for solid motors with a higher heat flux."],
+    "Carbon phenolic (ablative)": ["both", "Nozzle throat and entrance liners in both domains. The supply of the rayon precursor has long been a constraint."],
+    "Silica phenolic (ablative)": ["defence", "Exit cone and housing insulation on solid motors."],
+    "Glass phenolic (ablative)": ["defence", "Exit cone liners and blast tubes on solid motors. Cheaper than carbon phenolic and sufficient at lower heat flux, which is why it stays in production hardware."],
+    "Cork phenolic (Norcoat type)": ["both", "External insulation of stages and motors, and backshells of entry vehicles."],
+    "15CDV6 (1.7734)": ["both", "The European weldable case and pressure-vessel steel, at full strength as welded with no heat treatment after welding. Used in space and defence."],
+    "S-glass/epoxy": ["both", "Filament-wound cases and radomes in both domains."],
+    "Aramid/epoxy (Kevlar)": ["both", "Damage-tolerant overwrap and containment. Kevlar-overwrapped cases have flown on both sides."],
+    "T800 carbon/epoxy": ["both", "Filament-wound motor cases and pressure-vessel overwrap in both domains."],
+    "Carbon/epoxy (filament wound)": ["both", "The main modern case material in both domains."],
+    "S355 structural steel": ["ground", "Test stands, handling frames and baseplates. Never flight hardware."],
+    "4130 (25CrMo4)": ["ground", "Test rigs, tube structure and ground hardware, and light flight structure."],
+    "Grey cast iron (EN-GJL-250)": ["ground", "Machine bases and tooling. Not flight hardware."],
+    "Tool steel H13": ["ground", "Hot-work dies, extrusion tooling and the mandrels for winding composite cases. Tooling, not flight hardware, but tooling decides whether a flight part can be made at all."],
+    "Tool steel D2": ["ground", "Blanking and forming tools for sheet parts. A cold-work die steel and brittle, so never a structural part."],
+    "Tool steel O1": ["ground", "Gauges, jigs and fixtures where dimensional stability through the heat treatment is more important than strength."],
+    "Al 6082-T6": ["ground", "The UK default for general engineering and ground support equipment, and secondary flight structure."],
+    "9% Ni cryogenic steel": ["ground", "LNG and cryogenic storage on the ground. Seldom flight hardware."]
+  }
+}

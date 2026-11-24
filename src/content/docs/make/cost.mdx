@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import CornerRadius from '../../../components/CornerRadius.astro';
 import CostCalc from '../../../components/CostCalc.astro';
+import ToleranceCost from '../../../components/ToleranceCost.astro';
 
 <div class="glance">
   <div><b>In one line</b>Setups dominate the cost of one part, material and cycle time dominate production, and tight tolerances multiply both. Most of the cost is fixed by the drawing.</div>
@@ -54,6 +55,12 @@ a finer Ra can double the cost of that feature. One unnecessary ±0.01 mm can do
 - **Use a general tolerance** for all other dimensions ([Fits & limits](../../drawing/fits-and-limits/#general-tolerances-iso-2768)).
 - **Do not ask for a finer finish than the function needs.** Below Ra 0.8 µm most surfaces need an extra operation
   ([Surface finish](../../drawing/surface-finish/)).
+
+The tables give what each tolerance grade and each finish needs, and the factor on cycle time that the calculator below
+uses for it. The tolerances are for a 25 mm feature ([ISO 286](../../drawing/fits-and-limits/)); a larger feature has a
+wider tolerance in the same grade.
+
+<ToleranceCost />
 
 ## Design for machining
 

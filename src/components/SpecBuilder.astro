@@ -3,12 +3,24 @@
 // (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface and process concerns of each material).
 // Callout assembly lives in src/lib/callout.ts (unit-tested).
 import data from '../data/specs.json';
+import xref from '../data/xref.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
+import { SPECS_CU } from '../data/specs-cu.mjs';
 import { MFG } from '../data/specs-mfg.mjs';
+import { MATERIALS } from '../lib/materials';
+import { sameAlloy } from '../lib/datasheet';
+import { skeletonSheet, type SpecSheet } from '../lib/callout';
 
-const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper' };
-const sheets = [...SPECS_V2, ...data.specs].map((s) => ({ ...s, mfg: MFG[s.name] }));
-const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i) => ({ s, i })).filter(({ s }) => s.family === k) })).filter((g) => g.items.length);
+const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper and brass', mg: 'Magnesium', refract: 'Refractory metals' };
+const full: SpecSheet[] = [...SPECS_V2, ...data.specs, ...SPECS_CU].map((s) => ({ ...s, mfg: MFG[s.name] }));
+// every metal of the material library is in the builder: the ones with no sheet yet get a skeleton callout
+const skeletons = MATERIALS.filter((m) => m.kind === 'metal' && !full.some((s) => sameAlloy(m, s)))
+  .map((m) => skeletonSheet(m, (xref.rows as { name: string; family: string; en: string; enNo: string }[]).find((r) => sameAlloy(m, r))));
+const sheets = [...full, ...skeletons];
+const group = (skel: boolean) => Object.entries(FAM)
+  .map(([k, n]) => ({ n: skel ? `${n}: no sheet yet` : n, items: sheets.map((s, i) => ({ s, i })).filter(({ s }) => s.family === k && !!s.skeleton === skel) }))
+  .filter((g) => g.items.length);
+const groups = [...group(false), ...group(true)];
 ---
 
 <div class="calc specb" data-specb>
@@ -25,6 +37,7 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
           </select>
         </label>
         <p class="hint" data-base></p>
+        <p class="hint">{full.length} full sheets. The other {skeletons.length} metals of the material library are at the end of the list, with a skeleton callout to complete.</p>
       </fieldset>
       <fieldset>
         <legend>1 · Product form</legend>
@@ -65,7 +78,7 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       <p class="pv-sub">Your callout</p>
       <pre class="sb-out" data-out></pre>
       <p class="hint">Placeholders in &lt;angle brackets&gt; are yours to fill. Check every standard is the issue your programme invokes.</p>
-      <p class="pv-sub">How v1 wrote it for this material</p>
+      <p class="pv-sub" data-exhead>Example callout for this material</p>
       <pre class="sb-out sb-ex" data-ex></pre>
       <div data-mfgbox>
         <p class="pv-sub">Manufacturing considerations</p>
@@ -120,6 +133,7 @@ const groups = Object.entries(FAM).map(([k, n]) => ({ n, items: sheets.map((s, i
       (field('finish') as HTMLSelectElement).value = s.finishes.length ? '0' : '-1';
       q('base').textContent = `${s.base}${s.composition ? ` · ${s.composition}` : ''}`;
       q('ex').textContent = s.callout || '—';
+      q('ex').hidden = q('exhead').hidden = !s.callout;
       q('tips').innerHTML = s.tips.map((t) => `<li>${t}</li>`).join('');
       // manufacturing considerations, and the peripheral coarse grain lines on for the alloys that can grow it
       q('mfgbox').hidden = !s.mfg;

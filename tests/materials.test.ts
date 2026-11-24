@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MATERIALS, FAMILIES, DEFAULTS, material, withProps, grouped, slug } from '../src/lib/materials.ts';
 import { cardInUnits, cardNumber, solverCard, plasticTable } from '../src/lib/feacards.ts';
+import domains from '../src/data/domains.json' with { type: 'json' };
 
 test('every material has a unique key and a known family', () => {
   const keys = new Set(MATERIALS.map((m) => m.key));
@@ -71,4 +72,15 @@ test('solver cards: content, plastic table and missing values', () => {
   const p = solverCard('abaqus', material(DEFAULTS.propellant)!, 'mm-t', { id: 1, tref: 20 });
   assert.deepEqual(p.missing, ['Poisson\'s ratio']);
   assert.doesNotMatch(p.text, /\*ELASTIC/);
+});
+
+test('domain notes: each names a library material and one of the four domains', () => {
+  const names = new Set(MATERIALS.map((m) => m.name));
+  const entries = Object.entries(domains.materials as Record<string, [string, string]>);
+  assert.ok(entries.length >= 51);
+  for (const [n, [d, note]] of entries) {
+    assert.ok(names.has(n), `${n}: not in the material library`);
+    assert.ok(d in domains.domains, `${n}: unknown domain ${d}`);
+    assert.ok(note.length > 20 && !note.includes('—'), `${n}: note`);
+  }
 });

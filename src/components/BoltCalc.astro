@@ -4,7 +4,7 @@
 import MaterialSelect from './MaterialSelect.astro';
 import ThreadSelect from './ThreadSelect.astro';
 import { DEFAULTS as D } from '../lib/materials';
-import { THREADS, GRADES, MATERIALS } from '../lib/bolts';
+import { THREADS, GRADES, MATERIALS, FRICTION } from '../lib/bolts';
 ---
 
 <div class="calc btcalc" data-btcalc>
@@ -36,11 +36,12 @@ import { THREADS, GRADES, MATERIALS } from '../lib/bolts';
         <div class="row2">
           <label>Torque (N·m)<input name="tq" type="number" min="0" step="any" value="60" /></label>
           <label>Preload scatter ± (%)<input name="gam" type="number" min="0" max="80" step="any" placeholder="your value" autocomplete="off" /></label>
+          <label>Surface condition<select name="fric">{FRICTION.map((p) => <option value={p.key} selected={p.key === 'oiled'}>{p.name} (μ {p.mu.toFixed(2)})</option>)}<option value="own">Your measured values</option></select></label>
           <label>Thread friction μ<sub>t</sub><input name="mut" type="number" min="0.02" max="0.5" step="0.01" value="0.12" /></label>
           <label>Head friction μ<sub>b</sub><input name="muh" type="number" min="0.02" max="0.5" step="0.01" value="0.12" /></label>
           <label>Preload loss (%)<input name="loss" type="number" min="0" max="50" step="any" value="0" /></label>
         </div>
-        <p class="hint">Friction: about 0.10–0.14 lubricated, 0.14–0.20 dry steel: measure it for your lubricant. The scatter of preload for your tightening method comes from your programme's standard. Loss covers embedding and relaxation.</p>
+        <p class="hint">The surface condition fills both frictions with typical values: measure them for your lubricant and coating when the preload matters. The scatter of preload for your tightening method comes from your programme's standard. Loss covers embedding and relaxation.</p>
       </fieldset>
       <fieldset>
         <legend>Load and temperature</legend>
@@ -99,7 +100,7 @@ import { THREADS, GRADES, MATERIALS } from '../lib/bolts';
 </style>
 
 <script>
-  import { THREADS, GRADES, MATERIALS, torquePreload, boltStiffness, memberStiffness, loadFactor, jointState, thermalPreload, tighteningStress, boltMargins } from '../lib/bolts';
+  import { THREADS, GRADES, MATERIALS, FRICTION, torquePreload, boltStiffness, memberStiffness, loadFactor, jointState, thermalPreload, tighteningStress, boltMargins } from '../lib/bolts';
   import { readFactor, awaitingMessage, wireWorkedExample } from '../lib/factors';
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -124,6 +125,11 @@ import { THREADS, GRADES, MATERIALS } from '../lib/bolts';
     // presets fill their fields; any field can then be edited
     field('th').addEventListener('change', () => { const t = THREADS.find((x) => x.name === field('th').value)!; field('dw').value = String(Math.round(1.5 * t.d)); field('dh').value = String(t.d + 1); });
     field('gr').addEventListener('change', () => { const g = GRADES.find((x) => x.key === field('gr').value)!; field('rp').value = String(g.Rp); field('rm').value = String(g.Rm); });
+    // the surface condition fills both frictions; typing your own values changes it to "your measured values"
+    field('fric').addEventListener('change', () => { const p = FRICTION.find((x) => x.key === field('fric').value); if (p) { field('mut').value = String(p.mu); field('muh').value = String(p.mu); } });
+    const syncFric = () => { const p = FRICTION.find((x) => x.mu === num('mut') && x.mu === num('muh')); field('fric').value = p ? p.key : 'own'; };
+    field('mut').addEventListener('input', syncFric);
+    field('muh').addEventListener('input', syncFric);
 
     function run() {
       const notes: [string, string][] = [];

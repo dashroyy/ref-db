@@ -664,12 +664,12 @@
     {
       "name": "Brass CZ114",
       "family": "cu",
-      "en": "CuZn40Mn1Pb1AlFeNi (EN 12164)",
+      "en": "CuZn40Mn1Pb1AlFeSn (EN 12164)",
       "enNo": "CW721R",
       "legacyBs": "BS 2874 CZ114",
       "uns": "C67500 (similar)",
       "aero": "EN 12164",
-      "note": "High tensile brass."
+      "note": "High tensile brass (manganese bronze)."
     },
     {
       "name": "Brass CZ122",

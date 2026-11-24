@@ -58,3 +58,16 @@ test('service conditions: strength retention with temperature and an estimated f
   const r = rank(withConditions(mats, ROOM), index('fatigueTie'), { families: ['steel', 'ti', 'al'], minServiceTemp: -1e9, weldableOnly: false, hideDefaultToughness: false });
   assert.ok(r.length > 10 && r.every((x) => ['steel', 'ti', 'al'].includes(x.m.family)));
 });
+
+test('cost and conduction indices: valid axes, and the ranking that the use text promises', () => {
+  for (const k of ['costTie', 'costStiff', 'conduct']) {
+    const i = index(k);
+    assert.ok(prop(i.x) && prop(i.y), `${k}: axes are properties`);
+  }
+  assert.equal(prop('costVol').get(get('Brass CZ121')), 8.5 * 8, 'cost per volume is density times price');
+  const all = { families: ['steel', 'ti', 'al', 'cu'], minServiceTemp: -273, weldableOnly: false, hideDefaultToughness: false };
+  const cost = rank(mats, index('costTie'), all).map((r) => r.m.name);
+  assert.ok(cost.indexOf(get('S355').name) < cost.indexOf(get('Ti-6Al-4V').name), 'cheap steel beats titanium on strength per pound');
+  const k = rank(mats, index('conduct'), all);
+  assert.equal(k[0].m.family, 'cu', 'copper alloys lead on conduction');
+});

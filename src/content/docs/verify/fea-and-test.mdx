@@ -58,6 +58,37 @@ or the natural frequency of a bracket. Then select the simplest model that can a
 - **Linear or nonlinear.** Large deflection of thin shells, plasticity near burst, and contact in joints and seals each
   make the model nonlinear. Each has its own convergence and checks.
 
+## Which analysis for which part
+
+REF·DB v1 gave the failure mode that sizes each part of a motor, and the analysis that finds it:
+
+| Part | What fails | Analysis |
+| --- | --- | --- |
+| Case cylinder | Membrane hoop stress and burst | Linear static to size it; nonlinear material to predict burst; fracture analysis if it is fracture critical |
+| Case dome and closure joint | Bending at the discontinuity, not membrane stress | Axisymmetric or 3-D linear static with the real geometry: cases fail at the junction, not in the cylinder |
+| Skirt and interstage | Buckling in compression and bending | Eigenvalue buckling for the mode shape, then nonlinear with imperfections for the load |
+| Bolted closure and flange | Joint separation, thread stripping, bolt fatigue | Contact with explicit bolt preload: a bonded contact hides the failure mode |
+| Nozzle throat insert | Thermal shock and erosion, not mechanical load | Transient thermal stress with temperature-dependent properties |
+| Nozzle exit cone | Buckling, thermal gradient, side loads at start | Thermal analysis coupled to nonlinear buckling: the start transient often governs |
+| Insulation and liner bondline | Debond under thermal cycles and grain strain | Nonlinear, with a cohesive or contact bondline. A debond adds burning area: it is a safety item |
+| Propellant grain | Cracks from thermal cycles and cure shrinkage | Nonlinear viscoelastic, with time and temperature: specialist analysis ([Propellant grain](../../motor/propellant-grain/)) |
+| Igniter boss and attachment | Local bearing, thread pull-out, discontinuity stress | A local 3-D submodel with contact, driven by the global model |
+| Brackets and secondary structure | Static strength, then vibration fatigue | Linear static for limit and ultimate loads, then random response and fatigue damage ([Random vibration](../random-vibration/)) |
+| Instrument ports | Stress concentration at the hole | A submodel with the real fillet radius: a sharp corner in the model is a singularity, not a stress |
+
+Each type of analysis has a sign that shows that you used the wrong one:
+
+| Analysis | Use it when | The sign that it is wrong |
+| --- | --- | --- |
+| Linear static | The first analysis of nearly anything | The peak stress keeps increasing as you refine the mesh: a singularity, not a result |
+| Nonlinear material | Stress above the proportional limit, or a burst prediction | A burst pressure from a linear analysis means nothing: plastic redistribution sets it |
+| Nonlinear geometry | Deflections near the wall thickness, or a load path that changes as the part deforms | The deformed shape looks different from the undeformed one |
+| Contact and assembly | Parts touch, slide, separate or are bolted | A bonded contact where the real joint can open: model the preload |
+| Buckling (eigenvalue) | Compression, external pressure or bending of thin structure | The eigenvalue is always unconservative: use it for the mode shape, then a nonlinear analysis with imperfections |
+| Modal and dynamic | Vibration, launch loads, pulsing sources | One set of modes for the full burn: an empty motor is a different structure, so run the start and the end |
+| Thermal stress | Gradients, differential expansion, hot structure | A free part at uniform temperature has no thermal stress: the gradient and the constraint cause it |
+| Fracture and damage tolerance | Fracture-critical hardware, or a possible flaw | A typical toughness: use the value for the orientation, thickness and temperature; the assumed initial flaw sets the life |
+
 ## Mesh and convergence
 
 A finite-element result has a discretisation error, which decreases as you refine the mesh. The only way to know its
@@ -115,6 +146,7 @@ peak stress that you report. The limits below are typical starting values; your 
 | Corner angles, triangles and tetrahedra | 30° or more | 20–30° | under 15° | Small angles give poor stress results |
 | Corner angles, quadrilaterals and hexahedra | 45°–135° | 30°–150° | outside 20°–160° | Very distorted corners give poor stress results |
 | Warpage of quadrilateral faces | under 5° | 5–15° | over 15° | A warped shell or face is not flat, and bends incorrectly |
+| Skewness (0 for the ideal shape, 1 for a flat element) | under 0.5 | 0.5–0.95 | over 0.95 | A skewed element degrades the local result and slows an iterative solver |
 | Mid-side node position (second-order) | on the straight line or the surface | small offset | far from the middle | Curved edges that do not follow the geometry give false stresses |
 
 Look at the metrics where the stress is high, not only as a summary for the full model. A poor element far from the

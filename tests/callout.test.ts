@@ -1,11 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStandard, temperCode, finishSpec, buildCallout, needsBake, isPlating, type SpecSheet } from '../src/lib/callout.ts';
+import { parseStandard, temperCode, finishSpec, buildCallout, needsBake, isPlating, skeletonSheet, type SpecSheet } from '../src/lib/callout.ts';
 import { MFG } from '../src/data/specs-mfg.mjs';
 import data from '../src/data/specs.json' with { type: 'json' };
 import { SPECS_V2 } from '../src/data/specs-v2.mjs';
+import { SPECS_CU } from '../src/data/specs-cu.mjs';
+import xref from '../src/data/xref.json' with { type: 'json' };
+import { MATERIALS } from '../src/lib/materials.ts';
+import { sameAlloy } from '../src/lib/datasheet.ts';
 
-const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[])];
+const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[])];
 const sheet = (n: string) => sheets.find((s) => s.name.startsWith(n))!;
 
 test('standards parse into alternatives and tolerance standards', () => {
@@ -87,5 +91,36 @@ test('hydrogen-embrittlement bake: on for a plated steel, off when the finish al
   assert.ok(!needsBake(sheet('Aluminium 6082'), sheet('Aluminium 6082').finishes[0]));
   const out = buildCallout({ sheet: s4130, formIndex: 0, standard: 'X', temperIndex: 0, finishIndex: s4130.finishes.indexOf(zinc), afterFinish: false, traceability: false, certificate: false, hydrogenBake: true });
   assert.match(out, /HYDROGEN EMBRITTLEMENT RELIEF BAKE TO AMS 2759\/9 OR BS EN ISO 9588\n {10}START THE BAKE WITHIN <TIME> OF PLATING/);
+});
+
+test('brass sheets: each matches its library entry and names its EN product standards', () => {
+  for (const sh of SPECS_CU as SpecSheet[]) {
+    const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
+    assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
+    assert.ok(sh.forms.every((f) => /^(BS EN \d{4,5}|ASTM B\d+)$/.test(f.standard)), `${sh.name}: product standards`);
+    assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
+  }
+  const w = sheet('Brass CW713R');
+  const out = buildCallout({ sheet: w, formIndex: 0, standard: 'BS EN 12164', temperIndex: 0, finishIndex: -1, afterFinish: false, traceability: false, certificate: true });
+  assert.equal(out.split('\n')[0], 'MATERIAL: CuZn37Mn3Al2PbSi (CW713R) ROD FOR FREE MACHINING TO BS EN 12164');
+  assert.equal(out.split('\n')[1], '          CONDITION: R540');
+});
+
+test('every library metal is in the builder: a full sheet, or a skeleton with placeholders', () => {
+  const rows = xref.rows as { name: string; family: string; en: string; enNo: string }[];
+  const metals = MATERIALS.filter((m) => m.kind === 'metal');
+  const skel = metals.filter((m) => !sheets.some((sh) => sameAlloy(m, sh))).map((m) => skeletonSheet(m, rows.find((r) => sameAlloy(m, r))));
+  assert.ok(skel.length > 0 && skel.length < metals.length);
+  for (const sk of skel) {
+    const out = buildCallout({ sheet: sk, formIndex: 0, standard: parseStandard(sk.forms[0].standard).alternatives[0], temperIndex: 0, finishIndex: 0, afterFinish: true, traceability: false, certificate: true });
+    assert.ok(out.startsWith('MATERIAL: ') && out.includes('<PRODUCT FORM>') && out.includes('CONDITION: <CONDITION>') && !out.includes('undefined'), sk.name);
+  }
+  // a brass with no full sheet takes its designation and standard from the designations table
+  const muntz = skel.find((sk) => sk.name.includes('CW509L'))!;
+  assert.equal(muntz.designation, 'CuZn40 (CW509L)');
+  assert.deepEqual(parseStandard(muntz.forms[0].standard).alternatives, ['BS EN 12163', '<PRODUCT STANDARD>']);
+  // an aluminium skeleton does not join a placeholder condition to the designation
+  const al = skel.find((sk) => sk.family === 'al')!;
+  assert.doesNotMatch(buildCallout({ sheet: al, formIndex: 0, standard: 'X', temperIndex: 0, finishIndex: -1, afterFinish: false, traceability: false, certificate: false }), /-<CONDITION>/);
 });
 

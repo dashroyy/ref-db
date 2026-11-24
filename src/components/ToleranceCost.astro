@@ -1,0 +1,41 @@
+---
+// The cost of tolerance and finish: what each IT grade and each Ra needs (REF·DB v1's tables), with the cycle-time
+// factor that the cost calculator uses (src/lib/cost.ts), so that the page and the tool agree. Tolerances for a 25 mm
+// feature (ISO 286, src/lib/fits.ts).
+import { itValue } from '../lib/fits';
+import { tolFactor, finishFactor } from '../lib/cost';
+
+const D = 25;
+const grades = [
+  { g: 12, n: 'IT12 and coarser', need: 'As cast, as forged, flame cut or rough machined. No special control.' },
+  { g: 11, n: 'IT11', need: 'Coarse machining, with no attention to size.' },
+  { g: 9, n: 'IT9', need: 'General machining: routine CNC capability.' },
+  { g: 8, n: 'IT8', need: 'Close machining: attention to the tools, the offsets and thermal drift.' },
+  { g: 7, n: 'IT7', need: 'The fit tolerance (H7): reaming, boring or grinding, with gauging during the process.' },
+  { g: 6, n: 'IT6', need: 'Precision: grinding, inspection at a controlled temperature, and more scrap.' },
+  { g: 5, n: 'IT5', need: 'Very precise: specialist work. Make sure that the function needs it.' },
+].map((r) => { const it = itValue(D, r.g); return { ...r, pm: it / 2000, k: tolFactor(it / 2000) }; });
+const finishes = [
+  { ra: '3.2', v: 3.2, need: 'General machining: a normal finishing pass. Ra 6.3 (one pass) and Ra 12.5 (as roughed) cost no less.' },
+  { ra: '1.6', v: 1.6, need: 'A careful finishing pass: sharp tools and a controlled feed.' },
+  { ra: '0.8', v: 0.8, need: 'Near the limit of turning and milling; often ground instead.' },
+  { ra: '0.4', v: 0.4, need: 'Ground: a separate operation, setup and inspection.' },
+  { ra: '0.2', v: 0.2, need: 'Fine grinding: slower, with more passes and closer control.' },
+  { ra: '0.1', v: 0.1, need: 'Honed or lapped after grinding. Ra 0.05 and finer is a further operation again.' },
+].map((r) => ({ ...r, k: finishFactor(r.v) }));
+---
+
+<div class="tolcost">
+  <table>
+    <thead><tr><th>Tolerance grade</th><th>± at 25 mm</th><th>What it needs</th><th>Cycle time ×</th></tr></thead>
+    <tbody>{grades.map((r) => <tr><td>{r.n}</td><td>{r.pm.toFixed(r.pm < 0.01 ? 4 : 3)} mm</td><td>{r.need}</td><td>{r.k.toFixed(2)}</td></tr>)}</tbody>
+  </table>
+  <table>
+    <thead><tr><th>Finish</th><th>What it needs</th><th>Cycle time ×</th></tr></thead>
+    <tbody>{finishes.map((r) => <tr><td>Ra {r.ra} µm</td><td>{r.need}</td><td>{r.k.toFixed(2)}</td></tr>)}</tbody>
+  </table>
+</div>
+
+<style>
+  .tolcost td:nth-child(1), .tolcost td:last-child { white-space: nowrap; }
+</style>

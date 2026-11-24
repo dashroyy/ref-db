@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { THREADS, metricThread, torquePreload, boltStiffness, memberStiffness, loadFactor, jointState, thermalPreload, tighteningStress, boltMargins } from '../src/lib/bolts.ts';
+import { THREADS, FRICTION, metricThread, torquePreload, boltStiffness, memberStiffness, loadFactor, jointState, thermalPreload, tighteningStress, boltMargins } from '../src/lib/bolts.ts';
 
 const close = (a: number, b: number, tol: number, msg?: string) => assert.ok(Math.abs(a - b) <= tol, `${msg ?? ''} ${a} vs ${b}`);
 const M10 = THREADS.find((t) => t.name === 'M10')!;
@@ -72,4 +72,13 @@ test('blank factors give no margin, and a weak preload separates first', () => {
   const m = boltMargins({ Fmin: 10000, Fmax: 12000, P: 20000, phi: 0.2, As: 58, Rp: 1100, Rm: 1220, fsSep: null, fsYield: null, fsUlt: 1.4, special: 1 });
   assert.equal(m.sep, null); assert.equal(m.yield, null);
   assert.equal(m.ult!.separated, true); close(m.ult!.load, 28000, 1e-9);
+});
+
+test('friction presets: unique, inside the input range, lubricated below dry', () => {
+  assert.equal(new Set(FRICTION.map((p) => p.key)).size, FRICTION.length);
+  for (const p of FRICTION) assert.ok(p.mu >= 0.02 && p.mu <= 0.5, p.name);
+  const mu = (k: string) => FRICTION.find((p) => p.key === k)!.mu;
+  assert.ok(mu('oiled') < mu('dry') && mu('mos2') < mu('oiled') && mu('ptfe') < mu('mos2'));
+  assert.ok(mu('ssas') < mu('ssdry'), 'anti-seize lowers the friction of stainless');
+  assert.equal(mu('oiled'), 0.12, 'the default preset matches the default inputs of the calculator');
 });

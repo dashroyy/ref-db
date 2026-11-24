@@ -35,6 +35,7 @@ export const PROPERTIES: Property[] = [
   { key: 'spStiffness', label: 'Specific stiffness E/ρ', unit: 'MN·m/kg', get: (m) => (m.E ? m.E / m.density : undefined) },
   { key: 'Ealpha', label: 'Thermal stress per kelvin Eα', unit: 'MPa/K', get: (m) => (m.E && m.cte ? m.E * m.cte * 1e-3 : undefined) },
   { key: 'fatigue', label: 'Fatigue strength (estimated)', unit: 'MPa', get: (m) => m.fatigue },
+  { key: 'costVol', label: 'Cost per volume ρC', unit: '£/L', get: (m) => (m.pricePerKg ? m.density * m.pricePerKg : undefined) },
 ];
 export const prop = (key: string) => PROPERTIES.find((p) => p.key === key)!;
 
@@ -70,6 +71,12 @@ export const INDICES: Index[] = [
     value: (m) => pos(m.fatigue) && m.fatigue! / m.density, use: 'Parts that cycle many times (pressure cycles, vibration): mass for a given fatigue load. Metals only.' },
   { key: 'fatigueBeam', name: 'Light beam in fatigue', tex: 'S_e^{2/3}/\\rho', x: 'density', y: 'fatigue', slope: 1.5,
     value: (m) => pos(m.fatigue) && Math.pow(m.fatigue!, 2 / 3) / m.density, use: 'Brackets and beams sized by bending fatigue. Metals only.' },
+  { key: 'costTie', name: 'Cheap, strong tie or wall', tex: '\\sigma_y/(C_m\\rho)', x: 'costVol', y: 'yield', slope: 1,
+    value: (m) => (m.pricePerKg ? m.yield / (m.density * m.pricePerKg) : undefined), use: 'Tooling, fixtures, test hardware and ground equipment, where cost and not mass is the driver: strength for each pound spent.' },
+  { key: 'costStiff', name: 'Cheap, stiff tie or frame', tex: 'E/(C_m\\rho)', x: 'costVol', y: 'E', slope: 1,
+    value: (m) => (m.pricePerKg && m.E ? m.E / (m.density * m.pricePerKg) : undefined), use: 'Rigs, stands and fixtures sized by stiffness: stiffness for each pound spent.' },
+  { key: 'conduct', name: 'Heat conduction (cooled liner or heat sink)', tex: 'k', x: 'yield', y: 'k', slope: 0,
+    value: (m) => pos(m.k), use: 'A cooled liner or a heat sink is limited by conduction first: rank on k, then keep only the materials strong enough for the load (yield is the other axis).' },
 ];
 export const index = (key: string) => INDICES.find((i) => i.key === key)!;
 

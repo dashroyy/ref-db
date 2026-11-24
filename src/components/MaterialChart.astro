@@ -2,6 +2,7 @@
 // Ashby-style material selection chart. Indices, properties and ranking come from
 // src/lib/selection.ts (unit-tested), so the chart and the ranking table always agree.
 import data from '../data/materials.json';
+import domains from '../data/domains.json';
 import { INDICES, PROPERTIES } from '../lib/selection';
 import { SURFACES, LOADS, RELIABILITY } from '../lib/fatigue';
 
@@ -87,7 +88,7 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
     0.2% proof for metals, failure stress for ceramics and ablatives, and <b>fibre-direction</b> strength for composites.
     A real laminate is much lower, so cross-family rankings that include composites make them look too good. Toughness is indicative.
   </div>
-  <script type="application/json" data-data set:html={JSON.stringify({ materials: data.materials, FAMILIES })}></script>
+  <script type="application/json" data-data set:html={JSON.stringify({ materials: data.materials, FAMILIES, DOMAINS: Object.fromEntries(Object.entries(domains.materials).map(([n, [d, t]]) => [n, [(domains.domains as Record<string, { name: string }>)[d].name, t]])) })}></script>
 </div>
 
 <style is:global>
@@ -150,7 +151,7 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
   const fmt = (v: number) => (!Number.isFinite(v) ? '—' : v >= 1000 ? v.toFixed(0) : v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toPrecision(2));
 
   document.querySelectorAll<HTMLElement>('[data-mcalc]').forEach((root) => {
-    const { materials: RAW, FAMILIES } = JSON.parse(root.querySelector('[data-data]')!.textContent!) as { materials: Material[]; FAMILIES: [string, string, string][] };
+    const { materials: RAW, FAMILIES, DOMAINS } = JSON.parse(root.querySelector('[data-data]')!.textContent!) as { materials: Material[]; FAMILIES: [string, string, string][]; DOMAINS: Record<string, [string, string]> };
     let materials: (Material & { retention?: number })[] = RAW;
     // heat-map colour for a value t in [0, 1]: blue, teal, amber, red
     const HEAT = [[59, 110, 168], [47, 181, 173], [212, 160, 23], [224, 90, 71]];
@@ -329,6 +330,7 @@ const DEFAULT_FAMS = ['steel', 'ss', 'ti', 'al', 'ni']; // the worked example: m
         <h4>${m.name}</h4>
         <span class="mc-idx">${idx && v !== undefined ? `#${pos + 1} · M = ${fmt(v)}` : ''}</span>
         <p class="mc-sum">${m.summary}. ${m.spec}</p>
+        ${DOMAINS[m.name] ? `<p class="mc-sum mc-dom"><b>${DOMAINS[m.name][0]}.</b> ${DOMAINS[m.name][1]}</p>` : ''}
         <p class="mc-props">${['density', 'yield', 'uts', 'fatigue', 'E', 'kic', 'tmax', 'cte', 'k'].map(p).filter(Boolean).join('')}${(m as any).retention !== undefined && (m as any).retention < 1 ? `<span>strengths at ${field('T').value} °C: ${Math.round(100 * (m as any).retention)}% of room temperature</span>` : ''}${m.weldable ? '<span>weldable</span>' : ''}${m.kicIsFamilyDefault ? '<span>K<sub>IC</sub> is a family default</span>' : ''}</p>
       </div>`;
     }

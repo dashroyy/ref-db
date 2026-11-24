@@ -1,6 +1,6 @@
 ---
 title: Specifying materials
-description: Change a material selection into a drawing callout that an inspector can accept or reject. Alloy and condition, product-form standard and finish, peripheral coarse grain, and a builder for 27 specification sheets with their manufacturing considerations.
+description: Change a material selection into a drawing callout that an inspector can accept or reject. Alloy and condition, product-form standard and finish, peripheral coarse grain, and a builder for every metal in the material library.
 sidebar:
   order: 3
 ---
@@ -93,8 +93,12 @@ Where your programme does not permit PCG on the finished part, the drawing must 
 Select a sheet, then each of the three parts. The builder makes the block from the standards on that sheet. The extra
 lines add heat treatment with furnace pyrometry, the hydrogen-embrittlement bake after plating a steel, penetrant
 inspection, the edge condition, the grain direction and the peripheral coarse grain requirement. The PCG lines are on by
-default for the alloys that can grow it. Below the callout are the manufacturing considerations for the material, and an
-example of how REF·DB v1 wrote a complete callout for it.
+default for the alloys that can grow it. Below the callout are an example callout and the manufacturing considerations
+for the material.
+
+Every metal in the [material library](../selection/) is in the list. The common metals and the brasses have a full
+sheet. The others are at the end of the list: they give a skeleton callout, with the designation filled in and the
+product form, the standard, the condition and the finish left as placeholders for you to complete.
 
 <SpecBuilder />
 
@@ -122,7 +126,7 @@ The default of the builder is the D6AC sheet, one of the two case-steel sheets a
 
 <Aside type="caution" title="Check the current issue">
   Standards are revised and superseded, and sometimes they are withdrawn. The sheets here are a starting point from
-  REF·DB v1, with two v2 additions. Use the issue that your programme specifies, and use the preferred specifications of
+  REF·DB v1, with v2 additions (the case steels and the brasses). Use the issue that your programme specifies, and use the preferred specifications of
   your organisation where they exist.
 </Aside>
 

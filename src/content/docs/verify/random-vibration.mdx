@@ -204,6 +204,22 @@ The environment comes from four sources:
 - **Test.** Qualification and acceptance on a shaker, with levels, tolerances and durations from the applicable test
   standard.
 
+### Screening environments
+
+REF·DB v1 gave five flat spectra for a first look, before the environment specification exists. They are not
+qualification levels: the environment specification of your programme and the test standard set the real spectra, the
+ramps and the durations.
+
+| Environment | ASD (g²/Hz) | Band (Hz) | Grms | Duration | What drives it |
+| --- | --- | --- | --- | --- | --- |
+| General flight equipment | 0.04 | 20 to 2000 | 8.9 | 3 min | A mild generic level. Many programmes start here and change it when flight data exist. |
+| Launch-vehicle payload | 0.08 | 20 to 2000 | 12.6 | 3 min | Sound, worst at lift-off and in transonic flight. Usually the sizing case for anything carried to orbit. |
+| Tactical captive carry | 0.15 | 20 to 2000 | 17.2 | 1 h | The long duration: hours of carriage, not minutes of flight, so fatigue governs. |
+| Road transport | 0.015 | 5 to 500 | 2.7 | 2 h | Low level, long and at low frequency. It seldom sets the strength, but it often finds loose fasteners and fretting. |
+| Aft end, near the plume | 0.3 | 20 to 2000 | 24.4 | 1 min | Severe and short: structure near the nozzle exit sees the worst acoustic environment on the vehicle. |
+
+For a flat ASD $W$ from $f_1$ to $f_2$, $G_{rms} = \sqrt{W\,(f_2 - f_1)}$.
+
 ## Calculator
 
 <VibCalc />
