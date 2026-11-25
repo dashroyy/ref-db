@@ -6,13 +6,14 @@ import data from '../data/specs.json';
 import xref from '../data/xref.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
 import { SPECS_CU } from '../data/specs-cu.mjs';
+import { SPECS_STEEL } from '../data/specs-steel.mjs';
 import { MFG } from '../data/specs-mfg.mjs';
 import { MATERIALS } from '../lib/materials';
 import { sameAlloy } from '../lib/datasheet';
 import { skeletonSheet, type SpecSheet } from '../lib/callout';
 
 const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper and brass', mg: 'Magnesium', refract: 'Refractory metals' };
-const full: SpecSheet[] = [...SPECS_V2, ...data.specs, ...SPECS_CU].map((s) => ({ ...s, mfg: MFG[s.name] }));
+const full: SpecSheet[] = [...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL].map((s) => ({ ...s, mfg: MFG[s.name] }));
 // every metal of the material library is in the builder: the ones with no sheet yet get a skeleton callout
 const skeletons = MATERIALS.filter((m) => m.kind === 'metal' && !full.some((s) => sameAlloy(m, s)))
   .map((m) => skeletonSheet(m, (xref.rows as { name: string; family: string; en: string; enNo: string }[]).find((r) => sameAlloy(m, r))));

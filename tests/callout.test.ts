@@ -5,11 +5,12 @@ import { MFG } from '../src/data/specs-mfg.mjs';
 import data from '../src/data/specs.json' with { type: 'json' };
 import { SPECS_V2 } from '../src/data/specs-v2.mjs';
 import { SPECS_CU } from '../src/data/specs-cu.mjs';
+import { SPECS_STEEL } from '../src/data/specs-steel.mjs';
 import xref from '../src/data/xref.json' with { type: 'json' };
 import { MATERIALS } from '../src/lib/materials.ts';
 import { sameAlloy } from '../src/lib/datasheet.ts';
 
-const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[])];
+const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[])];
 const sheet = (n: string) => sheets.find((s) => s.name.startsWith(n))!;
 
 test('standards parse into alternatives and tolerance standards', () => {
@@ -18,6 +19,8 @@ test('standards parse into alternatives and tolerance standards', () => {
   assert.equal(temperCode('T6 / T651'), 'T6');
   assert.equal(finishSpec('BS EN ISO 7599 (or DEF STAN 03-24/25 on MoD work)'), 'BS EN ISO 7599');
   assert.equal(finishSpec('Company finish spec'), '<COMPANY SPEC>');
+  assert.equal(finishSpec('Process spec'), '<PROCESS SPEC>');
+  assert.equal(finishSpec('Programme spec'), '<PROGRAMME SPEC>');
 });
 
 test('aluminium callout reproduces the v1 example material line', () => {
@@ -98,7 +101,7 @@ test('brass sheets: each matches its library entry and names its EN product stan
     const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
     assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
     assert.ok(sh.forms.every((f) => /^(BS EN \d{4,5}|ASTM B\d+)$/.test(f.standard)), `${sh.name}: product standards`);
-    assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
+    assert.ok(sh.tempers.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name); // a heat-exchanger tube can have no finish
   }
   const w = sheet('Brass CW713R');
   const out = buildCallout({ sheet: w, formIndex: 0, standard: 'BS EN 12164', temperIndex: 0, finishIndex: -1, afterFinish: false, traceability: false, certificate: true });
@@ -115,12 +118,30 @@ test('every library metal is in the builder: a full sheet, or a skeleton with pl
     const out = buildCallout({ sheet: sk, formIndex: 0, standard: parseStandard(sk.forms[0].standard).alternatives[0], temperIndex: 0, finishIndex: 0, afterFinish: true, traceability: false, certificate: true });
     assert.ok(out.startsWith('MATERIAL: ') && out.includes('<PRODUCT FORM>') && out.includes('CONDITION: <CONDITION>') && !out.includes('undefined'), sk.name);
   }
-  // a brass with no full sheet takes its designation and standard from the designations table
-  const muntz = skel.find((sk) => sk.name.includes('CW509L'))!;
-  assert.equal(muntz.designation, 'CuZn40 (CW509L)');
-  assert.deepEqual(parseStandard(muntz.forms[0].standard).alternatives, ['BS EN 12163', '<PRODUCT STANDARD>']);
+  // a skeleton takes its designation, and a standard where the designations table gives one, from that table
+  const hinted = skel.filter((sk) => sk.forms[0].standard.endsWith(' / <PRODUCT STANDARD>'));
+  assert.ok(hinted.length > 0, 'some skeletons take a standard from the designations table');
+  for (const sk of hinted) assert.match(parseStandard(sk.forms[0].standard).alternatives[0], /^(BS EN|AMS|ASTM) /, sk.name);
+  assert.equal(skeletonSheet({ name: 'X', family: 'cu', summary: '', spec: '' }, { en: 'CuZn40 (EN 12163)', enNo: 'CW509L' }).designation, 'CuZn40 (CW509L)');
   // an aluminium skeleton does not join a placeholder condition to the designation
   const al = skel.find((sk) => sk.family === 'al')!;
   assert.doesNotMatch(buildCallout({ sheet: al, formIndex: 0, standard: 'X', temperIndex: 0, finishIndex: -1, afterFinish: false, traceability: false, certificate: false }), /-<CONDITION>/);
+});
+
+test('steel sheets: each matches one library material, with product standards and a full callout', () => {
+  for (const sh of SPECS_STEEL as SpecSheet[]) {
+    const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
+    assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
+    assert.equal(lib[0].family, 'steel', sh.name);
+    assert.ok(sh.forms.every((f) => /^(BS (EN (ISO )?)?\d{3,5}(-\d)?|ASTM A\d+)/.test(f.standard)), `${sh.name}: product standards`);
+    assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
+    sh.forms.forEach((f, fi) => {
+      const out = buildCallout({ sheet: sh, formIndex: fi, standard: parseStandard(f.standard).alternatives[0], temperIndex: 0, finishIndex: 0, afterFinish: true, traceability: true, certificate: true });
+      assert.ok(out.startsWith('MATERIAL: ') && !out.includes('undefined'), `${sh.name} / ${f.form}`);
+    });
+  }
+  // the quenched-and-tempered steels: the plated finish switches the hydrogen bake on
+  const s42 = sheet('4140 / 42CrMo4');
+  assert.ok(needsBake(s42, s42.finishes.find((f) => /Zinc-nickel/.test(f.name))!));
 });
 

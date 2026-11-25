@@ -43,10 +43,13 @@ export function parseStandard(raw: string) {
 /** First code of a temper entry: 'T6 / T651' → 'T6'. */
 export const temperCode = (raw: string) => raw.split(/\s\/\s/)[0].trim();
 
-/** Finish spec without bracketed notes; generic company specs become a placeholder. */
+/** Finish spec without bracketed notes; generic company, process and programme specs become placeholders. */
 export const finishSpec = (raw: string) => {
   const s = stripNotes(raw).split(/\s\/\s/)[0].trim();
-  return /company/i.test(s) ? '<COMPANY SPEC>' : s;
+  if (/company/i.test(s)) return '<COMPANY SPEC>';
+  if (/^process spec/i.test(s)) return '<PROCESS SPEC>';
+  if (/^programme spec/i.test(s)) return '<PROGRAMME SPEC>';
+  return s;
 };
 
 export interface CalloutChoice {

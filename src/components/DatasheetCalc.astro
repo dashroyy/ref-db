@@ -10,11 +10,12 @@ import xref from '../data/xref.json';
 import specs from '../data/specs.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
 import { SPECS_CU } from '../data/specs-cu.mjs';
+import { SPECS_STEEL } from '../data/specs-steel.mjs';
 import domains from '../data/domains.json';
 
 type XRow = { name: string; family: string; en: string; enNo: string; legacyBs: string; uns: string; aero: string; note: string };
 type Sheet = { name: string; family: string; designation: string; forms: unknown[]; tempers: unknown[] };
-const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU] as Sheet[];
+const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU, ...SPECS_STEEL] as Sheet[];
 const DOM = domains.domains as Record<string, { name: string }>, DOM_OF = domains.materials as Record<string, [string, string]>;
 const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
   name: m.name, family: m.family, familyName: m.familyName, kind: m.kind, summary: m.summary, spec: m.spec,
