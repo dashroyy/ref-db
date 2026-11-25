@@ -15,11 +15,13 @@ import { SPECS_SS } from '../data/specs-ss.mjs';
 import { SPECS_AL } from '../data/specs-al.mjs';
 import { SPECS_TI } from '../data/specs-ti.mjs';
 import { SPECS_NI } from '../data/specs-ni.mjs';
+import { SPECS_MG } from '../data/specs-mg.mjs';
+import { SPECS_REFRACT } from '../data/specs-refract.mjs';
 import domains from '../data/domains.json';
 
 type XRow = { name: string; family: string; en: string; enNo: string; legacyBs: string; uns: string; aero: string; note: string };
 type Sheet = { name: string; family: string; designation: string; forms: unknown[]; tempers: unknown[] };
-const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI] as Sheet[];
+const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI, ...SPECS_MG, ...SPECS_REFRACT] as Sheet[];
 const DOM = domains.domains as Record<string, { name: string }>, DOM_OF = domains.materials as Record<string, [string, string]>;
 const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
   name: m.name, family: m.family, familyName: m.familyName, kind: m.kind, summary: m.summary, spec: m.spec,

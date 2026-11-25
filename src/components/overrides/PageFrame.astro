@@ -34,6 +34,88 @@ const pc = here ? `var(--ph-${here.phase})` : 'var(--sl-color-accent)';
   addEventListener('resize', update);
   update();
 
+  // Calculator fit on every page. 1: a dropdown whose longest option, or a box whose value, does not fit takes the full
+  // row of its grid (fit-wide). 2: a two-column calculator in which something still does not fit (a value cut off in
+  // its box, a table wider than its column) stacks its inputs above its results (stacked). Checked on load, when the
+  // content changes, when a tab opens and when the calculator is resized; a calculator goes back to two columns only
+  // when its width changes.
+  const ctx = document.createElement('canvas').getContext('2d');
+  const FIELDS = 'select, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden])';
+  const fits = (el: HTMLSelectElement | HTMLInputElement) => {
+    if (!(el instanceof HTMLSelectElement)) return el.scrollWidth <= el.clientWidth + 1;
+    const cs = getComputedStyle(el);
+    ctx!.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    let text = 0;
+    for (const o of Array.from(el.options)) text = Math.max(text, ctx!.measureText(o.text.trim()).width);
+    return text + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 24 <= el.clientWidth; // 24 px: the arrow
+  };
+  const columns = (el: Element) => {
+    const s = getComputedStyle(el);
+    return s.display === 'grid' ? s.gridTemplateColumns.split(' ').length : 0;
+  };
+  /** The element to widen for a field: the field's nearest ancestor that sits in a grid of two or more columns (the
+   *  label in a row of inputs, or the group that holds a one-column list of labels). */
+  const wideTarget = (field: HTMLElement) => {
+    for (let el: HTMLElement | null = field; el && !el.classList.contains('calc'); el = el.parentElement)
+      if (el.parentElement && columns(el.parentElement) > 1) return el;
+    return null;
+  };
+  /** Widen every field of the calculator that does not fit; false if one still does not fit. */
+  const fitFields = (calc: HTMLElement) => {
+    calc.querySelectorAll('.fit-wide').forEach((el) => el.classList.remove('fit-wide'));
+    let ok = true;
+    for (const f of Array.from(calc.querySelectorAll<HTMLSelectElement | HTMLInputElement>(FIELDS))) {
+      if (!ctx || f.offsetParent === null || (f instanceof HTMLSelectElement && !f.options.length) || fits(f)) continue;
+      wideTarget(f)?.classList.add('fit-wide');
+      if (!fits(f)) ok = false;
+    }
+    return ok;
+  };
+  const overflows = (body: HTMLElement) => {
+    for (const el of Array.from(body.querySelectorAll<HTMLElement>('*'))) {
+      if (el.offsetParent === null || el.matches('select, [type=checkbox], [type=radio], [type=range]')) continue;
+      const scrolls = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || /auto|scroll/.test(getComputedStyle(el).overflowX);
+      if (scrolls && el.scrollWidth > el.clientWidth + 1) return true;
+    }
+    return false;
+  };
+  const widths = new WeakMap<HTMLElement, number>();
+  const fitCalc = (calc: HTMLElement) => {
+    if (widths.get(calc) !== calc.clientWidth) { calc.classList.remove('stacked'); widths.set(calc, calc.clientWidth); }
+    const ok = fitFields(calc);
+    const body = calc.querySelector<HTMLElement>('.calc-body');
+    if (!body || calc.classList.contains('stacked') || columns(body) < 2) return;
+    if (!ok || overflows(body)) {
+      calc.classList.add('stacked');
+      fitFields(calc);
+    }
+  };
+  // a zero-delay timer, not an animation frame: it runs after the click and input handlers, and also in a background tab
+  const due = new Set<HTMLElement>();
+  let timer = 0;
+  const queue = (calc: HTMLElement) => {
+    due.add(calc);
+    timer ||= window.setTimeout(() => { timer = 0; due.forEach(fitCalc); due.clear(); }, 0);
+  };
+  document.querySelectorAll<HTMLElement>('.calc').forEach((calc) => {
+    queue(calc);
+    new ResizeObserver(() => queue(calc)).observe(calc);
+    // tabs open by the hidden attribute, a class or a style. A class change that only adds or removes this script's own
+    // classes (fit-wide, stacked) is ignored, or the script would wake itself.
+    const own = new Set(['fit-wide', 'stacked']);
+    const words = (s: string | null) => new Set((s ?? '').split(/\s+/).filter(Boolean));
+    new MutationObserver((records) => {
+      const relevant = records.some((r) => {
+        if (r.type !== 'attributes' || r.attributeName !== 'class') return true;
+        const before = words(r.oldValue), after = words((r.target as Element).getAttribute('class'));
+        return [...before, ...after].some((c) => before.has(c) !== after.has(c) && !own.has(c));
+      });
+      if (relevant) queue(calc);
+    }).observe(calc, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'], attributeOldValue: true });
+    calc.addEventListener('input', () => queue(calc));
+    calc.addEventListener('click', () => queue(calc), true); // capture: a tab handler that stops the click cannot hide it
+  });
+
   // 3D tilt and a cursor glow on the home cards: fine pointers only, never under PAUSE MOTION or reduced motion
   const root = document.documentElement;
   const calm = () => root.classList.contains('motion-off') || matchMedia('(prefers-reduced-motion: reduce)').matches;

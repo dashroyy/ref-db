@@ -1,6 +1,7 @@
 ---
 // Material specification builder: v1's 25 spec sheets plus the v2 sheets (case steels, copper alloys, steels, stainless
-// steels, aluminium, titanium, nickel and cobalt alloys) and a skeleton for every other library metal, with v1's
+// steels, aluminium, titanium, nickel, cobalt, magnesium and refractory alloys) and a skeleton for every other library
+// metal, with v1's
 // manufacturing considerations
 // (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface and process concerns of each material).
 // Callout assembly lives in src/lib/callout.ts (unit-tested).
@@ -13,6 +14,8 @@ import { SPECS_SS } from '../data/specs-ss.mjs';
 import { SPECS_AL } from '../data/specs-al.mjs';
 import { SPECS_TI } from '../data/specs-ti.mjs';
 import { SPECS_NI } from '../data/specs-ni.mjs';
+import { SPECS_MG } from '../data/specs-mg.mjs';
+import { SPECS_REFRACT } from '../data/specs-refract.mjs';
 import { MFG } from '../data/specs-mfg.mjs';
 import { MATERIALS } from '../lib/materials';
 import { sameAlloy, matchRows } from '../lib/datasheet';
@@ -20,7 +23,7 @@ import { skeletonSheet, type SpecSheet } from '../lib/callout';
 
 const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper and brass', mg: 'Magnesium', refract: 'Refractory metals' };
 // manufacturing notes: from specs-mfg.mjs, or on the sheet itself (the titanium and nickel sheets)
-const full: SpecSheet[] = ([...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI] as SpecSheet[]).map((s) => ({ ...s, mfg: MFG[s.name] ?? s.mfg }));
+const full: SpecSheet[] = ([...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI, ...SPECS_MG, ...SPECS_REFRACT] as SpecSheet[]).map((s) => ({ ...s, mfg: MFG[s.name] ?? s.mfg }));
 // every metal of the material library is in the builder: the ones with no sheet yet get a skeleton callout
 const skeletons = MATERIALS.filter((m) => m.kind === 'metal' && !full.some((s) => sameAlloy(m, s)))
   .map((m) => ({ ...skeletonSheet(m, matchRows(m, xref.rows as { name: string; family: string; en: string; enNo: string }[])[0]), mfg: MFG[m.name] }));

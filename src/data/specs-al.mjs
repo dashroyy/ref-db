@@ -156,4 +156,45 @@ export const SPECS_AL = [
       'LM25 (BS 1490) is the British legacy alloy, close to EN AC-42000. A356 and EN AC-42100 have less iron, for better ductility: say which one you need.',
     ],
   },
+  // ---- pure aluminium and the weldable 7xxx alloy ----
+  {
+    name: 'Al 1050A (pure)',
+    designation: 'EN AW-1050A',
+    family: 'al',
+    base: 'EN AW-1050A · Al99.5 · commercially pure aluminium',
+    composition: 'BS EN 573-3 (composition) · BS EN 515 (tempers) · BS EN 485-2 (sheet, strip and plate) · BS EN 755-2 (extrusions)',
+    forms: [F.plate, F.extRect, F.extRound],
+    tempers: [
+      { code: 'H14', note: 'Strain hardened, half hard: the usual sheet temper.' },
+      { code: 'H24', note: 'Strain hardened and partially annealed, half hard: more formable than H14.' },
+      { code: 'O', note: 'Annealed: the most formable.' },
+      { code: 'H112', note: 'Extrusions and thick plate as fabricated, with property limits.' },
+    ],
+    finishes: AL_FIN,
+    callout: 'MATERIAL: EN AW-1050A-H14 SHEET, STRIP AND PLATE TO BS EN 485-2\n          TOLERANCES TO BS EN 485-4\nFINISH:   SULPHURIC ANODISE TO BS EN ISO 7599\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Formability, conductivity and corrosion resistance with very low strength: spun and pressed parts, heat shields, reflectors, busbars, labels and chemical equipment.',
+      'It anodises to a bright, even finish.',
+      'It is not heat treatable: the strength comes only from cold work, and welding anneals it.',
+    ],
+  },
+  {
+    name: 'Al 7020-T6',
+    designation: 'EN AW-7020',
+    family: 'al',
+    base: 'EN AW-7020 · AlZn4.5Mg1 · weldable 7xxx alloy that ages naturally after welding',
+    composition: 'BS EN 573-3 (composition) · BS EN 515 (tempers) · BS EN 485-2 (plate) · BS EN 755-2 (extrusions)',
+    forms: [F.plate, F.profile, F.extRect, F.extTube],
+    tempers: [
+      { code: 'T6', note: 'Solution heat treated and artificially aged.' },
+      { code: 'T651', note: 'T6 plate, stress relieved by stretching: less distortion in machining.' },
+      { code: 'T4', note: 'Solution heat treated and naturally aged.' },
+    ],
+    finishes: AL_FIN,
+    callout: 'MATERIAL: EN AW-7020-T651 SHEET, STRIP AND PLATE TO BS EN 485-2\n          TOLERANCES TO BS EN 485-3\nFINISH:   CHROMATE CONVERSION TO DEF STAN 03-18\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The weldable high-strength aluminium: welded frames, military vehicle and bridge structure, and welded tooling. The heat-affected zone recovers much of its strength by natural ageing in the weeks after welding.',
+      'Weld it with a 5xxx filler (5183 or 5356) and a qualified procedure.',
+    ],
+  },
 ];

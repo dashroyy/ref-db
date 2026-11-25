@@ -179,7 +179,8 @@ const ZONES = Object.fromEntries(STEPS.map((s) => {
 
   /* the comparison table */
   .wx-cmp { overflow-x: auto; }
-  .wx-cmp table { width: 100%; min-width: 44rem; margin: 0 !important; }
+  .wx-cmp table { width: 100%; min-width: 38rem; margin: 0 !important; }
+  .wx-cmp th { white-space: normal !important; } /* the headings wrap, so the table fits the text column on desktop */
   .wx-cmp td, .wx-cmp th { padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap; }
   .wx-cmp td:first-child, .wx-cmp th:first-child { text-align: left; white-space: normal; }
   .wx-cmp tr.sel td { background: color-mix(in srgb, var(--rd-accent) 9%, transparent); font-weight: 600; }

@@ -26,6 +26,14 @@ const ANNEALED = (hb) => ({ code: 'ANNEALED', note: `The soft delivery condition
 const HT = (note) => ({ code: 'HARDENED AND TEMPERED <HRC> HRC', note });
 const TOOL_TIP = 'Rough machine, stress relieve, then finish after the heat treatment, or leave grinding stock: hardening changes the size and can distort the part.';
 
+// ultra-high-strength steels: as the D6AC sheet (specs-v2.mjs)
+const UHS_FIN = [
+  { name: 'Primer and paint', spec: 'Company paint specification', note: 'The usual protection for ultra-high-strength steel.' },
+  { name: 'Phosphate (paint base)', spec: 'AMS 2480', note: 'Paint key and temporary protection.' },
+  { name: 'Shot peen', spec: 'AMS 2430 / AMS 2432', note: 'Fatigue and stress-corrosion resistance at fillets. Specify the intensity and the coverage.' },
+  { name: 'Zinc-nickel electroplate', spec: 'AMS 2417 + embrittlement-relief bake to AMS 2759/9', note: 'Only where justified: electroplating ultra-high-strength steel risks hydrogen embrittlement. Bake promptly and test.' },
+];
+
 export const SPECS_STEEL = [
   {
     name: 'Tool steel H13 (1.2344)',
@@ -172,5 +180,116 @@ export const SPECS_STEEL = [
     finishes: [{ name: 'Paint', spec: 'Company spec', note: 'Machine bases and housings.' }],
     callout: 'MATERIAL: EN-GJL-250 (5.1301) SAND CASTING TO BS EN 1561\n          CONDITION: STRESS RELIEVED\n          CASTING QUALITY TO <CASTING SPEC>\nCERTS:    BS EN 10204 TYPE 3.1',
     tips: ['Machine bases, surface plates and tooling: very good damping, stability and machinability, at very low cost.', 'It is brittle in tension, with almost no elongation: not for impact, pressure or flight hardware.'],
+  },
+  // ---- ultra-high-strength and cryogenic steels (AMS and ASTM; each number checked against the publisher's catalogue
+  // or the producer's data) ----
+  {
+    name: '300M',
+    designation: '300M (UNS K44220)',
+    family: 'steel',
+    base: '300M · 4340 modified with silicon and vanadium · UNS K44220 · consumable-electrode vacuum remelted',
+    composition: 'AMS 6257 (bar, forgings and tubing, 0.40 to 0.44 C) · AMS 6417 (0.38 to 0.43 C) · AMS 6419 (0.40 to 0.45 C)',
+    forms: [{ form: 'Bar, forgings and tubing', standard: 'AMS 6257 / AMS 6417 / AMS 6419', note: 'The three differ mainly in the carbon range: give the one that the stress analysis assumed. Stockists often hold 0.40% carbon minimum to meet AMS 6257 and AMS 6419 together.' }],
+    tempers: [
+      { code: 'HARDENED AND DOUBLE TEMPERED', note: 'Typically austenitised at approximately 870 °C, oil quenched and double tempered at approximately 300 °C: the 1860 to 1930 MPa (270 to 280 ksi) class. Heat treat per AMS 2759/2.' },
+      { code: 'NORMALISED AND TEMPERED', note: 'The supply condition: machine it, then harden it.' },
+    ],
+    finishes: UHS_FIN,
+    callout: 'MATERIAL: 300M (UNS K44220) BAR, FORGINGS AND TUBING TO AMS 6257\n          CONDITION: HARDENED AND DOUBLE TEMPERED\n          HEAT TREAT PER AMS 2759/2\n          FURNACE PYROMETRY TO AMS 2750\nNDT:      MAGNETIC PARTICLE TO ASTM E1444\nFINISH:   PRIMER AND PAINT TO <COMPANY SPEC>\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Landing gear, flap tracks, high-strength shafts and fasteners, and motor hardware where D6AC or 4340 is short of strength.',
+      'It is very sensitive to notches and to hydrogen: generous radii, no sharp corners, and a bake after every plating or acid process.',
+      'Decarburisation lowers the fatigue strength: heat treat in a protective atmosphere, or machine the surface after heat treatment.',
+      'Grinding burns (re-tempered or untempered martensite) start fatigue cracks: give an etch inspection for ground parts (AMS 2649).',
+    ],
+  },
+  {
+    name: 'Maraging 18Ni-300',
+    designation: 'MARAGING STEEL 18Ni-300 (UNS K93120)',
+    family: 'steel',
+    base: '18Ni-9Co-5Mo-0.7Ti, vacuum-induction and vacuum-arc remelted · UNS K93120 · the 300 ksi maraging grade',
+    composition: 'AMS 6514 (bar and forgings)',
+    forms: [{ form: 'Bar and forgings', standard: 'AMS 6514', note: 'Supplied solution annealed (Condition A).' }],
+    tempers: [
+      { code: 'AGED 480 °C (900 °F)', note: 'About 480 °C (900 °F) for 3 to 6 h, to approximately 2000 MPa UTS. The shrinkage on ageing is small and predictable. Heat treat per AMS 2759/3.' },
+      { code: 'SOLUTION ANNEALED', note: 'Condition A: martensitic but soft. Machine, form and weld in this condition.' },
+    ],
+    finishes: [
+      { name: 'Primer and paint', spec: 'Company paint specification', note: 'Maraging steel is not stainless: protect it.' },
+      { name: 'Shot peen', spec: 'AMS 2430 / AMS 2432', note: 'After ageing, for fatigue and stress-corrosion resistance.' },
+    ],
+    callout: 'MATERIAL: MARAGING STEEL 18Ni-300 (UNS K93120) BAR AND FORGINGS TO AMS 6514\n          CONDITION: AGED 480 °C (900 °F)\n          HEAT TREAT PER AMS 2759/3\n          FURNACE PYROMETRY TO AMS 2750\nFINISH:   PRIMER AND PAINT TO <COMPANY SPEC>\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'More strength than 18Ni-250, with less toughness: dies, punches and tooling inserts, high-strength shafts and motor hardware.',
+      'It is also a usual powder for laser powder-bed printed tooling inserts: printed material needs its own qualification and an ageing heat treatment.',
+      'Weld it in the annealed condition, then age the whole part.',
+    ],
+  },
+  {
+    name: 'AerMet 100',
+    designation: 'AerMet 100 (UNS K92580)',
+    family: 'steel',
+    base: 'Fe-13.4Co-11.1Ni-3.1Cr-1.2Mo-0.23C · UNS K92580 · vacuum-induction and vacuum-arc remelted, secondary hardening',
+    composition: 'AMS 6532 (bar and forgings)',
+    forms: [{ form: 'Bar and forgings', standard: 'AMS 6532', note: '' }],
+    tempers: [
+      { code: 'SOLUTION TREATED, REFRIGERATED AND AGED', note: 'Typically solution treated at approximately 885 °C, cooled, refrigerated at approximately -73 °C, then aged at approximately 482 °C: the 1930 MPa (280 ksi) class with very high toughness.' },
+      { code: 'ANNEALED', note: 'The supply condition, for machining.' },
+    ],
+    finishes: UHS_FIN,
+    callout: 'MATERIAL: AerMet 100 (UNS K92580) BAR AND FORGINGS TO AMS 6532\n          CONDITION: SOLUTION TREATED, REFRIGERATED AND AGED\n          HEAT TREAT PER <PROCESS SPEC>\n          FURNACE PYROMETRY TO AMS 2750\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The best fracture toughness available at approximately 1930 MPa: landing gear, arrestor hooks and fracture-critical high-strength parts.',
+      'It costs much more than 300M (cobalt and nickel): use it where fracture control drives the design.',
+      'It is still a very high-strength steel: bake after plating, and keep it out of standing water.',
+    ],
+  },
+  {
+    name: 'HP 9-4-30',
+    designation: 'HP 9-4-30 (UNS K91283)',
+    family: 'steel',
+    base: 'Fe-9Ni-4Co-1Cr-1Mo-0.30C · UNS K91283 · vacuum-arc remelted',
+    composition: 'AMS 6526 (bar, forgings, rings and tubing) · AMS 6524 (sheet, strip and plate)',
+    forms: [
+      { form: 'Bar, forgings, rings and tubing', standard: 'AMS 6526', note: '' },
+      { form: 'Sheet, strip and plate', standard: 'AMS 6524', note: '' },
+    ],
+    tempers: [
+      { code: 'HARDENED AND TEMPERED', note: 'Austenitised, quenched, refrigerated and double tempered: the 1520 MPa (220 ksi) class with high toughness. Heat treat per AMS 2759/2.' },
+      { code: 'SUPPLY CONDITION', note: 'Soft, for machining before hardening: the condition is in the specification.' },
+    ],
+    finishes: UHS_FIN,
+    callout: 'MATERIAL: HP 9-4-30 (UNS K91283) BAR, FORGINGS, RINGS AND TUBING TO AMS 6526\n          CONDITION: HARDENED AND TEMPERED\n          HEAT TREAT PER AMS 2759/2\n          FURNACE PYROMETRY TO AMS 2750\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Ultra-high strength with good toughness, deep hardening and good weldability: thick welded fittings, cases and shafts where the heat treatment of D6AC is awkward.',
+      'Weld it with a qualified procedure, then heat treat the welded part.',
+      'Bake after plating: at this strength hydrogen embrittlement is a real risk.',
+    ],
+  },
+  {
+    name: '9% Ni cryogenic steel',
+    designation: 'X8Ni9 (1.5662)',
+    family: 'steel',
+    base: 'X8Ni9 · 1.5662 · ASTM A553 Type I and A353 · 9% nickel steel for cryogenic service',
+    composition: 'BS EN 10028-4 (pressure plate, nickel steels for low temperature) · ASTM A553 Type I (plate, quenched and tempered) · ASTM A353 (plate, double normalised and tempered)',
+    forms: [
+      { form: 'Plate for pressure purposes', standard: 'BS EN 10028-4 + BS EN 10029', note: 'X8Ni9 (1.5662). X7Ni9 (1.5663) has tighter sulphur and phosphorus limits.' },
+      { form: 'Plate, quenched and tempered', standard: 'ASTM A553', note: 'Type I (9% nickel).' },
+      { form: 'Plate, double normalised and tempered', standard: 'ASTM A353', note: '' },
+    ],
+    tempers: [
+      { code: '+QT', note: 'Quenched and tempered: the higher strength (EN 10028-4; ASTM A553).' },
+      { code: '+NT', note: 'Normalised and tempered (EN 10028-4; double normalised in ASTM A353).' },
+    ],
+    finishes: [
+      { name: 'Primer and paint', spec: 'Company paint specification', note: 'It is a low-alloy steel: protect it from corrosion.' },
+      { name: 'Shot blast', spec: 'Company spec', note: 'Surface preparation before painting.' },
+    ],
+    callout: 'MATERIAL: X8Ni9 (1.5662) PLATE FOR PRESSURE PURPOSES TO BS EN 10028-4\n          CONDITION: +QT\n          TOLERANCES TO BS EN 10029\n          CHARPY IMPACT TEST AT -196 °C\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Keeps its toughness to approximately -196 °C, which most ferritic steels cannot: LNG and cryogenic tanks and pressure vessels, where an austenitic stainless steel costs more.',
+      'It can keep residual magnetism from lifting magnets, which deflects the welding arc: specify demagnetising where the shop needs it.',
+      'It is usually welded with a nickel-base filler, because a matching ferritic weld metal does not have the toughness as welded: follow the qualified procedure.',
+    ],
   },
 ];

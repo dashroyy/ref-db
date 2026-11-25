@@ -102,6 +102,7 @@ const MATS = Object.fromEntries(metals.map((m) => [m.key, { name: m.name, kic: m
   .lb-cmp table { width: 100%; font-size: var(--sl-text-xs); border-collapse: collapse; display: table; margin: 0 !important; }
   .lb-cmp th, .lb-cmp td { padding: 0.25rem 0.45rem; border-bottom: 1px solid var(--rd-line); text-align: right; white-space: nowrap; }
   .lb-cmp th:first-child, .lb-cmp td:first-child { text-align: left; white-space: normal; }
+  .lb-cmp th { white-space: normal; } /* the headings wrap, so the table fits the text column on desktop */
   .lb-cmp tr.sel td { background: color-mix(in srgb, var(--rd-accent) 14%, transparent); font-weight: 600; }
   .lb-cmp .ok { color: var(--rd-ok); } .lb-cmp .bad { color: var(--rd-accent); } .lb-cmp .warn { color: var(--rd-warn); }
   .lb-cmp p.hint { margin: 0.3rem 0 0 !important; }

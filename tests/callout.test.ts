@@ -10,11 +10,13 @@ import { SPECS_SS } from '../src/data/specs-ss.mjs';
 import { SPECS_AL } from '../src/data/specs-al.mjs';
 import { SPECS_TI } from '../src/data/specs-ti.mjs';
 import { SPECS_NI } from '../src/data/specs-ni.mjs';
+import { SPECS_MG } from '../src/data/specs-mg.mjs';
+import { SPECS_REFRACT } from '../src/data/specs-refract.mjs';
 import xref from '../src/data/xref.json' with { type: 'json' };
 import { MATERIALS } from '../src/lib/materials.ts';
 import { sameAlloy } from '../src/lib/datasheet.ts';
 
-const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[]), ...(SPECS_SS as SpecSheet[]), ...(SPECS_AL as SpecSheet[]), ...(SPECS_TI as SpecSheet[]), ...(SPECS_NI as SpecSheet[])];
+const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[]), ...(SPECS_SS as SpecSheet[]), ...(SPECS_AL as SpecSheet[]), ...(SPECS_TI as SpecSheet[]), ...(SPECS_NI as SpecSheet[]), ...(SPECS_MG as SpecSheet[]), ...(SPECS_REFRACT as SpecSheet[])];
 const sheet = (n: string) => sheets.find((s) => s.name.startsWith(n))!;
 
 test('standards parse into alternatives and tolerance standards', () => {
@@ -149,7 +151,7 @@ test('steel sheets: each matches one library material, with product standards an
     const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
     assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
     assert.equal(lib[0].family, 'steel', sh.name);
-    assert.ok(sh.forms.every((f) => /^(BS (EN (ISO )?)?\d{3,5}(-\d)?|ASTM A\d+)/.test(f.standard)), `${sh.name}: product standards`);
+    assert.ok(sh.forms.every((f) => /^(BS (EN (ISO )?)?\d{3,5}(-\d)?|ASTM A\d+|AMS \d{4})/.test(f.standard)), `${sh.name}: product standards`);
     assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
     sh.forms.forEach((f, fi) => {
       const out = buildCallout({ sheet: sh, formIndex: fi, standard: parseStandard(f.standard).alternatives[0], temperIndex: 0, finishIndex: 0, afterFinish: true, traceability: true, certificate: true });
@@ -222,4 +224,31 @@ test('titanium and nickel sheets: each matches one library material of its famil
     if (/dry film/i.test(f.name)) assert.doesNotMatch(f.spec, /AMS 2525/, sh.name);
     if (sh.family === 'ti') assert.doesNotMatch(f.spec, /AMS 2700|AMS 2680/, sh.name);
   }
+});
+
+test('magnesium and refractory sheets: each matches one library material of its family, and every form builds', () => {
+  for (const [list, fam, std] of [
+    [SPECS_MG, 'mg', /^(AMS \d{4}|ASTM B\d+|BS EN \d{4})/],
+    [SPECS_REFRACT, 'refract', /^(ASTM B\d+|<PRODUCER SPEC>)/],
+  ] as const) {
+    for (const sh of list as SpecSheet[]) {
+      const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
+      assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
+      assert.equal(lib[0].family, fam, sh.name);
+      assert.ok(sh.forms.every((f) => std.test(f.standard)), `${sh.name}: product standards`);
+      assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
+      if (sh.mfg) assert.ok(!pcgRisk(sh) && sh.mfg.notes.length >= 3, `${sh.name}: notes`);
+      sh.forms.forEach((f, fi) => sh.tempers.forEach((_, ti) => {
+        const out = buildCallout({ sheet: sh, formIndex: fi, standard: parseStandard(f.standard).alternatives[0], temperIndex: ti, finishIndex: 0, afterFinish: true, traceability: true, certificate: true });
+        assert.ok(out.startsWith('MATERIAL: ') && !out.includes('undefined'), `${sh.name} / ${f.form}`);
+      }));
+    }
+  }
+  // magnesium is not in the hydrogen-bake families, and an anodic coating is not a plating
+  const az = sheet('Mg AZ31B');
+  assert.ok(az.finishes.every((f) => !needsBake(az, f)));
+  // a form with no public standard keeps the placeholder in the callout
+  const w = sheet('Tungsten / W-25Re');
+  const out = buildCallout({ sheet: w, formIndex: 1, standard: parseStandard(w.forms[1].standard).alternatives[0], temperIndex: 2, finishIndex: -1, afterFinish: false, traceability: false, certificate: false });
+  assert.equal(out.split('\n')[0], 'MATERIAL: Tungsten (unalloyed) ROD, BAR AND BLANKS TO <PRODUCER SPEC>');
 });

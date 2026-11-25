@@ -16,11 +16,11 @@ const fams = [...new Set(data.rows.map((r) => r.family))];
   </div>
   <div class="xr-wrap">
     <table>
-      <thead><tr><th>Common name</th><th>BS EN / ISO</th><th>EN No.</th><th>Legacy BS</th><th>UNS</th><th>Aero / other</th><th>Note</th></tr></thead>
+      <thead><tr><th>Common name and note</th><th>BS EN / ISO</th><th>EN No.</th><th>Legacy BS</th><th>UNS</th><th>Aero / other</th></tr></thead>
       <tbody>
         {data.rows.map((r) => (
           <tr data-row data-f={r.family} data-s={Object.values(r).join(' ').toLowerCase()}>
-            <td><b>{r.name}</b></td><td>{r.en}</td><td>{r.enNo}</td><td>{r.legacyBs}</td><td>{r.uns}</td><td>{r.aero}</td><td class="xr-note">{r.note}</td>
+            <td><b>{r.name}</b><span class="xr-note">{r.note}</span></td><td>{r.en}</td><td>{r.enNo}</td><td>{r.legacyBs}</td><td>{r.uns}</td><td>{r.aero}</td>
           </tr>
         ))}
       </tbody>
@@ -37,12 +37,20 @@ const fams = [...new Set(data.rows.map((r) => r.family))];
   .xref .chip { font-family: var(--sl-font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
     color: var(--sl-color-gray-2); background: transparent; border: 1px solid var(--hud-edge-strong); border-radius: 3px; padding: 0.2rem 0.5rem; margin: 0 !important; }
   .xref .chip.on, .xref .chip:hover { color: var(--sl-color-accent); border-color: var(--sl-color-accent); }
-  .xr-wrap { overflow-x: auto; padding: 0 1rem 0.5rem; max-height: 34rem; overflow-y: auto; }
+  .xr-wrap { overflow-x: auto; padding: 0 0.6rem 0.5rem; max-height: 34rem; overflow-y: auto; }
   .xr-wrap table { display: table; width: 100%; font-size: 0.76rem; margin: 0 !important; }
-  .xr-wrap th { position: sticky; top: 0; background: var(--hud-plate); z-index: 1; white-space: nowrap; }
+  .xr-wrap th { position: sticky; top: 0; background: var(--hud-plate); z-index: 1; }
   .xr-wrap td { vertical-align: top; }
-  .xr-wrap td:not(.xr-note) { white-space: nowrap; font-family: var(--sl-font-mono); }
-  .xr-note { min-width: 16rem; color: var(--sl-color-gray-3); }
+  .xr-wrap td:not(:first-child) { font-family: var(--sl-font-mono); }
+  /* the note sits under the name (one column fewer), the cells wrap between words and the padding is tight, so the
+     register fits a desktop text column */
+  .xr-wrap :is(th, td) { padding: 0.35rem 0.45rem; }
+  .xr-wrap td:first-child { min-width: 9.5rem; }
+  .xr-wrap td:nth-child(2) { min-width: 8rem; }
+  .xr-wrap td:nth-child(6) { min-width: 7rem; }
+  /* a long chemical designation or aerospace number breaks only where its column would otherwise overflow */
+  .xr-wrap td:is(:nth-child(2), :nth-child(6)) { overflow-wrap: anywhere; }
+  .xr-note { display: block; margin-top: 0.15rem; font-size: 0.7rem; line-height: 1.4; color: var(--sl-color-gray-3); }
   .xr-wrap tr[hidden] { display: none; }
 </style>
 

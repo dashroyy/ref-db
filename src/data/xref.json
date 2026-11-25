@@ -137,7 +137,7 @@
       "en": "EN-MC21120 / MgAl9Zn1(A)",
       "enNo": "3.5912",
       "legacyBs": "BS 2970 MAG7",
-      "uns": "M11914",
+      "uns": "M11916 (AZ91D, die cast)",
       "aero": "EN 1753 / ISO 16220",
       "note": "Most common die-casting magnesium. MB prefix = ingot, MC = casting."
     },
@@ -164,12 +164,32 @@
     {
       "name": "Mg Elektron 21 (EV31A)",
       "family": "mg",
-      "en": "EN-MC65120 / MgRE3Zn2Zr",
+      "en": "MC65410 (ISO 16220)",
       "enNo": "—",
       "legacyBs": "—",
       "uns": "M12310",
-      "aero": "ASTM B80 (EV31A)",
-      "note": "Modern castable RE alloy. EV31A is the ASTM designation."
+      "aero": "AMS 4429 / ASTM B80 (EV31A)",
+      "note": "Modern castable rare-earth alloy. EV31A is the ASTM designation; EN-MC65120 is a different alloy (EZ33A)."
+    },
+    {
+      "name": "Magnesium ZK60A-T5",
+      "family": "mg",
+      "en": "No EN 1753 designation: wrought",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "M16600",
+      "aero": "AMS 4352 (extrusions) / ASTM B91",
+      "note": "The strongest common wrought magnesium. Not weldable."
+    },
+    {
+      "name": "Magnesium AZ80A-T5",
+      "family": "mg",
+      "en": "No EN 1753 designation: wrought",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "M11800",
+      "aero": "ASTM B91 (forgings) / B107",
+      "note": "Forgings and extrusions of higher strength than AZ31B."
     },
     {
       "name": "CP Ti Grade 2",
@@ -342,6 +362,46 @@
       "note": "Ages with almost no distortion; welds annealed."
     },
     {
+      "name": "Maraging 18Ni-300",
+      "family": "steel",
+      "en": "X3NiCoMoTi18-9-5",
+      "enNo": "1.6354",
+      "legacyBs": "—",
+      "uns": "K93120",
+      "aero": "AMS 6514",
+      "note": "The 300 ksi maraging grade; also a tooling powder for laser powder-bed printing."
+    },
+    {
+      "name": "AerMet 100",
+      "family": "steel",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "K92580",
+      "aero": "AMS 6532",
+      "note": "Highest toughness at about 1930 MPa: landing gear and fracture-critical parts."
+    },
+    {
+      "name": "HP 9-4-30",
+      "family": "steel",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "K91283",
+      "aero": "AMS 6526 / 6524",
+      "note": "Weldable ultra-high-strength steel."
+    },
+    {
+      "name": "9% Ni cryogenic steel",
+      "family": "steel",
+      "en": "X8Ni9 (EN 10028-4)",
+      "enNo": "1.5662",
+      "legacyBs": "—",
+      "uns": "—",
+      "aero": "ASTM A553 Type I / A353",
+      "note": "Cryogenic plate: LNG tanks and vessels."
+    },
+    {
       "name": "Tool steel H13",
       "family": "steel",
       "en": "X40CrMoV5-1 (EN ISO 4957)",
@@ -480,6 +540,56 @@
       "uns": "S32205",
       "aero": "EN 10088-3",
       "note": "Chloride and stress-corrosion resistant."
+    },
+    {
+      "name": "Super duplex 2507",
+      "family": "ss",
+      "en": "X2CrNiMoN25-7-4 (EN 10088-2)",
+      "enNo": "1.4410",
+      "legacyBs": "—",
+      "uns": "S32750",
+      "aero": "ASTM A240 / A479 / A182 F53",
+      "note": "Seawater and sour service; PREN above 40."
+    },
+    {
+      "name": "301 stainless (full hard)",
+      "family": "ss",
+      "en": "X10CrNi18-8 (EN 10151)",
+      "enNo": "1.4310",
+      "legacyBs": "BS 1449 301S21",
+      "uns": "S30100",
+      "aero": "AMS 5519",
+      "note": "Cold-rolled spring and structure strip."
+    },
+    {
+      "name": "Nitronic 60 (S21800)",
+      "family": "ss",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "S21800",
+      "aero": "AMS 5848 / ASTM A276",
+      "note": "Anti-galling austenitic stainless: valve stems, pins and bushes."
+    },
+    {
+      "name": "Custom 455 stainless",
+      "family": "ss",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "S45500",
+      "aero": "AMS 5617 / ASTM A564 XM-16",
+      "note": "Very high strength PH stainless."
+    },
+    {
+      "name": "Custom 465",
+      "family": "ss",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "S46500",
+      "aero": "AMS 5936",
+      "note": "Maraging-class strength with stainless corrosion resistance."
     },
     {
       "name": "303 stainless (free machining)",
@@ -1017,7 +1127,7 @@
       "en": "Mo-Ti-Zr",
       "enNo": "—",
       "legacyBs": "—",
-      "uns": "R03640",
+      "uns": "R03630 (arc cast) / R03640 (PM)",
       "aero": "ASTM B387",
       "note": "Creep-resistant hot structure and tooling."
     },
@@ -1040,6 +1150,26 @@
       "uns": "R05255",
       "aero": "ASTM B708",
       "note": "Ductile refractory for small hot components."
+    },
+    {
+      "name": "Nb-1Zr",
+      "family": "refract",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "R04261 / R04251",
+      "aero": "ASTM B392 / B393 / B394",
+      "note": "Heat pipes, space nuclear and formable hot parts."
+    },
+    {
+      "name": "Tungsten heavy alloy (90W-Ni-Fe)",
+      "family": "refract",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "—",
+      "aero": "ASTM B777 (Classes 1 to 4)",
+      "note": "Ballast, balance weights and radiation shielding."
     }
   ]
 }

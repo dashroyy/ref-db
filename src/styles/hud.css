@@ -113,9 +113,22 @@ site-search button[data-open-modal] {
   -webkit-backdrop-filter: blur(10px) saturate(1.15);
   border-inline-end: 1px solid var(--hud-edge) !important;
 }
+/* Laptop widths. From 72rem Starlight gives "On this page" a column of its own. Between 72rem and 90rem that column
+   took up to 19.5rem from the text, so the text column was narrower than at 70rem (about 390 px at 72rem and 515 px at
+   80rem) and calculators, tables and dropdowns were cut off. Below 90rem the top "On this page" bar stays instead, as on
+   smaller screens, and the text keeps its full width. Starlight's own rules for 72rem are in a cascade layer, so these
+   unlayered rules win. */
+@media (min-width: 72rem) and (max-width: 89.99rem) {
+  :root { --sl-mobile-toc-height: 3rem; }
+  div:has(> .right-sidebar-container) { display: block; }
+  .right-sidebar-container, .right-sidebar { position: static; width: auto; height: auto; padding-top: 0; border: 0; overflow: visible; }
+  .right-sidebar .lg\:sl-hidden { display: block; }
+  .right-sidebar-panel { display: none; }
+  [data-has-sidebar][data-has-toc] .main-pane { width: 100%; --sl-content-margin-inline: auto; }
+}
 /* Glass only where the TOC is a real column: backdrop-filter makes an element the containing
    block for position:fixed children, which would pin Starlight's small-screen TOC bar mid-page. */
-@media (min-width: 72rem) {
+@media (min-width: 90rem) {
   .right-sidebar {
     background: var(--hud-glass);
     backdrop-filter: blur(10px);
@@ -440,7 +453,7 @@ mobile-starlight-toc .display-current { color: var(--pc, var(--sl-color-accent))
 :root[data-theme='dark'] .sidebar-pane {
   box-shadow: inset -1px 0 0 color-mix(in srgb, var(--glow) 30%, transparent), 10px 0 40px -28px var(--glow-soft);
 }
-@media (min-width: 72rem) {
+@media (min-width: 90rem) {
   :root[data-theme='dark'] .right-sidebar {
     box-shadow: inset 1px 0 0 color-mix(in srgb, var(--rd-blue) 30%, transparent), -10px 0 40px -28px var(--glow-blue);
   }

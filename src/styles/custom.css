@@ -197,6 +197,10 @@
 }
 .calc input[type='range'] { padding: 0; accent-color: var(--rd-accent); background: none; border: 0; }
 .calc .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; align-items: end; }
+/* Set by the fitting script in the PageFrame override: a dropdown whose longest option, or a box whose value, does not
+   fit takes the full row of its grid, and a calculator whose inputs or results do not fit side by side stacks them. */
+.calc .fit-wide { grid-column: 1 / -1; }
+.calc.stacked .calc-body { grid-template-columns: minmax(0, 1fr); }
 .calc .hint { font-size: var(--sl-text-xs); color: var(--rd-muted); }
 
 .readouts {
@@ -381,6 +385,10 @@
   border-bottom: 1px solid var(--rd-line);
   overflow-x: auto;
   scrollbar-width: thin;
+}
+/* desktop: the tabs wrap to a second line instead of scrolling, so no tab is cut off at the edge */
+@media (min-width: 50rem) {
+  .sl-markdown-content .calc .hc-tabs { flex-wrap: wrap; overflow-x: visible; }
 }
 .sl-markdown-content .calc .hc-tabs > * { margin: 0 !important; }
 .sl-markdown-content .calc .hc-tabs button.chip {

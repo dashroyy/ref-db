@@ -105,6 +105,15 @@ export const MFG = {
       'Form it in T4 and age it after, or bend T6 with a generous radius: T6 cracks in tight bends.',
     ],
   },
+  'Al 7020-T6': {
+    pcg: true,
+    notes: [
+      'Peripheral coarse grain. 7xxx extrusions and plate can grow a coarse recrystallised surface layer, which lowers the fatigue and stress-corrosion resistance: machine it off loaded surfaces.',
+      'Stress-corrosion cracking is the main risk: avoid sustained short-transverse tension, keep the residual stress low at welds and in formed parts, and do not cold form it after the heat treatment.',
+      'The heat-affected zone recovers its strength by natural ageing over some weeks: test welded parts only after the ageing time that the procedure qualification used.',
+      'Show the grain direction on the drawing for parts cut from plate.',
+    ],
+  },
   'Al 5083-H111': {
     pcg: false,
     notes: [
