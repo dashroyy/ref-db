@@ -12,6 +12,9 @@ export interface SpecSheet {
   mfg?: { pcg: boolean; notes: string[] };
   /** a library material with no sheet yet: placeholders for the form, standard, condition and finish */
   skeleton?: boolean;
+  /** false: the alloy is not sensitive to hydrogen embrittlement in its usual conditions (annealed nickel alloys,
+   *  Invar), so the bake line is not on by default after plating */
+  bake?: boolean;
 }
 
 /** True when the alloy can grow peripheral coarse grain: the manufacturing notes say so, or, without notes, an
@@ -40,7 +43,8 @@ const stripNotes = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();
 
 /** Split a form standard into the property standard alternatives and the tolerance standard(s). */
 export function parseStandard(raw: string) {
-  const parts = raw.split(/\s\+\s/).map(stripNotes).filter(Boolean);
+  // notes first: a note can itself hold ' + ' or ' / ' ("AMS 5662 (solution + aged) / AMS 5663")
+  const parts = stripNotes(raw).split(/\s\+\s/).map((s) => s.trim()).filter(Boolean);
   const alternatives = (parts[0] ?? '').split(/\s\/\s/).map((s) => s.trim()).filter(Boolean);
   return { alternatives, tolerances: parts.slice(1) };
 }
@@ -82,7 +86,7 @@ const CONT = ' '.repeat(10);
 export const isPlating = (finishName: string) => /plat|electro(?!polish)|zinc|cadmium|chrom(e|ium)\b/i.test(finishName) && !/galvani[sz]|hot.dip/i.test(finishName);
 /** The hydrogen-bake line applies by default to a plated steel, unless the finish specification already calls for the bake. */
 export const needsBake = (sheet: SpecSheet, finish: SpecFinish | null) =>
-  !!finish && ['steel', 'ss', 'ni'].includes(sheet.family) && isPlating(finish.name) && !/embrittlement/i.test(finish.spec);
+  !!finish && sheet.bake !== false && ['steel', 'ss', 'ni'].includes(sheet.family) && isPlating(finish.name) && !/embrittlement/i.test(finish.spec);
 
 export function buildCallout(c: CalloutChoice) {
   const s = c.sheet;

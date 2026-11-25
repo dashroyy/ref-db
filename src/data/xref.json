@@ -232,6 +232,36 @@
       "note": "High-temperature titanium, creep resistant."
     },
     {
+      "name": "Ti-6Al-6V-2Sn",
+      "family": "ti",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "R56620",
+      "aero": "AMS 4918 / 4971 / 4979",
+      "note": "Deep-hardening alpha-beta: heavily loaded fittings and lugs."
+    },
+    {
+      "name": "IMI 550",
+      "family": "ti",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "BS 2TA 45 / 2TA 47",
+      "uns": "—",
+      "aero": "BS 2TA 45 / 2TA 47",
+      "note": "Ti-4Al-4Mo-2Sn-0.5Si: UK forged discs and fittings."
+    },
+    {
+      "name": "Ti-10V-2Fe-3Al",
+      "family": "ti",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "R56410",
+      "aero": "AMS 4983 / 4986 / 4987",
+      "note": "Near-beta forgings: rotor hubs and landing gear."
+    },
+    {
       "name": "Structural steel S355",
       "family": "steel",
       "en": "S355J2+N (EN 10025-2)",
@@ -630,6 +660,106 @@
       "uns": "K94610",
       "aero": "ASTM F15",
       "note": "Glass-to-metal and ceramic seals."
+    },
+    {
+      "name": "Inconel 617",
+      "family": "ni",
+      "en": "NiCr23Co12Mo",
+      "enNo": "2.4663",
+      "legacyBs": "—",
+      "uns": "N06617",
+      "aero": "AMS 5887",
+      "note": "Oxidation and creep resistance to about 1100 °C."
+    },
+    {
+      "name": "Hastelloy C-276",
+      "family": "ni",
+      "en": "NiMo16Cr15W",
+      "enNo": "2.4819",
+      "legacyBs": "—",
+      "uns": "N10276",
+      "aero": "ASTM B575 / B574",
+      "note": "Corrosion alloy: propellant handling, ground and process equipment."
+    },
+    {
+      "name": "Haynes 282",
+      "family": "ni",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "N07208",
+      "aero": "AMS 5951 (sheet) / ASTM B637",
+      "note": "Fabricable gamma-prime alloy for welded hot structure."
+    },
+    {
+      "name": "Rene 41",
+      "family": "ni",
+      "en": "NiCr19Co11Mo10Ti",
+      "enNo": "2.4973",
+      "legacyBs": "—",
+      "uns": "N07041",
+      "aero": "AMS 5545 / 5712 / 5713",
+      "note": "High strength to about 870 °C; prone to strain-age cracking."
+    },
+    {
+      "name": "L-605 / Haynes 25",
+      "family": "ni",
+      "en": "CoCr20W15Ni",
+      "enNo": "2.4964",
+      "legacyBs": "—",
+      "uns": "R30605",
+      "aero": "AMS 5537 / 5759",
+      "note": "Cobalt alloy: liners, hot ducting, hot bearings."
+    },
+    {
+      "name": "Nimonic 75",
+      "family": "ni",
+      "en": "NiCr20Ti",
+      "enNo": "2.4951",
+      "legacyBs": "BS HR 5 / HR 203",
+      "uns": "N06075",
+      "aero": "BS HR 203 (sheet)",
+      "note": "Sheet for combustors and heat shields."
+    },
+    {
+      "name": "Nimonic 80A",
+      "family": "ni",
+      "en": "NiCr20TiAl",
+      "enNo": "2.4952",
+      "legacyBs": "BS HR 1 / HR 201",
+      "uns": "N07080",
+      "aero": "BS HR 1 / ASTM B637",
+      "note": "Hot bolts, exhaust valves and blades."
+    },
+    {
+      "name": "Nimonic C263",
+      "family": "ni",
+      "en": "NiCo20Cr20MoTi",
+      "enNo": "2.4650",
+      "legacyBs": "BS HR 10 / HR 206",
+      "uns": "N07263",
+      "aero": "AMS 5872 / 5886",
+      "note": "Fabricable age-hardening sheet: combustors and casings."
+    },
+    {
+      "name": "Nimonic 105",
+      "family": "ni",
+      "en": "NiCo20Cr15MoAlTi",
+      "enNo": "2.4634",
+      "legacyBs": "BS 2HR 3",
+      "uns": "—",
+      "aero": "BS 2HR 3",
+      "note": "High gamma prime: blades and hot fasteners."
+    },
+    {
+      "name": "MP35N",
+      "family": "ni",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "R30035",
+      "aero": "AMS 5844 / 5845",
+      "note": "Very high strength corrosion-resistant fasteners (260 ksi class)."
     },
     {
       "name": "Copper C101 (ETP)",

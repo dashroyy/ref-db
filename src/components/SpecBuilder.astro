@@ -1,6 +1,7 @@
 ---
 // Material specification builder: v1's 25 spec sheets plus the v2 sheets (case steels, copper alloys, steels, stainless
-// steels and aluminium alloys) and a skeleton for every other library metal, with v1's manufacturing considerations
+// steels, aluminium, titanium, nickel and cobalt alloys) and a skeleton for every other library metal, with v1's
+// manufacturing considerations
 // (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface and process concerns of each material).
 // Callout assembly lives in src/lib/callout.ts (unit-tested).
 import data from '../data/specs.json';
@@ -10,13 +11,16 @@ import { SPECS_CU } from '../data/specs-cu.mjs';
 import { SPECS_STEEL } from '../data/specs-steel.mjs';
 import { SPECS_SS } from '../data/specs-ss.mjs';
 import { SPECS_AL } from '../data/specs-al.mjs';
+import { SPECS_TI } from '../data/specs-ti.mjs';
+import { SPECS_NI } from '../data/specs-ni.mjs';
 import { MFG } from '../data/specs-mfg.mjs';
 import { MATERIALS } from '../lib/materials';
 import { sameAlloy, matchRows } from '../lib/datasheet';
 import { skeletonSheet, type SpecSheet } from '../lib/callout';
 
 const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper and brass', mg: 'Magnesium', refract: 'Refractory metals' };
-const full: SpecSheet[] = [...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL].map((s) => ({ ...s, mfg: MFG[s.name] }));
+// manufacturing notes: from specs-mfg.mjs, or on the sheet itself (the titanium and nickel sheets)
+const full: SpecSheet[] = ([...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI] as SpecSheet[]).map((s) => ({ ...s, mfg: MFG[s.name] ?? s.mfg }));
 // every metal of the material library is in the builder: the ones with no sheet yet get a skeleton callout
 const skeletons = MATERIALS.filter((m) => m.kind === 'metal' && !full.some((s) => sameAlloy(m, s)))
   .map((m) => ({ ...skeletonSheet(m, matchRows(m, xref.rows as { name: string; family: string; en: string; enNo: string }[])[0]), mfg: MFG[m.name] }));
@@ -102,11 +106,14 @@ const groups = [...group(false), ...group(true)];
   .specb .pv-sub { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-muted); margin: 0.9rem 0 0.4rem !important; }
   .specb .pv-sub:first-child { margin-top: 0 !important; }
   .sb-out {
-    margin: 0 !important; padding: 0.8rem 0.9rem; white-space: pre; overflow-x: auto; font-family: var(--sl-font-mono); font-size: 0.74rem; line-height: 1.55;
+    margin: 0 !important; padding: 0.8rem 0.9rem; white-space: normal; overflow-x: auto; font-family: var(--sl-font-mono); font-size: 0.74rem; line-height: 1.55;
     color: var(--sl-color-white); background: color-mix(in srgb, var(--rd-blue) 6%, transparent);
     border: 1px dashed var(--hud-edge-strong); border-left: 3px solid var(--pc, var(--sl-color-accent)); border-radius: 0 4px 4px 0;
   }
   .sb-ex { color: var(--sl-color-gray-2); border-left-color: var(--hud-edge-strong); }
+  /* one block per callout line (written by the script): a long line wraps under its value column, 10 characters in,
+     so the callout reads without a sideways scroll in the narrow column */
+  .sb-out :global(.ln) { display: block; white-space: pre-wrap; overflow-wrap: anywhere; padding-left: 10ch; text-indent: -10ch; }
   .sb-tips { font-size: var(--sl-text-sm); padding-left: 1.1rem; margin: 0 !important; }
   .specb .sb-stock input { width: 5.5rem; }
   .sb-pcg { margin: 0 0 0.5rem !important; padding: 0.45rem 0.7rem; font-size: var(--sl-text-sm); border-left: 3px solid var(--rd-ok); border-radius: 0 4px 4px 0; background: color-mix(in srgb, var(--rd-ok) 8%, transparent); }
@@ -127,6 +134,10 @@ const groups = [...group(false), ...group(true)];
       sel.innerHTML = (none ? `<option value="-1">${none}</option>` : '') + items.map((t, i) => `<option value="${i}">${t}</option>`).join('');
     };
     const sheet = () => sheets[+field('sheet').value];
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    /** Write a callout one block per line (see .ln); the copy button takes the plain text, without the wraps. */
+    const show = (el: HTMLElement, text: string) => { el.innerHTML = text.split('\n').map((l) => `<span class="ln">${esc(l) || ' '}</span>`).join(''); };
+    let outText = '';
 
     function loadSheet() {
       const s = sheet();
@@ -136,7 +147,7 @@ const groups = [...group(false), ...group(true)];
       opts(field('finish') as HTMLSelectElement, s.finishes.map((f) => f.name), '— none —');
       (field('finish') as HTMLSelectElement).value = s.finishes.length ? '0' : '-1';
       q('base').textContent = `${s.base}${s.composition ? ` · ${s.composition}` : ''}`;
-      q('ex').textContent = s.callout || '—';
+      show(q('ex'), s.callout || '—');
       q('ex').hidden = q('exhead').hidden = !s.callout;
       q('tips').innerHTML = s.tips.map((t) => `<li>${t}</li>`).join('');
       // manufacturing considerations, and the peripheral coarse grain lines on for the alloys that can grow it
@@ -174,12 +185,13 @@ const groups = [...group(false), ...group(true)];
       q('finnote').textContent = ni >= 0 ? `${s.finishes[ni].spec}: ${s.finishes[ni].note}` : 'No finish called up.';
       const on = (n: string) => (field(n) as HTMLInputElement).checked;
       const stock = Math.max(0, Number(field('stock').value) || 0);
-      q('out').textContent = buildCallout({
+      outText = buildCallout({
         sheet: s, formIndex: fi, standard: std, temperIndex: ti, finishIndex: ni,
         afterFinish: on('after'), traceability: on('trace'), certificate: on('cert'),
         heatTreat: on('heat'), hydrogenBake: on('bake'), ndt: on('ndt'), edges: on('edges'), grainDirection: on('graindir'),
         pcg: on('pcg') ? { stock, macro: on('macro') } : null,
       });
+      show(q('out'), outText);
     }
 
     field('sheet').addEventListener('change', () => { loadSheet(); setBake(); run(); });
@@ -189,7 +201,7 @@ const groups = [...group(false), ...group(true)];
     field('stock').addEventListener('input', run);
     root.querySelector('[data-copy]')!.addEventListener('click', async (e) => {
       const b = e.currentTarget as HTMLButtonElement;
-      try { await navigator.clipboard.writeText(q('out').textContent ?? ''); b.textContent = 'Copied'; }
+      try { await navigator.clipboard.writeText(outText); b.textContent = 'Copied'; }
       catch { b.textContent = 'Select and copy'; }
       setTimeout(() => (b.textContent = 'Copy callout'), 1800);
     });

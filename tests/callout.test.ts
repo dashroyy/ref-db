@@ -8,16 +8,20 @@ import { SPECS_CU } from '../src/data/specs-cu.mjs';
 import { SPECS_STEEL } from '../src/data/specs-steel.mjs';
 import { SPECS_SS } from '../src/data/specs-ss.mjs';
 import { SPECS_AL } from '../src/data/specs-al.mjs';
+import { SPECS_TI } from '../src/data/specs-ti.mjs';
+import { SPECS_NI } from '../src/data/specs-ni.mjs';
 import xref from '../src/data/xref.json' with { type: 'json' };
 import { MATERIALS } from '../src/lib/materials.ts';
 import { sameAlloy } from '../src/lib/datasheet.ts';
 
-const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[]), ...(SPECS_SS as SpecSheet[]), ...(SPECS_AL as SpecSheet[])];
+const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[]), ...(SPECS_SS as SpecSheet[]), ...(SPECS_AL as SpecSheet[]), ...(SPECS_TI as SpecSheet[]), ...(SPECS_NI as SpecSheet[])];
 const sheet = (n: string) => sheets.find((s) => s.name.startsWith(n))!;
 
 test('standards parse into alternatives and tolerance standards', () => {
   assert.deepEqual(parseStandard('BS EN 755-2 (properties) + BS EN 755-3 (tolerances)'), { alternatives: ['BS EN 755-2'], tolerances: ['BS EN 755-3'] });
   assert.deepEqual(parseStandard('AMS 4928 / ASTM B348'), { alternatives: ['AMS 4928', 'ASTM B348'], tolerances: [] });
+  // a note that holds ' + ' is not a tolerance standard (the v1 Inconel 718 bar)
+  assert.deepEqual(parseStandard('AMS 5662 (solution + aged) / AMS 5663 / ASTM B637'), { alternatives: ['AMS 5662', 'AMS 5663', 'ASTM B637'], tolerances: [] });
   assert.equal(temperCode('T6 / T651'), 'T6');
   assert.equal(finishSpec('BS EN ISO 7599 (or DEF STAN 03-24/25 on MoD work)'), 'BS EN ISO 7599');
   assert.equal(finishSpec('Company finish spec'), '<COMPANY SPEC>');
@@ -189,3 +193,33 @@ test('stainless and aluminium sheets: each matches one library material of its f
   for (const sh of sheets) for (const f of sh.finishes) if (/^Passivat/i.test(f.name)) assert.doesNotMatch(finishSpec(f.spec), /16048/, `${sh.name}: passivation`);
 });
 
+
+test('titanium and nickel sheets: each matches one library material of its family, and every form builds', () => {
+  for (const [list, fam, std] of [
+    [SPECS_TI, 'ti', /^(AMS \d{4}|ASTM B\d+|BS (2)?TA \d+)/],
+    [SPECS_NI, 'ni', /^(AMS \d{4}|ASTM [BF]\d+|BS (2)?HR \d+)/],
+  ] as const) {
+    for (const sh of list as SpecSheet[]) {
+      const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
+      assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
+      assert.equal(lib[0].family, fam, sh.name);
+      assert.ok(sh.forms.every((f) => std.test(f.standard)), `${sh.name}: product standards`);
+      assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
+      if (sh.mfg) assert.ok(!pcgRisk(sh) && sh.mfg.notes.length >= 3 && sh.mfg.notes.every((n) => n.length > 20), `${sh.name}: notes`);
+      sh.forms.forEach((f, fi) => sh.tempers.forEach((_, ti) => {
+        const out = buildCallout({ sheet: sh, formIndex: fi, standard: parseStandard(f.standard).alternatives[0], temperIndex: ti, finishIndex: 0, afterFinish: true, traceability: true, certificate: true });
+        assert.ok(out.startsWith('MATERIAL: ') && !out.includes('undefined'), `${sh.name} / ${f.form}`);
+      }));
+    }
+  }
+  // the bake line: on for a plated age-hardened alloy, off where the sheet says that the alloy is not sensitive
+  const k500 = sheet('Monel K-500'), invar = sheet('Invar 36');
+  assert.ok(needsBake(k500, k500.finishes.find((f) => /Silver/.test(f.name))!));
+  assert.ok(!needsBake(invar, invar.finishes.find((f) => /^Nickel plating/.test(f.name))!));
+  // AMS 2525 is a graphite film, not the general dry film lubricant; AMS 2700 (stainless passivation) and AMS 2680
+  // (electron-beam welding) are not titanium finishes
+  for (const sh of sheets) for (const f of sh.finishes) {
+    if (/dry film/i.test(f.name)) assert.doesNotMatch(f.spec, /AMS 2525/, sh.name);
+    if (sh.family === 'ti') assert.doesNotMatch(f.spec, /AMS 2700|AMS 2680/, sh.name);
+  }
+});
