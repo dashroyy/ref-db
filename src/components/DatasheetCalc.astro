@@ -5,26 +5,28 @@
 // materials.json appears here. Maths in src/lib/datasheet.ts (unit-tested); UI only here.
 import MaterialSelect from './MaterialSelect.astro';
 import { MATERIALS, DEFAULTS as D } from '../lib/materials';
-import { derived, galvanicFor, sameAlloy } from '../lib/datasheet';
+import { derived, galvanicFor, matchRows } from '../lib/datasheet';
 import xref from '../data/xref.json';
 import specs from '../data/specs.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
 import { SPECS_CU } from '../data/specs-cu.mjs';
 import { SPECS_STEEL } from '../data/specs-steel.mjs';
+import { SPECS_SS } from '../data/specs-ss.mjs';
+import { SPECS_AL } from '../data/specs-al.mjs';
 import domains from '../data/domains.json';
 
 type XRow = { name: string; family: string; en: string; enNo: string; legacyBs: string; uns: string; aero: string; note: string };
 type Sheet = { name: string; family: string; designation: string; forms: unknown[]; tempers: unknown[] };
-const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU, ...SPECS_STEEL] as Sheet[];
+const SHEETS = [...SPECS_V2, ...specs.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL] as Sheet[];
 const DOM = domains.domains as Record<string, { name: string }>, DOM_OF = domains.materials as Record<string, [string, string]>;
 const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
   name: m.name, family: m.family, familyName: m.familyName, kind: m.kind, summary: m.summary, spec: m.spec,
   p: { rho: m.rho, E: m.E, nu: m.nu, Fty: m.Fty, Ftu: m.Ftu, eu: m.eu, kic: m.kic, alpha: m.alpha, k: m.k, kz: m.kz, cp: m.cp, maxT: m.maxT, tPyro: m.tPyro, erosion: m.erosion, corrosion: m.corrosion, machinability: m.machinability, price: m.price },
   weldable: m.weldable, kicDefault: m.kicDefault, defaults: m.defaults,
   d: derived(m), galv: galvanicFor(m),
-  xref: (xref.rows as XRow[]).filter((r) => sameAlloy(m, r)).slice(0, 3).map((r) => ({ name: r.name, en: r.en, enNo: r.enNo, uns: r.uns, aero: r.aero, legacyBs: r.legacyBs })),
+  xref: matchRows(m, xref.rows as XRow[]).slice(0, 3).map((r) => ({ name: r.name, en: r.en, enNo: r.enNo, uns: r.uns, aero: r.aero, legacyBs: r.legacyBs })),
   // the spec-builder sheet: its own key, so that it does not replace the library text in `spec`
-  sheet: SHEETS.filter((s) => sameAlloy(m, s)).slice(0, 1).map((s) => ({ name: s.name, designation: s.designation, forms: s.forms.length, tempers: s.tempers.length }))[0] ?? null,
+  sheet: matchRows(m, SHEETS).slice(0, 1).map((s) => ({ name: s.name, designation: s.designation, forms: s.forms.length, tempers: s.tempers.length }))[0] ?? null,
   domain: DOM_OF[m.name] ? { name: DOM[DOM_OF[m.name][0]].name, note: DOM_OF[m.name][1] } : null,
   caseOk: ['steel', 'ss', 'ti', 'al', 'ni'].includes(m.family) && !!m.Fty && !!m.Ftu && !!m.rho,
 }]));
@@ -189,7 +191,7 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
       const g = (m: M | null) => (m?.galv ? `${m.galv.index.toFixed(2)} V` : '—');
       html += `<section class="ds-sec"><h5>Galvanic and specification</h5><div class="ds-tw"><table><tbody>
         <tr><td>Anodic index</td><td>${g(a)}</td>${b ? `<td class="b">${g(b)}</td><td>${a.galv && b.galv ? `${Math.abs(a.galv.index - b.galv.index).toFixed(2)} V apart` : '—'}</td>` : ''}<td class="u">${a.galv ? esc(a.galv.name) : 'not in the galvanic table'}</td></tr>
-        <tr><td>Spec builder</td><td>${a.sheet ? 'full sheet' : a.kind === 'metal' ? 'skeleton' : 'no'}</td>${b ? `<td class="b">${b.sheet ? 'full sheet' : b.kind === 'metal' ? 'skeleton' : 'no'}</td><td></td>` : ''}<td class="u">${a.sheet ? `${esc(a.sheet.designation)}: ${a.sheet.forms} product forms, ${a.sheet.tempers} conditions` : (a.kind === 'metal' ? 'no sheet yet: the builder gives a skeleton callout' : 'metals only')}</td></tr>
+        <tr><td>Spec builder</td><td>${a.sheet ? 'full sheet' : a.kind === 'metal' ? 'skeleton' : 'no'}</td>${b ? `<td class="b">${b.sheet ? 'full sheet' : b.kind === 'metal' ? 'skeleton' : 'no'}</td><td></td>` : ''}<td class="u">${a.sheet ? `${esc(a.sheet.designation)}: ${a.sheet.forms} product form${a.sheet.forms === 1 ? '' : 's'}, ${a.sheet.tempers} condition${a.sheet.tempers === 1 ? '' : 's'}` : (a.kind === 'metal' ? 'no sheet yet: the builder gives a skeleton callout' : 'metals only')}</td></tr>
       </tbody></table></div></section>`;
       if (a.galv) T.push(`ANODIC INDEX: ${a.galv.index.toFixed(2)} V (${a.galv.name})`);
       root.querySelector('[data-tables]')!.innerHTML = html;

@@ -1,16 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStandard, temperCode, finishSpec, buildCallout, needsBake, isPlating, skeletonSheet, type SpecSheet } from '../src/lib/callout.ts';
+import { parseStandard, temperCode, finishSpec, buildCallout, needsBake, isPlating, skeletonSheet, pcgRisk, type SpecSheet } from '../src/lib/callout.ts';
 import { MFG } from '../src/data/specs-mfg.mjs';
 import data from '../src/data/specs.json' with { type: 'json' };
 import { SPECS_V2 } from '../src/data/specs-v2.mjs';
 import { SPECS_CU } from '../src/data/specs-cu.mjs';
 import { SPECS_STEEL } from '../src/data/specs-steel.mjs';
+import { SPECS_SS } from '../src/data/specs-ss.mjs';
+import { SPECS_AL } from '../src/data/specs-al.mjs';
 import xref from '../src/data/xref.json' with { type: 'json' };
 import { MATERIALS } from '../src/lib/materials.ts';
 import { sameAlloy } from '../src/lib/datasheet.ts';
 
-const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[])];
+const sheets = [...(data.specs as SpecSheet[]), ...(SPECS_V2 as SpecSheet[]), ...(SPECS_CU as SpecSheet[]), ...(SPECS_STEEL as SpecSheet[]), ...(SPECS_SS as SpecSheet[]), ...(SPECS_AL as SpecSheet[])];
 const sheet = (n: string) => sheets.find((s) => s.name.startsWith(n))!;
 
 test('standards parse into alternatives and tolerance standards', () => {
@@ -55,11 +57,19 @@ test('v2 case-steel sheets are present and complete', () => {
 
 test('manufacturing considerations: every entry has a sheet, and the PCG flag marks the heat-treatable aluminium alloys', () => {
   for (const [name, m] of Object.entries(MFG)) {
-    const s = sheets.find((x) => x.name === name);
-    assert.ok(s, `${name}: no specification sheet of that name`);
+    // keyed by a full sheet, or by the library name of a metal that has a skeleton
+    const fam = sheets.find((x) => x.name === name)?.family ?? MATERIALS.find((x) => x.name === name)?.family;
+    assert.ok(fam, `${name}: no specification sheet or library material of that name`);
     assert.ok(m.notes.length >= 3 && m.notes.every((n) => n.length > 20), `${name}: notes`);
-    assert.equal(m.pcg, s!.family === 'al' && /\b[267]\d{3}/.test(name), `${name}: the PCG flag`);
+    assert.equal(m.pcg, fam === 'al' && /\b[267]\d{3}/.test(name), `${name}: the PCG flag`);
   }
+  // without notes, every heat-treatable aluminium alloy still defaults to the PCG lines
+  assert.ok(pcgRisk({ family: 'al', name: 'Al 7050-T7451', designation: 'EN AW-7050' }));
+  assert.ok(pcgRisk({ family: 'al', name: 'Al-Li 2195', designation: 'Al-Li 2195' }));
+  assert.ok(!pcgRisk({ family: 'al', name: 'Al 5083-H111', designation: 'EN AW-5083' }));
+  assert.ok(!pcgRisk({ family: 'al', name: 'Al A356 / LM25 (cast)', designation: 'Al A356 / LM25 (cast)' }));
+  assert.ok(pcgRisk({ family: 'al', name: 'Al 6005A-T6', designation: 'EN AW-6005A' }), 'an A-suffix alloy of a heat-treatable series');
+  assert.ok(!pcgRisk({ family: 'al', name: 'X', designation: 'EN AC-42100 (AlSi7Mg0.3)' }), 'a casting');
   // every aluminium sheet of a heat-treatable series has its notes, with the PCG warning first
   for (const s of sheets.filter((x) => x.family === 'al' && /\b[267]\d{3}/.test(x.name))) {
     assert.ok(MFG[s.name]?.pcg, `${s.name}: PCG notes`);
@@ -87,6 +97,8 @@ test('callout: the peripheral coarse grain, heat-treatment, NDT and note lines',
 test('hydrogen-embrittlement bake: on for a plated steel, off when the finish already calls for it', () => {
   assert.ok(isPlating('Zinc plating') && isPlating('Zinc-nickel electroplate') && isPlating('Cadmium / zinc-nickel plating') && isPlating('Silver plate'));
   assert.ok(!isPlating('Electropolish') && !isPlating('Hot dip galvanize') && !isPlating('Passivation') && !isPlating('Phosphate + oil'));
+  // hard chromium is an electroplate (hydrogen); a chromate conversion coating is not
+  assert.ok(isPlating('Hard chromium') && isPlating('Hard chrome plating') && !isPlating('Chromate conversion'));
   const s4130 = sheet('4130'), zinc = s4130.finishes.find((f) => /^Zinc plating/.test(f.name))!;
   assert.ok(needsBake(s4130, zinc));
   const d6 = sheet('D6AC'), zn = d6.finishes.find((f) => /electroplate/i.test(f.name))!;
@@ -96,11 +108,11 @@ test('hydrogen-embrittlement bake: on for a plated steel, off when the finish al
   assert.match(out, /HYDROGEN EMBRITTLEMENT RELIEF BAKE TO AMS 2759\/9 OR BS EN ISO 9588\n {10}START THE BAKE WITHIN <TIME> OF PLATING/);
 });
 
-test('brass sheets: each matches its library entry and names its EN product standards', () => {
+test('copper-alloy sheets: each matches its library entry and names its product standards', () => {
   for (const sh of SPECS_CU as SpecSheet[]) {
     const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
     assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
-    assert.ok(sh.forms.every((f) => /^(BS EN \d{4,5}|ASTM B\d+)$/.test(f.standard)), `${sh.name}: product standards`);
+    assert.ok(sh.forms.every((f) => /^(BS EN \d{4,5}|ASTM B\d+|AMS \d{4})$/.test(f.standard)), `${sh.name}: product standards`);
     assert.ok(sh.tempers.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name); // a heat-exchanger tube can have no finish
   }
   const w = sheet('Brass CW713R');
@@ -120,7 +132,7 @@ test('every library metal is in the builder: a full sheet, or a skeleton with pl
   }
   // a skeleton takes its designation, and a standard where the designations table gives one, from that table
   const hinted = skel.filter((sk) => sk.forms[0].standard.endsWith(' / <PRODUCT STANDARD>'));
-  assert.ok(hinted.length > 0, 'some skeletons take a standard from the designations table');
+  assert.equal(skeletonSheet({ name: 'X', family: 'cu', summary: '', spec: '' }, { en: 'CuZn40 (EN 12163)', enNo: 'CW509L' }).forms[0].standard, 'BS EN 12163 / <PRODUCT STANDARD>', 'a skeleton takes the standard that the designations table gives');
   for (const sk of hinted) assert.match(parseStandard(sk.forms[0].standard).alternatives[0], /^(BS EN|AMS|ASTM) /, sk.name);
   assert.equal(skeletonSheet({ name: 'X', family: 'cu', summary: '', spec: '' }, { en: 'CuZn40 (EN 12163)', enNo: 'CW509L' }).designation, 'CuZn40 (CW509L)');
   // an aluminium skeleton does not join a placeholder condition to the designation
@@ -143,5 +155,37 @@ test('steel sheets: each matches one library material, with product standards an
   // the quenched-and-tempered steels: the plated finish switches the hydrogen bake on
   const s42 = sheet('4140 / 42CrMo4');
   assert.ok(needsBake(s42, s42.finishes.find((f) => /Zinc-nickel/.test(f.name))!));
+  assert.ok(needsBake(s42, s42.finishes.find((f) => /Hard chromium/.test(f.name))!), 'hard chromium is a plating');
+});
+
+test('stainless and aluminium sheets: each matches one library material of its family, and every form builds', () => {
+  for (const [list, fam, std] of [
+    [SPECS_SS, 'ss', /^(BS (EN (ISO )?)?\d{3,5}(-\d)?|BS S\d+|ASTM A\d+|AMS \d{4})/],
+    [SPECS_AL, 'al', /^(BS (EN )?\d{3,5}(-\d)?|BS L\d+|ASTM B\d+|AMS \d{4})/],
+  ] as const) {
+    for (const sh of list as SpecSheet[]) {
+      const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
+      assert.equal(lib.length, 1, `${sh.name}: one library material, found ${lib.map((m) => m.name).join(', ')}`);
+      assert.equal(lib[0].family, fam, sh.name);
+      assert.ok(sh.forms.every((f) => std.test(f.standard)), `${sh.name}: product standards`);
+      assert.ok(sh.tempers.length && sh.finishes.length && sh.tips.length && sh.callout.startsWith('MATERIAL: '), sh.name);
+      sh.forms.forEach((f, fi) => sh.tempers.forEach((_, ti) => {
+        const out = buildCallout({ sheet: sh, formIndex: fi, standard: parseStandard(f.standard).alternatives[0], temperIndex: ti, finishIndex: 0, afterFinish: true, traceability: true, certificate: true });
+        assert.ok(out.startsWith('MATERIAL: ') && !out.includes('undefined'), `${sh.name} / ${f.form}`);
+      }));
+    }
+  }
+  // wrought aluminium joins the temper to the designation; a casting keeps it on the condition line
+  const b = (n: string) => buildCallout({ sheet: sheet(n), formIndex: 0, standard: parseStandard(sheet(n).forms[0].standard).alternatives[0], temperIndex: 0, finishIndex: -1, afterFinish: false, traceability: false, certificate: false }).split('\n');
+  assert.equal(b('Al 7050')[0], 'MATERIAL: EN AW-7050-T7451 PLATE TO AMS 4050');
+  assert.deepEqual(b('Al A356').slice(0, 2), ['MATERIAL: EN AC-42100 (AlSi7Mg0.3) SAND CASTING (S) TO BS EN 1706', '          CONDITION: T6']);
+  // the heat-treatable alloys default to the PCG lines; 5083 and the casting do not
+  assert.ok(pcgRisk(sheet('Al 7050')) && pcgRisk(sheet('Al 6063')) && !pcgRisk(sheet('Al 5083')) && !pcgRisk(sheet('Al A356')));
+  assert.ok(pcgRisk({ ...sheet('Al 2014A'), mfg: MFG['Al 2014A-T6'] }), 'the 2014A notes key the sheet');
+  // the hardened martensitic stainless steels bake after plating; passivation is not a plating
+  const s431 = sheet('431 stainless');
+  assert.ok(needsBake(s431, s431.finishes.find((f) => /Hard chromium/.test(f.name))!) && !needsBake(s431, s431.finishes[0]));
+  // passivation cites the general standards: BS EN ISO 16048 is for fasteners
+  for (const sh of sheets) for (const f of sh.finishes) if (/^Passivat/i.test(f.name)) assert.doesNotMatch(finishSpec(f.spec), /16048/, `${sh.name}: passivation`);
 });
 

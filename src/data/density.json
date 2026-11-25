@@ -731,7 +731,7 @@
    "name": "Beryllium copper C17200",
    "cat": "cu",
    "rho": 8.25,
-   "use": "Non-sparking tools, springs"
+   "use": "Low-spark tools, springs"
   },
   {
    "name": "CuCrZr",

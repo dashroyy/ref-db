@@ -14,6 +14,11 @@ export interface SpecSheet {
   skeleton?: boolean;
 }
 
+/** True when the alloy can grow peripheral coarse grain: the manufacturing notes say so, or, without notes, an
+ *  aluminium alloy of a heat-treatable series (2xxx, 6xxx, 7xxx, including Al-Li). */
+export const pcgRisk = (s: Pick<SpecSheet, 'family' | 'name' | 'designation' | 'mfg'>) =>
+  s.mfg ? s.mfg.pcg : s.family === 'al' && /\b[267]\d{3}[a-z]?\b/i.test(`${s.name} ${s.designation}`);
+
 /** A skeleton sheet for a library metal that has no specification sheet: its designation, if the designations table
  *  knows it, and placeholders for everything else. Nothing is invented. */
 export function skeletonSheet(m: { name: string; family: string; summary: string; spec: string }, x?: { en: string; enNo: string } | null): SpecSheet {
@@ -74,7 +79,7 @@ const pad = (k: string) => (k + ':').padEnd(10, ' ');
 const CONT = ' '.repeat(10);
 
 /** True when a finish is an electroplating that can put hydrogen into a steel (not hot-dip galvanising or electropolishing). */
-export const isPlating = (finishName: string) => /plat|electro(?!polish)|zinc|cadmium/i.test(finishName) && !/galvani[sz]|hot.dip/i.test(finishName);
+export const isPlating = (finishName: string) => /plat|electro(?!polish)|zinc|cadmium|chrom(e|ium)\b/i.test(finishName) && !/galvani[sz]|hot.dip/i.test(finishName);
 /** The hydrogen-bake line applies by default to a plated steel, unless the finish specification already calls for the bake. */
 export const needsBake = (sheet: SpecSheet, finish: SpecFinish | null) =>
   !!finish && ['steel', 'ss', 'ni'].includes(sheet.family) && isPlating(finish.name) && !/embrittlement/i.test(finish.spec);
@@ -88,8 +93,9 @@ export function buildCallout(c: CalloutChoice) {
   const FORM = form.form.toUpperCase().replace(/&/g, 'AND');
   const lines: string[] = [];
 
-  if (s.family === 'al' && temper && !temper.code.startsWith('<')) {
-    // EN aluminium: the temper is part of the designation (EN AW-6082-T6)
+  if (s.family === 'al' && temper && !temper.code.startsWith('<') && !/^EN AC-/.test(s.designation)) {
+    // EN wrought aluminium: the temper is part of the designation (EN AW-6082-T6). A casting (EN AC-) keeps it on the
+    // condition line, where it joins the casting process of the form (S, K or L)
     lines.push(`${pad('MATERIAL')}${s.designation}-${temperCode(temper.code)} ${FORM} TO ${c.standard}`);
   } else {
     lines.push(`${pad('MATERIAL')}${s.designation} ${FORM} TO ${c.standard}`);

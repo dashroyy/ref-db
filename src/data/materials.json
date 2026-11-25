@@ -1867,7 +1867,7 @@
     },
     {
       "name": "Beryllium copper C17200",
-      "summary": "non-sparking high-strength copper",
+      "summary": "low-spark, high-strength copper",
       "family": "cu",
       "density": 8.25,
       "uts": 1310,
@@ -1877,7 +1877,7 @@
       "corrosion": 2,
       "machinability": 3,
       "pricePerKg": 90,
-      "spec": "The strongest copper alloy. Non-sparking tools, springs, bushes and bearings. Beryllium dust is a serious health hazard: machining requires controls.",
+      "spec": "The strongest copper alloy. Springs, bushes, bearings and low-spark tools. Beryllium dust is a serious health hazard: machining requires controls.",
       "E": 128,
       "k": 105,
       "cte": 17,

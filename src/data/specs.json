@@ -500,7 +500,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048 / ASTM A967",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "Removes free iron after machining. Do this: machined stainless is not passive."
         },
         {
@@ -510,7 +510,7 @@
         },
         {
           "name": "Pickling",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A380",
           "note": "After welding, to restore the passive layer and remove heat tint."
         },
         {
@@ -524,7 +524,7 @@
           "note": "Specify the finish designation rather than describing it in words."
         }
       ],
-      "callout": "MATERIAL: X2CrNiMo17-12-2 (1.4404) BRIGHT BAR TO BS EN 10088-3\n          DIMENSIONS AND TOLERANCES TO BS EN 10278, h9\nFINISH:   PASSIVATE TO BS EN ISO 16048 AFTER MACHINING\nNOTE:     NO CARBON STEEL TOOLING OR MEDIA TO CONTACT PART\n          EDGES ISO 13715 -0.1/-0.5, NO BURRS",
+      "callout": "MATERIAL: X2CrNiMo17-12-2 (1.4404) BRIGHT BAR TO BS EN 10088-3\n          DIMENSIONS AND TOLERANCES TO BS EN 10278, h9\nFINISH:   PASSIVATE TO ASTM A967 AFTER MACHINING\nNOTE:     NO CARBON STEEL TOOLING OR MEDIA TO CONTACT PART\n          EDGES ISO 13715 -0.1/-0.5, NO BURRS",
       "tips": [
         "Machined stainless is not corrosion resistant until it is passivated: free iron smeared from tooling will rust. Put passivation on the drawing.",
         "316L work-hardens rapidly: rigid setup, sharp tools, positive feed, never dwell. A rubbing tool makes the next cut worse.",
@@ -581,7 +581,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048 / ASTM A967",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -600,7 +600,7 @@
           "note": "—"
         }
       ],
-      "callout": "MATERIAL: 17-4PH BAR TO AMS 5643, SUPPLIED CONDITION A\nHEAT TREAT: AGE TO CONDITION H1025 PER AMS 2759/3\n            FURNACE PYROMETRY TO AMS 2750\nFINISH:   PASSIVATE TO BS EN ISO 16048\nNOTE:     HARDNESS 35-40 HRC. DIMENSIONS APPLY AFTER HEAT TREATMENT.",
+      "callout": "MATERIAL: 17-4PH BAR TO AMS 5643, SUPPLIED CONDITION A\nHEAT TREAT: AGE TO CONDITION H1025 PER AMS 2759/3\n            FURNACE PYROMETRY TO AMS 2750\nFINISH:   PASSIVATE TO ASTM A967\nNOTE:     HARDNESS 35-40 HRC. DIMENSIONS APPLY AFTER HEAT TREATMENT.",
       "tips": [
         "The condition is not optional detail: it IS the specification. '17-4PH' alone tells the shop nothing about strength.",
         "Ageing causes a small, predictable dimensional change. Machine in condition A, age, then finish-machine critical features.",
@@ -1288,12 +1288,12 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048 / ASTM A967",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
           "name": "Pickling",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A380",
           "note": "After welding, to remove heat tint and restore the passive layer."
         },
         {
@@ -1353,7 +1353,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -1377,7 +1377,7 @@
     {
       "name": "Stainless A286",
       "designation": "X5NiCrTi26-15 (1.4980)",
-      "family": "ss",
+      "family": "ni",
       "base": "X5NiCrTi26-15 · 1.4980 · UNS S66286 · iron-base superalloy",
       "composition": "AMS 5731/5732/5737 · BS EN 10269 · BS EN 10302",
       "forms": [
@@ -1482,7 +1482,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -1547,7 +1547,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -1603,7 +1603,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -1660,7 +1660,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -1712,7 +1712,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {
@@ -1773,7 +1773,7 @@
       "finishes": [
         {
           "name": "Passivation",
-          "spec": "BS EN ISO 16048",
+          "spec": "ASTM A967 / AMS 2700 (BS EN ISO 16048 for fasteners)",
           "note": "—"
         },
         {

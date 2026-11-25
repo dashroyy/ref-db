@@ -1,5 +1,6 @@
 ---
-// Material specification builder: v1's 25 spec sheets plus the v2 case steels, with v1's manufacturing considerations
+// Material specification builder: v1's 25 spec sheets plus the v2 sheets (case steels, copper alloys, steels, stainless
+// steels and aluminium alloys) and a skeleton for every other library metal, with v1's manufacturing considerations
 // (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface and process concerns of each material).
 // Callout assembly lives in src/lib/callout.ts (unit-tested).
 import data from '../data/specs.json';
@@ -7,16 +8,18 @@ import xref from '../data/xref.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
 import { SPECS_CU } from '../data/specs-cu.mjs';
 import { SPECS_STEEL } from '../data/specs-steel.mjs';
+import { SPECS_SS } from '../data/specs-ss.mjs';
+import { SPECS_AL } from '../data/specs-al.mjs';
 import { MFG } from '../data/specs-mfg.mjs';
 import { MATERIALS } from '../lib/materials';
-import { sameAlloy } from '../lib/datasheet';
+import { sameAlloy, matchRows } from '../lib/datasheet';
 import { skeletonSheet, type SpecSheet } from '../lib/callout';
 
 const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper and brass', mg: 'Magnesium', refract: 'Refractory metals' };
-const full: SpecSheet[] = [...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL].map((s) => ({ ...s, mfg: MFG[s.name] }));
+const full: SpecSheet[] = [...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL].map((s) => ({ ...s, mfg: MFG[s.name] }));
 // every metal of the material library is in the builder: the ones with no sheet yet get a skeleton callout
 const skeletons = MATERIALS.filter((m) => m.kind === 'metal' && !full.some((s) => sameAlloy(m, s)))
-  .map((m) => skeletonSheet(m, (xref.rows as { name: string; family: string; en: string; enNo: string }[]).find((r) => sameAlloy(m, r))));
+  .map((m) => ({ ...skeletonSheet(m, matchRows(m, xref.rows as { name: string; family: string; en: string; enNo: string }[])[0]), mfg: MFG[m.name] }));
 const sheets = [...full, ...skeletons];
 const group = (skel: boolean) => Object.entries(FAM)
   .map(([k, n]) => ({ n: skel ? `${n}: no sheet yet` : n, items: sheets.map((s, i) => ({ s, i })).filter(({ s }) => s.family === k && !!s.skeleton === skel) }))
@@ -113,7 +116,7 @@ const groups = [...group(false), ...group(true)];
 </style>
 
 <script>
-  import { parseStandard, buildCallout, needsBake, type SpecSheet } from '../lib/callout';
+  import { parseStandard, buildCallout, needsBake, pcgRisk, type SpecSheet } from '../lib/callout';
 
   document.querySelectorAll<HTMLElement>('[data-specb]').forEach((root) => {
     const sheets = JSON.parse(root.querySelector('[data-data]')!.textContent!) as SpecSheet[];
@@ -137,16 +140,17 @@ const groups = [...group(false), ...group(true)];
       q('ex').hidden = q('exhead').hidden = !s.callout;
       q('tips').innerHTML = s.tips.map((t) => `<li>${t}</li>`).join('');
       // manufacturing considerations, and the peripheral coarse grain lines on for the alloys that can grow it
-      q('mfgbox').hidden = !s.mfg;
-      if (s.mfg) {
+      const risk = pcgRisk(s);
+      q('mfgbox').hidden = !s.mfg && !risk;
+      if (s.mfg || risk) {
         const p = q('pcg');
-        p.classList.toggle('risk', s.mfg.pcg); // toggle, so that the scoping of the element stays
-        p.innerHTML = s.mfg.pcg
+        p.classList.toggle('risk', risk); // toggle, so that the scoping of the element stays
+        p.innerHTML = risk
           ? '<b>Peripheral coarse grain: a risk</b>This alloy and its extrusions and forgings can grow a recrystallised coarse-grain layer at the surface. Where your programme does not permit it, the drawing states the minimum stock removal from every as-supplied surface and how to verify it.'
           : '<b>No peripheral coarse grain</b>This material does not grow peripheral coarse grain. Its own surface or process concern is in the first note.';
-        q('mfg').innerHTML = s.mfg.notes.map((t) => `<li>${t}</li>`).join('');
+        q('mfg').innerHTML = (s.mfg?.notes ?? []).map((t) => `<li>${t}</li>`).join('');
       }
-      (field('pcg') as HTMLInputElement).checked = !!s.mfg?.pcg;
+      (field('pcg') as HTMLInputElement).checked = risk;
       loadForm();
     }
     /** The hydrogen-bake line follows the finish: on for a plated steel, unless the finish specification calls for it. */

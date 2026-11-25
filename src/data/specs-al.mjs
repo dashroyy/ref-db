@@ -1,0 +1,159 @@
+// Specification sheets for the aluminium alloys that had only a skeleton (v2): the thick-plate aerospace alloy 7050,
+// the marine, cryogenic and tooling-plate alloy 5083, the extrusion alloy 6063, the forging alloy 2014A and the casting
+// alloy A356. Same shape as the sheets in specs.json. Wrought alloys to BS EN 573-3 with tempers to BS EN 515; castings
+// to BS EN 1706. Standards are cited for orientation: work to the issue your programme invokes.
+
+const F = {
+  extRound: { form: 'Extruded round bar', standard: 'BS EN 755-2 + BS EN 755-3', note: 'The properties change with the section thickness: read the row of EN 755-2.' },
+  extRect: { form: 'Extruded rectangular bar', standard: 'BS EN 755-2 + BS EN 755-5', note: '' },
+  extTube: { form: 'Extruded seamless tube', standard: 'BS EN 755-2 + BS EN 755-7', note: 'Porthole (welded-seam) tube is EN 755-8: it is not the same product.' },
+  profile: { form: 'Extruded profile', standard: 'BS EN 755-2 + BS EN 755-9', note: '' },
+  drawn: { form: 'Cold drawn round bar', standard: 'BS EN 754-2 + BS EN 754-3', note: 'Tighter tolerances and a better finish than extruded bar.' },
+  plate: { form: 'Sheet, strip and plate', standard: 'BS EN 485-2 + BS EN 485-3', note: 'EN 485-3 gives the tolerances of hot-rolled plate, EN 485-4 those of cold-rolled sheet.' },
+  forging: { form: 'Forgings', standard: 'BS EN 586-2 + BS EN 586-3', note: 'Give the forging drawing, the grain flow and the properties to test.' },
+};
+const AL_FIN = [
+  { name: 'Sulphuric anodise', spec: 'BS EN ISO 7599 (DEF STAN 03-25 on MoD work)', note: 'Corrosion protection and a paint key. It is electrically insulating: mask the bonding points.' },
+  { name: 'Hard anodise', spec: 'BS EN ISO 10074 / BS EN 2536 (aerospace) / MIL-A-8625 Type III', note: '25 to 75 µm for wear. Approximately half grows outwards: say whether the dimensions apply before or after.' },
+  { name: 'Chromate conversion', spec: 'DEF STAN 03-18 / MIL-DTL-5541', note: 'Negligible thickness and electrically conductive: the choice for bonding and EMC faces. Hexavalent chromate is restricted under REACH: say whether a trivalent process (MIL-DTL-5541 Type II) is acceptable.' },
+  { name: 'Primer and topcoat', spec: 'Programme spec', note: 'Usually an epoxy primer over a conversion coating.' },
+];
+
+export const SPECS_AL = [
+  {
+    name: 'Al 7050-T7451',
+    designation: 'EN AW-7050',
+    family: 'al',
+    base: 'EN AW-7050 · AlZn6CuMgZr · UNS A97050 · the thick-plate aerospace alloy',
+    composition: 'BS EN 573-3 (composition) · BS EN 515 (tempers) · AMS 4050 (plate, T7451) · ASTM B209 (plate)',
+    forms: [
+      { form: 'Plate', standard: 'AMS 4050 / ASTM B209', note: 'Solution heat treated, stress relieved by stretching and overaged (T7451). The usual form for machined frames and fittings. Forgings and extrusions have their own AMS specifications: give the one your programme uses.' },
+    ],
+    tempers: [
+      { code: 'T7451', note: 'Overaged for stress-corrosion resistance and stress relieved by stretching: the usual plate condition (AMS 4050).' },
+      { code: 'T7651', note: 'Overaged for exfoliation resistance: more strength than T7451, less stress-corrosion resistance.' },
+    ],
+    finishes: AL_FIN,
+    callout: 'MATERIAL: EN AW-7050-T7451 PLATE TO AMS 4050\nFINISH:   CHROMATE CONVERSION TO DEF STAN 03-18\nCERTS:    BS EN 10204 TYPE 3.1\nNOTE:     GRAIN DIRECTION AS SHOWN',
+    tips: [
+      'Thick plate for primary structure and heavy machined parts: frames, bulkheads, and wing and landing-gear fittings. The zirconium keeps the strength and the toughness through thick sections, where 7075 falls off.',
+      'Do not change T7451 to a peak-aged temper for strength: the overageing gives the stress-corrosion resistance.',
+      'Use the short-transverse allowables for any load through the plate thickness, and show the grain direction on the drawing.',
+      'The stretched plate has low residual stress, so it stays flat when you machine it. Machine thin webs symmetrically.',
+      'Do not fusion weld it.',
+    ],
+  },
+  {
+    name: 'Al 5083-H111',
+    designation: 'EN AW-5083',
+    family: 'al',
+    base: 'EN AW-5083 · AlMg4.5Mn0.7 · UNS A95083 · non-heat-treatable: marine, cryogenic and tooling plate',
+    composition: 'BS EN 573-3 (composition) · BS EN 515 (tempers) · BS EN 485-2 (plate and sheet) · BS EN 755-2 (extrusions) · BS EN 586-2 (forgings) · ASTM B928 (marine plate)',
+    forms: [
+      F.plate,
+      { form: 'Plate for marine service', standard: 'ASTM B928', note: 'H116 or H321 plate, tested for exfoliation and intergranular corrosion.' },
+      F.extRound,
+      F.extRect,
+      F.profile,
+      F.forging,
+    ],
+    tempers: [
+      { code: 'H111', note: 'Annealed, then slightly strain hardened by flattening or stretching: the usual plate temper, with almost the properties of O.' },
+      { code: 'O', note: 'Annealed: the most formable.' },
+      { code: 'H116', note: 'Strain hardened for marine service, tested for exfoliation and intergranular corrosion.' },
+      { code: 'H321', note: 'Strain hardened and stabilised, also for marine service.' },
+      { code: 'H112', note: 'As fabricated, with mechanical-property limits: thick plate and extrusions.' },
+    ],
+    finishes: AL_FIN,
+    callout: 'MATERIAL: EN AW-5083-H111 SHEET, STRIP AND PLATE TO BS EN 485-2\n          TOLERANCES TO BS EN 485-3\nFINISH:   SULPHURIC ANODISE TO BS EN ISO 7599\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The strongest of the common non-heat-treatable alloys: welded structures, pressure and cryogenic vessels, marine parts, and jig and fixture plates.',
+      'For jig plates, fixture bases and vacuum plates, cast and stress-relieved tooling plate (a 5083-type alloy cast to thickness and fly-cut) stays flat when you machine it. Order it to the specification of the producer.',
+      'Do not use it above approximately 65 °C in sustained service: it can become sensitised to intergranular corrosion and stress-corrosion cracking.',
+      'It welds very well (5183 filler). In the O and H111 tempers the weld keeps almost the strength of the parent.',
+    ],
+  },
+  {
+    name: 'Al 6063-T6',
+    designation: 'EN AW-6063',
+    family: 'al',
+    base: 'EN AW-6063 · AlMg0.7Si · UNS A96063 · legacy HE9 · the extrusion alloy for profiles and finish',
+    composition: 'BS EN 573-3 (composition) · BS EN 515 (tempers) · BS EN 755-2 (extrusions) · BS EN 754-2 (drawn bar and tube) · BS EN 12020-2 (precision profiles)',
+    forms: [
+      F.profile,
+      { form: 'Precision profile', standard: 'BS EN 755-2 + BS EN 12020-2', note: 'Tighter tolerances than EN 755-9, for 6060 and 6063 only.' },
+      F.extTube,
+      F.extRound,
+      F.extRect,
+      F.drawn,
+    ],
+    tempers: [
+      { code: 'T6', note: 'Solution heat treated (usually at the press) and artificially aged: the usual structural condition.' },
+      { code: 'T5', note: 'Cooled from the extrusion press and artificially aged: lower strength and lower cost.' },
+      { code: 'T66', note: 'A T6 with higher minimum properties, by closer control of the process.' },
+      { code: 'T4', note: 'Naturally aged, for bending and forming before the ageing.' },
+    ],
+    finishes: AL_FIN,
+    callout: 'MATERIAL: EN AW-6063-T6 EXTRUDED PROFILE TO BS EN 755-2\n          TOLERANCES TO BS EN 755-9\nFINISH:   SULPHURIC ANODISE TO BS EN ISO 7599\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The extrusion alloy: thin-wall and complex profiles, frames, rails, enclosures and heat sinks, with the best anodised finish.',
+      'It has approximately 70% of the strength of 6082-T6: use 6082 for structural members and for machined bar.',
+      'Welding lowers the strength of the heat-affected zone towards the T4 or O values: design the joint for that.',
+      'Give the extruder the profile drawing and the tolerance standard (EN 755-9, or EN 12020-2 for precision profiles).',
+    ],
+  },
+  {
+    name: 'Al 2014A-T6',
+    designation: 'EN AW-2014A',
+    family: 'al',
+    base: 'EN AW-2014A · AlCu4SiMg(A) · legacy HE15 and HF15 · BS L168 (aerospace) · the high-strength forging alloy',
+    composition: 'BS EN 573-3 (composition) · BS EN 515 (tempers) · BS EN 755-2 (extrusions) · BS EN 754-2 (drawn bar) · BS EN 586-2 (forgings) · BS L168 (aerospace bar and section)',
+    forms: [
+      F.forging,
+      F.extRound,
+      F.extRect,
+      F.drawn,
+      { form: 'Bar and section, aerospace (UK)', standard: 'BS L168', note: 'The British aerospace specification, in the T6 condition. It has its own acceptance requirements.' },
+    ],
+    tempers: [
+      { code: 'T6', note: 'Solution heat treated and artificially aged: the full strength.' },
+      { code: 'T6511', note: 'Extrusions: T6, stress relieved by stretching with minor straightening. Less distortion in machining.' },
+      { code: 'T652', note: 'Forgings: stress relieved by compression after the solution treatment, then aged.' },
+      { code: 'T4', note: 'Solution heat treated and naturally aged: more ductile and tougher, with less strength.' },
+      { code: 'O', note: 'Annealed, for forming before the heat treatment.' },
+    ],
+    finishes: AL_FIN,
+    callout: 'MATERIAL: EN AW-2014A-T6 FORGINGS TO BS EN 586-2\n          TOLERANCES TO BS EN 586-3\nFINISH:   CHROMATE CONVERSION TO DEF STAN 03-18\nCERTS:    BS EN 10204 TYPE 3.1\nGRAIN:    NO PERIPHERAL COARSE GRAIN ON THE FINISHED PART\n          REMOVE MIN 1.5 mm FROM ALL AS-SUPPLIED SURFACES',
+    tips: [
+      'High strength in thick sections, and it forges well: landing-gear and engine-mount fittings, wheels, hydraulic parts and highly loaded tooling.',
+      'In T6 the stress-corrosion resistance in the short-transverse direction is low: show the grain direction, and avoid sustained short-transverse tension.',
+      'It is the European relative of 2014: the two are close but not identical. Confirm before you substitute one for the other.',
+    ],
+  },
+  {
+    name: 'Al A356 / LM25 (cast)',
+    designation: 'EN AC-42100 (AlSi7Mg0.3)',
+    family: 'al',
+    base: 'EN AC-42100 · AlSi7Mg0.3 · similar to A356.0 · LM25 (BS 1490) is the close EN AC-42000 (AlSi7Mg)',
+    composition: 'BS EN 1706 (castings) · BS EN 1676 (ingots) · ASTM B26 (sand castings) · ASTM B108 (permanent-mould castings)',
+    forms: [
+      { form: 'Sand casting (S)', standard: 'BS EN 1706', note: 'Read the minimum properties for sand castings. Separately cast test bars show the quality of the melt, not of the casting.' },
+      { form: 'Permanent-mould casting (K)', standard: 'BS EN 1706', note: 'Gravity die cast: a finer structure and higher properties than sand.' },
+      { form: 'Investment casting (L)', standard: 'BS EN 1706', note: 'Thin walls and fine detail.' },
+      { form: 'Sand casting, A356.0', standard: 'ASTM B26', note: '' },
+      { form: 'Permanent-mould casting, A356.0', standard: 'ASTM B108', note: '' },
+    ],
+    tempers: [
+      { code: 'T6', note: 'Solution heat treated and artificially aged: the usual condition for stressed castings.' },
+      { code: 'T64', note: 'Solution heat treated and under-aged: more ductility, less strength.' },
+      { code: 'F', note: 'As cast, with no heat treatment: low strength. Do not use it for a stressed part.' },
+    ],
+    finishes: [...AL_FIN, { name: 'Vacuum impregnation', spec: 'MIL-STD-276', note: 'Seals the porosity of pressure-tight castings. Do it after machining and before the finish.' }],
+    callout: 'MATERIAL: EN AC-42100 (AlSi7Mg0.3) SAND CASTING (S) TO BS EN 1706\n          CONDITION: T6\n          CASTING QUALITY TO <CASTING SPEC>, TEST BARS PER BATCH\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The general-purpose structural casting alloy: housings, brackets, pump and valve bodies, and cast tooling details. It casts, welds and machines well, and it takes a T6 heat treatment.',
+      'Castings have porosity. Give the casting quality, the radiographic grade and the critical zones on the drawing (for example to AMS 2175, or with radiography to BS EN 12681-1), and use the casting factor of your programme.',
+      'LM25 (BS 1490) is the British legacy alloy, close to EN AC-42000. A356 and EN AC-42100 have less iron, for better ductility: say which one you need.',
+    ],
+  },
+];

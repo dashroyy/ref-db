@@ -122,7 +122,7 @@
       "note": "The general-purpose casting alloy."
     },
     {
-      "name": "Magnesium AZ31B",
+      "name": "Magnesium AZ31B-H24",
       "family": "mg",
       "en": "No EN 1753 designation: wrought",
       "enNo": "3.5312",
@@ -142,7 +142,7 @@
       "note": "Most common die-casting magnesium. MB prefix = ingot, MC = casting."
     },
     {
-      "name": "Magnesium ZE41A",
+      "name": "Magnesium ZE41A-T5",
       "family": "mg",
       "en": "EN-MC35110 / MgZn4RE1Zr",
       "enNo": "—",
@@ -162,7 +162,7 @@
       "note": "Rare-earth, high temperature, self-extinguishing."
     },
     {
-      "name": "Magnesium Elektron 21",
+      "name": "Mg Elektron 21 (EV31A)",
       "family": "mg",
       "en": "EN-MC65120 / MgRE3Zn2Zr",
       "enNo": "—",
@@ -172,13 +172,13 @@
       "note": "Modern castable RE alloy. EV31A is the ASTM designation."
     },
     {
-      "name": "CP Titanium Grade 2",
+      "name": "CP Ti Grade 2",
       "family": "ti",
       "en": "EN ISO Ti2 / Ti99.5",
       "enNo": "3.7035",
       "legacyBs": "—",
       "uns": "R50400",
-      "aero": "AMS 4902 / EN 10204",
+      "aero": "AMS 4902 (sheet, strip and plate)",
       "note": "Formable, corrosion resistant, weldable."
     },
     {
@@ -342,7 +342,7 @@
       "note": "Oil-hardening gauges and jigs."
     },
     {
-      "name": "Grey cast iron",
+      "name": "Grey cast iron (EN-GJL-250)",
       "family": "steel",
       "en": "EN-GJL-250 (EN 1561)",
       "enNo": "EN-JL1040",
@@ -452,14 +452,34 @@
       "note": "Chloride and stress-corrosion resistant."
     },
     {
-      "name": "A286",
+      "name": "303 stainless (free machining)",
       "family": "ss",
-      "en": "X5NiCrTi26-15 (EN 10269)",
-      "enNo": "1.4980",
+      "en": "X8CrNiS18-9 (EN 10088-3)",
+      "enNo": "1.4305",
+      "legacyBs": "BS 970 303S31",
+      "uns": "S30300",
+      "aero": "AMS 5640",
+      "note": "Free-machining austenitic: turned parts. Not for welded or wetted parts."
+    },
+    {
+      "name": "431 stainless (S80)",
+      "family": "ss",
+      "en": "X17CrNi16-2 (EN 10088-3)",
+      "enNo": "1.4057",
+      "legacyBs": "BS 970 431S29",
+      "uns": "S43100",
+      "aero": "BS S80 / AMS 5628",
+      "note": "Hardenable martensitic stainless with nickel: shafts, pins, fittings."
+    },
+    {
+      "name": "17-7PH stainless",
+      "family": "ss",
+      "en": "X7CrNiAl17-7 (EN 10151)",
+      "enNo": "1.4568",
       "legacyBs": "—",
-      "uns": "S66286",
-      "aero": "AMS 5731 / 5737",
-      "note": "Budget superalloy fastener stock to ~650 °C."
+      "uns": "S17700",
+      "aero": "AMS 5528 / AMS 5644 / AMS 5678",
+      "note": "Semi-austenitic precipitation hardening: springs, bellows, formed parts."
     },
     {
       "name": "21-6-9 (Nitronic 40)",
@@ -562,6 +582,16 @@
       "note": "Turbine blades and hot bolting."
     },
     {
+      "name": "A286",
+      "family": "ni",
+      "en": "X5NiCrTi26-15 (EN 10269)",
+      "enNo": "1.4980",
+      "legacyBs": "—",
+      "uns": "S66286",
+      "aero": "AMS 5731 / 5737",
+      "note": "Budget superalloy fastener stock to ~650 °C."
+    },
+    {
       "name": "Monel 400",
       "family": "ni",
       "en": "NiCu30Fe",
@@ -582,7 +612,7 @@
       "note": "Age-hardened, good galling resistance."
     },
     {
-      "name": "Invar 36",
+      "name": "Invar 36 (FeNi36)",
       "family": "ni",
       "en": "FeNi36",
       "enNo": "1.3912",
@@ -592,7 +622,7 @@
       "note": "Near-zero expansion composite tooling."
     },
     {
-      "name": "Kovar",
+      "name": "Kovar (FeNi29Co17)",
       "family": "ni",
       "en": "FeNi29Co17",
       "enNo": "1.3981",
@@ -782,17 +812,27 @@
       "note": "Cast high-tensile brass."
     },
     {
-      "name": "Beryllium copper",
+      "name": "Beryllium copper C17200",
       "family": "cu",
       "en": "CuBe2 (EN 12163)",
       "enNo": "CW101C",
-      "legacyBs": "BS 2873 CB101",
+      "legacyBs": "BS CB101",
       "uns": "C17200",
       "aero": "AMS 4533",
-      "note": "Non-sparking tools, springs, bushes."
+      "note": "Low-spark tools, springs, bushes."
     },
     {
-      "name": "Phosphor bronze",
+      "name": "Beryllium copper C17510",
+      "family": "cu",
+      "en": "CuNi2Be (EN 12163)",
+      "enNo": "CW110C",
+      "legacyBs": "—",
+      "uns": "C17510",
+      "aero": "ASTM B441 (rod and bar)",
+      "note": "RWMA Class 3: welding electrodes, current-carrying springs."
+    },
+    {
+      "name": "Phosphor bronze CW452K",
       "family": "cu",
       "en": "CuSn6 (EN 12163)",
       "enNo": "CW452K",
@@ -802,17 +842,27 @@
       "note": "Springs and electrical contacts."
     },
     {
-      "name": "Bearing bronze",
+      "name": "Bearing bronze CC493K",
       "family": "cu",
       "en": "CuSn7Zn4Pb7 (EN 1982)",
       "enNo": "CC493K",
-      "legacyBs": "BS 1400 LG2",
+      "legacyBs": "—",
       "uns": "C93200",
       "aero": "EN 1982",
-      "note": "Bushes and plain bearings."
+      "note": "Bushes and plain bearings. Legacy German Rg7 (DIN 1705 G-CuSn7ZnPb). BS 1400 LG2 is a different alloy (CC491K)."
     },
     {
-      "name": "CuCrZr",
+      "name": "Aluminium bronze C63000",
+      "family": "cu",
+      "en": "CuAl10Ni5Fe4 (EN 12163)",
+      "enNo": "CW307G",
+      "legacyBs": "BS CA104",
+      "uns": "C63000",
+      "aero": "AMS 4640",
+      "note": "Landing-gear and flap-track bushes, seawater fittings, low-spark tools."
+    },
+    {
+      "name": "CuCrZr (C18150)",
       "family": "cu",
       "en": "CuCr1Zr (EN 12163)",
       "enNo": "CW106C",
@@ -842,14 +892,14 @@
       "note": "Creep-resistant hot structure and tooling."
     },
     {
-      "name": "Tungsten",
+      "name": "Tungsten / W-25Re",
       "family": "refract",
-      "en": "W (EN ISO 4499 rel.)",
+      "en": "No EN designation",
       "enNo": "—",
       "legacyBs": "—",
       "uns": "R07005",
-      "aero": "ASTM B760",
-      "note": "Throat inserts, ballast, erosion resistance."
+      "aero": "ASTM B760 (plate, sheet and foil)",
+      "note": "Throat inserts, ballast, erosion resistance. ASTM B760 covers unalloyed tungsten; W-25Re is bought to the producer specification."
     },
     {
       "name": "Ta-10W",

@@ -29,6 +29,15 @@ export function sameAlloy(m: { name: string; family: string }, other: { name: st
   return keys.some((k, i) => (i === 0 || /^\d{3,}[a-z]?$/.test(k)) && o.includes(k));
 }
 
+/** The register entries of the same alloy, the closest name first: for 'Ti-6Al-4V ELI (Gr 23)' the ELI row comes
+ *  before the Grade 5 row. Score: the words the names share, less half a point for each other word of the entry. */
+export function matchRows<T extends { name: string; family?: string }>(m: { name: string; family: string }, rows: T[]): T[] {
+  const words = (s: string) => new Set(s.toLowerCase().replace(/\bgrade\b/g, 'gr').split(/[^a-z0-9]+/).filter(Boolean));
+  const mw = words(m.name);
+  const score = (r: T) => [...words(r.name)].reduce((n, w) => n + (mw.has(w) ? 1 : -0.5), 0);
+  return rows.filter((r) => sameAlloy(m, r)).map((r, i) => ({ r, i, s: score(r) })).sort((a, b) => b.s - a.s || a.i - b.i).map((x) => x.r);
+}
+
 /** The anodic index row (src/lib/galvanic.ts) for a library material, from its family and alloy. */
 export function galvanicKey(m: { name: string; family: string }) {
   const n = m.name.toLowerCase();

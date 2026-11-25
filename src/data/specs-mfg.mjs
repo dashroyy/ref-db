@@ -77,6 +77,52 @@ export const MFG = {
       'Check UK availability: stockists usually hold 6082.',
     ],
   },
+  // 2014A: its sheet (src/data/specs-al.mjs) has the name of the library material
+  'Al 2014A-T6': {
+    pcg: true,
+    notes: [
+      'Peripheral coarse grain. 2xxx extrusions and forgings are susceptible. Machine off the as-supplied skin on every loaded surface.',
+      'Legacy UK drawings call it L168 (bar, extrusion and section; see the BS L-series register in Designations). It is the same alloy, and the legacy specification has its own acceptance requirements.',
+      'Bare, it has poor corrosion resistance: always protect it.',
+      'Do not fusion weld it.',
+    ],
+  },
+  'Al 7050-T7451': {
+    pcg: true,
+    notes: [
+      'Peripheral coarse grain. Thick 7xxx plate and forgings can grow a coarse recrystallised layer at the surface. Machine it off every loaded surface, and give the minimum stock removal on the drawing.',
+      'Distortion: the stretched plate has low residual stress, but deep pockets and thin webs still move. Rough machine, let the part rest, then finish it, and machine the two faces in turn.',
+      'The through-thickness properties fall towards the centre of thick plate: use the allowables for the plate thickness and for the short-transverse direction.',
+      'Do not fusion weld it: design for fasteners or bonding from the start.',
+    ],
+  },
+  'Al 6063-T6': {
+    pcg: true,
+    notes: [
+      'Peripheral coarse grain. 6xxx extrusions can grow a coarse recrystallised layer at the surface. On 6063 it shows mainly as streaks after anodising; on a loaded or sealing surface, machine it off.',
+      'The quench at the press sets the properties: thick walls cool more slowly and can fall below the T6 minimums. Read the EN 755-2 row for the wall thickness.',
+      'For anodised parts, ask for an anodising-quality extrusion and agree a sample: die lines and the grain show through the film.',
+      'Form it in T4 and age it after, or bend T6 with a generous radius: T6 cracks in tight bends.',
+    ],
+  },
+  'Al 5083-H111': {
+    pcg: false,
+    notes: [
+      'It is not heat treatable: there is no solution treatment, so there is no peripheral coarse grain.',
+      'Its strength comes from the magnesium and from work hardening. The weld and the heat-affected zone go to the O condition, which is close to H111: design them for that.',
+      'Long service above approximately 65 °C can sensitise it to intergranular corrosion. ASTM G67 (mass loss in nitric acid) is the test for the marine tempers.',
+      'It makes long, gummy chips: sharp, polished, high-rake tools and plenty of coolant give the best finish.',
+    ],
+  },
+  'Al A356 / LM25 (cast)': {
+    pcg: false,
+    notes: [
+      'A casting has no peripheral coarse grain. The surface concerns are porosity, oxide films and the as-cast skin: machine through the skin where a seal bears on it.',
+      'The solution treatment and the quench can distort thin-walled castings: leave machining stock on the datums and bores, and finish them after the heat treatment.',
+      'Agree the critical zones with the foundry: it puts the chills and the feeders there, and radiographs them.',
+      'A weld repair of a casting needs your approval, a qualified procedure and a new heat treatment: say on the drawing whether it is allowed.',
+    ],
+  },
   'Aluminium 5251 / 5754': {
     pcg: false,
     notes: [

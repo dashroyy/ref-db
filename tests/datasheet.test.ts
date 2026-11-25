@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { alloyKeys, sameAlloy, galvanicFor, derived } from '../src/lib/datasheet.ts';
+import { alloyKeys, sameAlloy, matchRows, galvanicFor, derived } from '../src/lib/datasheet.ts';
 import { material, DEFAULTS, MATERIALS, has } from '../src/lib/materials.ts';
 import xref from '../src/data/xref.json' with { type: 'json' };
 import specs from '../src/data/specs.json' with { type: 'json' };
@@ -24,6 +24,15 @@ test('library materials find their designations and spec-builder entries', () =>
   assert.ok(!find('Ti-6Al-4V (Gr 5)').some((n) => /6Al-2Sn/.test(n)), 'not Ti-6242');
   const sp = (specs.specs as { name: string; family: string }[]).filter((s) => sameAlloy(material('Inconel 718')!, s));
   assert.equal(sp.length, 1);
+});
+
+test('every designations row matches a library material, and the closest row comes first', () => {
+  const rows = xref.rows as { name: string; family: string }[];
+  for (const r of rows) assert.ok(MATERIALS.some((m) => sameAlloy(m, r)), `${r.name}: no library material of that name`);
+  assert.equal(matchRows(material('Ti-6Al-4V ELI (Gr 23)')!, rows)[0].name, 'Ti-6Al-4V ELI (Grade 23)');
+  assert.equal(matchRows(material('Ti-6Al-4V (Gr 5)')!, rows)[0].name, 'Ti-6Al-4V (Grade 5)');
+  assert.equal(matchRows(material('Beryllium copper C17200')!, rows)[0].name, 'Beryllium copper C17200');
+  assert.equal(matchRows(material('A286 (Fe-Ni-Cr)')!, rows)[0].family, 'ni');
 });
 
 test('galvanic index by family and alloy', () => {

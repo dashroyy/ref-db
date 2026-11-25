@@ -1,4 +1,4 @@
-// Specification sheets for the brasses (v2). Same shape as the sheets in specs.json. EN copper product standards by
+// Specification sheets for the brasses and the other copper alloys (v2). Same shape as the sheets in specs.json. EN copper product standards by
 // form; tempers in the EN 1173 system: M as manufactured, R = minimum tensile strength (MPa), H = minimum hardness.
 // Where a source gave the tempers of an alloy they are named; elsewhere the R temper is left for the size table of the
 // standard. Standards are cited for orientation: work to the issue your programme invokes.
@@ -36,7 +36,9 @@ const TIPS = {
   dzr: 'Brasses with more than approximately 15% zinc can dezincify in water: the zinc leaches out and leaves weak, porous copper. For wetted parts use a DZR or a tin brass.',
   lead: 'Lead gives the machinability. Check the current RoHS and REACH position for your product; the lead-free brasses (for example CW724R) are the usual alternative.',
   spark: 'Brass gives fewer and cooler sparks than steel on impact, which is why it is used for some hand tools and tooling in hazardous areas. It is not spark-free: the explosive-safety rules of the facility decide which materials are allowed.',
+  beryllium: 'Breathing beryllium-containing dust or fume can cause chronic beryllium disease. Operations that make fine particles or fume (grinding, polishing, abrasive cutting, EDM and welding) need extraction and controls: check the rules of the shop before you specify them.',
 };
+const lowSpark = (alloy) => `${alloy} gives fewer and cooler sparks than steel on impact, which is why it is used for low-spark hand tools. It is not spark-free: the explosive-safety rules of the facility decide which materials are allowed.`;
 
 export const SPECS_CU = [
   {
@@ -254,5 +256,141 @@ export const SPECS_CU = [
     finishes: FIN,
     callout: 'MATERIAL: CuZn37Pb2 (CW606N) PLATE TO BS EN 1652\n          CONDITION: R<MIN TENSILE>\nCERTS:    BS EN 10204 TYPE 3.1',
     tips: ['Flat stock that machines, engraves and blanks cleanly: templates, drilling and marking plates, nameplates, dials and instrument plates.', 'The lead limits cold forming: bend with a generous radius.', TIPS.season, TIPS.lead],
+  },
+  // ---- other copper alloys. The beryllium coppers and aluminium bronze are usually bought to ASTM or AMS, in the
+  // ASTM B601 tempers (TB00 solution annealed, TD04 cold worked, TF00 and TH04 precipitation hardened, TQ50 and HR50);
+  // the EN standards use the EN 1173 conditions (R, H, M) as for the brasses. ----
+  {
+    name: 'Beryllium copper C17200 (CuBe2)',
+    designation: 'CuBe2 (CW101C)',
+    family: 'cu',
+    base: 'CuBe2 · CW101C · UNS C17200 · legacy BS CB101 · precipitation hardening',
+    composition: 'ASTM B196 (rod and bar) · ASTM B194 (plate, sheet and strip) · ASTM B197 (wire) · BS EN 12163 (rod) · BS EN 1652 and BS EN 1654 (sheet and spring strip)',
+    forms: [
+      { form: 'Rod and bar, UNS C17200', standard: 'ASTM B196', note: 'The usual supply route for beryllium copper bar, in the ASTM tempers.' },
+      { form: 'Plate, sheet and strip, UNS C17200', standard: 'ASTM B194', note: 'Strip is also supplied mill hardened (the TM tempers): it needs no age hardening.' },
+      { form: 'Wire, UNS C17200', standard: 'ASTM B197', note: '' },
+      F.rodGP,
+      F.sheet,
+      { form: 'Strip for springs', standard: 'BS EN 1654', note: 'Spring and connector strip.' },
+    ],
+    tempers: [
+      { code: 'TF00', note: 'ASTM: solution annealed and precipitation hardened (AT). Rod is typically Rm 1140 to 1380 MPa and 36 to 42 HRC.' },
+      { code: 'TH04', note: 'ASTM: cold worked hard and precipitation hardened (HT): the highest strength of rod.' },
+      { code: 'TB00', note: 'ASTM: solution annealed (A). Soft: machine or form it, then age harden it to TF00.' },
+      { code: 'TD04', note: 'ASTM: solution annealed and cold worked hard (H). Age harden it to TH04.' },
+      { code: 'R<MIN TENSILE>', note: 'EN 1173, for the EN standards: a minimum tensile strength. Read the R conditions and their sizes in the table of the product standard.' },
+    ],
+    finishes: FIN,
+    callout: 'MATERIAL: CuBe2 (CW101C) ROD AND BAR, UNS C17200 TO ASTM B196\n          CONDITION: TF00\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The strongest copper alloy: springs, contacts, bushes, bearings, mould inserts and low-spark tools.',
+      'Buy it hardened (TF00 or TH04) and machine it: this is the usual route for machined parts. Or buy it soft (TB00 or TD04), machine or form it, then age harden it. The age hardening causes a small shrinkage, so finish the critical features after it.',
+      TIPS.beryllium,
+      lowSpark('Beryllium copper'),
+    ],
+  },
+  {
+    name: 'Beryllium copper C17510 (CuNi2Be)',
+    designation: 'CuNi2Be (CW110C)',
+    family: 'cu',
+    base: 'CuNi2Be · CW110C · UNS C17510 · RWMA Class 3 · the high-conductivity beryllium copper',
+    composition: 'ASTM B441 (rod and bar) · ASTM B534 (plate, sheet and strip) · BS EN 12163 (rod)',
+    forms: [
+      { form: 'Rod and bar, UNS C17510', standard: 'ASTM B441', note: 'The usual supply route, in the ASTM tempers.' },
+      { form: 'Plate, sheet and strip, UNS C17510', standard: 'ASTM B534', note: '' },
+      F.rodGP,
+    ],
+    tempers: [
+      { code: 'TF00', note: 'ASTM: solution annealed and precipitation hardened. Less strength than CuBe2, but approximately twice its electrical and thermal conductivity.' },
+      { code: 'TH04', note: 'ASTM: cold worked and precipitation hardened: more strength.' },
+      { code: 'TB00', note: 'ASTM: solution annealed, for machining or forming before the age hardening.' },
+      { code: 'R<MIN TENSILE>', note: 'EN 1173, for the EN standard: a minimum tensile strength from the table of the product standard.' },
+    ],
+    finishes: FIN,
+    callout: 'MATERIAL: CuNi2Be (CW110C) ROD AND BAR, UNS C17510 TO ASTM B441\n          CONDITION: TH04\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Strength with conductivity: resistance-welding electrodes, seam-welding wheels and dies, mould inserts that must cool quickly, and current-carrying springs.',
+      TIPS.beryllium,
+    ],
+  },
+  {
+    name: 'Phosphor bronze CW452K (CuSn6)',
+    designation: 'CuSn6 (CW452K)',
+    family: 'cu',
+    base: 'CuSn6 · CW452K · UNS C51900 · legacy BS PB103 · wrought tin bronze',
+    composition: 'BS EN 1652 and BS EN 1654 (plate, sheet and spring strip) · BS EN 12163 (rod) · BS EN 12166 (wire)',
+    forms: [F.sheet, { form: 'Strip for springs', standard: 'BS EN 1654', note: 'Spring and connector strip.' }, F.rodGP, F.wire],
+    tempers: [R, H, M],
+    finishes: FIN,
+    callout: 'MATERIAL: CuSn6 (CW452K) STRIP FOR SPRINGS TO BS EN 1654\n          CONDITION: R<MIN TENSILE>\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Springs, contacts, bellows, diaphragms and bushes: good fatigue strength, corrosion resistance and wear against steel.',
+      'It does not dezincify (it contains no zinc), and it resists stress corrosion better than brass.',
+      'Hard spring tempers crack in tight bends when the bend line is parallel to the rolling direction: show the rolling direction on the drawing.',
+    ],
+  },
+  {
+    name: 'Bearing bronze CC493K (CuSn7Zn4Pb7-C)',
+    designation: 'CuSn7Zn4Pb7-C (CC493K)',
+    family: 'cu',
+    base: 'CuSn7Zn4Pb7-C · CC493K · similar to UNS C93200 (SAE 660) · legacy DIN 1705 G-CuSn7ZnPb (Rg7) · leaded tin bronze',
+    composition: 'BS EN 1982 (copper alloy ingots and castings) · ASTM B505 (continuous castings, UNS C93200)',
+    forms: [...cast('read the minimum properties for the casting process in the standard.'), { form: 'Continuous-cast bar, UNS C93200', standard: 'ASTM B505', note: 'The North American bearing-bronze bar.' }],
+    tempers: [{ code: 'AS CAST', note: 'Castings are used as cast. Continuous-cast bar (GC) is the usual stock for machined bushes.' }],
+    finishes: [],
+    callout: 'MATERIAL: CuSn7Zn4Pb7-C (CC493K) CONTINUOUS CASTING TO BS EN 1982\n          CONDITION: AS CAST\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'The plain-bearing bronze: bushes, thrust washers and wear plates. The lead gives embeddability and conformability, and it tolerates poor lubrication.',
+      'Give the running clearance, the lubrication and the shaft hardness on the drawing: they set the life as much as the bronze does.',
+      'The lead makes it unweldable, and its strength is low: it carries bearing pressure, not structural load.',
+    ],
+  },
+  {
+    name: 'Aluminium bronze C63000 (CuAl10Ni5Fe4)',
+    designation: 'CuAl10Ni5Fe4 (CW307G)',
+    family: 'cu',
+    base: 'CuAl10Ni5Fe4 · CW307G · UNS C63000 · legacy BS CA104 · nickel aluminium bronze',
+    composition: 'AMS 4640 (UNS C63000 bar, rod, shapes, tube and forgings) · ASTM B150 (rod and bar) · BS EN 12163 (rod) · BS EN 12165 (forging stock) · BS EN 12420 (forgings)',
+    forms: [
+      { form: 'Bar, rod and forgings, UNS C63000', standard: 'AMS 4640', note: 'The aerospace specification, in the TQ50 or HR50 temper: landing-gear and flap-track bushes.' },
+      { form: 'Rod and bar, UNS C63000', standard: 'ASTM B150', note: '' },
+      F.rodGP,
+      F.forge,
+      F.forging,
+    ],
+    tempers: [
+      { code: 'TQ50', note: 'ASTM: quench hardened and temper annealed. A temper of AMS 4640.' },
+      { code: 'HR50', note: 'ASTM: drawn and stress relieved. The other temper of AMS 4640.' },
+      R,
+      M,
+    ],
+    finishes: [],
+    callout: 'MATERIAL: CuAl10Ni5Fe4 (CW307G) BAR, ROD AND FORGINGS, UNS C63000 TO AMS 4640\n          CONDITION: TQ50\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'High strength with very good wear, galling and seawater resistance: bushes against hardened steel shafts, valve seats, gears, and landing-gear and flap-track bushes.',
+      lowSpark('Aluminium bronze'),
+      'It welds with a qualified procedure, unlike the leaded bronzes.',
+    ],
+  },
+  {
+    name: 'CuCrZr (C18150)',
+    designation: 'CuCr1Zr (CW106C)',
+    family: 'cu',
+    base: 'CuCr1Zr · CW106C · UNS C18150 · RWMA Class 2 · precipitation hardening, high conductivity',
+    composition: 'BS EN 12163 (rod) · BS EN 12165 (forging stock) · BS EN 12420 (forgings)',
+    forms: [F.rodGP, F.forge, F.forging],
+    tempers: [
+      { code: 'R<MIN TENSILE>', note: 'Solution annealed and precipitation hardened, usually with cold work between: the usual delivery condition, with approximately 80% of the conductivity of pure copper. Read the R conditions and their sizes in the table of the product standard.' },
+      { code: 'H<MIN HARDNESS>', note: 'A minimum hardness: the usual check on electrodes and liners.' },
+      M,
+    ],
+    finishes: [],
+    callout: 'MATERIAL: CuCr1Zr (CW106C) ROD FOR GENERAL PURPOSES TO BS EN 12163\n          CONDITION: R<MIN TENSILE>, PRECIPITATION HARDENED\nCERTS:    BS EN 10204 TYPE 3.1',
+    tips: [
+      'Resistance-welding electrodes, mould inserts and cooled liners: strength and conductivity together.',
+      'It over-ages and softens above approximately 500 °C: check the hot-wall temperature of a liner.',
+      'Brazing and welding soften it. Where the part must be brazed, consider a dispersion-strengthened copper (Glidcop), which keeps its strength.',
+    ],
   },
 ];
