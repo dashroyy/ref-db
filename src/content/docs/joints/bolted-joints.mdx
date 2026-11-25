@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import TorqueSplit from '../../../components/TorqueSplit.astro';
 import BoltCalc from '../../../components/BoltCalc.astro';
+import BoltPreload from '../../../components/BoltPreload.astro';
 
 <div class="glance">
   <div><b>In one line</b>A bolted joint works by clamping. The preload keeps it tight. An external load mostly decreases the clamp before it adds to the bolt load, until the parts separate.</div>
@@ -89,6 +90,8 @@ $P_{sep}$, the clamp force is zero, the joint opens, and the bolt carries all th
   post is zero does each additional pull go directly into the rope. The bolt is the rope, and the clamped parts are the
   post.
 </Analogy>
+
+<BoltPreload />
 
 ## Margins
 

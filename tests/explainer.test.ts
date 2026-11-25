@@ -3,9 +3,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ends, progress, stageAt, nextStop, prevStop, stageStart, ease, seg, attrs } from '../src/lib/explainer.ts';
 import { STATES, CYL, PCG, HBAKE, LBB, cylinder, pcg, hbake, lbb, lbDepth, lbHalf, LB_TAU_B, stageOf } from '../src/lib/explainers.ts';
+import { BOLT, OR, GALV, bolt, oring, galv, boltForces, boltLoad, oringShape, oringLoad, polyArea, gamma, kappa, galvCurrent, galvCharge } from '../src/lib/explainers.ts';
 
-const MS = { cylinder: CYL.ms, pcg: PCG.ms, hbake: HBAKE.ms, lbb: LBB.ms };
-const FILES = { cylinder: 'CylinderSplit', pcg: 'PcgGrowth', hbake: 'HydrogenBake', lbb: 'LeakOrBurst' };
+const MS = { cylinder: CYL.ms, pcg: PCG.ms, hbake: HBAKE.ms, lbb: LBB.ms, bolt: BOLT.ms, oring: OR.ms, galv: GALV.ms };
+const FILES = {
+  cylinder: 'CylinderSplit',
+  pcg: 'PcgGrowth',
+  hbake: 'HydrogenBake',
+  lbb: 'LeakOrBurst',
+  bolt: 'BoltPreload',
+  oring: 'ORingSqueeze',
+  galv: 'GalvanicJoint',
+};
 const num = (v: string | number | undefined) => Number(v);
 
 test('timeline: stage ends, progress and the stops', () => {
@@ -65,9 +74,11 @@ test('every state key has its element in the component, and the server renders t
     assert.match(src, new RegExp(`const S = ${name}\\(\\[1(, 1)*\\]\\)`), `${name} renders the end state`);
     const ms = MS[name as keyof typeof MS];
     assert.equal(fn(ms.map(() => 1)) !== undefined, true);
+    // a key is written out, or made by a template such as data-k={`ha${i}`} or data-k={`hsg${pn.key}`}
+    const prefixes = [...src.matchAll(/data-k=\{`([a-zA-Z]+)\$\{/g)].map((m) => m[1]);
     for (const k of Object.keys(fn(ms.map(() => 1)))) {
-      const templated = /^(ha|hb|mA|mB|puff)\d+$/.test(k) && src.includes(`data-k={\`${k.replace(/\d+$/, '')}\${i}\`}`);
-      const keyed = src.includes(`data-k="${k}"`) || src.includes(`data-k={pn.n}`) && /^n[AB]$/.test(k);
+      const templated = prefixes.some((pre) => k.startsWith(pre) && /^[A-Z0-9]+$/.test(k.slice(pre.length)));
+      const keyed = src.includes(`data-k="${k}"`) || (src.includes('data-k={pn.n}') && /^n[AB]$/.test(k));
       assert.ok(templated || keyed, `${name}: no element for ${k}`);
     }
   }
@@ -139,4 +150,86 @@ test('leak before break: the crack grows faster as it grows, and A leaks while B
   const before = lbb([1, 1, 0, 0]);
   assert.equal(num(before.burst.opacity), 0);
   assert.equal(num(before.ffB.opacity), 0);
+});
+
+test('bolted joint: only the load factor share of the load gets to the bolt, until the joint opens', () => {
+  const { phi, p1, psep } = BOLT;
+  assert.ok(Math.abs(psep - 1.25) < 1e-12);
+  const w = boltForces(1, p1);
+  assert.ok(Math.abs(w.fb - (1 + phi * p1)) < 1e-12 && Math.abs(w.fc - (1 - (1 - phi) * p1)) < 1e-12 && !w.open);
+  // while the joint is closed, the bolt force and the clamp force differ by the load
+  assert.ok(Math.abs(w.fb - w.fc - p1) < 1e-12);
+  const o = boltForces(1, 1.5);
+  assert.deepEqual([o.fb, o.fc, o.open], [1.5, 0, true]);
+  // during the load cycles the bolt force changes by phi P1 only, and the clamp force by (1 - phi) P1
+  const fb: number[] = [];
+  const fc: number[] = [];
+  for (let u = 0; u <= 1.0001; u += 0.01) {
+    const { s, P } = boltLoad([1, 1, u, 0]);
+    const f = boltForces(s, P);
+    fb.push(f.fb);
+    fc.push(f.fc);
+  }
+  assert.ok(Math.abs(Math.max(...fb) - Math.min(...fb) - phi * p1) < 1e-3);
+  assert.ok(Math.abs(Math.max(...fc) - Math.min(...fc) - (1 - phi) * p1) < 1e-3);
+  const end = bolt([1, 1, 1, 1]);
+  assert.equal(end.stat.text, 'Joint open');
+  assert.equal(end.fcLab.text, 'CLAMP FORCE Fc = 0.00 Fi');
+  assert.equal(end.fbLab.text, 'BOLT FORCE Fb = 1.50 Fi');
+  assert.equal(num(end.sepLab.opacity), 1);
+  const work = bolt([1, 1, 0, 0]);
+  assert.equal(work.fbLab.text, 'BOLT FORCE Fb = 1.16 Fi');
+  assert.equal(num(work.sepLab.opacity), 0);
+});
+
+test('O-ring: the rubber keeps its volume, stays in its groove, and only ring A extrudes', () => {
+  assert.ok(Math.abs(gamma(0.5) ** 2 - Math.PI) < 1e-9 && Math.abs(gamma(5) - 24) < 1e-9);
+  assert.ok(Math.abs(kappa(2) - Math.PI / 2) < 1e-9);
+  const area = Math.PI * OR.r ** 2;
+  const total = ends(OR.ms)[OR.ms.length - 1];
+  for (let t = 0; t <= total; t += total / 61) {
+    const { yb, push } = oringLoad(progress(OR.ms, t));
+    const sh = oringShape(yb, push);
+    assert.ok(Math.abs(polyArea(sh.pts) / area - 1) < 0.01, `area at ${t}`);
+    for (const [x, y] of sh.pts) {
+      assert.ok(x >= OR.left - 0.01 && x <= OR.wall + 0.01, `x ${x} at ${t}`);
+      assert.ok(y >= Math.min(yb, OR.bottom - 2 * OR.r) - 0.01 && y <= OR.bottom + 0.01, `y ${y} at ${t}`);
+    }
+  }
+  const closed = oringShape(oringLoad([1, 0, 0, 0]).yb, 0);
+  assert.ok(Math.abs(closed.squeeze - 0.2) < 1e-9, 'a squeeze of 20 % after assembly');
+  const end = oring([1, 1, 1, 1]);
+  assert.equal(num(end.flake0.opacity), 1);
+  assert.equal(num(end.flake1.opacity), 1);
+  assert.equal(end.statA.text, 'Nibbled: it will leak');
+  assert.equal(end.statB.text, 'Sealed');
+  assert.ok(num(end.csA.width) > num(end.prA.width), 'the contact stress stays above the pressure');
+  const half = oring([1, 1, 0, 0]);
+  assert.equal(half.tongue.d, 'M0,0 Z', 'no extrusion at half pressure');
+  assert.equal(num(half.flake0.opacity), 0);
+});
+
+test('galvanic cell: no current when dry, four times the current with four times the wet cathode, none when sealed', () => {
+  assert.equal(galvCurrent([1, 0, 0, 0]), 0);
+  assert.equal(galvCurrent([1, 1, 0, 0]), 1);
+  assert.equal(galvCurrent([1, 1, 1, 0]), 4);
+  assert.equal(galvCurrent([1, 1, 1, 1]), 0);
+  // the loss only grows, and it stops when the joint is sealed
+  const total = ends(GALV.ms)[GALV.ms.length - 1];
+  let last = -1;
+  for (let t = 0; t <= total; t += total / 200) {
+    const q = galvCharge(progress(GALV.ms, t));
+    assert.ok(q >= last - 1e-9, `loss decreased at ${t}`);
+    last = q;
+  }
+  assert.ok(Math.abs(galvCharge([1, 1, 1, 0.6]) - galvCharge([1, 1, 1, 1])) < 1e-9);
+  assert.ok(Math.abs(galvCharge([1, 1, 1, 1]) - GALV.qmax) < 1e-9);
+  const dry = galv([1, 0, 0, 0]);
+  assert.equal(num(dry.curBar.width), 0);
+  assert.equal(num(dry.film.opacity), 0);
+  assert.equal(num(dry.e0.opacity), 0);
+  const end = galv([1, 1, 1, 1]);
+  assert.equal(end.stat.text, 'Sealed: no current');
+  assert.equal(num(end.curBar.width), 0);
+  assert.equal(num(end.lossBar.width), 220);
 });

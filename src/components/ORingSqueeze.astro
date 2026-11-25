@@ -1,0 +1,85 @@
+---
+// Animation: an O-ring is squeezed, energised by pressure, and extruded into a gap that opens. Panel A has no back-up
+// ring and is nibbled; panel B has a back-up ring. State: oring() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { OR, oring, attrs } from '../lib/explainers';
+
+const S = oring([1, 1, 1, 1]);
+const { B, land, bottom, left, wall, cut } = OR;
+const panels = [
+  { ox: 0, key: 'A', title: 'A · NO BACK-UP RING', groove: wall },
+  { ox: B, key: 'B', title: 'B · WITH A BACK-UP RING', groove: wall + 18 },
+];
+const steps = [
+  {
+    ms: OR.ms[0],
+    html: '<b>Close the gland.</b> The ring is squeezed into an oval, here by 20%. The squeeze gives the first seal, before there is pressure.',
+  },
+  {
+    ms: OR.ms[1],
+    html: '<b>Pressurise.</b> The pressure pushes the ring into the low-pressure corner. The contact stress is the squeeze stress plus the pressure, so the seal gets tighter as the pressure increases.',
+  },
+  {
+    ms: OR.ms[2],
+    html: '<b>Increase the pressure.</b> The joint opens a little and the clearance gap gets wider. In A, the rubber flows into the gap. In B, the stiff back-up ring bridges the gap.',
+  },
+  {
+    ms: OR.ms[3],
+    html: '<b>Cycle the pressure.</b> Each time the gap closes, it cuts a small piece from the rubber in A. This is nibbling, and in time A leaks. B does not change.',
+  },
+];
+---
+
+<Explainer name="oring" title="Animation · O-ring squeeze, pressure and extrusion" steps={steps}>
+  <svg viewBox="0 0 860 300" role="img" aria-labelledby="or-desc">
+    <desc id="or-desc">
+      Two sections through an O-ring gland under pressure from the left. In both, the ring is squeezed between the housing
+      and the groove bottom and pushed into the right-hand corner. In A, with no back-up ring, rubber has flowed into the
+      clearance gap, and two small pieces cut from the ring lie in the gap. In B, a back-up ring fills the corner and
+      bridges the gap, and the ring is intact. Bars show that the contact stress is higher than the pressure.
+    </desc>
+    <defs>
+      <marker id="or-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-blue)"></path>
+      </marker>
+    </defs>
+    <line x1="430" y1="12" x2="430" y2="292" stroke="var(--rd-line)"></line>
+    {panels.map((pn) => (
+      <g>
+        <text x={20 + pn.ox} y="26" font-size="13" fill="var(--rd-muted)" letter-spacing="1">{pn.title}</text>
+        <rect data-k={`hsg${pn.key}`} x={20 + pn.ox} y="40" width="380" {...attrs(S[`hsg${pn.key}`])} fill="var(--rd-steel)" fill-opacity="0.7"></rect>
+        <path d={`M${20 + pn.ox},${land} H${left + pn.ox} V${bottom} H${pn.groove + pn.ox} V${land} H${400 + pn.ox} V230 H${20 + pn.ox} Z`} fill="var(--rd-steel)" fill-opacity="0.4" stroke="var(--rd-steel)"></path>
+        <polygon data-k={`fluid${pn.key}`} {...attrs(S[`fluid${pn.key}`])} fill="var(--rd-blue)"></polygon>
+        <line data-k={`parr${pn.key}`} x1={26 + pn.ox} x2={118 + pn.ox} {...attrs(S[`parr${pn.key}`])} stroke="var(--rd-blue)" stroke-width="2" marker-end="url(#or-ah)"></line>
+        <text x={26 + pn.ox} y="128" font-size="13" fill="var(--rd-blue)" class="halo">pressure</text>
+        <text x={330 + pn.ox} y="66" font-size="13" text-anchor="middle" fill="var(--rd-ink)" class="halo">housing</text>
+        <text x={392 + pn.ox} y="222" font-size="13" text-anchor="end" fill="var(--rd-ink)" class="halo">piston</text>
+        <text x={pn.groove + 18 + pn.ox} y="92" font-size="12" fill="var(--rd-ink)" class="halo">clearance gap</text>
+        <rect x={20 + pn.ox} y="250" width="200" height="10" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+        <rect data-k={`pr${pn.key}`} x={20 + pn.ox} y="250" height="10" {...attrs(S[`pr${pn.key}`])} fill="var(--rd-blue)"></rect>
+        <text x={228 + pn.ox} y="259" font-size="12" fill="var(--rd-muted)">pressure</text>
+        <rect x={20 + pn.ox} y="272" width="200" height="10" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+        <rect data-k={`cs${pn.key}`} x={20 + pn.ox} y="272" height="10" {...attrs(S[`cs${pn.key}`])} fill="var(--rd-accent)"></rect>
+        <text x={228 + pn.ox} y="281" font-size="12" fill="var(--rd-muted)">contact stress</text>
+      </g>
+    ))}
+
+    <!-- A: the ring, the rubber in the gap, the cut pieces -->
+    <path data-k="ringA" {...attrs(S.ringA)} fill="var(--rd-ink)"></path>
+    <path data-k="tongue" {...attrs(S.tongue)} fill="var(--rd-ink)"></path>
+    <polygon data-k="notch" {...attrs(S.notch)} fill="var(--rd-panel)"></polygon>
+    {cut.map((_, i) => <ellipse data-k={`flake${i}`} rx="6" fill="var(--rd-ink)" {...attrs(S[`flake${i}`])}></ellipse>)}
+    <text data-k="sqLab" x={left + 6} y="204" font-size="12" fill="var(--rd-ink)" class="halo" {...attrs(S.sqLab)}>{S.sqLab.text}</text>
+    <text data-k="statA" x="400" y="26" font-size="13" text-anchor="end" {...attrs(S.statA)}>{S.statA.text}</text>
+
+    <!-- B: the ring and the back-up ring -->
+    <path data-k="ringB" {...attrs(S.ringB)} fill="var(--rd-ink)"></path>
+    <rect data-k="bur" x={wall + B} width="18" {...attrs(S.bur)} fill="var(--rd-ok)" fill-opacity="0.9"></rect>
+    <text x={wall + 9 + B} y="206" font-size="12" text-anchor="middle" fill="var(--rd-ok)" class="halo">back-up ring</text>
+    <text data-k="statB" x="840" y="26" font-size="13" text-anchor="end" {...attrs(S.statB)}>{S.statB.text}</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic: the clearance gap and the joint opening are exaggerated. The squeeze, the pressures and the stresses are
+    for this example only.
+  </Fragment>
+</Explainer>

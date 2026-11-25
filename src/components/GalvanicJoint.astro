@@ -1,0 +1,75 @@
+---
+// Animation: a galvanic cell at a joint between aluminium and stainless steel. Dry, then wet, then more wet cathode,
+// then a sealant fillet that breaks the cell. State: galv() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { GALV, galv, attrs } from '../lib/explainers';
+
+const S = galv([1, 1, 1, 1]);
+const { join, top } = GALV;
+const n = (k: number) => Array.from({ length: k }, (_, i) => i);
+const steps = [
+  {
+    ms: GALV.ms[0],
+    html: '<b>Two metals touch.</b> Aluminium (anodic index 0.90 V) against passive stainless steel (0.50 V): a difference of 0.40 V. While the joint is dry, there is no cell.',
+  },
+  {
+    ms: GALV.ms[1],
+    html: '<b>Add a film of salty water.</b> Now the cell works. Electrons go through the contact to the steel, and the aluminium near the contact dissolves into the water.',
+  },
+  {
+    ms: GALV.ms[2],
+    html: '<b>Wet more of the cathode.</b> The oxygen reduction on the steel sets the current. More wet steel gives more current, and all of it goes into the same small area of aluminium.',
+  },
+  {
+    ms: GALV.ms[3],
+    html: '<b>Break the cell.</b> A sealant fillet keeps the water off the joint. With no electrolyte across the contact, the current stops, and so does the attack.',
+  },
+];
+---
+
+<Explainer name="galv" title="Animation · a galvanic cell at a joint, and how to stop it" steps={steps}>
+  <svg viewBox="0 0 860 280" role="img" aria-labelledby="gv-desc">
+    <desc id="gv-desc">
+      A section through an aluminium plate and a stainless steel plate that touch. A film of salty water lies on the steel.
+      A pit has formed in the aluminium next to the contact. A fillet of sealant now covers the joint, so the water no
+      longer touches both metals, and the bars show that the corrosion current has stopped.
+    </desc>
+
+    <!-- current and loss -->
+    <text x="40" y="38" font-size="12" fill="var(--rd-ink)" letter-spacing="0.5">CORROSION CURRENT</text>
+    <rect x="40" y="46" width="220" height="10" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="curBar" x="40" y="46" height="10" {...attrs(S.curBar)} fill="var(--rd-warn)"></rect>
+    <text x="40" y="76" font-size="12" fill="var(--rd-ink)" letter-spacing="0.5">ALUMINIUM LOST</text>
+    <rect x="40" y="84" width="220" height="10" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="lossBar" x="40" y="84" height="10" {...attrs(S.lossBar)} fill="var(--rd-accent)"></rect>
+    <text data-k="stat" x="820" y="38" font-size="13" text-anchor="end" {...attrs(S.stat)}>{S.stat.text}</text>
+
+    <!-- the two plates -->
+    <rect x="40" y={top} width={join - 40} height="70" fill="var(--rd-accent)" fill-opacity="0.3" stroke="var(--rd-accent)" stroke-opacity="0.6"></rect>
+    <rect x={join} y={top} width={820 - join} height="70" fill="var(--rd-steel)" fill-opacity="0.65" stroke="var(--rd-steel)"></rect>
+    <line x1={join} y1={top} x2={join} y2={top + 70} stroke="var(--rd-ink)" stroke-width="2"></line>
+    <text x="60" y="244" font-size="13" fill="var(--rd-ink)">aluminium: anode</text>
+    <text x="60" y="262" font-size="12" fill="var(--rd-muted)">anodic index 0.90 V</text>
+    <text x="800" y="244" font-size="13" text-anchor="end" fill="var(--rd-ink)">stainless steel: cathode</text>
+    <text x="800" y="262" font-size="12" text-anchor="end" fill="var(--rd-muted)">anodic index 0.50 V</text>
+    <text x={join} y="244" font-size="13" text-anchor="middle" fill="var(--rd-ink)">ΔV = 0.40 V</text>
+
+    <!-- the attack, the water and the sealant -->
+    <path data-k="pitBase" {...attrs(S.pitBase)} fill="var(--rd-panel)"></path>
+    <path data-k="film" {...attrs(S.film)} fill="var(--rd-blue)" fill-opacity="0.35" stroke="var(--rd-blue)" stroke-opacity="0.7"></path>
+    {n(GALV.ions).map((j) => <circle data-k={`ion${j}`} r="2.6" fill="var(--rd-accent)" {...attrs(S[`ion${j}`])}></circle>)}
+    {n(GALV.oh).map((j) => <circle data-k={`oh${j}`} r="2.4" fill="var(--rd-blue)" {...attrs(S[`oh${j}`])}></circle>)}
+    <path data-k="seal" {...attrs(S.seal)} fill="var(--rd-ok)" fill-opacity="0.9" stroke="var(--rd-ok)"></path>
+    <text data-k="sealLab" x={join} y={top - 8} font-size="13" text-anchor="middle" fill="var(--rd-ink)" class="halo" {...attrs(S.sealLab)}>sealant</text>
+    <text data-k="anLab" x="330" y="124" font-size="13" text-anchor="middle" fill="var(--rd-accent)" class="halo" {...attrs(S.anLab)}>Al → Al³⁺ + 3e⁻</text>
+    <text data-k="caLab" y="124" font-size="13" text-anchor="middle" fill="var(--rd-blue)" class="halo" {...attrs(S.caLab)}>O₂ + 2H₂O + 4e⁻ → 4OH⁻</text>
+
+    <!-- electrons through the metal, from the anode to the cathode -->
+    {n(GALV.electrons).map((i) => <circle data-k={`e${i}`} r="3" fill="var(--rd-warn)" stroke="var(--rd-panel)" stroke-width="1" {...attrs(S[`e${i}`])}></circle>)}
+    <text data-k="eLab" x={join + 16} y={top + 62} font-size="12" fill="var(--rd-ink)" class="halo" {...attrs(S.eLab)}>electrons →</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic. The current and the metal loss are relative values for illustration only. The calculator on this page
+    gives the rate for your metals, areas and environment.
+  </Fragment>
+</Explainer>

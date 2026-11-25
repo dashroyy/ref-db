@@ -368,4 +368,328 @@ export function lbb(p: number[]): State {
   return s;
 }
 
-export const STATES = { cylinder, pcg, hbake, lbb };
+// ---------------------------------------------------------------------------------------------------------------------
+// 5. Preload and the joint diagram (joints/bolted-joints)
+// ---------------------------------------------------------------------------------------------------------------------
+// Forces in units of the preload Fi. The load factor and the loads are for this example only.
+const BJ_PHI = 0.2;
+const BJ_P1 = 0.8; // the working load
+const BJ_POVER = 1.5; // the overload, above the separation load
+/** The bolt force and the clamp force at a preload s (0 to 1 of Fi) and an external load P. */
+export const boltForces = (s: number, P: number, phi = BJ_PHI) => {
+  const sep = s / (1 - phi);
+  return P < sep ? { fb: s + phi * P, fc: s - (1 - phi) * P, open: false } : { fb: P, fc: 0, open: true };
+};
+const BJ_D = { ox: 480, oy: 280, sx: 200, sy: 120 }; // the joint diagram: origin, px per bolt stretch at Fi, px per Fi
+export const BOLT = {
+  ms: [2400, 2400, 3200, 2800],
+  phi: BJ_PHI,
+  p1: BJ_P1,
+  pover: BJ_POVER,
+  psep: 1 / (1 - BJ_PHI),
+  diagram: BJ_D,
+  /** The width of a force bar (the track is 300 px for 1.6 Fi). */
+  barW: (f: number) => r2((300 * f) / 1.6),
+};
+/** The external load and the preload at each moment. */
+export const boltLoad = ([u1 = 1, u2 = 1, u3 = 1, u4 = 1]: number[]) => {
+  const s = ease(u1);
+  let P = 0;
+  if (u4 > 0) P = lerp(BJ_P1, BJ_POVER, ease(u4));
+  else if (u3 > 0) P = (BJ_P1 * (1 + Math.cos(4 * Math.PI * u3))) / 2;
+  else P = BJ_P1 * ease(u2);
+  return { s, P };
+};
+const BJ_TEXT = ['Tightening', 'Working load', 'Load cycles', 'Joint open'];
+
+export function bolt(p: number[]): State {
+  const [, , u3 = 1, u4 = 1] = p;
+  const { s, P } = boltLoad(p);
+  const { fb, fc, open } = boltForces(s, P);
+  const { ox, oy, sx, sy } = BJ_D;
+  const k = stageOf(p);
+  // the gap in the section, exaggerated
+  const g = open ? Math.min(8, (8 * (P - s / (1 - BJ_PHI))) / (BJ_POVER - 1 / (1 - BJ_PHI))) : 0;
+  const lp = (36 * P) / BJ_POVER;
+  // the diagram: the preload point A and the zero point B of the clamped parts, scaled by the preload while tightening
+  const xA = ox + sx * s;
+  const yA = oy - sy * s;
+  const xB = ox + sx * s * (1 + BJ_PHI / (1 - BJ_PHI));
+  const x = ox + sx * fb; // the bolt stretch is proportional to the bolt force
+  const yb = oy - sy * fb;
+  const yc = oy - sy * fc;
+  const range = seg(u3, 0, 0.3);
+  return {
+    top: { transform: `translate(0 ${r2(-g / 2)})` },
+    bot: { transform: `translate(0 ${r2(g / 2)})` },
+    shankBase: { y: r2(120 - g / 2), height: r2(80 + g) },
+    shank: { y: r2(120 - g / 2), height: r2(80 + g), 'fill-opacity': r2(0.15 + (0.6 * fb) / 1.6) },
+    conesT: { 'fill-opacity': r2(0.08 + 0.6 * Math.max(0, fc)) },
+    conesB: { 'fill-opacity': r2(0.08 + 0.6 * Math.max(0, fc)) },
+    parr: { opacity: P > 0.03 ? 1 : 0 },
+    pa1: { y1: r2(120 - g / 2), y2: r2(120 - g / 2 - lp) },
+    pa2: { y1: r2(120 - g / 2), y2: r2(120 - g / 2 - lp) },
+    pa3: { y1: r2(200 + g / 2), y2: r2(200 + g / 2 + lp) },
+    pa4: { y1: r2(200 + g / 2), y2: r2(200 + g / 2 + lp) },
+    pt1: { y: r2(120 - g / 2 - lp + 4) },
+    pt2: { y: r2(200 + g / 2 + lp + 4) },
+    fbBar: { width: BOLT.barW(fb) },
+    fcBar: { width: BOLT.barW(Math.max(0, fc)) },
+    fbLab: { text: `BOLT FORCE Fb = ${fb.toFixed(2)} Fi` },
+    fcLab: { text: `CLAMP FORCE Fc = ${Math.max(0, fc).toFixed(2)} Fi` },
+    stat: { text: BJ_TEXT[k], fill: open ? 'var(--rd-accent)' : 'var(--rd-muted)' },
+    // the diagram
+    triB: { x2: r2(xA), y2: r2(yA), opacity: s > 0.01 ? 1 : 0 },
+    triM: { x1: r2(xA), y1: r2(yA), x2: r2(xB), y2: oy, opacity: s > 0.01 ? 1 : 0 },
+    fiLine: { x2: r2(Math.max(xA, x) + 6), y1: r2(yA), y2: r2(yA), opacity: s > 0.01 ? 1 : 0 },
+    fiLab: { y: r2(yA + 4), opacity: s > 0.3 ? 1 : 0 },
+    ext: { opacity: P > 0.03 || k > 0 ? 1 : 0 },
+    ptB: { cx: r2(x), cy: r2(yb), opacity: s > 0.01 ? 1 : 0 },
+    ptC: { cx: r2(x), cy: r2(yc), opacity: s > 0.01 ? 1 : 0 },
+    pSeg: { x1: r2(x), x2: r2(x), y1: r2(yc), y2: r2(yb), opacity: P > 0.03 ? 1 : 0 },
+    pLab: { x: r2(x + 8), y: r2((yb + yc) / 2 + 4), opacity: P > 0.15 ? 1 : 0 },
+    rangeB: { opacity: r2(range) },
+    rangeC: { opacity: r2(range) },
+    sepLab: { opacity: r2(open ? 1 : 0) },
+    openLab: { opacity: r2(seg(u4, 0.6, 1)) },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 6. O-ring squeeze, pressure and extrusion (seals/o-ring-design)
+// ---------------------------------------------------------------------------------------------------------------------
+/** The gamma function (Lanczos approximation), for the area of a superellipse. */
+export const gamma = (z: number): number => {
+  if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  const x0 = z - 1;
+  let a = c[0];
+  const t = x0 + 7.5;
+  for (let i = 1; i < 9; i++) a += c[i] / (x0 + i);
+  return Math.sqrt(2 * Math.PI) * t ** (x0 + 0.5) * Math.exp(-t) * a;
+};
+/** The area of one half (x >= 0) of a superellipse with semi-axes a, b and exponent n, divided by a b. */
+export const kappa = (n: number) => (2 * gamma(1 + 1 / n) ** 2) / gamma(1 + 2 / n);
+
+export const OR = {
+  ms: [2400, 2600, 2600, 3200],
+  r: 50, // the free section radius
+  bottom: 180, // the groove bottom
+  land: 106, // the top of the piston lands
+  left: 130, // the groove wall on the pressure side
+  wall: 260, // the wall on the low-pressure side (the back-up ring is beyond it in panel B)
+  B: 440, // the offset of panel B
+  cut: [0.25, 0.75], // the moments in stage 4 when the closing gap cuts a piece from ring A
+};
+/** The pressure (0 to 1) and the bottom of the housing at each moment. */
+export const oringLoad = ([u1 = 1, u2 = 1, u3 = 1, u4 = 1]: number[]) => {
+  let pr = 0;
+  if (u4 > 0) pr = 0.6 + 0.4 * Math.cos(4 * Math.PI * u4);
+  else if (u3 > 0) pr = 0.5 + 0.5 * ease(u3);
+  else pr = 0.5 * ease(u2);
+  const yb = u2 > 0 ? 100 - 5 * pr : lerp(70, 100, ease(u1));
+  return { pr, yb, push: ease(u2) };
+};
+/** The section of the ring: a superellipse with a flatter right side when the pressure pushes it to the wall. */
+export const oringShape = (yb: number, push: number) => {
+  const { r, bottom, wall, left } = OR;
+  const g = bottom - yb;
+  const b = Math.min(r, g / 2);
+  const cy = bottom - b;
+  const sq = clamp01((2 * r - g) / (0.4 * r)); // 1 at a squeeze of 20%
+  const nL = 2 + 0.6 * sq;
+  const nR = nL + 1.4 * push;
+  const area = Math.PI * r * r;
+  const aSym = area / (b * 2 * kappa(nL));
+  const aR = lerp(aSym, 0.9 * aSym, push);
+  const aL = (area / b - aR * kappa(nR)) / kappa(nL);
+  const cx = lerp((left + wall) / 2, wall - aR, push);
+  const pts: [number, number][] = [];
+  for (let i = 0; i < 72; i++) {
+    const th = (2 * Math.PI * i) / 72;
+    const c = Math.cos(th);
+    const s = Math.sin(th);
+    const n = c >= 0 ? nR : nL;
+    const a = c >= 0 ? aR : aL;
+    pts.push([cx + a * Math.sign(c) * Math.abs(c) ** (2 / n), cy + b * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return { pts, cx, cy, b, aL, aR, nL, nR, squeeze: Math.max(0, (2 * r - g) / (2 * r)), leftX: cx - aL };
+};
+/** The area of a polygon (shoelace). */
+export const polyArea = (pts: [number, number][]) =>
+  Math.abs(pts.reduce((s, [x, y], i) => {
+    const [x2, y2] = pts[(i + 1) % pts.length];
+    return s + x * y2 - x2 * y;
+  }, 0)) / 2;
+const ptsPath = (pts: [number, number][], dx = 0) => `M${pts.map(([x, y]) => `${r2(x + dx)},${r2(y)}`).join(' L')} Z`;
+
+/** The pressure fluid: the clearance on the pressure side and the groove up to the ring. */
+const fluid = (yb: number, leftX: number, dx: number) => {
+  const { left, bottom, land } = OR;
+  const x = Math.max(left, leftX + 8);
+  return [
+    [20, yb],
+    [x, yb],
+    [x, bottom],
+    [left, bottom],
+    [left, land],
+    [20, land],
+  ]
+    .map(([a, b]) => `${r2(a + dx)},${r2(b)}`)
+    .join(' ');
+};
+
+export function oring(p: number[]): State {
+  const [, , u3 = 1, u4 = 1] = p;
+  const { pr, yb, push } = oringLoad(p);
+  const sh = oringShape(yb, push);
+  const { B, wall, land, cut } = OR;
+  const k = stageOf(p);
+  const c = land - yb; // the clearance gap
+  // panel A: the rubber flows into the gap at high pressure; the closing gap cuts it twice in stage 4
+  const L = u3 > 0 ? 24 * clamp01((pr - 0.55) / 0.45) : 0;
+  const tongue = L > 0.5
+    ? `M${wall - 8},${r2(yb)} L${r2(wall + L - c / 2)},${r2(yb)} Q${r2(wall + L)},${r2(yb)} ${r2(wall + L)},${r2(yb + c / 2)} Q${r2(wall + L)},${land} ${r2(wall + L - c / 2)},${land} L${wall - 8},${land} Z`
+    : 'M0,0 Z';
+  const cuts = cut.filter((m) => u4 >= m).length;
+  const sqStress = 0.4 * (sh.squeeze / 0.2);
+  const contact = sqStress + pr;
+  const s: State = {
+    hsgA: { height: r2(yb - 40) },
+    hsgB: { height: r2(yb - 40) },
+    ringA: { d: ptsPath(sh.pts) },
+    ringB: { d: ptsPath(sh.pts, B) },
+    tongue: { d: tongue },
+    notch: {
+      points: `${wall},${r2(yb)} ${r2(wall - 7 * cuts)},${r2(yb)} ${wall},${r2(yb + 7 * cuts)}`,
+      opacity: cuts ? 1 : 0,
+    },
+    bur: { y: r2(yb), height: r2(180 - yb) },
+    fluidA: { points: fluid(yb, sh.leftX, 0), opacity: r2(0.4 * clamp01(pr / 0.3)) },
+    fluidB: { points: fluid(yb, sh.leftX, B), opacity: r2(0.4 * clamp01(pr / 0.3)) },
+    parrA: { y1: r2((yb + land) / 2), y2: r2((yb + land) / 2), opacity: pr > 0.05 ? 1 : 0 },
+    parrB: { y1: r2((yb + land) / 2), y2: r2((yb + land) / 2), opacity: pr > 0.05 ? 1 : 0 },
+    prA: { width: r2((200 * pr) / 1.5) },
+    prB: { width: r2((200 * pr) / 1.5) },
+    csA: { width: r2((200 * contact) / 1.5) },
+    csB: { width: r2((200 * contact) / 1.5) },
+    sqLab: { text: `squeeze ${Math.round(100 * sh.squeeze)} %`, opacity: sh.squeeze > 0.01 ? 1 : 0 },
+    statA: { text: cuts ? 'Nibbled: it will leak' : (k === 2 && L > 2) || k === 3 ? 'Extruding into the gap' : '', fill: 'var(--rd-accent)' },
+    statB: { text: k >= 2 ? 'Sealed' : '', fill: 'var(--rd-ok)' },
+  };
+  cut.forEach((m, i) => {
+    // a cut piece moves out along the gap and stays there
+    const v = ease(seg(u4, m, m + 0.15));
+    s[`flake${i}`] = {
+      cx: r2(lerp(wall + 6, 300 + 34 * i, v)),
+      cy: r2((yb + land) / 2),
+      ry: r2(Math.max(2, c / 2 - 1)),
+      opacity: u4 >= m ? 1 : 0,
+    };
+  });
+  return s;
+}
+// ---------------------------------------------------------------------------------------------------------------------
+// 7. A galvanic cell at a joint, and how to stop it (materials/galvanic)
+// ---------------------------------------------------------------------------------------------------------------------
+const GV_MS = [2000, 3000, 3000, 2600];
+/** The integral of the smoothstep from 0 to x (x from 0 to 1). */
+const S1 = (x: number) => x ** 3 - x ** 4 / 2;
+/** The integral of ease(seg(v, a, b)) for v from 0 to u. */
+const easeInt = (u: number, a: number, b: number) => (b - a) * S1(seg(u, a, b)) + Math.max(0, u - b);
+/** The corrosion current (relative) at each moment: 0 dry, 1 with a small film, 4 with four times the wet cathode. */
+export const galvCurrent = ([, u2 = 1, u3 = 1, u4 = 1]: number[]) => {
+  if (u4 > 0) return 4 * (1 - ease(seg(u4, 0.15, 0.55)));
+  if (u3 > 0) return 1 + 3 * ease(u3);
+  return ease(seg(u2, 0, 0.35));
+};
+/** The charge so far: the integral of the current over the time, in current x ms. */
+export const galvCharge = ([, u2 = 1, u3 = 1, u4 = 1]: number[]) =>
+  GV_MS[1] * easeInt(u2, 0, 0.35) + GV_MS[2] * (u3 + 3 * S1(u3)) + GV_MS[3] * 4 * (u4 - easeInt(u4, 0.15, 0.55));
+const GV_QMAX = galvCharge([1, 1, 1, 1]);
+export const GALV = {
+  ms: GV_MS,
+  qmax: GV_QMAX,
+  join: 420, // the contact between the two plates
+  top: 150, // the top surface of the plates
+  pit: 392, // the centre of the attack on the aluminium
+  electrons: 10,
+  ions: 5,
+  oh: 6,
+};
+const GV_TEXT = ['Dry: no cell', 'Wet: the cell works', 'More wet steel: more current', 'Sealed: no current'];
+/** A point at the fraction f along a polyline. */
+const along = (pts: [number, number][], f: number): [number, number] => {
+  const lens = pts.slice(1).map(([x, y], i) => Math.hypot(x - pts[i][0], y - pts[i][1]));
+  let d = f * lens.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < lens.length; i++) {
+    if (d <= lens[i] || i === lens.length - 1) {
+      const t = lens[i] ? Math.min(1, d / lens[i]) : 0;
+      return [lerp(pts[i][0], pts[i + 1][0], t), lerp(pts[i][1], pts[i + 1][1], t)];
+    }
+    d -= lens[i];
+  }
+  return pts[pts.length - 1];
+};
+
+export function galv(p: number[]): State {
+  const [, u2 = 1, u3 = 1, u4 = 1] = p;
+  const { join, top, pit } = GALV;
+  const I = galvCurrent(p);
+  const Q = galvCharge(p);
+  const q = Q / GV_QMAX;
+  const k = stageOf(p) === 3 && u4 < 0.55 ? 2 : stageOf(p);
+  const film = ease(seg(u2, 0, 0.35));
+  const wl = 70 * film;
+  const wr = 70 * film + 270 * ease(u3);
+  const h = 16 * film;
+  const seal = ease(seg(u4, 0, 0.5));
+  const pw = 4 + 20 * q;
+  const pd = 22 * q;
+  const xc = join + Math.max(30, wr / 2);
+  const path: [number, number][] = [
+    [pit, top + 16],
+    [pit, top + 46],
+    [xc, top + 46],
+    [xc, top + 16],
+  ];
+  const phase = Q / 1000;
+  const on = r2(clamp01(2 * I));
+  const s: State = {
+    film: {
+      d: `M${r2(join - wl)},${top} C${r2(join - wl + 14)},${r2(top - h)} ${r2(join + wr - 14)},${r2(top - h)} ${r2(join + wr)},${top} Z`,
+      opacity: film > 0.01 ? 1 : 0,
+    },
+    pitBase: { d: `M${r2(pit - pw)},${top} A${r2(pw)},${r2(Math.max(0.1, pd))} 0 0 0 ${r2(pit + pw)},${top} Z`, opacity: q > 0.002 ? 1 : 0 },
+    seal: {
+      d: `M${r2(join - 86 * seal)},${top} C${r2(join - 60 * seal)},${r2(top - 34 * seal)} ${r2(join + 60 * seal)},${r2(top - 34 * seal)} ${r2(join + 86 * seal)},${top} Z`,
+      opacity: seal > 0.01 ? 1 : 0,
+    },
+    curBar: { width: r2((220 * I) / 4) },
+    lossBar: { width: r2(220 * q) },
+    stat: { text: GV_TEXT[k], fill: k === 3 ? 'var(--rd-ok)' : k === 0 ? 'var(--rd-muted)' : 'var(--rd-accent)' },
+    anLab: { opacity: r2(film * (1 - seal)) },
+    caLab: { opacity: r2(film * (1 - seal)), x: r2(Math.min(640, Math.max(560, join + wr * 0.55))) },
+    sealLab: { opacity: r2(seg(u4, 0.3, 0.6)) },
+    eLab: { opacity: on },
+  };
+  for (let i = 0; i < GALV.electrons; i++) {
+    const [x, y] = along(path, frac(phase + i / GALV.electrons));
+    s[`e${i}`] = { cx: r2(x), cy: r2(y), opacity: on };
+  }
+  for (let j = 0; j < GALV.ions; j++) {
+    const f = frac(0.7 * phase + j / GALV.ions);
+    s[`ion${j}`] = { cx: r2(pit - 10 + 5 * j), cy: r2(top - 3 - 12 * f), opacity: r2(on * (1 - f) * (1 - seal)) };
+  }
+  for (let j = 0; j < GALV.oh; j++) {
+    const f = frac(0.5 * phase + j / GALV.oh);
+    s[`oh${j}`] = {
+      cx: r2(join + 14 + (Math.max(56, wr) - 24) * ((j + 0.5) / GALV.oh)),
+      cy: r2(top - 3 - 9 * f),
+      opacity: r2(on * (1 - f)),
+    };
+  }
+  return s;
+}
+
+export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv };

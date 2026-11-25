@@ -1,0 +1,135 @@
+---
+// Animation: tightening a bolted joint, the working load, load cycles and separation, with the joint diagram.
+// State: bolt() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { BOLT, bolt, attrs } from '../lib/explainers';
+
+const S = bolt([1, 1, 1, 1]);
+const { ox, oy, sx, sy } = BOLT.diagram;
+const { phi, p1 } = BOLT;
+const X = (f: number) => ox + sx * f; // bolt stretch for a bolt force f
+const Y = (f: number) => oy - sy * f;
+const xA = X(1);
+const xB = X(1 + phi / (1 - phi));
+const fc1 = 1 - (1 - phi) * p1;
+const xC1 = xA + (1 - fc1) * (xB - xA);
+const fiX = 50 + 300 / 1.6;
+const cone = 40 * Math.tan(Math.PI / 6);
+const steps = [
+  {
+    ms: BOLT.ms[0],
+    html: '<b>Tighten.</b> The bolt stretches and the clamped parts compress, with the same force: the preload F<sub>i</sub>. The parts are much stiffer, so they compress much less.',
+  },
+  {
+    ms: BOLT.ms[1],
+    html: '<b>Apply the working load P.</b> The bolt force increases by only ΦP. The clamp force decreases by (1 − Φ)P. Here Φ = 0.2, for this example only.',
+  },
+  {
+    ms: BOLT.ms[2],
+    html: '<b>Cycle the load.</b> The clamp force changes a lot, but the bolt force changes by only ΦP. This is how preload protects the bolt from fatigue.',
+  },
+  {
+    ms: BOLT.ms[3],
+    html: '<b>Overload.</b> At P<sub>sep</sub> = F<sub>i</sub>/(1 − Φ), the clamp force is zero and the joint opens. Then the bolt carries all of the load, with no fatigue protection.',
+  },
+];
+const plate = { fill: 'var(--rd-steel)', 'fill-opacity': 0.35, stroke: 'var(--rd-steel)', 'stroke-width': 1.2 };
+---
+
+<Explainer name="bolt" title="Animation · preload and the joint diagram" steps={steps}>
+  <svg viewBox="0 0 860 340" role="img" aria-labelledby="bj-desc">
+    <desc id="bj-desc">
+      Left: a section through a bolt that clamps two plates, with compression cones in the plates under the head and the
+      nut. An external load pulls the plates apart, and the joint has opened at the interface. Below, bars show the bolt
+      force and the clamp force. Right: the joint diagram. The bolt line rises from the origin to the preload, and the
+      line of the clamped parts falls steeply from the preload to zero. The operating point is beyond the separation
+      point, where the clamp force is zero and the bolt force equals the load.
+    </desc>
+    <defs>
+      <marker id="bj-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-ink)"></path>
+      </marker>
+      <marker id="bj-ax" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-muted)"></path>
+      </marker>
+    </defs>
+
+    <!-- the section -->
+    <text x="50" y="36" font-size="13" fill="var(--rd-muted)" letter-spacing="1">JOINT SECTION</text>
+    <text data-k="stat" x="350" y="36" font-size="13" text-anchor="end" {...attrs(S.stat)}>{S.stat.text}</text>
+    <g data-k="top" {...attrs(S.top)}>
+      <rect x="50" y="120" width="136" height="40" {...plate}></rect>
+      <rect x="214" y="120" width="136" height="40" {...plate}></rect>
+      <g data-k="conesT" fill="var(--rd-blue)" {...attrs(S.conesT)}>
+        <polygon points={`166,120 186,120 186,160 ${166 - cone},160`}></polygon>
+        <polygon points={`214,120 234,120 ${234 + cone},160 214,160`}></polygon>
+      </g>
+      <rect x="166" y="96" width="68" height="24" fill="var(--rd-ink)" fill-opacity="0.75"></rect>
+    </g>
+    <g data-k="bot" {...attrs(S.bot)}>
+      <rect x="50" y="160" width="136" height="40" {...plate}></rect>
+      <rect x="214" y="160" width="136" height="40" {...plate}></rect>
+      <g data-k="conesB" fill="var(--rd-blue)" {...attrs(S.conesB)}>
+        <polygon points={`${166 - cone},160 186,160 186,200 166,200`}></polygon>
+        <polygon points={`214,160 ${234 + cone},160 234,200 214,200`}></polygon>
+      </g>
+      <rect x="166" y="200" width="68" height="24" fill="var(--rd-ink)" fill-opacity="0.75"></rect>
+    </g>
+    <rect data-k="shankBase" x="188" width="24" {...attrs(S.shankBase)} fill="var(--rd-steel)" fill-opacity="0.6"></rect>
+    <rect data-k="shank" x="188" width="24" {...attrs(S.shank)} fill="var(--rd-accent)"></rect>
+    <g data-k="parr" {...attrs(S.parr)} stroke="var(--rd-ink)" stroke-width="2.5">
+      <line data-k="pa1" x1="80" x2="80" {...attrs(S.pa1)} marker-end="url(#bj-ah)"></line>
+      <line data-k="pa2" x1="320" x2="320" {...attrs(S.pa2)} marker-end="url(#bj-ah)"></line>
+      <line data-k="pa3" x1="80" x2="80" {...attrs(S.pa3)} marker-end="url(#bj-ah)"></line>
+      <line data-k="pa4" x1="320" x2="320" {...attrs(S.pa4)} marker-end="url(#bj-ah)"></line>
+      <text data-k="pt1" x="330" font-size="14" fill="var(--rd-ink)" stroke="none" {...attrs(S.pt1)}>P</text>
+      <text data-k="pt2" x="330" font-size="14" fill="var(--rd-ink)" stroke="none" {...attrs(S.pt2)}>P</text>
+    </g>
+    <text x="244" y="112" font-size="13" fill="var(--rd-accent)" class="halo">tension</text>
+    <text x="262" y="150" font-size="13" fill="var(--rd-blue)" class="halo">compression</text>
+    <text data-k="openLab" x="356" y="165" font-size="13" fill="var(--rd-accent)" {...attrs(S.openLab)}>open</text>
+
+    <!-- force bars -->
+    <text data-k="fbLab" x="50" y="262" font-size="13" fill="var(--rd-ink)">{S.fbLab.text}</text>
+    <rect x="50" y="268" width="300" height="12" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="fbBar" x="50" y="268" height="12" {...attrs(S.fbBar)} fill="var(--rd-accent)"></rect>
+    <text data-k="fcLab" x="50" y="300" font-size="13" fill="var(--rd-ink)">{S.fcLab.text}</text>
+    <rect x="50" y="306" width="300" height="12" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="fcBar" x="50" y="306" height="12" {...attrs(S.fcBar)} fill="var(--rd-blue)"></rect>
+    <line x1={fiX} y1="266" x2={fiX} y2="320" stroke="var(--rd-muted)" stroke-dasharray="3 3"></line>
+    <text x={fiX} y="334" font-size="12" text-anchor="middle" fill="var(--rd-muted)">Fi</text>
+
+    <line x1="420" y1="24" x2="420" y2="330" stroke="var(--rd-line)"></line>
+
+    <!-- the joint diagram -->
+    <text x={ox} y="36" font-size="13" fill="var(--rd-muted)" letter-spacing="1">JOINT DIAGRAM</text>
+    <line x1={ox} y1={oy} x2="836" y2={oy} stroke="var(--rd-muted)" marker-end="url(#bj-ax)"></line>
+    <line x1={ox} y1={oy} x2={ox} y2="62" stroke="var(--rd-muted)" marker-end="url(#bj-ax)"></line>
+    <text x="836" y={oy + 20} font-size="12" text-anchor="end" fill="var(--rd-muted)">elongation</text>
+    <text x={ox + 8} y="70" font-size="12" fill="var(--rd-muted)">force</text>
+    <line data-k="fiLine" x1={ox} {...attrs(S.fiLine)} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text data-k="fiLab" x={ox - 8} font-size="13" text-anchor="end" fill="var(--rd-ink)" {...attrs(S.fiLab)}>Fi</text>
+    <line data-k="ext" x1={xA} y1={Y(1)} x2={X(1.6)} y2={Y(1.6)} stroke="var(--rd-accent)" stroke-opacity="0.45" stroke-dasharray="5 4" {...attrs(S.ext)}></line>
+    <line data-k="triB" x1={ox} y1={oy} {...attrs(S.triB)} stroke="var(--rd-accent)" stroke-width="2.5"></line>
+    <line data-k="triM" {...attrs(S.triM)} stroke="var(--rd-blue)" stroke-width="2.5"></line>
+    <g data-k="rangeB" {...attrs(S.rangeB)}>
+      <line x1={xA} y1={Y(1)} x2={X(1 + phi * p1)} y2={Y(1 + phi * p1)} stroke="var(--rd-accent)" stroke-width="7" stroke-linecap="round" stroke-opacity="0.6"></line>
+      <text x={xA + 8} y={Y(1 + phi * p1) + 6} font-size="13" text-anchor="end" fill="var(--rd-accent)" class="halo">bolt: ΦP</text>
+    </g>
+    <g data-k="rangeC" {...attrs(S.rangeC)}>
+      <line x1={xA} y1={Y(1)} x2={xC1} y2={Y(fc1)} stroke="var(--rd-blue)" stroke-width="7" stroke-linecap="round" stroke-opacity="0.6"></line>
+      <text x={xC1 - 12} y={Y(fc1) + 2} font-size="13" text-anchor="end" fill="var(--rd-blue)" class="halo">clamp: (1 − Φ)P</text>
+    </g>
+    <text x={X(1.6) + 6} y={Y(1.6) + 4} font-size="13" fill="var(--rd-accent)">bolt</text>
+    <text x={xB - 12} y={oy - 8} font-size="13" text-anchor="end" fill="var(--rd-blue)" class="halo">clamped parts</text>
+    <text data-k="sepLab" x={xB + 4} y={oy + 20} font-size="13" text-anchor="end" fill="var(--rd-accent)" class="halo" {...attrs(S.sepLab)}>Fc = 0: open</text>
+    <line data-k="pSeg" {...attrs(S.pSeg)} stroke="var(--rd-ink)" stroke-width="2"></line>
+    <text data-k="pLab" font-size="14" fill="var(--rd-ink)" class="halo" {...attrs(S.pLab)}>P</text>
+    <circle data-k="ptB" r="5" fill="var(--rd-accent)" {...attrs(S.ptB)}></circle>
+    <circle data-k="ptC" r="5" fill="var(--rd-blue)" {...attrs(S.ptC)}></circle>
+  </svg>
+  <Fragment slot="caption">
+    Schematic: the deformations are exaggerated. Φ = 0.2 and the loads are for this example only. The calculator on
+    this page uses your values.
+  </Fragment>
+</Explainer>
