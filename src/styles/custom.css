@@ -96,6 +96,74 @@
   margin: 0 0 0.5rem;
 }
 
+/* ---------- Explainer animations (Explainer.astro, src/lib/explainer.ts) ---------- */
+.viz.ex svg .halo { paint-order: stroke; stroke: var(--rd-panel); stroke-width: 4px; stroke-linejoin: round; }
+.ex-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+.ex-btn {
+  font-family: var(--sl-font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rd-ink);
+  background: var(--rd-panel2);
+  border: 1px solid var(--rd-line);
+  border-radius: 5px;
+  padding: 0.35rem 0.7rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.ex-btn:hover:not(:disabled) { border-color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 8%, var(--rd-panel2)); }
+.ex-btn:disabled { opacity: 0.45; cursor: default; }
+.ex-play { min-width: 7.6rem; color: var(--rd-accent); border-color: color-mix(in srgb, var(--rd-accent) 65%, var(--rd-line)); }
+.ex-bar input[type='range'] { flex: 1 1 8rem; min-width: 6rem; margin: 0; accent-color: var(--rd-accent); }
+.ex-count {
+  font-family: var(--sl-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rd-muted);
+  white-space: nowrap;
+}
+.ex-steps { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.ex-steps li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rd-line);
+  border-radius: 6px;
+  background: var(--rd-panel);
+  color: var(--rd-ink);
+  font-size: var(--sl-text-sm);
+  line-height: 1.45;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.ex-steps li[aria-current] { border-color: var(--rd-accent); background: color-mix(in srgb, var(--rd-accent) 7%, var(--rd-panel)); }
+.ex-num {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--rd-line);
+  background: var(--rd-panel2);
+  color: var(--rd-ink);
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.ex-num:hover { border-color: var(--rd-accent); }
+.ex-steps li[aria-current] .ex-num { background: var(--rd-accent); border-color: var(--rd-accent); color: var(--rd-panel); }
+:is(.ex-btn, .ex-num, .ex-bar input):focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+@media (min-width: 40rem) {
+  .ex-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ---------- Analogy callout ---------- */
 .analogy {
   margin: 1.5rem 0;

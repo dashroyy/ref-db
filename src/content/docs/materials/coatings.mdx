@@ -10,6 +10,7 @@ import Analogy from '../../../components/Analogy.astro';
 import CoatingCosts from '../../../components/CoatingCosts.astro';
 import CoatingGrowth from '../../../components/CoatingGrowth.astro';
 import CoatCalc from '../../../components/CoatCalc.astro';
+import HydrogenBake from '../../../components/HydrogenBake.astro';
 
 <div class="glance">
   <div><b>In one line</b>Every coating changes the size, the friction, the fatigue strength or the conductivity of the part. Choose the coating for its function, and write on the drawing which of these effects you accept.</div>
@@ -91,6 +92,8 @@ Use fatigue data for the coated condition where the part is fatigue-critical ([F
 Electroplating and acid cleaning put hydrogen into the steel. In high-strength steel (approximately 39 HRC and above,
 about 1200 MPa), the hydrogen causes delayed brittle fracture under a sustained stress, sometimes days after
 assembly ([Metallurgy](../../fundamentals/metallurgy/#diffusion)).
+
+<HydrogenBake />
 
 - **Bake soon after plating.** ASTM B850 and ISO 9588 give the temperature and time, usually 190 to 220 °C for
   hours, started within a short time after plating. The bake is a heat exposure too: it must stay below the temper

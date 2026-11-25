@@ -1,0 +1,150 @@
+---
+// Animation: how peripheral coarse grain forms in an extrusion, and how the drawing makes sure that it is not on the
+// finished part. State: pcg() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { PCG, pcg, attrs } from '../lib/explainers';
+
+const S = pcg([1, 1, 1, 1]);
+const { stock, deepest } = PCG;
+const steps = [
+  { ms: PCG.ms[0], html: '<b>Extrude.</b> The metal at the surface shears hard against the die. The core flows with less strain.' },
+  {
+    ms: PCG.ms[1],
+    html: '<b>Solution heat treat.</b> The strained skin recrystallises into coarse grains. This is peripheral coarse grain (PCG). The core keeps its fine, fibrous grain.',
+  },
+  { ms: PCG.ms[2], html: '<b>Machine the skin off.</b> Remove more stock than the deepest layer that the mill guarantees.' },
+  {
+    ms: PCG.ms[3],
+    html: '<b>Verify.</b> A macro-etch of a slice or a test piece from the same batch shows the depth of the layer. The finished surface has no coarse grain.',
+  },
+];
+const ring = PCG.ring.map((a) => ({ x1: 338 + 22 * Math.cos(a), y1: 266 + 22 * Math.sin(a), x2: 338 + 30 * Math.cos(a), y2: 266 + 30 * Math.sin(a) }));
+---
+
+<Explainer name="pcg" title="Animation · how peripheral coarse grain forms, and how to remove it" steps={steps}>
+  <svg viewBox="0 0 860 310" role="img" aria-labelledby="pg-desc">
+    <desc id="pg-desc">
+      Left: an extrusion press. A ram pushes a billet through a die and a bar comes out. Right: a magnified section
+      near the surface of the bar. After the solution heat treatment, a layer of coarse grains is at the surface above a
+      fine, fibrous core. A cutting tool has removed the layer to a depth more than the deepest coarse grain, and the
+      finished surface has fine grain. A macro-etched slice from the same batch shows the coarse ring.
+    </desc>
+    <defs>
+      <pattern id="pg-eq" data-k="pat" width="9" height="9" patternUnits="userSpaceOnUse" {...attrs(S.pat)}>
+        <rect width="9" height="9" fill="var(--rd-steel)" fill-opacity="0.3"></rect>
+        <circle cx="4.5" cy="4.5" r="1.5" fill="var(--rd-ink)" fill-opacity="0.35"></circle>
+      </pattern>
+      <pattern id="pg-fib" width="22" height="6" patternUnits="userSpaceOnUse">
+        <rect width="22" height="6" fill="var(--rd-steel)" fill-opacity="0.3"></rect>
+        <line x1="1" y1="3" x2="17" y2="3" stroke="var(--rd-ink)" stroke-opacity="0.4" stroke-width="1.2"></line>
+      </pattern>
+      <pattern id="pg-shear" width="11" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)">
+        <line x1="0" y1="3.5" x2="8" y2="3.5" stroke="var(--rd-warn)" stroke-width="1.6" stroke-linecap="round"></line>
+      </pattern>
+      <clipPath id="pg-exit"><rect x="266" y="100" width="150" height="90"></rect></clipPath>
+      <clipPath id="pg-det"><rect x="440" y="70" width="400" height="230"></rect></clipPath>
+      <clipPath id="pg-rev"><rect data-k="reveal" x="440" y="88" width="400" {...attrs(S.reveal)}></rect></clipPath>
+      {[['pg-ah-a', 'var(--rd-accent)'], ['pg-ah-o', 'var(--rd-ok)']].map(([id, c]) => (
+        <marker id={id} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 Z" fill={c}></path>
+        </marker>
+      ))}
+    </defs>
+
+    <!-- the press -->
+    <text x="30" y="34" font-size="13" fill="var(--rd-muted)" letter-spacing="1">EXTRUSION</text>
+    <rect x="40" y="72" width="210" height="14" fill="var(--rd-steel)" fill-opacity="0.7"></rect>
+    <rect x="40" y="204" width="210" height="14" fill="var(--rd-steel)" fill-opacity="0.7"></rect>
+    <rect data-k="billet" y="86" height="118" {...attrs(S.billet)} fill="url(#pg-eq)"></rect>
+    <rect data-k="rod" x="20" y="132" height="26" {...attrs(S.rod)} fill="var(--rd-muted)"></rect>
+    <rect data-k="ram" y="86" width="20" height="118" {...attrs(S.ram)} fill="var(--rd-muted)"></rect>
+    <rect x="250" y="72" width="16" height="50" fill="var(--rd-ink)" fill-opacity="0.55"></rect>
+    <rect x="250" y="168" width="16" height="50" fill="var(--rd-ink)" fill-opacity="0.55"></rect>
+    <text x="24" y="122" font-size="13" fill="var(--rd-muted)">ram</text>
+    <text x="190" y="150" font-size="13" text-anchor="middle" fill="var(--rd-ink)" class="halo">billet</text>
+    <text x="258" y="64" font-size="13" text-anchor="middle" fill="var(--rd-muted)">die</text>
+    <g clip-path="url(#pg-exit)">
+      <g data-k="bar" {...attrs(S.bar)}>
+        <rect x="266" y="128" width="138" height="34" fill="url(#pg-fib)"></rect>
+        <g data-k="skin" {...attrs(S.skin)}>
+          <rect x="266" y="122" width="138" height="6" fill="var(--rd-steel)" fill-opacity="0.3"></rect>
+          <rect x="266" y="162" width="138" height="6" fill="var(--rd-steel)" fill-opacity="0.3"></rect>
+          <g data-k="skinW" {...attrs(S.skinW)} fill="var(--rd-warn)">
+            <rect x="266" y="122" width="138" height="6"></rect>
+            <rect x="266" y="162" width="138" height="6"></rect>
+          </g>
+          <g data-k="skinP" {...attrs(S.skinP)} fill="var(--rd-accent)">
+            <rect x="266" y="122" width="138" height="6"></rect>
+            <rect x="266" y="162" width="138" height="6"></rect>
+          </g>
+        </g>
+        <g data-k="barfin" {...attrs(S.barfin)} stroke="var(--rd-ok)" stroke-width="2">
+          <line x1="266" y1="128" x2="404" y2="128"></line>
+          <line x1="266" y1="162" x2="404" y2="162"></line>
+        </g>
+      </g>
+    </g>
+    <rect data-k="furn" x="276" y="108" width="128" height="74" rx="8" fill="var(--rd-hot)" {...attrs(S.furn)}></rect>
+    <text data-k="furnlab" x="340" y="102" font-size="13" text-anchor="middle" fill="var(--rd-hot)" class="halo" {...attrs(S.furnlab)}>solution heat treatment</text>
+    <text data-k="barlab" x="335" y="200" font-size="13" text-anchor="middle" fill="var(--rd-ink)" {...attrs(S.barlab)}>extruded bar</text>
+
+    <!-- the etched slice from the same batch -->
+    <g data-k="slice" {...attrs(S.slice)}>
+      <circle cx="338" cy="266" r="30" fill="var(--rd-accent)" fill-opacity="0.45" stroke="var(--rd-ink)" stroke-width="1.2"></circle>
+      <circle cx="338" cy="266" r="22" fill="url(#pg-eq)" stroke="var(--rd-ink)" stroke-width="1" stroke-opacity="0.6"></circle>
+      {ring.map((l) => <line {...l} stroke="var(--rd-ink)" stroke-width="1"></line>)}
+      <text x="294" y="262" font-size="13" text-anchor="end" fill="var(--rd-ink)">macro-etch of a slice</text>
+      <text x="294" y="278" font-size="13" text-anchor="end" fill="var(--rd-muted)">shows the coarse ring</text>
+    </g>
+
+    <!-- the magnified detail at the surface -->
+    <text x="446" y="60" font-size="13" fill="var(--rd-muted)" letter-spacing="1">SECTION AT THE SURFACE, MAGNIFIED</text>
+    <g data-k="det" {...attrs(S.det)}>
+      <rect x="374" y="118" width="26" height="20" fill="none" stroke="var(--rd-muted)" stroke-dasharray="3 3"></rect>
+      <line x1="400" y1="118" x2="440" y2="70" stroke="var(--rd-muted)" stroke-dasharray="3 3"></line>
+      <line x1="400" y1="138" x2="440" y2="300" stroke="var(--rd-muted)" stroke-dasharray="3 3"></line>
+      <g clip-path="url(#pg-det)">
+        <rect x="440" y="90" width="400" height="210" fill="var(--rd-steel)" fill-opacity="0.16"></rect>
+        {PCG.fib.map((f) => <line x1={f.x1} y1={f.y} x2={f.x2} y2={f.y} stroke="var(--rd-muted)" stroke-width="2.2" stroke-linecap="round" opacity="0.75"></line>)}
+        <g data-k="shear" {...attrs(S.shear)}>
+          <rect x="440" y="90" width="400" height="54" fill="var(--rd-panel)"></rect>
+          <rect x="440" y="90" width="400" height="54" fill="var(--rd-steel)" fill-opacity="0.16"></rect>
+          <rect x="440" y="90" width="400" height="54" fill="url(#pg-shear)"></rect>
+        </g>
+        <g clip-path="url(#pg-rev)">
+          {PCG.cells.map((c) => <path d={c.d} fill="var(--rd-panel)"></path>)}
+          {PCG.cells.map((c) => <path d={c.d} fill="var(--rd-accent)" fill-opacity={c.op} stroke="var(--rd-ink)" stroke-opacity="0.7" stroke-width="1.2"></path>)}
+        </g>
+        <line x1="440" y1="90" x2="840" y2="90" stroke="var(--rd-steel)" stroke-width="2"></line>
+        <rect data-k="dheat" x="440" y="70" width="400" height="230" fill="var(--rd-hot)" {...attrs(S.dheat)}></rect>
+        <rect data-k="cutR" y="70" height={stock - 70} {...attrs(S.cutR)} fill="var(--rd-panel)"></rect>
+        <line data-k="newS" y1={stock} x2="840" y2={stock} {...attrs(S.newS)} stroke="var(--rd-ok)" stroke-width="2.5"></line>
+        <g data-k="tool" {...attrs(S.tool)}>
+          <rect x="-2" y={stock - 64} width="28" height="34" fill="var(--rd-ink)" fill-opacity="0.75"></rect>
+          <path d={`M0,${stock} L-6,${stock - 30} L26,${stock - 30} Z`} fill="var(--rd-ink)" fill-opacity="0.9"></path>
+        </g>
+        <g data-k="ghost" {...attrs(S.ghost)}>
+          <line x1="440" y1="90" x2="840" y2="90" stroke="var(--rd-muted)" stroke-dasharray="5 4"></line>
+          <polyline points={PCG.front} fill="none" stroke="var(--rd-accent)" stroke-dasharray="5 4"></polyline>
+          <line x1="470" y1="91" x2="470" y2={deepest - 1} stroke="var(--rd-accent)" stroke-width="1.6" marker-start="url(#pg-ah-a)" marker-end="url(#pg-ah-a)"></line>
+          <text x="478" y={(90 + deepest) / 2 + 4} font-size="13" fill="var(--rd-accent)" class="halo">deepest PCG</text>
+          <line x1="600" y1="91" x2="600" y2={stock - 1} stroke="var(--rd-ok)" stroke-width="1.6" marker-start="url(#pg-ah-o)" marker-end="url(#pg-ah-o)"></line>
+          <text x="608" y={(90 + stock) / 2 + 4} font-size="13" fill="var(--rd-ok)" class="halo">stock removed</text>
+          <text x="836" y="84" font-size="13" text-anchor="end" fill="var(--rd-muted)">as-extruded surface</text>
+        </g>
+        <g data-k="finlab" {...attrs(S.finlab)}>
+          <rect x="628" y={stock + 9} width="212" height="18" rx="3" fill="var(--rd-panel)"></rect>
+          <text x="832" y={stock + 22} font-size="13" text-anchor="end" fill="var(--rd-ok)">finished surface: fine grain</text>
+        </g>
+        <text data-k="shearlab" x="836" y="112" font-size="13" text-anchor="end" fill="var(--rd-warn)" class="halo" {...attrs(S.shearlab)}>sheared skin</text>
+        <text data-k="pcglab" x="836" y="112" font-size="13" text-anchor="end" fill="var(--rd-accent)" class="halo" {...attrs(S.pcglab)}>coarse grains (PCG)</text>
+        <text x="836" y="240" font-size="13" text-anchor="end" fill="var(--rd-ink)" class="halo">fine, fibrous core</text>
+      </g>
+    </g>
+    <rect x="440" y="70" width="400" height="230" fill="none" stroke="var(--rd-line)"></rect>
+  </svg>
+  <Fragment slot="caption">
+    Schematic. The depth of the layer changes with the alloy, the die, the press and the heat treatment. Agree the
+    guaranteed depth with the mill when you order.
+  </Fragment>
+</Explainer>

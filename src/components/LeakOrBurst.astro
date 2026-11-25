@@ -1,0 +1,112 @@
+---
+// Animation: a fatigue crack grows from the inner surface of a pressurised wall. In a tough wall it goes through and
+// leaks (leak before break). In a low-toughness wall it gets to its critical size below the surface and the case
+// bursts. State: lbb() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { LBB, lbb, lbShape, attrs } from '../lib/explainers';
+
+const S = lbb([1, 1, 1, 1]);
+const { cxA, cxB, crit, marks, critLen } = LBB;
+const panels = [
+  { ox: 0, cx: cxA, clip: 'lb-a', title: 'A · TOUGH MATERIAL', n: 'nA' },
+  { ox: 420, cx: cxB, clip: 'lb-b', title: 'B · LOW TOUGHNESS', n: 'nB' },
+];
+const steps = [
+  {
+    ms: LBB.ms[0],
+    html: '<b>A small flaw</b> is at the inner surface of the wall. The drawing shows the plane of the crack, with the inner surface at the bottom. The two walls have the same stress and the same flaw.',
+  },
+  {
+    ms: LBB.ms[1],
+    html: '<b>Each pressure cycle grows the crack a little.</b> The beach marks are at equal numbers of cycles. They get further apart, because the growth rate increases with the size of the crack.',
+  },
+  {
+    ms: LBB.ms[2],
+    html: '<b>B, low toughness:</b> K gets to K<sub>IC</sub> while the crack is still below the surface. The crack runs along the wall and the case bursts. In A, the crack continues to grow.',
+  },
+  {
+    ms: LBB.ms[3],
+    html: '<b>A, high toughness:</b> the crack goes through the wall first. The gas leaks out and the pressure falls. The through crack is shorter than the critical length, so it is stable. This is leak before break.',
+  },
+];
+---
+
+<Explainer name="lbb" title="Animation · leak before break, or burst" steps={steps}>
+  <svg viewBox="0 0 860 280" role="img" aria-labelledby="lb-desc">
+    <desc id="lb-desc">
+      Two views of the crack face in a pressurised wall, with the inner surface at the bottom. Left, a tough material:
+      the fatigue crack has grown through the wall with beach marks, the gas leaks out, and the through crack is shorter
+      than the critical length. Right, a low-toughness material: the crack got to its critical size below the surface and
+      a fast fracture ran along the wall, so the case burst.
+    </desc>
+    <defs>
+      <clipPath id="lb-a"><rect x="50" y="120" width="350" height="100"></rect></clipPath>
+      <clipPath id="lb-b"><rect x="470" y="120" width="350" height="100"></rect></clipPath>
+      <pattern id="lb-ff" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="8" height="8" fill="var(--rd-accent)" fill-opacity="0.3"></rect>
+        <line x1="0" y1="0" x2="0" y2="8" stroke="var(--rd-accent)" stroke-width="2" stroke-opacity="0.7"></line>
+      </pattern>
+      <marker id="lb-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-muted)"></path>
+      </marker>
+    </defs>
+
+    <line x1="435" y1="24" x2="435" y2="272" stroke="var(--rd-line)"></line>
+    {panels.map((pn) => (
+      <g>
+        <text x={50 + pn.ox} y="40" font-size="14" fill="var(--rd-muted)" letter-spacing="1">{pn.title}</text>
+        <text data-k={pn.n} x={400 + pn.ox} y="40" font-size="13" text-anchor="end" fill="var(--rd-muted)">{S[pn.n].text}</text>
+        <rect x={50 + pn.ox} y="120" width="350" height="100" fill="var(--rd-steel)" fill-opacity="0.2" stroke="var(--rd-steel)" stroke-width="1.5"></rect>
+        <text x={54 + pn.ox} y="113" font-size="12.5" fill="var(--rd-muted)">outside surface</text>
+        <text x={54 + pn.ox} y="237" font-size="12.5" fill="var(--rd-muted)">inside surface (gas pressure)</text>
+        <line x1={36 + pn.ox} y1="122" x2={36 + pn.ox} y2="218" stroke="var(--rd-muted)" marker-start="url(#lb-ah)" marker-end="url(#lb-ah)"></line>
+        <text x={28 + pn.ox} y="174" font-size="14" text-anchor="end" fill="var(--rd-muted)">t</text>
+        <rect x={50 + pn.ox} y="254" width="120" height="10" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+        <text x={178 + pn.ox} y="263" font-size="12.5" fill="var(--rd-muted)">pressure</text>
+      </g>
+    ))}
+    <rect data-k="presA" x="50" y="254" height="10" fill="var(--rd-blue)" {...attrs(S.presA)}></rect>
+    <rect data-k="presB" x="470" y="254" height="10" fill="var(--rd-blue)" {...attrs(S.presB)}></rect>
+
+    <!-- A: tough -->
+    <g clip-path="url(#lb-a)">
+      <path data-k="crackA" {...attrs(S.crackA)} fill="var(--rd-accent)" fill-opacity="0.3" stroke="var(--rd-accent)" stroke-width="1.5"></path>
+      {marks.map((m, i) => <path data-k={`mA${i}`} d={lbShape(cxA, m.a, m.c)} fill="none" stroke="var(--rd-ink)" stroke-width="1" {...attrs(S[`mA${i}`])}></path>)}
+    </g>
+    {LBB.puffs.map((f, i) => <circle data-k={`puff${i}`} cx={cxA + f.dx} r={f.r} fill="var(--rd-blue)" {...attrs(S[`puff${i}`])}></circle>)}
+    <g data-k="bracket" {...attrs(S.bracket)} stroke="var(--rd-muted)">
+      <line x1={cxA - critLen} y1="97" x2={cxA + critLen} y2="97" stroke-dasharray="5 4"></line>
+      <line x1={cxA - critLen} y1="91" x2={cxA - critLen} y2="103"></line>
+      <line x1={cxA + critLen} y1="91" x2={cxA + critLen} y2="103"></line>
+      <text x={cxA - critLen} y="86" font-size="13" fill="var(--rd-muted)" stroke="none">critical length</text>
+    </g>
+    <g data-k="leak" {...attrs(S.leak)}>
+      <text x={cxA + 28} y="80" font-size="13" fill="var(--rd-blue)">gas leaks out</text>
+      <text x="400" y="263" font-size="14" font-weight="600" text-anchor="end" fill="var(--rd-ok)">LEAK BEFORE BREAK</text>
+    </g>
+
+    <!-- B: low toughness -->
+    <g clip-path="url(#lb-b)">
+      <path data-k="ffB" {...attrs(S.ffB)} fill="url(#lb-ff)"></path>
+      <path data-k="crackB" {...attrs(S.crackB)} fill="var(--rd-accent)" fill-opacity="0.3" stroke="var(--rd-accent)" stroke-width="1.5"></path>
+      {marks.map((m, i) => <path data-k={`mB${i}`} d={lbShape(cxB, m.a, m.c)} fill="none" stroke="var(--rd-ink)" stroke-width="1" {...attrs(S[`mB${i}`])}></path>)}
+    </g>
+    <g data-k="critB" {...attrs(S.critB)}>
+      <path d={lbShape(cxB, crit.a, crit.c)} fill="none" stroke="var(--rd-warn)" stroke-width="1.6" stroke-dasharray="5 4"></path>
+      <text x={cxB} y={220 - crit.a - 7} font-size="13" text-anchor="middle" fill="var(--rd-warn)" class="halo">critical size</text>
+    </g>
+    <g data-k="burst" {...attrs(S.burst)}>
+      <text x={cxB} y="176" font-size="14" font-weight="600" text-anchor="middle" fill="var(--rd-ink)" class="halo">fast fracture along the wall</text>
+      <text x="820" y="263" font-size="14" font-weight="600" text-anchor="end" fill="var(--rd-accent)">BURST</text>
+    </g>
+
+    <g data-k="flawlab" {...attrs(S.flawlab)} font-size="13" text-anchor="middle" fill="var(--rd-ink)">
+      <text x={cxA} y="202" class="halo">flaw</text>
+      <text x={cxB} y="202" class="halo">flaw</text>
+    </g>
+  </svg>
+  <Fragment slot="caption">
+    Schematic. The sizes and the numbers of cycles are for illustration only. The calculator on this page does the
+    check with your values.
+  </Fragment>
+</Explainer>

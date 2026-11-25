@@ -1,0 +1,44 @@
+---
+// The frame of a staged explainer animation: the drawing (default slot), the controls, the list of steps and the
+// caption (slot "caption"). The drawing shows the end state first. The script connects every explainer on the page to
+// its state function in src/lib/explainers.ts, by the name.
+interface Props {
+  name: 'cylinder' | 'pcg' | 'hbake' | 'lbb';
+  title: string;
+  /** The duration and the text (HTML) of each step. */
+  steps: { ms: number; html: string }[];
+}
+const { name, title, steps } = Astro.props;
+const n = steps.length;
+---
+
+<figure class="viz ex" data-ex={name}>
+  <p class="viz-title">{title}</p>
+  <slot />
+  <div class="ex-bar not-content">
+    <button type="button" class="ex-btn" data-ex-back aria-label="Back one step"><span aria-hidden="true">◀</span> Back</button>
+    <button type="button" class="ex-btn ex-play" data-ex-play aria-label="Replay">▶ Replay</button>
+    <button type="button" class="ex-btn" data-ex-next aria-label="Next step" disabled>Next <span aria-hidden="true">▶</span></button>
+    <input type="range" min="0" max="1000" step="1" value="1000" data-ex-scrub aria-label="Time in the animation" />
+    <span class="ex-count" data-ex-count aria-live="polite">Step {n} of {n}</span>
+  </div>
+  <ol class="ex-steps not-content">
+    {steps.map((s, i) => (
+      <li data-ex-step data-ms={s.ms} aria-current={i === n - 1 ? 'step' : undefined}>
+        <button type="button" class="ex-num" data-ex-go={i} aria-label={`Play step ${i + 1}`}>{i + 1}</button>
+        <span set:html={s.html} />
+      </li>
+    ))}
+  </ol>
+  {Astro.slots.has('caption') && <figcaption><slot name="caption" /></figcaption>}
+</figure>
+
+<script>
+  import { mountExplainer } from '../lib/explainer';
+  import { STATES } from '../lib/explainers';
+
+  document.querySelectorAll<HTMLElement>('figure[data-ex]').forEach((root) => {
+    const fn = STATES[root.dataset.ex as keyof typeof STATES];
+    if (fn) mountExplainer(root, fn);
+  });
+</script>

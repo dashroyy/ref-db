@@ -1,0 +1,105 @@
+---
+// Animation: hydrogen from plating in a notched high-strength steel part. Part A is baked soon after plating and does
+// not crack. Part B is not baked: under a sustained load the hydrogen moves to the notch root and the part cracks later.
+// State: hbake() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { HBAKE, hbake, attrs } from '../lib/explainers';
+
+const S = hbake([1, 1, 1, 1]);
+const B = 430;
+const H = HBAKE.halves(B);
+const { x0, x1, cx } = HBAKE.bar;
+const atoms = Array.from({ length: HBAKE.atoms }, (_, i) => i);
+const steps = [
+  { ms: HBAKE.ms[0], html: '<b>Plate both parts.</b> Acid cleaning and electroplating put hydrogen atoms into the steel.' },
+  {
+    ms: HBAKE.ms[1],
+    html: '<b>Bake part A soon after plating</b>, at 190 to 220 °C for hours. The heat removes most of the mobile hydrogen. Part B is not baked.',
+  },
+  { ms: HBAKE.ms[2], html: '<b>Apply a sustained load.</b> The notch root has the highest stress. In part B, the hydrogen moves to it.' },
+  {
+    ms: HBAKE.ms[3],
+    html: '<b>Delayed fracture.</b> Part B cracks at the notch root, hours or days later, at a stress below its strength. Part A does not crack.',
+  },
+];
+const steel = { fill: 'var(--rd-steel)', 'fill-opacity': 0.22 };
+const edge = { fill: 'none', stroke: 'var(--rd-steel)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' as const };
+const body = { ...steel, stroke: 'var(--rd-steel)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' as const };
+const plate = { fill: 'none', stroke: 'var(--rd-blue)', 'stroke-opacity': 0.85, 'stroke-linejoin': 'round' as const };
+---
+
+<Explainer name="hbake" title="Animation · why plated high-strength steel must be baked" steps={steps}>
+  <svg viewBox="0 0 860 270" role="img" aria-labelledby="hb-desc">
+    <desc id="hb-desc">
+      Two notched parts of high-strength steel after plating, under a sustained load. Part A was baked soon after
+      plating. Almost no hydrogen remains in it and it has no crack. Part B was not baked. Its hydrogen atoms have moved to
+      the notch root, and the part has cracked there.
+    </desc>
+    <defs>
+      <radialGradient id="hb-glow">
+        <stop offset="0" stop-color="var(--rd-accent)" stop-opacity="0.9"></stop>
+        <stop offset="1" stop-color="var(--rd-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+      <marker id="hb-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-ink)"></path>
+      </marker>
+    </defs>
+
+    <text x={x0} y="36" font-size="14" fill="var(--rd-muted)" letter-spacing="1">A · BAKED SOON AFTER PLATING</text>
+    <text x={x0 + B} y="36" font-size="14" fill="var(--rd-muted)" letter-spacing="1">B · NOT BAKED</text>
+    <circle cx="726" cy="32" r="3.2" fill="var(--rd-accent)"></circle>
+    <text x="736" y="36" font-size="13" fill="var(--rd-muted)">hydrogen atom</text>
+    <line x1="425" y1="24" x2="425" y2="262" stroke="var(--rd-line)"></line>
+
+    <!-- plating baths -->
+    <rect data-k="bathA" x={x0 - 20} y="78" width={x1 - x0 + 40} height="150" rx="10" fill="var(--rd-blue)" {...attrs(S.bathA)}></rect>
+    <rect data-k="bathB" x={x0 - 20 + B} y="78" width={x1 - x0 + 40} height="150" rx="10" fill="var(--rd-blue)" {...attrs(S.bathB)}></rect>
+    <g data-k="bathlab" {...attrs(S.bathlab)} font-size="13" fill="var(--rd-blue)">
+      <text x={x0 - 10} y="222">plating bath</text>
+      <text x={x0 - 10 + B} y="222">plating bath</text>
+    </g>
+
+    <!-- part A, whole -->
+    <rect data-k="heat" x={x0 - 12} y="100" width={x1 - x0 + 24} height="110" rx="8" fill="var(--rd-hot)" {...attrs(S.heat)}></rect>
+    <text data-k="heatlab" x={cx} y="94" font-size="13" text-anchor="middle" fill="var(--rd-hot)" class="halo" {...attrs(S.heatlab)}>baked at 190 to 220 °C</text>
+    <path d={HBAKE.outline(0)} {...body}></path>
+    <path data-k="plateA" d={HBAKE.outline(0)} {...plate} {...attrs(S.plateA)}></path>
+    <circle data-k="glowA" cx={cx} cy="152" r="30" fill="url(#hb-glow)" {...attrs(S.glowA)}></circle>
+
+    <!-- part B, in two halves that come apart at the crack -->
+    <path data-k="wholeB" d={HBAKE.outline(B)} {...steel} {...attrs(S.wholeB)}></path>
+    <circle data-k="glowB" cx={cx + B} cy="152" r="30" fill="url(#hb-glow)" {...attrs(S.glowB)}></circle>
+    <g data-k="halfL" {...attrs(S.halfL)}>
+      <path data-k="fillL" d={H.left} {...steel} {...attrs(S.fillL)}></path>
+      <path d={H.leftPlate} {...edge}></path>
+      <path data-k="plateBL" d={H.leftPlate} {...plate} {...attrs(S.plateBL)}></path>
+    </g>
+    <g data-k="halfR" {...attrs(S.halfR)}>
+      <path data-k="fillR" d={H.right} {...steel} {...attrs(S.fillR)}></path>
+      <path d={H.rightPlate} {...edge}></path>
+      <path data-k="plateBR" d={H.rightPlate} {...plate} {...attrs(S.plateBR)}></path>
+    </g>
+    <path data-k="crack" d={H.crack} fill="none" stroke="var(--rd-ink)" stroke-width="2" stroke-linejoin="round" {...attrs(S.crack)}></path>
+
+    <!-- hydrogen atoms -->
+    {atoms.map((i) => <circle data-k={`ha${i}`} r="3.2" fill="var(--rd-accent)" stroke="var(--rd-panel)" stroke-width="1" {...attrs(S[`ha${i}`])}></circle>)}
+    {atoms.map((i) => <circle data-k={`hb${i}`} r="3.2" fill="var(--rd-accent)" stroke="var(--rd-panel)" stroke-width="1" {...attrs(S[`hb${i}`])}></circle>)}
+
+    <!-- sustained load -->
+    <g data-k="loadA" {...attrs(S.loadA)} stroke="var(--rd-ink)" stroke-width="2.5">
+      <line data-k="la1" x1={x0 - 6} y1="155" y2="155" {...attrs(S.la1)} marker-end="url(#hb-ah)"></line>
+      <line data-k="la2" x1={x1 + 6} y1="155" y2="155" {...attrs(S.la2)} marker-end="url(#hb-ah)"></line>
+    </g>
+    <g data-k="loadB" {...attrs(S.loadB)} stroke="var(--rd-ink)" stroke-width="2.5">
+      <line data-k="lb1" y1="155" y2="155" {...attrs(S.lb1)} marker-end="url(#hb-ah)"></line>
+      <line data-k="lb2" y1="155" y2="155" {...attrs(S.lb2)} marker-end="url(#hb-ah)"></line>
+    </g>
+
+    <text data-k="statA" x={cx} y="254" font-size="14" text-anchor="middle" {...attrs(S.statA)}>{S.statA.text}</text>
+    <text data-k="statB" x={cx + B} y="254" font-size="14" text-anchor="middle" {...attrs(S.statB)}>{S.statB.text}</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic. Your plating specification (for example ASTM B850 or ISO 9588) gives the bake temperature, the time and
+    the latest start after plating.
+  </Fragment>
+</Explainer>

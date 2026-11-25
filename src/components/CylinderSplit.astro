@@ -1,0 +1,117 @@
+---
+// Animation: a closed cylinder under pressure. The hoop stress increases two times as fast as the axial stress, gets to
+// the strength first, and the wall splits along its length. State: cylinder() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { CYL, cylinder, attrs } from '../lib/explainers';
+
+const S = cylinder([1, 1, 1, 1]);
+const { cy, el, dome, crack, dial, bar } = CYL;
+const steps = [
+  { ms: CYL.ms[0], html: '<b>Pressurise.</b> The gas pushes out on all of the wall. The stresses in the wall increase with the pressure.' },
+  {
+    ms: CYL.ms[1],
+    html: '<b>Compare the two squares of wall.</b> On the cylinder, the hoop stress σ<sub>h</sub> is two times the axial stress σ<sub>a</sub>. On the dome, the stress is σ<sub>a</sub> in all directions.',
+  },
+  {
+    ms: CYL.ms[2],
+    html: '<b>Increase the pressure.</b> The hoop stress gets to the strength of the material first. The axial stress and the dome stress are at only half of it.',
+  },
+  {
+    ms: CYL.ms[3],
+    html: '<b>The wall splits along its length.</b> The crack opens at 90° to the largest stress, which is the hoop stress. Burst tests of cylinders show this lengthwise split.',
+  },
+];
+const marks = [
+  { id: 'cs-ah-r', color: 'var(--rd-accent)' },
+  { id: 'cs-ah-b', color: 'var(--rd-blue)' },
+];
+---
+
+<Explainer name="cylinder" title="Animation · why a cylinder splits along its length" steps={steps}>
+  <svg viewBox="0 0 860 300" role="img" aria-labelledby="cs-desc">
+    <desc id="cs-desc">
+      A closed cylinder with domed ends, under internal pressure. A small square of the cylinder wall has hoop stress
+      arrows two times as long as its axial stress arrows. A square on the dome has short arrows of the same length in
+      both directions. A pressure dial is at burst. A bar for the hoop stress is at the strength of the material, and a
+      bar for the axial stress is at half of it. A crack has opened along the length of the cylinder.
+    </desc>
+    <defs>
+      {marks.map((m) => (
+        <marker id={m.id} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 Z" fill={m.color}></path>
+        </marker>
+      ))}
+      <linearGradient id="cs-shade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--rd-steel)" stop-opacity="0.5"></stop>
+        <stop offset="0.42" stop-color="var(--rd-steel)" stop-opacity="0.2"></stop>
+        <stop offset="1" stop-color="var(--rd-steel)" stop-opacity="0.55"></stop>
+      </linearGradient>
+    </defs>
+
+    <!-- the vessel, seen from the outside -->
+    <path d={CYL.body} fill="url(#cs-shade)" stroke="var(--rd-steel)" stroke-width="2"></path>
+    <line x1="130" y1="97" x2="130" y2="233" stroke="var(--rd-steel)" stroke-dasharray="3 4" opacity="0.6"></line>
+    <line x1="390" y1="97" x2="390" y2="233" stroke="var(--rd-steel)" stroke-dasharray="3 4" opacity="0.6"></line>
+
+    <!-- the crack -->
+    <path data-k="crack" {...attrs(S.crack)} fill="#000" fill-opacity="0.75" stroke="var(--rd-accent)" stroke-width="1.5" stroke-linejoin="round"></path>
+    <g data-k="clab" {...attrs(S.clab)}>
+      <line x1={crack.x} y1="84" x2={crack.x} y2={cy - 12} stroke="var(--rd-accent)" stroke-dasharray="3 3"></line>
+      <text x={crack.x} y="76" font-size="14" text-anchor="middle" fill="var(--rd-accent)" class="halo">the crack runs along the length</text>
+    </g>
+
+    <!-- a square of wall on the cylinder, and one on the dome -->
+    <rect x={el.x - el.half} y={cy - el.half} width={el.half * 2} height={el.half * 2} fill="var(--rd-panel)" stroke="var(--rd-ink)" stroke-width="1.5"></rect>
+    <rect x={dome.x - dome.half} y={cy - dome.half} width={dome.half * 2} height={dome.half * 2} fill="var(--rd-panel)" stroke="var(--rd-ink)" stroke-width="1.5"></rect>
+    <g data-k="hl" {...attrs(S.hl)} fill="none" stroke="var(--rd-warn)" stroke-width="2">
+      <circle cx={el.x} cy={cy} r="26"></circle>
+      <circle cx={dome.x} cy={cy} r="26"></circle>
+    </g>
+    <g data-k="arrows" {...attrs(S.arrows)} stroke-width="3">
+      <line data-k="eh1" x1={el.x} y1={cy - el.half} x2={el.x} {...attrs(S.eh1)} stroke="var(--rd-accent)" marker-end="url(#cs-ah-r)"></line>
+      <line data-k="eh2" x1={el.x} y1={cy + el.half} x2={el.x} {...attrs(S.eh2)} stroke="var(--rd-accent)" marker-end="url(#cs-ah-r)"></line>
+      <line data-k="ea1" x1={el.x - el.half} y1={cy} y2={cy} {...attrs(S.ea1)} stroke="var(--rd-blue)" marker-end="url(#cs-ah-b)"></line>
+      <line data-k="ea2" x1={el.x + el.half} y1={cy} y2={cy} {...attrs(S.ea2)} stroke="var(--rd-blue)" marker-end="url(#cs-ah-b)"></line>
+      <line data-k="ed1" x1={dome.x} y1={cy - dome.half} x2={dome.x} {...attrs(S.ed1)} stroke="var(--rd-blue)" marker-end="url(#cs-ah-b)"></line>
+      <line data-k="ed2" x1={dome.x} y1={cy + dome.half} x2={dome.x} {...attrs(S.ed2)} stroke="var(--rd-blue)" marker-end="url(#cs-ah-b)"></line>
+      <line data-k="ed3" x1={dome.x - dome.half} y1={cy} y2={cy} {...attrs(S.ed3)} stroke="var(--rd-blue)" marker-end="url(#cs-ah-b)"></line>
+      <line data-k="ed4" x1={dome.x + dome.half} y1={cy} y2={cy} {...attrs(S.ed4)} stroke="var(--rd-blue)" marker-end="url(#cs-ah-b)"></line>
+    </g>
+    <g data-k="elab" {...attrs(S.elab)} font-size="14">
+      <text x={el.x + 8} y={cy - 36} fill="var(--rd-accent)" class="halo">σh</text>
+      <text x={el.x + 20} y={cy - 8} fill="var(--rd-blue)" class="halo">σa</text>
+      <text x={el.x} y="262" text-anchor="middle" fill="var(--rd-ink)">cylinder: σh = 2 σa</text>
+      <text x={dome.x} y="262" text-anchor="middle" fill="var(--rd-ink)">dome: σ = pr/2t</text>
+      <text x={el.x} y="280" text-anchor="middle" font-size="13" fill="var(--rd-muted)">σh = pr/t, σa = pr/2t</text>
+      <text x={dome.x} y="280" text-anchor="middle" font-size="13" fill="var(--rd-muted)">in all directions</text>
+    </g>
+
+    <line x1="500" y1="30" x2="500" y2="290" stroke="var(--rd-line)"></line>
+
+    <!-- pressure dial -->
+    <text x={dial.x} y="34" font-size="13" text-anchor="middle" fill="var(--rd-muted)" letter-spacing="1">PRESSURE</text>
+    <path d={`M${dial.x - dial.r},${dial.y} A${dial.r},${dial.r} 0 0 1 ${dial.x + dial.r},${dial.y}`} fill="none" stroke="var(--rd-line)" stroke-width="10"></path>
+    <path data-k="parc" d={`M${dial.x - dial.r},${dial.y} A${dial.r},${dial.r} 0 0 1 ${dial.x + dial.r},${dial.y}`} fill="none" stroke="var(--rd-accent)" stroke-width="10" {...attrs(S.parc)}></path>
+    <line data-k="needle" x1={dial.x} y1={dial.y} {...attrs(S.needle)} stroke="var(--rd-ink)" stroke-width="3" stroke-linecap="round"></line>
+    <circle cx={dial.x} cy={dial.y} r="5" fill="var(--rd-ink)"></circle>
+    <text x={dial.x - dial.r} y={dial.y + 18} font-size="13" text-anchor="middle" fill="var(--rd-muted)">0</text>
+    <text x={dial.x + dial.r} y={dial.y + 18} font-size="13" text-anchor="middle" fill="var(--rd-muted)">burst</text>
+    <text data-k="pval" x={dial.x} y={dial.y + 40} font-size="15" text-anchor="middle" fill="var(--rd-ink)">{S.pval.text}</text>
+
+    <!-- stress bars -->
+    <text x={bar.x} y="186" font-size="13" fill="var(--rd-ink)" letter-spacing="0.5">HOOP STRESS σh = pr/t</text>
+    <rect x={bar.x} y="194" width={bar.w} height="16" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="hbar" x={bar.x} y="194" height="16" {...attrs(S.hbar)} fill="var(--rd-accent)"></rect>
+    <text data-k="hval" x={bar.x} y="226" font-size="13" fill="var(--rd-muted)">{S.hval.text}</text>
+    <text x={bar.x} y="248" font-size="13" fill="var(--rd-ink)" letter-spacing="0.5">AXIAL STRESS σa = pr/2t</text>
+    <rect x={bar.x} y="256" width={bar.w} height="16" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="abar" x={bar.x} y="256" height="16" {...attrs(S.abar)} fill="var(--rd-blue)"></rect>
+    <text data-k="aval" x={bar.x} y="288" font-size="13" fill="var(--rd-muted)">{S.aval.text}</text>
+    <line data-k="slim" x1={bar.x + bar.w} y1="180" x2={bar.x + bar.w} y2="278" {...attrs(S.slim)} stroke-width="2" stroke-dasharray="5 4"></line>
+    <text data-k="slab" x={bar.x + bar.w} y="172" font-size="13" text-anchor="middle" {...attrs(S.slab)}>strength</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic, not to scale. Here the dome has the same wall as the cylinder, so its stress is half the hoop stress.
+    This is why a dome needs only half the wall.
+  </Fragment>
+</Explainer>
