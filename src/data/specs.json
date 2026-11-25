@@ -104,7 +104,7 @@
         },
         {
           "name": "Shot peen",
-          "spec": "BS 7864 / AMS 2430",
+          "spec": "AMS 2430 / AMS 2432",
           "note": "Fatigue improvement. Specify intensity (Almen) and coverage."
         },
         {
@@ -189,7 +189,7 @@
         },
         {
           "name": "Shot peen",
-          "spec": "BS 7864 / AMS 2430",
+          "spec": "AMS 2430 / AMS 2432",
           "note": "Common on fatigue-critical 7075 fittings."
         }
       ],
@@ -279,16 +279,16 @@
       "designation": "EN AW-2219",
       "family": "al",
       "base": "EN AW-2219 / AlCu6Mn · 3.1341",
-      "composition": "BS EN 573-3 · BS EN 515 · AMS 4095 (sheet/plate)",
+      "composition": "BS EN 573-3 · BS EN 515 · ASTM B209 (sheet and plate) · AMS 4143 and AMS 4144 (forgings)",
       "forms": [
         {
           "form": "Plate",
-          "standard": "AMS 4095 / BS EN 485-2",
+          "standard": "ASTM B209 / BS EN 485-2",
           "note": "The tankage and pressure-shell form."
         },
         {
           "form": "Sheet",
-          "standard": "AMS 4095",
+          "standard": "ASTM B209",
           "note": ""
         },
         {
@@ -298,8 +298,8 @@
         },
         {
           "form": "Forgings",
-          "standard": "AMS 4143 / BS EN 586-2",
-          "note": ""
+          "standard": "AMS 4143 / AMS 4144 / BS EN 586-2",
+          "note": "AMS 4143: die forgings and rings (T6). AMS 4144: hand forgings and rolled rings (T852)."
         }
       ],
       "tempers": [
@@ -337,7 +337,7 @@
           "note": "Used for weight reduction on tank walls; state the etch allowance."
         }
       ],
-      "callout": "MATERIAL: EN AW-2219-T87 PLATE TO AMS 4095\nWELD:     PER [WPS] TO BS EN ISO 15614-2. QUALITY LEVEL B TO BS EN ISO 10042\nNDT:      100% RT OF WELDS TO BS EN ISO 17636. PT TO BS EN ISO 3452 LEVEL 3\nNOTE:     PROOF TEST PER [TEST SPEC]. DIMENSIONS APPLY AT 20 °C.",
+      "callout": "MATERIAL: EN AW-2219-T87 PLATE TO ASTM B209\nWELD:     PER [WPS] TO BS EN ISO 15614-2. QUALITY LEVEL B TO BS EN ISO 10042\nNDT:      100% RT OF WELDS TO BS EN ISO 17636. PT TO BS EN ISO 3452 LEVEL 3\nNOTE:     PROOF TEST PER [TEST SPEC]. DIMENSIONS APPLY AT 20 °C.",
       "tips": [
         "2219 is the go-to when you need a weldable aluminium that also works cryogenically: it keeps toughness where 6082 and 7075 can't go.",
         "Weld strength is well below parent strength; design the joint, don't assume parent properties across it.",
@@ -641,9 +641,9 @@
           "note": ""
         },
         {
-          "form": "AM powder",
-          "standard": "AMS 7005 / ASTM F3055",
-          "note": "State build orientation, stress relief and HIP on the drawing."
+          "form": "Additively manufactured parts (L-PBF)",
+          "standard": "ASTM F3055",
+          "note": "Give the powder and process specifications of your programme, the build orientation, the stress relief and the HIP on the drawing."
         }
       ],
       "tempers": [
@@ -735,7 +735,7 @@
       "finishes": [
         {
           "name": "Zinc-nickel plating",
-          "spec": "BS EN ISO 2081 / DEF STAN 03-38",
+          "spec": "BS EN ISO 19598",
           "note": "Modern replacement for cadmium on steel."
         },
         {
@@ -755,11 +755,11 @@
         },
         {
           "name": "Shot peen",
-          "spec": "BS 7864 / AMS 2430",
+          "spec": "AMS 2430 / AMS 2432",
           "note": "Fatigue-critical areas."
         }
       ],
-      "callout": "MATERIAL: 15CDV6 BAR TO AIR 9160C, QUENCHED AND TEMPERED\n          UTS 980 MPa MIN\nWELD:     PER [WPS] TO BS EN ISO 15614-1. NO POST-WELD HEAT TREATMENT REQUIRED\nNDT:      100% MPI TO BS EN ISO 9934 + PT TO BS EN ISO 3452 LEVEL 3\nFINISH:   ZINC-NICKEL TO BS EN ISO 2081 + EPOXY PRIMER\nNOTE:     BAKE FOR HYDROGEN EMBRITTLEMENT RELIEF WITHIN 4 HRS OF PLATING\n          PER BS EN ISO 4042 (200 °C, 8 HRS MIN)",
+      "callout": "MATERIAL: 15CDV6 BAR TO AIR 9160C, QUENCHED AND TEMPERED\n          UTS 980 MPa MIN\nWELD:     PER [WPS] TO BS EN ISO 15614-1. NO POST-WELD HEAT TREATMENT REQUIRED\nNDT:      100% MPI TO BS EN ISO 9934 + PT TO BS EN ISO 3452 LEVEL 3\nFINISH:   ZINC-NICKEL TO BS EN ISO 19598 + EPOXY PRIMER\nNOTE:     BAKE FOR HYDROGEN EMBRITTLEMENT RELIEF WITHIN 4 HRS OF PLATING\n          PER BS EN ISO 4042 (200 °C, 8 HRS MIN)",
       "tips": [
         "The whole reason 15CDV6 exists is that it welds at full strength without post-weld heat treatment. If your design doesn't exploit that, a cheaper steel may do.",
         "Still a high-strength steel: the hydrogen embrittlement bake after plating is mandatory, not advisory. Put the time limit and temperature on the drawing.",
@@ -825,8 +825,8 @@
         },
         {
           "name": "Zinc-nickel",
-          "spec": "BS EN ISO 2081 / DEF STAN 03-38",
-          "note": "Better protection, defence standard."
+          "spec": "BS EN ISO 19598",
+          "note": "Better protection than zinc, without cadmium."
         },
         {
           "name": "Phosphate + oil",
@@ -941,7 +941,7 @@
         },
         {
           "form": "Forgings",
-          "standard": "BS EN 586-2 / AMS 4144",
+          "standard": "BS EN 586-2",
           "note": "Die and hand forgings for high-integrity fittings."
         },
         {
@@ -982,7 +982,7 @@
         },
         {
           "name": "Shot peen",
-          "spec": "BS 7864 / AMS 2430",
+          "spec": "AMS 2430 / AMS 2432",
           "note": "Common on fatigue-critical machined parts."
         }
       ],
@@ -1059,7 +1059,7 @@
       "designation": "EN AW-2618A",
       "family": "al",
       "base": "EN AW-2618A / AlCu2Mg1.5Ni · legacy Hiduminium RR58 · DTD 5014A",
-      "composition": "DTD 5014A (bar/section) · AMS 4132 · EN 2123 · BS L100",
+      "composition": "DTD 5014A (bar and section, cancelled but still on legacy drawings) · DTD 5070B (clad sheet) · AMS 4132 (2618 forgings, T61) · EN 2123 (plate)",
       "forms": [
         {
           "form": "Extruded bar & section",
@@ -1068,13 +1068,18 @@
         },
         {
           "form": "Plate",
-          "standard": "EN 2123 / AMS 4132",
+          "standard": "EN 2123",
           "note": ""
         },
         {
           "form": "Forgings",
-          "standard": "DTD 5070B / AMS 4132",
-          "note": "Pistons, impellers, rotating parts."
+          "standard": "AMS 4132",
+          "note": "Die and hand forgings and rolled rings (2618-T61): pistons, impellers, rotating parts."
+        },
+        {
+          "form": "Clad sheet",
+          "standard": "DTD 5070B",
+          "note": "The legacy British clad sheet."
         }
       ],
       "tempers": [
@@ -1508,7 +1513,7 @@
       "designation": "X3CrNiMoAl13-8-2 (1.4534)",
       "family": "ss",
       "base": "X3CrNiMoAl13-8-2 · 1.4534 · UNS S13800",
-      "composition": "AMS 5629 (bar) · AMS 5934 · BS EN 10088-3",
+      "composition": "AMS 5629 (bar, wire and forgings) · AMS 5934 (extra-high-toughness bar and forgings) · ASTM A693 (plate, XM-13) · BS EN 10088-3",
       "forms": [
         {
           "form": "Bar",
@@ -1522,8 +1527,8 @@
         },
         {
           "form": "Plate",
-          "standard": "AMS 5934",
-          "note": ""
+          "standard": "ASTM A693",
+          "note": "XM-13."
         }
       ],
       "tempers": [
@@ -1681,7 +1686,7 @@
       "designation": "X12CrNiMoV12-3 (1.4939)",
       "family": "ss",
       "base": "X12CrNiMoV12-3 · 1.4939 · UNS S64152 · legacy BS S151/S152",
-      "composition": "BS S151 / S152 · AMS 5718 · DTD 5212",
+      "composition": "BS S151 / S152 · AMS 5718 (bar) · AMS 5719 (sheet)",
       "forms": [
         {
           "form": "Bar",
@@ -1690,7 +1695,7 @@
         },
         {
           "form": "Forgings",
-          "standard": "BS S152 / DTD 5212",
+          "standard": "BS S152",
           "note": ""
         },
         {
@@ -1716,9 +1721,14 @@
           "note": "—"
         },
         {
-          "name": "Cadmium / zinc-nickel plating",
-          "spec": "DEF STAN 03-19 / BS EN ISO 2081",
+          "name": "Zinc-nickel plating",
+          "spec": "BS EN ISO 19598",
           "note": "Hydrogen embrittlement bake mandatory."
+        },
+        {
+          "name": "Cadmium plating",
+          "spec": "DEF STAN 03-19 (legacy, now SAE AMS 03-19)",
+          "note": "Legacy fleets only: check the programme. Hydrogen embrittlement bake mandatory."
         },
         {
           "name": "Nitride",
@@ -1738,7 +1748,7 @@
       "designation": "X5CrNiMoCuNb14-5 (1.4594)",
       "family": "ss",
       "base": "X5CrNiMoCuNb14-5 · 1.4594 · UNS S45000 (near) · Firth Vickers 520B",
-      "composition": "BS S143 / S144 · DTD 5212 · EN 10088-3",
+      "composition": "BS S143 / S144 · BS EN 10088-3",
       "forms": [
         {
           "form": "Bar",
@@ -1778,7 +1788,7 @@
         },
         {
           "name": "Shot peen",
-          "spec": "BS 7864 / AMS 2430",
+          "spec": "AMS 2430 / AMS 2432",
           "note": "—"
         },
         {

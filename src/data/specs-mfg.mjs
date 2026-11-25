@@ -114,6 +114,24 @@ export const MFG = {
       'Show the grain direction on the drawing for parts cut from plate.',
     ],
   },
+  'Al-Li 2050-T84': {
+    pcg: true,
+    notes: [
+      'Peripheral coarse grain. Thick 2xxx plate can grow a coarse recrystallised surface layer: machine it off the loaded surfaces.',
+      'The properties fall towards the centre of thick plate and in the short-transverse direction: use the allowables for the thickness and the direction.',
+      'Keep the swarf and the scrap apart from other aluminium: lithium alloys are recycled separately.',
+      'Where it is welded, friction stir welding is the usual process: qualify it for the product and the joint.',
+    ],
+  },
+  'Al-Li 2099-T83': {
+    pcg: true,
+    notes: [
+      'Peripheral coarse grain. 2xxx extrusions can grow a coarse recrystallised surface layer: machine it off the loaded surfaces.',
+      'The extruded properties change with the section thickness and the direction: use the allowables for the section.',
+      'Keep the swarf and the scrap apart from other aluminium: lithium alloys are recycled separately.',
+      'Show the extrusion direction on the drawing.',
+    ],
+  },
   'Al 5083-H111': {
     pcg: false,
     notes: [

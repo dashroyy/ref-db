@@ -38,7 +38,7 @@
       "enNo": "3.1341",
       "legacyBs": "—",
       "uns": "A92219",
-      "aero": "AMS 4095",
+      "aero": "ASTM B209 (plate) / AMS 4143, 4144 (forgings)",
       "note": "The weldable cryogenic tankage alloy."
     },
     {
@@ -120,6 +120,36 @@
       "uns": "A03560",
       "aero": "EN 1706",
       "note": "The general-purpose casting alloy."
+    },
+    {
+      "name": "AlSi10Mg (L-PBF)",
+      "family": "al",
+      "en": "Similar to EN AC-43000 (EN 1706)",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "—",
+      "aero": "ASTM F3318 (parts) / AMS 7018 (powder)",
+      "note": "Laser powder-bed fusion aluminium."
+    },
+    {
+      "name": "Al-Li 2050 / 2099",
+      "family": "al",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "—",
+      "aero": "AMS 4413 (2050-T84 plate) / AMS 4287 (2099-T83 extrusions)",
+      "note": "Third-generation aluminium-lithium: lower density, higher stiffness."
+    },
+    {
+      "name": "Al-Li 2195",
+      "family": "al",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "—",
+      "aero": "Programme specification",
+      "note": "Cryogenic tank alloy (Space Shuttle super lightweight tank); friction stir welded."
     },
     {
       "name": "Magnesium AZ31B-H24",
@@ -1110,6 +1140,26 @@
       "uns": "C18150",
       "aero": "EN 12163",
       "note": "Conductive and heat resistant; resistance welding electrodes."
+    },
+    {
+      "name": "AMZIRC (Cu-0.15Zr)",
+      "family": "cu",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "C15000",
+      "aero": "Producer specification",
+      "note": "Zirconium copper: very high conductivity, moderate strength."
+    },
+    {
+      "name": "Glidcop AL-15",
+      "family": "cu",
+      "en": "—",
+      "enNo": "—",
+      "legacyBs": "—",
+      "uns": "C15715",
+      "aero": "Producer specification",
+      "note": "Alumina dispersion-strengthened copper: keeps its strength after brazing."
     },
     {
       "name": "C-103 Niobium",

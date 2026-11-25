@@ -167,7 +167,7 @@ test('steel sheets: each matches one library material, with product standards an
 test('stainless and aluminium sheets: each matches one library material of its family, and every form builds', () => {
   for (const [list, fam, std] of [
     [SPECS_SS, 'ss', /^(BS (EN (ISO )?)?\d{3,5}(-\d)?|BS S\d+|ASTM A\d+|AMS \d{4})/],
-    [SPECS_AL, 'al', /^(BS (EN )?\d{3,5}(-\d)?|BS L\d+|ASTM B\d+|AMS \d{4})/],
+    [SPECS_AL, 'al', /^(BS (EN )?\d{3,5}(-\d)?|BS L\d+|ASTM [BF]\d+|AMS \d{4})/],
   ] as const) {
     for (const sh of list as SpecSheet[]) {
       const lib = MATERIALS.filter((m) => sameAlloy(m, sh));
@@ -251,4 +251,16 @@ test('magnesium and refractory sheets: each matches one library material of its 
   const w = sheet('Tungsten / W-25Re');
   const out = buildCallout({ sheet: w, formIndex: 1, standard: parseStandard(w.forms[1].standard).alternatives[0], temperIndex: 2, finishIndex: -1, afterFinish: false, traceability: false, certificate: false });
   assert.equal(out.split('\n')[0], 'MATERIAL: Tungsten (unalloyed) ROD, BAR AND BLANKS TO <PRODUCER SPEC>');
+});
+
+test('no sheet cites a standard that was found to be wrong for its use', () => {
+  // BS 7864 and BS L100 cannot be found; DEF STAN 03-38 is guidance on chromate alternatives; DTD 5212 is maraging
+  // steel; AMS 7005 is a plasma-arc DED process; AMS 4095 is not a confirmed 2219 plate specification
+  const wrong = /BS 7864|BS L100|DEF STAN 03-38|DTD 5212|AMS 7005|AMS 4095/;
+  for (const sh of sheets) {
+    const text = [sh.composition, sh.callout, ...sh.forms.map((f) => f.standard), ...sh.finishes.map((f) => f.spec)].join(' | ');
+    assert.doesNotMatch(text, wrong, sh.name);
+    // zinc-nickel is BS EN ISO 19598 (or AMS 2417); ISO 2081 is plain zinc
+    for (const f of sh.finishes) if (/zinc-nickel/i.test(f.name)) assert.doesNotMatch(f.spec, /2081/, `${sh.name}: ${f.name}`);
+  }
 });

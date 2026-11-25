@@ -157,9 +157,10 @@ const DATA = Object.fromEntries(MATERIALS.map((m) => [m.key, {
       const aKey = sel('a').value;
       root.querySelector('[data-links]')!.innerHTML = [
         a.caseOk ? `<a href="../../motor/case-sizing/?m=${encodeURIComponent(aKey)}#calculator">Size a case with it →</a>` : '',
-        `<a href="../selection/#calculator">See it on the selection chart →</a>`,
+        `<a href="../selection/#the-chart">See it on the selection chart →</a>`,
         `<a href="../../verify/fea-cards/#calculator">Make an FEA card →</a>`,
-        a.kind === 'metal' ? `<a href="../specification/#calculator">Build the callout →</a>` : '',
+        // the builder opens the sheet of this material (or its skeleton, which has the library name)
+        a.kind === 'metal' ? `<a href="../specification/?sheet=${encodeURIComponent(a.sheet?.name ?? a.name)}#builder">Build the callout →</a>` : '',
       ].filter(Boolean).join('');
 
       // property tables

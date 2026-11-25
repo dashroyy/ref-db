@@ -1,10 +1,9 @@
 ---
 // Material specification builder: v1's 25 spec sheets plus the v2 sheets (case steels, copper alloys, steels, stainless
 // steels, aluminium, titanium, nickel, cobalt, magnesium and refractory alloys) and a skeleton for every other library
-// metal, with v1's
-// manufacturing considerations
-// (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface and process concerns of each material).
-// Callout assembly lives in src/lib/callout.ts (unit-tested).
+// metal, with v1's manufacturing considerations (src/data/specs-mfg.mjs: peripheral coarse grain and the other surface
+// and process concerns of each material). A filter finds a sheet; ?sheet=<name> opens one (the datasheet links here),
+// and each sheet links to the datasheet of its library material. Callout assembly lives in src/lib/callout.ts.
 import data from '../data/specs.json';
 import xref from '../data/xref.json';
 import { SPECS_V2 } from '../data/specs-v2.mjs';
@@ -23,11 +22,25 @@ import { skeletonSheet, type SpecSheet } from '../lib/callout';
 
 const FAM: Record<string, string> = { steel: 'Steels', ss: 'Stainless & PH steels', ti: 'Titanium', al: 'Aluminium', ni: 'Nickel alloys', cu: 'Copper and brass', mg: 'Magnesium', refract: 'Refractory metals' };
 // manufacturing notes: from specs-mfg.mjs, or on the sheet itself (the titanium and nickel sheets)
-const full: SpecSheet[] = ([...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI, ...SPECS_MG, ...SPECS_REFRACT] as SpecSheet[]).map((s) => ({ ...s, mfg: MFG[s.name] ?? s.mfg }));
+// the library material of a sheet, for the link to its datasheet: the closest name when a sheet covers more than one
+const words = (x: string) => new Set(x.toLowerCase().replace(/\bgrade\b/g, 'gr').split(/[^a-z0-9]+/).filter(Boolean));
+const keyOf = (s: SpecSheet) => {
+  const sw = words(s.name), score = (n: string) => [...words(n)].reduce((a, w) => a + (sw.has(w) ? 1 : -0.5), 0);
+  return MATERIALS.filter((m) => sameAlloy(m, s)).sort((a, b) => score(b.name) - score(a.name))[0]?.key;
+};
+const full: (SpecSheet & { key?: string })[] = ([...SPECS_V2, ...data.specs, ...SPECS_CU, ...SPECS_STEEL, ...SPECS_SS, ...SPECS_AL, ...SPECS_TI, ...SPECS_NI, ...SPECS_MG, ...SPECS_REFRACT] as SpecSheet[]).map((s) => ({ ...s, mfg: MFG[s.name] ?? s.mfg, key: keyOf(s) }));
 // every metal of the material library is in the builder: the ones with no sheet yet get a skeleton callout
 const skeletons = MATERIALS.filter((m) => m.kind === 'metal' && !full.some((s) => sameAlloy(m, s)))
-  .map((m) => ({ ...skeletonSheet(m, matchRows(m, xref.rows as { name: string; family: string; en: string; enNo: string }[])[0]), mfg: MFG[m.name] }));
-const sheets = [...full, ...skeletons];
+  .map((m) => ({ ...skeletonSheet(m, matchRows(m, xref.rows as { name: string; family: string; en: string; enNo: string }[])[0]), mfg: MFG[m.name], key: m.key }));
+// the text that the filter searches: the sheet, its standards, and the designation rows of its library material (so a
+// UNS, EN or legacy BS number finds a sheet even when the sheet does not quote it)
+const XR = xref.rows as { name: string; family: string; en: string; enNo: string; legacyBs: string; uns: string; aero: string }[];
+const findText = (s: SpecSheet & { key?: string }) => {
+  const m = s.key ? MATERIALS.find((x) => x.key === s.key) : undefined;
+  const rows = m ? matchRows(m, XR) : [];
+  return [s.name, s.designation, s.base, s.composition, ...s.forms.map((f) => f.standard), ...rows.flatMap((r) => [r.en, r.enNo, r.legacyBs, r.uns, r.aero])].join(' ').toLowerCase();
+};
+const sheets = [...full, ...skeletons].map((s) => ({ ...s, find: findText(s) }));
 const group = (skel: boolean) => Object.entries(FAM)
   .map(([k, n]) => ({ n: skel ? `${n}: no sheet yet` : n, items: sheets.map((s, i) => ({ s, i })).filter(({ s }) => s.family === k && !!s.skeleton === skel) }))
   .filter((g) => g.items.length);
@@ -40,6 +53,10 @@ const groups = [...group(false), ...group(true)];
     <form data-form onsubmit="return false">
       <fieldset>
         <legend>Material</legend>
+        <label>Find a sheet
+          <input type="search" data-find placeholder="Alloy, UNS or EN number, or standard" autocomplete="off" />
+        </label>
+        <p class="hint" data-findcount hidden></p>
         <label>Specification sheet
           <select name="sheet">
             {groups.map((g) => (
@@ -48,6 +65,7 @@ const groups = [...group(false), ...group(true)];
           </select>
         </label>
         <p class="hint" data-base></p>
+        <p class="hint" data-dslink><a href="../datasheet/">Open the material datasheet →</a></p>
         <p class="hint">{full.length} full sheets. The other {skeletons.length} metals of the material library are at the end of the list, with a skeleton callout to complete.</p>
       </fieldset>
       <fieldset>
@@ -129,7 +147,7 @@ const groups = [...group(false), ...group(true)];
   import { parseStandard, buildCallout, needsBake, pcgRisk, type SpecSheet } from '../lib/callout';
 
   document.querySelectorAll<HTMLElement>('[data-specb]').forEach((root) => {
-    const sheets = JSON.parse(root.querySelector('[data-data]')!.textContent!) as SpecSheet[];
+    const sheets = JSON.parse(root.querySelector('[data-data]')!.textContent!) as (SpecSheet & { key?: string; find: string })[];
     const form = root.querySelector<HTMLFormElement>('[data-form]')!;
     const field = (n: string) => form.elements.namedItem(n) as HTMLSelectElement | HTMLInputElement;
     const q = (k: string) => root.querySelector<HTMLElement>(`[data-${k}]`)!;
@@ -150,6 +168,9 @@ const groups = [...group(false), ...group(true)];
       opts(field('finish') as HTMLSelectElement, s.finishes.map((f) => f.name), '— none —');
       (field('finish') as HTMLSelectElement).value = s.finishes.length ? '0' : '-1';
       q('base').textContent = `${s.base}${s.composition ? ` · ${s.composition}` : ''}`;
+      // the datasheet of the library material behind the sheet
+      q('dslink').hidden = !s.key;
+      if (s.key) q('dslink').querySelector('a')!.href = `../datasheet/?m=${encodeURIComponent(s.key)}`;
       show(q('ex'), s.callout || '—');
       q('ex').hidden = q('exhead').hidden = !s.callout;
       q('tips').innerHTML = s.tips.map((t) => `<li>${t}</li>`).join('');
@@ -197,7 +218,33 @@ const groups = [...group(false), ...group(true)];
       show(q('out'), outText);
     }
 
-    field('sheet').addEventListener('change', () => { loadSheet(); setBake(); run(); });
+    // the chosen sheet goes into the address, so a link opens it again (?sheet=<name>)
+    const remember = () => { try { const u = new URL(location.href); u.searchParams.set('sheet', sheet().name); history.replaceState(null, '', u); } catch { /* opaque origin */ } };
+    field('sheet').addEventListener('change', () => { loadSheet(); setBake(); run(); remember(); });
+    // find a sheet: every word must appear in its search text (see findText above)
+    const select = field('sheet') as HTMLSelectElement;
+    const hay = sheets.map((s) => s.find);
+    const find = q('find') as HTMLInputElement;
+    find.addEventListener('input', () => {
+      const terms = find.value.toLowerCase().split(/\s+/).filter(Boolean);
+      let n = 0, first: HTMLOptionElement | null = null;
+      for (const o of Array.from(select.options)) {
+        const show = terms.every((t) => hay[+o.value].includes(t));
+        o.hidden = o.disabled = !show; // disabled too: some browsers ignore hidden on an option
+        if (show) { n++; first ??= o; }
+      }
+      select.querySelectorAll('optgroup').forEach((g) => { g.hidden = !Array.from(g.children).some((o) => !(o as HTMLOptionElement).hidden); });
+      const count = q('findcount');
+      count.hidden = !terms.length;
+      count.textContent = n ? `${n} of ${select.options.length} sheets match.` : 'No sheet matches: try fewer words.';
+      if (first && select.selectedOptions[0]?.hidden) { select.value = first.value; select.dispatchEvent(new Event('change', { bubbles: true })); }
+    });
+    // open the sheet that the link names: ?sheet=<name>
+    try {
+      const want = new URLSearchParams(location.search).get('sheet');
+      const i = want ? sheets.findIndex((s) => s.name === want) : -1;
+      if (i >= 0) select.value = String(i);
+    } catch { /* no URL */ }
     field('form').addEventListener('change', loadForm);
     field('finish').addEventListener('change', setBake);
     form.addEventListener('change', (e) => { if (!['sheet', 'form'].includes((e.target as HTMLElement).getAttribute('name') ?? '')) run(); });
