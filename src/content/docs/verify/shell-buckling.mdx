@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import BucklingModes from '../../../components/BucklingModes.astro';
 import BucklingCalc from '../../../components/BucklingCalc.astro';
+import ShellBuckle from '../../../components/ShellBuckle.astro';
 
 <div class="glance">
   <div><b>In one line</b>A case that easily holds 12 MPa from inside can collapse under one atmosphere from outside. Without pressure, stability limits a thin shell, not strength.</div>
@@ -80,6 +81,8 @@ The thinner the shell, the larger the decrease. These are **lower limits**, fitt
 1960s. Many of those shells were made to less accurate standards than a modern case. The factors are safe and often
 very conservative. Programmes that have the budget measure their real imperfections and use non-linear analysis and
 test. The NASA Shell Buckling Knockdown Factor project develops less conservative factors with this method.
+
+<ShellBuckle />
 
 ### Bending is gentler
 

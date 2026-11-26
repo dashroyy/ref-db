@@ -1,0 +1,94 @@
+---
+// Animation: a bolted joint shaken sideways. Below the slip load nothing turns; above it the nut turns back, the
+// torque stripe opens and the preload runs away; a dowel stops the slip. State: loose() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { LOOSE, loose, loosePlot, attrs } from '../lib/explainers';
+
+const S = loose([1, 1, 1, 1]);
+const { cx, plot } = LOOSE;
+const { X, Y } = loosePlot;
+const steps = [
+  {
+    ms: LOOSE.ms[0],
+    html: '<b>Shake the joint sideways, below its slip load.</b> Friction at the interface carries the load. Nothing slides, and the nut does not turn.',
+  },
+  {
+    ms: LOOSE.ms[1],
+    html: '<b>Shake it above the slip load.</b> The plates slide in each cycle. While they slide, the friction on the thread cannot also hold the nut, and the thread ramp turns it back a little. The torque stripe opens.',
+  },
+  {
+    ms: LOOSE.ms[2],
+    html: '<b>The loosening runs away.</b> Less preload gives a lower slip load, so the slip gets larger and the nut turns faster. The preload falls away in a few more cycles.',
+  },
+  {
+    ms: LOOSE.ms[3],
+    html: '<b>Stop the slip.</b> A new joint has a dowel to carry the shear. The same shaking gives no slip, and the preload stays. Preload, with no slip, is the first lock.',
+  },
+];
+---
+
+<Explainer name="loose" title="Animation · why a shaken nut turns back" steps={steps}>
+  <svg viewBox="0 0 860 320" role="img" aria-labelledby="ln-desc">
+    <desc id="ln-desc">
+      Left: a bolt clamps two plates, and the top plate is shaken sideways. A torque stripe runs from the nut onto the
+      plate. Right: the preload against the number of cycles. The slipping joint loses its preload slowly at first and
+      then quickly. A new joint with a dowel keeps all of its preload.
+    </desc>
+    <defs>
+      <marker id="ln-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-ink)"></path>
+      </marker>
+    </defs>
+
+    <!-- left: the joint -->
+    <text x="40" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">JOINT, SHAKEN SIDEWAYS</text>
+    <text data-k="stat" x="40" y="50" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    <rect x="60" y="190" width="280" height="40" fill="var(--rd-steel)" fill-opacity="0.5" stroke="var(--rd-steel)"></rect>
+    <rect x={cx - 34} y="230" width="68" height="22" fill="var(--rd-ink)" fill-opacity="0.75"></rect>
+    <g data-k="top" {...attrs(S.top)}>
+      <rect x="60" y="150" width="280" height="40" fill="var(--rd-steel)" fill-opacity="0.6" stroke="var(--rd-steel)"></rect>
+      <rect x={cx - 7} y="110" width="14" height="14" fill="var(--rd-steel)"></rect>
+      <rect x={cx - 30} y="124" width="60" height="26" fill="var(--rd-ink)" fill-opacity="0.8"></rect>
+      <line x1={cx - 10} y1="124" x2={cx - 10} y2="150" stroke="var(--rd-panel)" stroke-opacity="0.5"></line>
+      <line x1={cx + 10} y1="124" x2={cx + 10} y2="150" stroke="var(--rd-panel)" stroke-opacity="0.5"></line>
+      <line x1={cx + 8} y1="150" x2={cx + 8} y2="166" stroke="var(--rd-warn)" stroke-width="4"></line>
+      <line data-k="stripe" y1="126" y2="148" {...attrs(S.stripe)} stroke="var(--rd-warn)" stroke-width="4"></line>
+      <text x={cx + 40} y="140" font-size="12" fill="var(--rd-warn)" class="halo">torque stripe</text>
+      <text data-k="turnLab" x={cx - 40} y="140" font-size="12" text-anchor="end" fill="var(--rd-accent)" class="halo" {...attrs(S.turnLab)}>nut turns back</text>
+      <line x1="350" y1="172" x2="398" y2="172" stroke="var(--rd-ink)" stroke-width="2" marker-start="url(#ln-ah)" marker-end="url(#ln-ah)"></line>
+      <text x="374" y="162" font-size="12" text-anchor="middle" fill="var(--rd-ink)">shake</text>
+    </g>
+    <line data-k="shank" y1="150" x2={cx} y2="230" {...attrs(S.shank)} stroke="var(--rd-ink)" stroke-width="3" stroke-dasharray="4 3" opacity="0.7"></line>
+    <g data-k="dowel" {...attrs(S.dowel)}>
+      <rect x="104" y="156" width="10" height="68" rx="2" fill="var(--rd-ok)" fill-opacity="0.9"></rect>
+      <text x="109" y="248" font-size="12" text-anchor="middle" fill="var(--rd-ok)">dowel</text>
+    </g>
+    <text data-k="fLab" x="40" y="300" font-size="13" fill="var(--rd-ink)">{S.fLab.text}</text>
+    <text data-k="tLab" x="200" y="300" font-size="13" fill="var(--rd-ink)">{S.tLab.text}</text>
+
+    <line x1="440" y1="12" x2="440" y2="312" stroke="var(--rd-line)"></line>
+
+    <!-- right: preload against cycles -->
+    <text x={plot.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">PRELOAD AGAINST CYCLES</text>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x1} y2={plot.y0} stroke="var(--rd-muted)"></line>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x0} y2={plot.y1 - 8} stroke="var(--rd-muted)"></line>
+    {[0, 0.5, 1].map((f) => (
+      <text x={plot.x0 - 8} y={Y(f) + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">{`${f * 100} %`}</text>
+    ))}
+    <text x={plot.x1} y={plot.y0 + 18} font-size="12" text-anchor="end" fill="var(--rd-muted)">cycles</text>
+    <line x1={X(LOOSE.start)} y1={plot.y1} x2={X(LOOSE.start)} y2={plot.y0} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text x={X(LOOSE.start) + 5} y={plot.y0 - 8} font-size="12" fill="var(--rd-muted)">slip starts</text>
+    <polyline data-k="curveB" {...attrs(S.curveB)} fill="none" stroke="var(--rd-ok)" stroke-width="2.5"></polyline>
+    <polyline data-k="curveA" {...attrs(S.curveA)} fill="none" stroke="var(--rd-accent)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <line x1="690" y1="112" x2="712" y2="112" stroke="var(--rd-accent)" stroke-width="2.5"></line>
+    <text x="718" y="116" font-size="13" fill="var(--rd-accent)">slipping joint</text>
+    <g data-k="legB" {...attrs(S.legB)}>
+      <line x1="690" y1="132" x2="712" y2="132" stroke="var(--rd-ok)" stroke-width="2.5"></line>
+      <text x="718" y="136" font-size="13" fill="var(--rd-ok)">with a dowel</text>
+    </g>
+  </svg>
+  <Fragment slot="caption">
+    Schematic: the slip and the rotation are exaggerated, and the cycles are for illustration only. The preload curve
+    has the shape of a Junker test.
+  </Fragment>
+</Explainer>

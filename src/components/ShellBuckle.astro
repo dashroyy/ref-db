@@ -1,0 +1,105 @@
+---
+// Animation: a perfect cylinder in axial compression buckles at the classical load and its capacity falls; a cylinder
+// with a small dent collapses well below it; tests scatter above the SP-8007 knockdown. State: shell() in
+// src/lib/explainers.ts (schematic load paths).
+import Explainer from './Explainer.astro';
+import { SHELL, shell, shellPlot, attrs } from '../lib/explainers';
+
+const S = shell([1, 1, 1, 1]);
+const { X, Y } = shellPlot;
+const { plot, gamma, tests } = SHELL;
+const diamonds = [
+  ...[140, 176, 212, 248].map((x) => ({ x, y: 162 })),
+  ...[158, 194, 230, 262].map((x) => ({ x, y: 196 })),
+];
+const dia = (x: number, y: number) => `${x},${y - 14} ${x + 16},${y} ${x},${y + 14} ${x - 16},${y}`;
+const steps = [
+  {
+    ms: SHELL.ms[0],
+    html: '<b>A perfect cylinder.</b> Compress it along its axis. The load increases in a straight line up to the classical buckling load, σ<sub>cl</sub> ≈ 0.605 E t / r.',
+  },
+  {
+    ms: SHELL.ms[1],
+    html: '<b>It buckles at once.</b> The wall forms a pattern of diamond-shaped dents, and the load that it can carry falls to a fraction. The path after buckling is unstable.',
+  },
+  {
+    ms: SHELL.ms[2],
+    html: '<b>A real cylinder has small imperfections.</b> A dent much smaller than the wall thickness makes it leave the straight line early and collapse well below the classical load.',
+  },
+  {
+    ms: SHELL.ms[3],
+    html: '<b>Design with a knockdown.</b> Tests of real cylinders scatter below the classical load. SP-8007 gives a lower limit: γ = 0.58 for r/t = 100 in axial compression.',
+  },
+];
+---
+
+<Explainer name="shell" title="Animation · why a thin cylinder buckles early" steps={steps}>
+  <svg viewBox="0 0 860 320" role="img" aria-labelledby="sb-desc">
+    <desc id="sb-desc">
+      Left: a thin cylinder compressed along its axis, with a small dent and a band of diamond-shaped buckles. Right: the
+      load against the end-shortening. The perfect cylinder rises in a straight line to the classical load and then
+      falls. The cylinder with a dent collapses at about two thirds of it. Test results scatter above the SP-8007
+      knockdown line at 0.58.
+    </desc>
+    <defs>
+      <marker id="sb-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-ink)"></path>
+      </marker>
+      <linearGradient id="sb-shade" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="var(--rd-steel)" stop-opacity="0.55"></stop>
+        <stop offset="0.45" stop-color="var(--rd-steel)" stop-opacity="0.2"></stop>
+        <stop offset="1" stop-color="var(--rd-steel)" stop-opacity="0.6"></stop>
+      </linearGradient>
+    </defs>
+
+    <!-- left: the cylinder -->
+    <text x="40" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">CYLINDER IN COMPRESSION</text>
+    <text data-k="stat" x="40" y="50" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    <ellipse cx="200" cy="256" rx="80" ry="12" fill="var(--rd-steel)" fill-opacity="0.35" stroke="var(--rd-steel)"></ellipse>
+    <rect data-k="wall" x="120" width="160" {...attrs(S.wall)} fill="url(#sb-shade)" stroke="var(--rd-steel)"></rect>
+    <g data-k="buckles" {...attrs(S.buckles)}>
+      {diamonds.map((d) => <polygon points={dia(d.x, d.y)} fill="var(--rd-panel)" fill-opacity="0.45" stroke="var(--rd-ink)" stroke-opacity="0.7"></polygon>)}
+    </g>
+    <g data-k="dent" {...attrs(S.dent)}>
+      <ellipse cx="232" cy="122" rx="7" ry="5" fill="none" stroke="var(--rd-accent)" stroke-width="1.8"></ellipse>
+      <text x="244" y="118" font-size="12" fill="var(--rd-accent)" class="halo">dent</text>
+    </g>
+    <g data-k="capTop" {...attrs(S.capTop)}>
+      <ellipse cx="200" cy="84" rx="80" ry="12" fill="var(--rd-steel)" fill-opacity="0.55" stroke="var(--rd-steel)"></ellipse>
+    </g>
+    <g data-k="arrows" {...attrs(S.arrows)} stroke="var(--rd-ink)" stroke-width="2.5">
+      {[0, 1, 2].map((i) => <line data-k={`aT${i}`} x1={160 + 40 * i} x2={160 + 40 * i} y2="70" {...attrs(S[`aT${i}`])} marker-end="url(#sb-ah)"></line>)}
+    </g>
+    <g stroke="var(--rd-ink)" stroke-width="2.5">
+      {[0, 1, 2].map((i) => <line data-k={`aB${i}`} x1={160 + 40 * i} x2={160 + 40 * i} y2="272" {...attrs(S[`aB${i}`])} marker-end="url(#sb-ah)"></line>)}
+    </g>
+    <text data-k="qLab" x="296" y="176" font-size="13" fill="var(--rd-ink)">{S.qLab.text}</text>
+
+    <line x1="440" y1="12" x2="440" y2="312" stroke="var(--rd-line)"></line>
+
+    <!-- right: load against end-shortening -->
+    <text x={plot.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">LOAD AGAINST SHORTENING</text>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x1} y2={plot.y0} stroke="var(--rd-muted)"></line>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x0} y2={plot.y1 - 6} stroke="var(--rd-muted)"></line>
+    {[0, 0.5, 1].map((q) => <text x={plot.x0 - 8} y={Y(q) + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">{q.toFixed(1)}</text>)}
+    <text x={plot.x0 + 8} y={plot.y1 - 4} font-size="12" fill="var(--rd-muted)">load ÷ classical</text>
+    <text x={plot.x1} y={plot.y0 + 18} font-size="12" text-anchor="end" fill="var(--rd-muted)">end-shortening</text>
+    <line x1={plot.x0} y1={Y(1)} x2={plot.x1} y2={Y(1)} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text x={plot.x1} y={Y(1) - 6} font-size="12" text-anchor="end" fill="var(--rd-muted)">classical</text>
+    <g data-k="tests" {...attrs(S.tests)}>
+      {tests.map((q, i) => <circle cx={X(1.42 + 0.05 * (i % 4))} cy={Y(q)} r="4" fill="none" stroke="var(--rd-ink)" stroke-width="1.5"></circle>)}
+      <text x={X(1.62)} y={Y(0.9) - 6} font-size="12" text-anchor="end" fill="var(--rd-ink)" class="halo">test results</text>
+    </g>
+    <g data-k="kd" {...attrs(S.kd)}>
+      <line x1={plot.x0} y1={Y(gamma)} x2={plot.x1} y2={Y(gamma)} stroke="var(--rd-ok)" stroke-width="2" stroke-dasharray="7 4"></line>
+      <text x={plot.x1} y={Y(gamma) + 16} font-size="13" text-anchor="end" fill="var(--rd-ok)" class="halo">γ = {gamma.toFixed(2)}</text>
+    </g>
+    <polyline data-k="curveP" {...attrs(S.curveP)} fill="none" stroke="var(--rd-accent)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <polyline data-k="curveD" {...attrs(S.curveD)} fill="none" stroke="var(--rd-blue)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <circle data-k="dot" r="5" {...attrs(S.dot)} stroke="var(--rd-panel)" stroke-width="1.5"></circle>
+  </svg>
+  <Fragment slot="caption">
+    Schematic load paths, and test points for illustration only. The knockdown is the SP-8007 value for r/t = 100 from
+    the table above.
+  </Fragment>
+</Explainer>

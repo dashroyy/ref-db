@@ -5,8 +5,23 @@ import { ends, progress, stageAt, nextStop, prevStop, stageStart, ease, seg, att
 import { STATES, CYL, PCG, HBAKE, LBB, cylinder, pcg, hbake, lbb, lbDepth, lbHalf, LB_TAU_B, stageOf } from '../src/lib/explainers.ts';
 import { BOLT, OR, GALV, bolt, oring, galv, boltForces, boltLoad, oringShape, oringLoad, polyArea, gamma, kappa, galvCurrent, galvCharge } from '../src/lib/explainers.ts';
 import { MMC, INS, VIB, mmc, insul, vib, mmcAt, insulModel, insulAt, insulLimit, charDepth, transmissibility, vibAt } from '../src/lib/explainers.ts';
+import { LOOSE, SHELL, REC, loose, shell, recov, looseAt, preloadLeft, knockdown, shellAt, recovery, recoveryTime, recAt } from '../src/lib/explainers.ts';
 
-const MS = { cylinder: CYL.ms, pcg: PCG.ms, hbake: HBAKE.ms, lbb: LBB.ms, bolt: BOLT.ms, oring: OR.ms, galv: GALV.ms, mmc: MMC.ms, insul: INS.ms, vib: VIB.ms };
+const MS = {
+  cylinder: CYL.ms,
+  pcg: PCG.ms,
+  hbake: HBAKE.ms,
+  lbb: LBB.ms,
+  bolt: BOLT.ms,
+  oring: OR.ms,
+  galv: GALV.ms,
+  mmc: MMC.ms,
+  insul: INS.ms,
+  vib: VIB.ms,
+  loose: LOOSE.ms,
+  shell: SHELL.ms,
+  recov: REC.ms,
+};
 const FILES = {
   cylinder: 'CylinderSplit',
   pcg: 'PcgGrowth',
@@ -18,6 +33,9 @@ const FILES = {
   mmc: 'MmcBonus',
   insul: 'InsulSoak',
   vib: 'VibSweep',
+  loose: 'LooseNut',
+  shell: 'ShellBuckle',
+  recov: 'SealRecovery',
 };
 const num = (v: string | number | undefined) => Number(v);
 
@@ -288,4 +306,66 @@ test('sine sweep: Q at the natural frequency, one at root two, and less isolatio
   assert.equal(num(end.curveB.opacity), 1);
   assert.equal(num(end.q3.opacity), 1);
   assert.equal(num(vib([1, 0, 0, 0]).curveB.opacity), 0);
+});
+
+test('loosening: nothing turns below the slip load, the loss accelerates above it, a dowel keeps the preload', () => {
+  assert.equal(preloadLeft(0), 1);
+  assert.equal(preloadLeft(LOOSE.start), 1);
+  assert.ok(Math.abs(preloadLeft(LOOSE.nMax) - 0.08) < 1e-9);
+  // equal steps in cycles lose more and more preload
+  const steps = [0.2, 0.45, 0.7, 0.95, 1.2].map(preloadLeft);
+  const losses = steps.slice(1).map((x, i) => steps[i] - x);
+  for (let i = 1; i < losses.length; i++) assert.ok(losses[i] > losses[i - 1]);
+  const below = looseAt([1, 0, 0, 0]);
+  assert.equal(below.x, 1);
+  assert.equal(below.theta, 0);
+  // the slip grows as the preload falls
+  assert.ok(looseAt([1, 1, 0.5, 0]).amp > looseAt([1, 0.2, 0, 0]).amp);
+  const run = loose([1, 1, 1, 0]);
+  assert.equal(run.fLab.text, 'preload 8 %');
+  assert.equal(run.tLab.text, `nut turned back ${Math.round(0.92 * LOOSE.theta)}°`);
+  const end = loose([1, 1, 1, 1]);
+  assert.equal(end.fLab.text, 'preload 100 %');
+  assert.equal(num(end.dowel.opacity), 1);
+});
+
+test('shell buckling: the perfect shell gets to the classical load, a dented one collapses above the knockdown', () => {
+  // the SP-8007 table on the page
+  assert.equal(knockdown(50).toFixed(2), '0.68');
+  assert.equal(knockdown(100).toFixed(2), '0.58');
+  assert.equal(knockdown(300).toFixed(2), '0.40');
+  assert.equal(knockdown(1000).toFixed(2), '0.22');
+  const top = shellAt([1, 0, 0, 0]);
+  assert.ok(Math.abs(top.q - 1) < 1e-9 && !top.buckled);
+  assert.ok(shellAt([1, 1, 0, 0]).buckled && shellAt([1, 1, 0, 0]).q < 0.4);
+  // the dented shell peaks at SHELL.peak, below the classical load and above the knockdown, like the tests
+  let peak = 0;
+  for (let u = 0; u <= 1.0001; u += 0.01) peak = Math.max(peak, shellAt([1, 1, u, 0]).q);
+  assert.ok(Math.abs(peak - SHELL.peak) < 0.01 && peak < 1 && peak > SHELL.gamma);
+  for (const q of SHELL.tests) assert.ok(q > SHELL.gamma && q < 1);
+  const end = shell([1, 1, 1, 1]);
+  assert.equal(num(end.kd.opacity), 1);
+  assert.equal(num(end.dent.opacity), 1);
+});
+
+test('seal recovery: the worked-example points, and only the cold seal leaves a gap', () => {
+  assert.ok(Math.abs(recovery(0.1, REC.tauWarm) - 0.632) < 0.001);
+  assert.ok(Math.abs(recovery(0.1, REC.tauCold) - 0.064) < 0.0005);
+  assert.ok(Math.abs(REC.tauCold / REC.tauWarm - 32000) < 1e-6);
+  assert.ok(recoveryTime(0.5, REC.tauWarm) < 0.05);
+  assert.ok(recoveryTime(0.5, REC.tauCold) > 600);
+  const total = ends(REC.ms)[REC.ms.length - 1];
+  for (let t = 0; t <= total; t += total / 131) {
+    const s = recov(progress(REC.ms, t));
+    // a seal is never higher than the gap (the attributes are rounded to 0.01)
+    const { gap } = recAt(progress(REC.ms, t));
+    for (const k of ['W', 'C']) assert.ok(num(s[`seal${k}`].height) <= gap + 0.006);
+  }
+  const lag = recov([1, 1, 1, 0]);
+  assert.equal(lag.stW.text, 'sealing');
+  assert.equal(lag.stC.text, 'gap: gas gets past');
+  assert.equal(num(lag.gasC.opacity), 1);
+  assert.equal(num(lag.gasW.opacity), 0);
+  const end = recov([1, 1, 1, 1]);
+  assert.equal(num(end.mkC.opacity), 1);
 });

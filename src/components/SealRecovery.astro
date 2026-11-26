@@ -1,0 +1,102 @@
+---
+// Animation: two squeezed seals, at 40 °C and at 0 °C, when the joint opens. The warm seal follows the gap in
+// milliseconds; the cold one takes minutes. State: recov() in src/lib/explainers.ts (a recovery curve tuned to the
+// worked example on the viscoelasticity page).
+import Explainer from './Explainer.astro';
+import { REC, recov, recPlot, recovery, recoveryTime, attrs } from '../lib/explainers';
+
+const S = recov([1, 1, 1, 1]);
+const { X, Y } = recPlot;
+const { plot, base, logs } = REC;
+const full = (tau: number) => {
+  const pts: string[] = [];
+  for (let lt = logs[0]; lt <= logs[3] + 1e-9; lt += 0.05) pts.push(`${X(lt).toFixed(2)},${Y(recovery(10 ** lt, tau)).toFixed(2)}`);
+  return pts.join(' ');
+};
+const fmt = (t: number) => (t < 1 ? `${Math.round(t * 1000)} ms` : t < 120 ? `${Math.round(t)} s` : `${Math.round(t / 60)} min`);
+const panels = [
+  { key: 'W', ox: REC.panels[0], title: '40 °C', tau: REC.tauWarm },
+  { key: 'C', ox: REC.panels[1], title: '0 °C', tau: REC.tauCold },
+].map((pn) => ({ ...pn, t50: recoveryTime(0.5, pn.tau) }));
+const ticks = [
+  { lt: -5, t: '10 µs' },
+  { lt: -3, t: '1 ms' },
+  { lt: -1, t: '0.1 s' },
+  { lt: 1, t: '10 s' },
+  { lt: 3, t: '1000 s' },
+];
+const steps = [
+  {
+    ms: REC.ms[0],
+    html: '<b>Two seals, squeezed the same.</b> One is at 40 °C and one is at 0 °C. In the squeezed state, both of them seal.',
+  },
+  {
+    ms: REC.ms[1],
+    html: '<b>The joint opens.</b> Under pressure, the gap gets wider in about a millisecond. Each seal must spring back by half of its squeeze to stay in contact.',
+  },
+  {
+    ms: REC.ms[2],
+    html: '<b>The warm seal follows</b> in a few hundredths of a second. At 0 °C all the processes are about 32,000 times slower, so the cold seal lags, and gas gets past it.',
+  },
+  {
+    ms: REC.ms[3],
+    html: '<b>The cold seal recovers too late,</b> after minutes. This is the Challenger mechanism. Keep the seal warm, use a compound with a lower glass transition, add squeeze, or stop the joint from opening.',
+  },
+];
+---
+
+<Explainer name="recov" title="Animation · a warm seal follows the joint, a cold seal does not" steps={steps}>
+  <svg viewBox="0 0 860 330" role="img" aria-labelledby="rc-desc">
+    <desc id="rc-desc">
+      Two seals in a joint that has opened, one at 40 °C and one at 0 °C, with the recovery of each seal against the
+      logarithm of the time since the joint opened. The warm seal gets back into contact after about 25 milliseconds.
+      The cold seal gets back into contact only after about 13 minutes, and gas gets past it until then.
+    </desc>
+    <defs>
+      <marker id="rc-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-hot)"></path>
+      </marker>
+    </defs>
+    <text data-k="stat" x="20" y="320" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    {panels.map((pn) => (
+      <g>
+        <text x={pn.ox + 10} y="30" font-size="14" font-weight="600" fill="var(--rd-ink)">{pn.title}</text>
+        <text data-k={`st${pn.key}`} x={pn.ox + 10} y="50" font-size="13" {...attrs(S[`st${pn.key}`])}>{S[`st${pn.key}`].text}</text>
+        <rect data-k={`plate${pn.key}`} x={pn.ox + 10} width="210" height="34" {...attrs(S[`plate${pn.key}`])} fill="var(--rd-steel)" fill-opacity="0.55" stroke="var(--rd-steel)"></rect>
+        <rect x={pn.ox + 10} y={base} width="210" height="22" fill="var(--rd-steel)" fill-opacity="0.55" stroke="var(--rd-steel)"></rect>
+        <rect data-k={`seal${pn.key}`} rx="12" {...attrs(S[`seal${pn.key}`])} fill="var(--rd-ink)"></rect>
+        <g data-k={`gas${pn.key}`} {...attrs(S[`gas${pn.key}`])}>
+          <line x1={pn.ox + 16} y1="0" x2={pn.ox + 212} y2="0" stroke="var(--rd-hot)" stroke-width="2.5" marker-end="url(#rc-ah)"></line>
+        </g>
+        <text data-k={`rec${pn.key}`} x={pn.ox + 10} y="276" font-size="13" fill="var(--rd-ink)">{S[`rec${pn.key}`].text}</text>
+        <g data-k={`mk${pn.key}`} {...attrs(S[`mk${pn.key}`])}>
+          <text x={pn.ox + 10} y="296" font-size="12" fill="var(--rd-ok)">{`contact again after ${fmt(pn.t50)}`}</text>
+          <circle cx={X(Math.log10(pn.t50))} cy={Y(0.5)} r="6" fill="none" stroke="var(--rd-ok)" stroke-width="2"></circle>
+        </g>
+      </g>
+    ))}
+
+    <line x1="560" y1="12" x2="560" y2="312" stroke="var(--rd-line)"></line>
+
+    <!-- right: recovery against log time -->
+    <text x={plot.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">RECOVERY</text>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x1} y2={plot.y0} stroke="var(--rd-muted)"></line>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x0} y2={plot.y1 - 8} stroke="var(--rd-muted)"></line>
+    {[0.5, 1].map((f) => <text x={plot.x0 - 6} y={Y(f) + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">{`${f * 100} %`}</text>)}
+    {ticks.map((k) => <text x={X(k.lt)} y={plot.y0 + 16} font-size="11.5" text-anchor="middle" fill="var(--rd-muted)">{k.t}</text>)}
+    <text x={plot.x1} y={plot.y0 + 34} font-size="12" text-anchor="end" fill="var(--rd-muted)">time after the joint opens</text>
+    <line x1={plot.x0} y1={Y(0.5)} x2={plot.x1} y2={Y(0.5)} stroke="var(--rd-accent)" stroke-dasharray="6 4"></line>
+    <text x={plot.x0 + 6} y={Y(0.5) - 6} font-size="12" fill="var(--rd-accent)">needed</text>
+    <polyline points={full(REC.tauWarm)} fill="none" stroke="var(--rd-ok)" stroke-opacity="0.25" stroke-width="2"></polyline>
+    <polyline points={full(REC.tauCold)} fill="none" stroke="var(--rd-blue)" stroke-opacity="0.25" stroke-width="2"></polyline>
+    <line data-k="cursor" y1={plot.y1} y2={plot.y0} {...attrs(S.cursor)} stroke="var(--rd-muted)"></line>
+    <polyline data-k="cW" {...attrs(S.cW)} fill="none" stroke="var(--rd-ok)" stroke-width="2.5"></polyline>
+    <polyline data-k="cC" {...attrs(S.cC)} fill="none" stroke="var(--rd-blue)" stroke-width="2.5"></polyline>
+    <text x={X(-1.2) - 6} y={Y(0.59) - 8} font-size="13" text-anchor="end" fill="var(--rd-ok)">40 °C</text>
+    <text x={X(1.6) + 6} y={Y(0.27) + 16} font-size="13" fill="var(--rd-blue)">0 °C</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic: the recovery curves are tuned to the worked example above (63% and 6.4% after 0.1 s). The squeeze and
+    the opening are for illustration only.
+  </Fragment>
+</Explainer>

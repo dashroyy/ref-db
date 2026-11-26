@@ -958,4 +958,213 @@ export function vib(p: number[]): State {
   };
 }
 
-export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv, mmc, insul, vib };
+// ---------------------------------------------------------------------------------------------------------------------
+// 11. Why a shaken nut turns back (joints/locking-and-retention)
+// ---------------------------------------------------------------------------------------------------------------------
+// After the sideways load is increased to 1.3 times the slip load, the preload falls as x = 1.3 - 0.3 e^(k n): each
+// loss lowers the slip load, so the slip and the loss rate grow. k is set so that 8% of the preload is left at the end.
+export const LOOSE = {
+  ms: [2400, 3200, 3000, 3000],
+  k: Math.log((1.3 - 0.08) / 0.3),
+  start: 0.2, // the cycle count where the sideways load goes above the slip load
+  nMax: 1.2,
+  theta: 70, // the rotation, in degrees, that releases all the preload (illustration)
+  cx: 200, // the bolt axis in the drawing
+  plot: { x0: 470, x1: 830, y0: 270, y1: 80 },
+};
+/** The fraction of the preload that is left after n (normalised) cycles of the slipping joint. */
+export const preloadLeft = (n: number) => (n <= LOOSE.start ? 1 : Math.max(0, 1.3 - 0.3 * Math.exp(LOOSE.k * (n - LOOSE.start))));
+const lpX = (n: number) => LOOSE.plot.x0 + ((LOOSE.plot.x1 - LOOSE.plot.x0) * n) / LOOSE.nMax;
+const lpY = (x: number) => LOOSE.plot.y0 - (LOOSE.plot.y0 - LOOSE.plot.y1) * x;
+export const loosePlot = { X: lpX, Y: lpY };
+/** The cycle count, the preload left, the slip amplitude (px) and the nut rotation (degrees) at each moment. */
+export const looseAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  const n = k === 0 ? 0.2 * u : k === 1 ? 0.2 + 0.5 * u : k === 2 ? 0.7 + 0.5 * u : LOOSE.nMax;
+  const x = k === 3 ? 1 : preloadLeft(n);
+  const b = 1 / 1.3;
+  const amp = k === 0 || k === 3 ? 0.8 : Math.min(16, (4 * (1 - b * x)) / (1 - b));
+  return { k, n, x, amp, theta: k === 3 ? 0 : LOOSE.theta * (1 - x) };
+};
+const LOOSE_TEXT = ['Below the slip load', 'Slipping: the nut turns back', 'Runaway', 'A dowel stops the slip'];
+
+export function loose(p: number[]): State {
+  const { k, n, x, amp, theta } = looseAt(p);
+  const elapsed = LOOSE.ms.reduce((s, m, i) => s + m * (p[i] ?? 0), 0);
+  const dx = amp * Math.sin((2 * Math.PI * 2.4 * elapsed) / 1000);
+  const { cx } = LOOSE;
+  const ptsA: string[] = [];
+  const nA = k === 3 ? LOOSE.nMax : n;
+  for (let m = 0; m < nA; m += 0.01) ptsA.push(`${r2(lpX(m))},${r2(lpY(preloadLeft(m)))}`);
+  ptsA.push(`${r2(lpX(nA))},${r2(lpY(preloadLeft(nA)))}`);
+  const u4 = p[3] ?? 0;
+  return {
+    top: { transform: `translate(${r2(dx)} 0)` },
+    shank: { x1: r2(cx + dx) },
+    stripe: { x1: r2(cx + 8 + 21 * Math.sin((theta * Math.PI) / 180)), x2: r2(cx + 8 + 21 * Math.sin((theta * Math.PI) / 180)) },
+    turnLab: { opacity: theta > 4 ? 1 : 0 },
+    curveA: { points: ptsA.join(' ') },
+    curveB: { points: k === 3 ? `${r2(lpX(0))},${r2(lpY(1))} ${r2(lpX(LOOSE.nMax * u4))},${r2(lpY(1))}` : '', opacity: k === 3 ? 1 : 0 },
+    dowel: { opacity: k === 3 ? 1 : 0 },
+    legB: { opacity: k === 3 ? 1 : 0 },
+    stat: { text: LOOSE_TEXT[k] },
+    fLab: { text: `preload ${Math.round(100 * x)} %` },
+    tLab: { text: `nut turned back ${Math.round(theta)}°` },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 12. Why a thin cylinder buckles early (verify/shell-buckling)
+// ---------------------------------------------------------------------------------------------------------------------
+// Schematic load paths: load / classical load against end-shortening (1 at the classical load).
+const SH_PEAK = 0.66; // the collapse load of the shell with a small dent (schematic)
+/** The SP-8007 knockdown for axial compression of an unstiffened cylinder. */
+export const knockdown = (rt: number) => 1 - 0.901 * (1 - Math.exp(-Math.sqrt(rt) / 16));
+export const SHELL = {
+  ms: [2600, 2400, 3000, 2800],
+  peak: SH_PEAK,
+  gamma: knockdown(100),
+  plot: { x0: 470, x1: 830, y0: 270, y1: 70, sMax: 1.7, pMax: 1.1 },
+  // test results for illustration: collapse loads of real shells, all above the knockdown
+  tests: [0.63, 0.71, 0.66, 0.79, 0.74, 0.69, 0.86, 0.61, 0.77, 0.68, 0.82, 0.72],
+};
+const shX = (s: number) => SHELL.plot.x0 + ((SHELL.plot.x1 - SHELL.plot.x0) * s) / SHELL.plot.sMax;
+const shY = (q: number) => SHELL.plot.y0 - ((SHELL.plot.y0 - SHELL.plot.y1) * q) / SHELL.plot.pMax;
+export const shellPlot = { X: shX, Y: shY };
+/** The perfect shell: straight to 1, a sudden drop, then a low post-buckling path. f from 0 to 1 along it. */
+const perfectPath = (f: number): [number, number] => {
+  if (f <= 0.6) return [f / 0.6, f / 0.6];
+  if (f <= 0.75) return [lerp(1, 1.06, (f - 0.6) / 0.15), lerp(1, 0.32, (f - 0.6) / 0.15)];
+  return [lerp(1.06, 1.7, (f - 0.75) / 0.25), lerp(0.32, 0.36, (f - 0.75) / 0.25)];
+};
+/** The shell with a dent: it softens, collapses at SH_PEAK, then drops to the same low path. */
+const dentPath = (f: number): [number, number] => {
+  if (f <= 0.6) {
+    const l = (SH_PEAK * f) / 0.6;
+    return [l * (1 + 0.35 * (l / SH_PEAK) ** 4), l];
+  }
+  const s0 = SH_PEAK * 1.35;
+  if (f <= 0.75) return [lerp(s0, s0 + 0.06, (f - 0.6) / 0.15), lerp(SH_PEAK, 0.3, (f - 0.6) / 0.15)];
+  return [lerp(s0 + 0.06, 1.7, (f - 0.75) / 0.25), lerp(0.3, 0.36, (f - 0.75) / 0.25)];
+};
+const trace = (path: (f: number) => [number, number], f1: number) => {
+  const pts: string[] = [];
+  for (let f = 0; f < f1; f += 0.005) {
+    const [s, q] = path(f);
+    pts.push(`${r2(shX(s))},${r2(shY(q))}`);
+  }
+  const [s, q] = path(f1);
+  pts.push(`${r2(shX(s))},${r2(shY(q))}`);
+  return pts.join(' ');
+};
+export const shellAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  // f along the perfect path in stages 1-2, along the dent path in stage 3
+  const fP = k === 0 ? 0.6 * u : k === 1 ? 0.6 + 0.25 * u : 0.85;
+  const fD = k === 2 ? 0.85 * u : k === 3 ? 0.85 : 0;
+  const [s, q] = k >= 2 ? dentPath(fD) : perfectPath(fP);
+  return { k, fP, fD, s, q, buckled: k >= 2 ? fD > 0.62 : fP > 0.62 };
+};
+const SH_TEXT = ['Perfect shell', 'Buckled', 'Real shell with a small dent', 'Design with a knockdown'];
+
+export function shell(p: number[]): State {
+  const { k, fP, fD, s, q, buckled } = shellAt(p);
+  const short = 14 * Math.min(1.2, s); // the drawn end-shortening, px
+  const arrow = 10 + 26 * q;
+  const u4 = p[3] ?? 0;
+  const s0: State = {};
+  [0, 1, 2].forEach((i) => {
+    s0[`aT${i}`] = { y1: r2(68 - arrow) };
+    s0[`aB${i}`] = { y1: r2(272 + arrow) };
+  });
+  return {
+    ...s0,
+    curveP: { points: trace(perfectPath, Math.max(0.001, fP)) },
+    curveD: { points: k >= 2 ? trace(dentPath, Math.max(0.001, fD)) : '', opacity: k >= 2 ? 1 : 0 },
+    dot: { cx: r2(shX(s)), cy: r2(shY(q)), fill: k >= 2 ? 'var(--rd-blue)' : 'var(--rd-accent)' },
+    capTop: { transform: `translate(0 ${r2(short)})` },
+    wall: { y: r2(84 + short), height: r2(172 - short) },
+    arrows: { transform: `translate(0 ${r2(short)})` },
+    buckles: { opacity: buckled ? 1 : 0 },
+    dent: { opacity: k >= 2 ? 1 : 0 },
+    tests: { opacity: r2(seg(u4, 0, 0.4)) },
+    kd: { opacity: r2(seg(u4, 0.3, 0.7)) },
+    stat: { text: SH_TEXT[k] },
+    qLab: { text: `P / Pcl = ${q.toFixed(2)}` },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 13. A warm seal follows the joint, a cold seal does not (fundamentals/viscoelasticity)
+// ---------------------------------------------------------------------------------------------------------------------
+// Recovery after release, r(t) = 1 - exp(-(t / tau)^beta): a schematic curve tuned to the worked example on that page
+// (63% after 0.1 s at 40 °C, 6.4% at 0 °C, where all processes are approximately 32,000 times slower).
+export const REC = {
+  ms: [2000, 2600, 3400, 3400],
+  beta: Math.log(-Math.log(1 - 0.064)) / Math.log(0.1 / (0.1 * 32000)),
+  tauWarm: 0.1,
+  tauCold: 0.1 * 32000,
+  H0: 72, // the free height of the seal, px
+  Hs: 54, // squeezed
+  open: 9, // the joint opening: half of the squeeze
+  W0: 64,
+  base: 228, // the top of the groove floor
+  logs: [-5, -3, 0, 3], // log10 of the time at the start of stages 2, 3, 4 and at the end
+  plot: { x0: 590, x1: 836, y0: 270, y1: 84 },
+  panels: [20, 290], // the left edge of the warm and the cold panel
+};
+export const recovery = (t: number, tau: number) => 1 - Math.exp(-((t / tau) ** REC.beta));
+/** The time after release (s) at which the recovery gets to the fraction f. */
+export const recoveryTime = (f: number, tau: number) => tau * (-Math.log(1 - f)) ** (1 / REC.beta);
+const rcX = (lt: number) => REC.plot.x0 + ((REC.plot.x1 - REC.plot.x0) * (lt - REC.logs[0])) / (REC.logs[3] - REC.logs[0]);
+const rcY = (r: number) => REC.plot.y0 - (REC.plot.y0 - REC.plot.y1) * r;
+export const recPlot = { X: rcX, Y: rcY };
+const rcCurve = (tau: number, lt1: number) => {
+  const pts: string[] = [];
+  for (let lt = REC.logs[0]; lt < lt1; lt += 0.05) pts.push(`${r2(rcX(lt))},${r2(rcY(recovery(10 ** lt, tau)))}`);
+  pts.push(`${r2(rcX(lt1))},${r2(rcY(recovery(10 ** lt1, tau)))}`);
+  return pts.join(' ');
+};
+/** The gap above the floor, the opening progress and log10 of the time since release at each moment. */
+export const recAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  const { H0, Hs, open, logs } = REC;
+  if (k === 0) return { k, gap: lerp(H0 + 8, Hs, ease(u)), lt: null as number | null };
+  const lt = lerp(logs[k - 1], logs[k], u);
+  const gap = Hs + open * (k === 1 ? ease(u) : 1);
+  return { k, gap, lt };
+};
+const REC_TEXT = ['Both seals squeezed', 'The joint opens', 'Warm follows, cold lags', 'Too late for the cold seal'];
+
+export function recov(p: number[]): State {
+  const { k, gap, lt } = recAt(p);
+  const { H0, Hs, W0, base } = REC;
+  const s: State = {
+    stat: { text: REC_TEXT[k] },
+    cursor: { x1: r2(rcX(lt ?? REC.logs[0])), x2: r2(rcX(lt ?? REC.logs[0])), opacity: lt === null ? 0 : 1 },
+    cW: { points: lt === null ? '' : rcCurve(REC.tauWarm, lt) },
+    cC: { points: lt === null ? '' : rcCurve(REC.tauCold, lt) },
+  };
+  [REC.tauWarm, REC.tauCold].forEach((tau, i) => {
+    const key = i ? 'C' : 'W';
+    const ox = REC.panels[i];
+    const r = lt === null ? 0 : recovery(10 ** lt, tau);
+    const want = lt === null ? H0 : Hs + r * (H0 - Hs);
+    const h = Math.min(want, gap);
+    const w = (W0 * H0) / h;
+    const leak = lt !== null && gap - h > 1.5;
+    const reached = lt !== null && lt >= Math.log10(recoveryTime(0.5, tau));
+    s[`seal${key}`] = { x: r2(ox + 115 - w / 2), y: r2(base - h), width: r2(w), height: r2(h) };
+    s[`plate${key}`] = { y: r2(base - gap - 34) };
+    s[`gas${key}`] = { opacity: leak ? 1 : 0, transform: `translate(0 ${r2(base - h - (gap - h) / 2)})` };
+    s[`rec${key}`] = { text: `recovered ${Math.round(100 * r)} %` };
+    s[`st${key}`] = { text: leak ? 'gap: gas gets past' : 'sealing', fill: leak ? 'var(--rd-accent)' : 'var(--rd-ok)' };
+    s[`mk${key}`] = { opacity: reached ? 1 : 0 };
+  });
+  return s;
+}
+
+export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv, mmc, insul, vib, loose, shell, recov };
