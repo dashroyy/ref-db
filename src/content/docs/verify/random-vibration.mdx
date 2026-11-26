@@ -10,6 +10,7 @@ import Analogy from '../../../components/Analogy.astro';
 import RandomSignal from '../../../components/RandomSignal.astro';
 import StrainLife from '../../../components/StrainLife.astro';
 import VibCalc from '../../../components/VibCalc.astro';
+import VibSweep from '../../../components/VibSweep.astro';
 
 <div class="glance">
   <div><b>In one line</b>A random environment is power spread over frequency. Each part responds mostly to the band around its own natural frequency, and you design it for three times its rms response.</div>
@@ -83,6 +84,8 @@ input near $f_n$ is important. This is why the frequency of a part decides its e
   other pushes cancel. A swing with good bearings (high Q) goes higher, but it responds only to a smaller range of
   rhythms.
 </Analogy>
+
+<VibSweep />
 
 **Assumptions:** one mode; light damping; an input that is approximately flat across the half-power bandwidth $f_n/Q$;
 a rigid base whose motion the part does not change; and a Gaussian, steady input. The calculator compares Miles with

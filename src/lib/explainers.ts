@@ -692,4 +692,270 @@ export function galv(p: number[]): State {
   return s;
 }
 
-export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv };
+// ---------------------------------------------------------------------------------------------------------------------
+// 8. Bonus tolerance at MMC (drawing/gdt): the numbers of the worked example on that page
+// ---------------------------------------------------------------------------------------------------------------------
+const MM_PHI = Math.atan2(0.21, 0.18);
+const MM_E = Math.hypot(0.18, 0.21);
+export const MMC = {
+  ms: [2800, 2600, 2600, 2600],
+  t: 0.5,
+  mmc: 11.0,
+  lmc: 11.2,
+  vc: 10.5,
+  left: { cx: 210, cy: 182, r0: 84, k: 130 }, // clearances x 130 px/mm about a 11.0 hole drawn 84 px in radius
+  right: { cx: 640, cy: 182, k: 300 }, // the position zone at 300 px/mm
+};
+/** The hole size, and the offset of its axis from true position (radius e at the angle phi), at each moment. */
+export const mmcAt = ([u1 = 1, u2 = 1, u3 = 1, u4 = 1]: number[]) => {
+  let d = MMC.mmc;
+  let e = MM_E;
+  let phi = MM_PHI;
+  if (u4 > 0) d = lerp(11.0, 11.15, ease(u4));
+  else if (u3 > 0) {
+    d = lerp(11.2, 11.0, ease(u3));
+    e = lerp(0.35, MM_E, ease(u3));
+  } else if (u2 > 0) {
+    d = lerp(11.0, 11.2, ease(u2));
+    e = (d - MMC.vc) / 2;
+  } else {
+    e = 0.25 * ease(seg(u1, 0, 0.3));
+    phi = MM_PHI + 2 * Math.PI * ease(seg(u1, 0.3, 1));
+  }
+  const allowed = MMC.t + (d - MMC.mmc);
+  return { d, e, phi, dx: e * Math.cos(phi), dy: e * Math.sin(phi), allowed, measured: 2 * e, ok: 2 * e <= allowed + 1e-9 };
+};
+
+export function mmc(p: number[]): State {
+  const { d, dx, dy, allowed, measured, ok } = mmcAt(p);
+  const { left: L, right: R } = MMC;
+  const hx = L.cx + L.k * dx;
+  const hy = L.cy - L.k * dy;
+  const ax = R.cx + R.k * dx;
+  const ay = R.cy - R.k * dy;
+  const col = ok ? 'var(--rd-ok)' : 'var(--rd-accent)';
+  return {
+    hole: { cx: r2(hx), cy: r2(hy), r: r2(L.r0 + L.k * (d / 2 - 5.5)) },
+    hAxis: { transform: `translate(${r2(hx)} ${r2(hy)})` },
+    pin: { fill: col },
+    zone: { r: r2((R.k * allowed) / 2) },
+    axis: { cx: r2(ax), cy: r2(ay), fill: col },
+    vec: { x2: r2(ax), y2: r2(ay) },
+    holeLab: { text: `hole ⌀${d.toFixed(2)}` },
+    zoneLab: { text: `permitted ⌀${allowed.toFixed(2)}`, y: r2(R.cy - (R.k * allowed) / 2 - 8) },
+    readout: { text: `bonus ${(d - MMC.mmc).toFixed(2)}  ·  axis ⌀${measured.toFixed(3)}` },
+    verdict: { text: ok ? 'CONFORMS' : 'REJECT', fill: col },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 9. Char, erosion and soak-back (motor/insulation): one-dimensional conduction, nondimensional
+// ---------------------------------------------------------------------------------------------------------------------
+// The insulation is 1 thick with a diffusivity of 1. During the burn the surface is at 1 and erodes at v. After
+// burnout the face radiates (linearised, hs). The bondline node carries the capacity of a thin case (cc) and loses heat
+// to the outside (hb). Temperatures are fractions of the surface rise. Solved once, on first use.
+export const INS = {
+  ms: [2400, 3000, 3000, 3600],
+  N: 40,
+  v: 0.8,
+  tb: 0.06,
+  tEnd: 1.0,
+  thp: 0.36, // the pyrolysis level: (450 - 20) / (1200 - 20) in the worked example
+  hs: 3,
+  hb: 0.4,
+  cc: 0.25,
+  times: [0, 0.015, 0.06, 0.2, 1.0], // the physical time at the start of each stage, and the end
+  sec: { x0: 90, x1: 380, gas: 40, case: 410 }, // the section: insulation from x0 to x1, case to `case`
+  prof: { top: 62, bot: 172 }, // the profile chart over the section: temperature 1 at top, 0 at bot
+  plot: { x0: 480, x1: 830, y0: 250, y1: 70, tMax: 1.0, thMax: 0.15 }, // the bondline history
+};
+type InsModel = { t: number[]; th: Float32Array[]; mx: Float32Array[]; bond: number[]; peak: { t: number; th: number } };
+let insCache: InsModel | null = null;
+export const insulModel = (): InsModel => {
+  if (insCache) return insCache;
+  const { N, v, tb, tEnd, hs, hb, cc } = INS;
+  const dx = 1 / N;
+  const dt = 0.4 * dx * dx;
+  let th = new Float64Array(N + 1);
+  let nt = new Float64Array(N + 1);
+  const mx = new Float64Array(N + 1);
+  const out: InsModel = { t: [], th: [], mx: [], bond: [], peak: { t: 0, th: 0 } };
+  const save = (t: number) => {
+    out.t.push(t);
+    out.th.push(Float32Array.from(th));
+    out.mx.push(Float32Array.from(mx));
+    out.bond.push(th[N]);
+    if (th[N] > out.peak.th) out.peak = { t, th: th[N] };
+  };
+  const gap = (t: number) => (t < tb ? 0.001 : t < 0.2 ? 0.0025 : 0.01);
+  let t = 0;
+  let last = 0;
+  save(0);
+  while (t < tEnd - 1e-12) {
+    const js = Math.min(N - 1, Math.floor((v * Math.min(t, tb)) / dx));
+    for (let j = js + 1; j < N; j++) nt[j] = th[j] + (dt * (th[j - 1] - 2 * th[j] + th[j + 1])) / (dx * dx);
+    nt[N] = th[N] + (dt * ((th[N - 1] - th[N]) / dx - hb * th[N])) / (dx / 2 + cc);
+    if (t < tb) for (let j = 0; j <= js; j++) nt[j] = 1;
+    else {
+      nt[js] = th[js] + (dt * ((th[js + 1] - th[js]) / dx - hs * th[js])) / (dx / 2);
+      for (let j = 0; j < js; j++) nt[j] = 0;
+    }
+    [th, nt] = [nt, th];
+    t += dt;
+    for (let j = js; j <= N; j++) if (th[j] > mx[j]) mx[j] = th[j];
+    if (t - last >= gap(last) - 1e-12) {
+      save(t);
+      last = t;
+    }
+  }
+  insCache = out;
+  return out;
+};
+/** The physical time at each moment of the animation. */
+export const insulTime = (p: number[]) => {
+  const k = stageOf(p);
+  return lerp(INS.times[k], INS.times[k + 1], p[k] ?? 1);
+};
+/** The temperatures, the largest temperatures so far and the bondline temperature at the time t (interpolated). */
+export const insulAt = (t: number) => {
+  const m = insulModel();
+  let i = 0;
+  while (i < m.t.length - 2 && m.t[i + 1] < t) i++;
+  const w = clamp01((t - m.t[i]) / (m.t[i + 1] - m.t[i]));
+  const mix = (a: Float32Array, b: Float32Array) => Array.from(a, (x, j) => x + (b[j] - x) * w);
+  return { th: mix(m.th[i], m.th[i + 1]), mx: mix(m.mx[i], m.mx[i + 1]), bond: lerp(m.bond[i], m.bond[i + 1], w), i };
+};
+/** The depth of the char front: the deepest point that got hotter than the pyrolysis level. */
+export const charDepth = (mx: number[]) => {
+  let x = 0;
+  for (let j = 0; j < mx.length - 1; j++) {
+    if (mx[j] >= INS.thp && mx[j + 1] < INS.thp) x = (j + (mx[j] - INS.thp) / (mx[j] - mx[j + 1])) / INS.N;
+    else if (mx[j + 1] >= INS.thp) x = (j + 1) / INS.N;
+  }
+  return x;
+};
+export const insulLimit = () => r2(insulModel().peak.th * 1.15 * 1000) / 1000;
+const INS_TEXT = ['Ignition', 'Burning: the surface erodes', 'Burnout: the heat goes both ways', 'Soak-back'];
+
+export function insul(p: number[]): State {
+  const { sec, prof, plot, tb, v } = INS;
+  const t = insulTime(p);
+  const { th, mx, bond } = insulAt(t);
+  const m = insulModel();
+  const X = (x: number) => sec.x0 + (sec.x1 - sec.x0) * x;
+  const Yp = (q: number) => prof.bot - (prof.bot - prof.top) * q;
+  const PX = (tt: number) => plot.x0 + ((plot.x1 - plot.x0) * tt) / plot.tMax;
+  const PY = (q: number) => plot.y0 - ((plot.y0 - plot.y1) * q) / plot.thMax;
+  const s = v * Math.min(t, tb); // the eroded depth
+  const xc = Math.max(s, charDepth(mx));
+  const burning = t < tb;
+  // the profile from the current surface to the bondline
+  const js = Math.floor(s * INS.N);
+  const pts = [`${r2(X(s))},${r2(Yp(burning ? 1 : th[Math.min(js, INS.N)]))}`];
+  for (let j = js + 1; j <= INS.N; j++) pts.push(`${r2(X(j / INS.N))},${r2(Yp(th[j]))}`);
+  // the bondline history up to t
+  const hist = [`${r2(PX(0))},${r2(PY(0))}`];
+  for (let i = 1; i < m.t.length && m.t[i] <= t; i++) hist.push(`${r2(PX(m.t[i]))},${r2(PY(m.bond[i]))}`);
+  hist.push(`${r2(PX(t))},${r2(PY(bond))}`);
+  const k = stageOf(p);
+  const after = t > m.peak.t + 0.02;
+  return {
+    flame: { opacity: r2(burning ? 1 : 1 - clamp01((t - tb) / 0.02)) },
+    gasR: { width: r2(X(s) - sec.gas) },
+    voidR: { width: r2(X(s) - sec.gas) },
+    char: { x: r2(X(s)), width: r2(Math.max(0, X(xc) - X(s))) },
+    front: { x1: r2(X(xc)), x2: r2(X(xc)), opacity: xc > s + 0.005 ? 1 : 0 },
+    prof: { points: pts.join(' ') },
+    hist: { points: hist.join(' ') },
+    dot: { cx: r2(PX(t)), cy: r2(PY(bond)) },
+    peak: { opacity: after ? 1 : 0 },
+    stat: { text: INS_TEXT[k] },
+    bondLab: { text: `bondline ${Math.round(bond * 1000) / 10} % of the surface rise` },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 10. A sine sweep through a resonance (verify/random-vibration)
+// ---------------------------------------------------------------------------------------------------------------------
+/** The absolute transmissibility of a base-excited single mode at the frequency ratio r. */
+export const transmissibility = (r: number, zeta: number) =>
+  Math.sqrt((1 + (2 * zeta * r) ** 2) / ((1 - r * r) ** 2 + (2 * zeta * r) ** 2));
+/** The phase lag of the response behind the base. */
+export const phaseLag = (r: number, zeta: number) => Math.atan2(2 * zeta * r ** 3, 1 - r * r + (2 * zeta * r) ** 2);
+export const VIB = {
+  ms: [2200, 3200, 3200, 3600],
+  sweep: [
+    [0.1, 0.5],
+    [0.5, 1.0],
+    [1.0, 3.0],
+    [0.1, 3.0],
+  ] as const,
+  zeta: [0.05, 0.05, 0.05, 1 / 6], // Q = 10, then Q = 3
+  Y: 3.5, // the base amplitude, px
+  plot: { x0: 400, x1: 830, y0: 286, y1: 58, rMax: 3, lo: -1, hi: Math.log10(20) },
+  rest: 150, // the top of the part at rest
+};
+const vbX = (r: number) => VIB.plot.x0 + ((VIB.plot.x1 - VIB.plot.x0) * r) / VIB.plot.rMax;
+const vbY = (T: number) => VIB.plot.y0 - ((VIB.plot.y0 - VIB.plot.y1) * (Math.log10(T) - VIB.plot.lo)) / (VIB.plot.hi - VIB.plot.lo);
+export const vibPlot = { X: vbX, Y: vbY };
+const vbCurve = (zeta: number, r1: number) => {
+  const pts: string[] = [];
+  for (let r = 0.1; r < r1; r += 0.01) pts.push(`${r2(vbX(r))},${r2(vbY(transmissibility(r, zeta)))}`);
+  pts.push(`${r2(vbX(r1))},${r2(vbY(transmissibility(r1, zeta)))}`);
+  return pts.join(' ');
+};
+/** The frequency ratio, the damping and the phase of the drawn oscillation at each moment. */
+export const vibAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  const [r0, r1] = VIB.sweep[k];
+  const r = lerp(r0, r1, u);
+  // the drawn oscillation: 0.8 Hz plus 1.2 Hz for each unit of r, integrated over the linear sweep of each stage
+  let cyc = 0;
+  VIB.sweep.forEach(([a, b], i) => {
+    const w = p[i] ?? 0;
+    cyc += (VIB.ms[i] / 1000) * (0.8 * w + 1.2 * (a * w + ((b - a) * w * w) / 2));
+  });
+  return { k, r, zeta: VIB.zeta[k], psi: 2 * Math.PI * cyc };
+};
+const VB_TEXT = ['Below fn: moves with the base', 'At fn: Q times the input', 'Above √2 fn: isolated', 'Q = 3: lower and wider'];
+const zigzag = (x: number, y0: number, y1: number) => {
+  const n = 8;
+  const pts = [`${x},${r2(y0)}`];
+  for (let i = 1; i < n; i++) pts.push(`${x + (i % 2 ? -10 : 10)},${r2(lerp(y0, y1, i / n))}`);
+  pts.push(`${x},${r2(y1)}`);
+  return pts.join(' ');
+};
+
+export function vib(p: number[]): State {
+  const { k, r, zeta, psi } = vibAt(p);
+  const T = transmissibility(r, zeta);
+  const lag = phaseLag(r, zeta);
+  const yb = VIB.Y * Math.sin(psi); // the base, up is positive
+  const x = T * VIB.Y * Math.sin(psi - lag);
+  const top = VIB.rest - x; // the top of the part
+  const bot = top + 40;
+  const baseTop = 262 - yb;
+  const [, , u3 = 1] = p;
+  return {
+    base: { y: r2(baseTop) },
+    part: { y: r2(top) },
+    partLab: { y: r2(top + 25) },
+    spring: { points: zigzag(140, baseTop, bot) },
+    cyl: { y: r2(baseTop - 60) },
+    rod: { y1: r2(bot), y2: r2(Math.min(bot + 50, baseTop - 4)) },
+    pis: { y: r2(Math.min(bot + 50, baseTop - 4) - 3) },
+    env: { y1: r2(VIB.rest + 20 - T * VIB.Y), y2: r2(VIB.rest + 20 + T * VIB.Y) },
+    curveA: { points: vbCurve(0.05, k < 3 ? Math.max(0.1, r) : 3) },
+    curveB: { points: k === 3 ? vbCurve(1 / 6, Math.max(0.1, r)) : '', opacity: k === 3 ? 1 : 0 },
+    cur: { cx: r2(vbX(r)), cy: r2(vbY(T)), fill: k === 3 ? 'var(--rd-blue)' : 'var(--rd-accent)' },
+    iso: { opacity: r2(k > 2 ? 1 : k === 2 ? seg(u3, 0.25, 0.6) : 0) },
+    q10: { opacity: k >= 2 || (k === 1 && r > 0.98) ? 1 : 0 },
+    q3: { opacity: k === 3 && r > 1.2 ? 1 : 0 },
+    rLab: { text: `f / fn = ${r.toFixed(2)}` },
+    tLab: { text: `response ÷ input = ${T >= 10 ? T.toFixed(1) : T.toFixed(2)}` },
+    stat: { text: VB_TEXT[k] },
+  };
+}
+
+export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv, mmc, insul, vib };

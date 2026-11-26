@@ -1,0 +1,101 @@
+---
+// Animation: heat into an insulated wall during a burn (char and erosion), then soak-back after burnout, with the
+// bondline temperature history. State: insul() in src/lib/explainers.ts (a one-dimensional conduction model).
+import Explainer from './Explainer.astro';
+import { INS, insul, insulModel, insulLimit, attrs } from '../lib/explainers';
+
+const S = insul([1, 1, 1, 1]);
+const { sec, prof, plot, thp, tb } = INS;
+const m = insulModel();
+const lim = insulLimit();
+const PX = (t: number) => plot.x0 + ((plot.x1 - plot.x0) * t) / plot.tMax;
+const PY = (q: number) => plot.y0 - ((plot.y0 - plot.y1) * q) / plot.thMax;
+const Yp = (q: number) => prof.bot - (prof.bot - prof.top) * q;
+const steps = [
+  {
+    ms: INS.ms[0],
+    html: '<b>Ignition.</b> The surface gets hot at once. Heat goes into the insulation by conduction, and the depth that it gets to increases as √t. Where the rubber gets hotter than its pyrolysis temperature, it becomes char.',
+  },
+  {
+    ms: INS.ms[1],
+    html: '<b>The burn continues.</b> The flow erodes the surface, and the char front follows it. The char layer stops its growth at a steady thickness. The bondline is still cool.',
+  },
+  {
+    ms: INS.ms[2],
+    html: '<b>Burnout.</b> The flame stops and the surface starts to cool. The heat stored in the hot char and insulation now flows both ways, and much of it goes inward.',
+  },
+  {
+    ms: INS.ms[3],
+    html: '<b>Soak-back.</b> The bondline temperature peaks long after burnout. Size the thickness for this peak, not for the temperature at burnout.',
+  },
+];
+---
+
+<Explainer name="insul" title="Animation · char, erosion and soak-back" steps={steps}>
+  <svg viewBox="0 0 860 320" role="img" aria-labelledby="in-desc">
+    <desc id="in-desc">
+      Left: a section through the insulated wall after the burn, from the gas side to the case: an eroded surface, a char
+      layer, virgin insulation, the bondline and the case, with the temperature profile above it. Right: the bondline
+      temperature against time. It stays low during the burn, rises after burnout, and peaks long after burnout, below
+      the bondline limit.
+    </desc>
+    <defs>
+      <linearGradient id="in-flame" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="var(--rd-hot)" stop-opacity="0.2"></stop>
+        <stop offset="1" stop-color="var(--rd-hot)" stop-opacity="0.9"></stop>
+      </linearGradient>
+    </defs>
+
+    <!-- left: the temperature profile over the section -->
+    <text x="40" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">SECTION THROUGH THE WALL</text>
+    <text data-k="stat" x="40" y="50" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    <line x1={sec.x0} y1={prof.top} x2={sec.x0} y2={prof.bot} stroke="var(--rd-muted)"></line>
+    <line x1={sec.x0} y1={prof.bot} x2={sec.case} y2={prof.bot} stroke="var(--rd-muted)"></line>
+    <text x={sec.x0 - 6} y={prof.top + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">hot</text>
+    <text x={sec.x0 - 6} y={prof.bot + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">cold</text>
+    <line x1={sec.x0} y1={Yp(thp)} x2={sec.x1} y2={Yp(thp)} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text x={sec.x1} y={Yp(thp) - 5} font-size="12" text-anchor="end" fill="var(--rd-muted)">pyrolysis</text>
+    <polyline data-k="prof" {...attrs(S.prof)} fill="none" stroke="var(--rd-hot)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+
+    <!-- the section -->
+    <rect x={sec.x0} y="190" width={sec.x1 - sec.x0} height="50" fill="var(--rd-insul)" fill-opacity="0.85"></rect>
+    <rect data-k="char" y="190" height="50" {...attrs(S.char)} fill="#2a2522"></rect>
+    <rect data-k="voidR" x={sec.gas} y="190" height="50" {...attrs(S.voidR)} fill="var(--rd-panel)"></rect>
+    <g data-k="flame" {...attrs(S.flame)}>
+      <rect data-k="gasR" x={sec.gas} y="190" height="50" {...attrs(S.gasR)} fill="url(#in-flame)"></rect>
+    </g>
+    <line data-k="front" y1="184" y2="246" {...attrs(S.front)} stroke="var(--rd-hot)" stroke-width="2" stroke-dasharray="4 3"></line>
+    <rect x={sec.x1} y="190" width={sec.case - sec.x1} height="50" fill="var(--rd-steel)" fill-opacity="0.85"></rect>
+    <line x1={sec.x1} y1="184" x2={sec.x1} y2="246" stroke="var(--rd-accent)" stroke-width="2.5"></line>
+    <text x={sec.gas + 2} y="262" font-size="12" fill="var(--rd-muted)">gas</text>
+    <text x={sec.x0 + 44} y="262" font-size="12" fill="var(--rd-ink)">char</text>
+    <text x="290" y="262" font-size="12" text-anchor="middle" fill="var(--rd-ink)">virgin insulation</text>
+    <text x={sec.x1} y="280" font-size="12" text-anchor="end" fill="var(--rd-accent)">bondline</text>
+    <text x={sec.x1 + 6} y="280" font-size="12" fill="var(--rd-ink)">case</text>
+    <text x={sec.x0} y="300" font-size="12" fill="var(--rd-muted)">dashed: the char front</text>
+
+    <line x1="450" y1="12" x2="450" y2="310" stroke="var(--rd-line)"></line>
+
+    <!-- right: the bondline temperature history -->
+    <text x={plot.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">BONDLINE TEMPERATURE</text>
+    <rect x={plot.x0} y={plot.y1} width={PX(tb) - plot.x0} height={plot.y0 - plot.y1} fill="var(--rd-hot)" fill-opacity="0.15"></rect>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x1 + 4} y2={plot.y0} stroke="var(--rd-muted)"></line>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x0} y2={plot.y1 - 6} stroke="var(--rd-muted)"></line>
+    <text x={PX(tb) + 4} y={plot.y0 + 16} font-size="12" fill="var(--rd-hot)">burnout</text>
+    <text x={plot.x1} y={plot.y0 + 16} font-size="12" text-anchor="end" fill="var(--rd-muted)">time</text>
+    <line x1={plot.x0} y1={PY(lim)} x2={plot.x1} y2={PY(lim)} stroke="var(--rd-accent)" stroke-dasharray="6 4"></line>
+    <text x={plot.x1} y={PY(lim) - 6} font-size="12" text-anchor="end" fill="var(--rd-accent)">bondline limit</text>
+    <polyline data-k="hist" {...attrs(S.hist)} fill="none" stroke="var(--rd-hot)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <circle data-k="dot" r="4.5" fill="var(--rd-hot)" {...attrs(S.dot)}></circle>
+    <g data-k="peak" {...attrs(S.peak)}>
+      <circle cx={PX(m.peak.t)} cy={PY(m.peak.th)} r="7" fill="none" stroke="var(--rd-ink)" stroke-width="1.5"></circle>
+      <text x={PX(m.peak.t) + 12} y={PY(m.peak.th) + 22} font-size="13" fill="var(--rd-ink)" class="halo">peak, long after burnout</text>
+    </g>
+    <text data-k="bondLab" x={plot.x0} y="300" font-size="13" fill="var(--rd-ink)">{S.bondLab.text}</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic: one-dimensional conduction with an eroding surface, and a face that radiates after burnout. The
+    temperatures are fractions of the surface rise, for illustration only. The calculator on this page gives the two
+    limits for your case.
+  </Fragment>
+</Explainer>

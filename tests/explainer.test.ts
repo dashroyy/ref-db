@@ -4,8 +4,9 @@ import { readFileSync } from 'node:fs';
 import { ends, progress, stageAt, nextStop, prevStop, stageStart, ease, seg, attrs } from '../src/lib/explainer.ts';
 import { STATES, CYL, PCG, HBAKE, LBB, cylinder, pcg, hbake, lbb, lbDepth, lbHalf, LB_TAU_B, stageOf } from '../src/lib/explainers.ts';
 import { BOLT, OR, GALV, bolt, oring, galv, boltForces, boltLoad, oringShape, oringLoad, polyArea, gamma, kappa, galvCurrent, galvCharge } from '../src/lib/explainers.ts';
+import { MMC, INS, VIB, mmc, insul, vib, mmcAt, insulModel, insulAt, insulLimit, charDepth, transmissibility, vibAt } from '../src/lib/explainers.ts';
 
-const MS = { cylinder: CYL.ms, pcg: PCG.ms, hbake: HBAKE.ms, lbb: LBB.ms, bolt: BOLT.ms, oring: OR.ms, galv: GALV.ms };
+const MS = { cylinder: CYL.ms, pcg: PCG.ms, hbake: HBAKE.ms, lbb: LBB.ms, bolt: BOLT.ms, oring: OR.ms, galv: GALV.ms, mmc: MMC.ms, insul: INS.ms, vib: VIB.ms };
 const FILES = {
   cylinder: 'CylinderSplit',
   pcg: 'PcgGrowth',
@@ -14,6 +15,9 @@ const FILES = {
   bolt: 'BoltPreload',
   oring: 'ORingSqueeze',
   galv: 'GalvanicJoint',
+  mmc: 'MmcBonus',
+  insul: 'InsulSoak',
+  vib: 'VibSweep',
 };
 const num = (v: string | number | undefined) => Number(v);
 
@@ -232,4 +236,56 @@ test('galvanic cell: no current when dry, four times the current with four times
   assert.equal(end.stat.text, 'Sealed: no current');
   assert.equal(num(end.curBar.width), 0);
   assert.equal(num(end.lossBar.width), 220);
+});
+
+test('MMC: the zone with its bonus and the gauge pin at the virtual condition give the same answer', () => {
+  const total = ends(MMC.ms)[MMC.ms.length - 1];
+  for (let t = 0; t <= total; t += total / 157) {
+    const a = mmcAt(progress(MMC.ms, t));
+    // the pin of diameter VC fits when the axis offset is not more than (d - VC) / 2
+    const pinFits = a.e <= (a.d - MMC.vc) / 2 + 1e-9;
+    assert.equal(a.ok, pinFits, `at ${t}`);
+    assert.ok(Math.abs(a.allowed - (MMC.t + a.d - MMC.mmc)) < 1e-12);
+  }
+  const end = mmc([1, 1, 1, 1]);
+  assert.equal(end.verdict.text, 'CONFORMS');
+  assert.equal(end.holeLab.text, 'hole ⌀11.15');
+  assert.equal(end.readout.text, 'bonus 0.15  ·  axis ⌀0.553');
+  assert.equal(mmc([1, 1, 1, 0]).verdict.text, 'REJECT', 'the same error in a hole at MMC');
+  const lmc = mmcAt([1, 1, 0, 0]);
+  assert.ok(Math.abs(lmc.d - 11.2) < 1e-12 && Math.abs(lmc.allowed - 0.7) < 1e-12);
+});
+
+test('insulation: the bondline is cool at burnout and peaks long after it, below the limit', () => {
+  const m = insulModel();
+  const atBurnout = insulAt(INS.tb).bond;
+  assert.ok(atBurnout < 0.1 * m.peak.th, `${atBurnout} vs ${m.peak.th}`);
+  assert.ok(m.peak.t > 3 * INS.tb, `peak at ${m.peak.t}`);
+  assert.ok(m.peak.th < insulLimit());
+  // soak-back moves the char front a little deeper, and the char never gets to the bondline
+  const c1 = charDepth(insulAt(INS.tb).mx);
+  const c2 = charDepth(insulAt(INS.tEnd).mx);
+  assert.ok(c2 > c1 && c2 < 0.6, `${c1} ${c2}`);
+  // the char front is behind the eroded surface
+  assert.ok(c1 > INS.v * INS.tb);
+  const end = insul([1, 1, 1, 1]);
+  assert.equal(num(end.peak.opacity), 1);
+  assert.equal(num(end.flame.opacity), 0);
+  assert.equal(num(insul([1, 0, 0, 0]).flame.opacity), 1);
+});
+
+test('sine sweep: Q at the natural frequency, one at root two, and less isolation with more damping', () => {
+  assert.ok(Math.abs(transmissibility(1, 0.05) - 10) < 0.1);
+  assert.ok(Math.abs(transmissibility(Math.SQRT2, 0.05) - 1) < 1e-12);
+  assert.ok(Math.abs(transmissibility(Math.SQRT2, 1 / 6) - 1) < 1e-12);
+  assert.ok(transmissibility(3, 1 / 6) > transmissibility(3, 0.05));
+  assert.ok(Math.abs(transmissibility(0.1, 0.05) - 1) < 0.02);
+  const atFn = vibAt([1, 1, 0, 0]);
+  assert.equal(atFn.r, 1);
+  assert.equal(vib([1, 1, 0, 0]).tLab.text, 'response ÷ input = 10.0');
+  const end = vib([1, 1, 1, 1]);
+  assert.equal(end.stat.text, 'Q = 3: lower and wider');
+  assert.equal(num(end.curveB.opacity), 1);
+  assert.equal(num(end.q3.opacity), 1);
+  assert.equal(num(vib([1, 0, 0, 0]).curveB.opacity), 0);
 });

@@ -1,0 +1,97 @@
+---
+// Animation: bonus tolerance at MMC, with the hole and its gauge pin beside the position zone. The numbers are those of
+// the worked example on the GD&T page. State: mmc() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { MMC, mmc, attrs } from '../lib/explainers';
+
+const S = mmc([1, 1, 1, 1]);
+const { left: L, right: R } = MMC;
+const pinR = L.r0 + L.k * (MMC.vc / 2 - 5.5);
+const fcf = [
+  { w: 24, t: '⌖' },
+  { w: 66, t: '⌀0.5 Ⓜ' },
+  { w: 24, t: 'A' },
+  { w: 42, t: 'B Ⓜ' },
+  { w: 24, t: 'C' },
+];
+let fx = 240;
+const boxes = fcf.map((b) => {
+  const box = { ...b, x: fx };
+  fx += b.w;
+  return box;
+});
+const steps = [
+  {
+    ms: MMC.ms[0],
+    html: '<b>A hole at MMC.</b> At ⌀11.0 the hole gets only the stated ⌀0.5 zone. Its axis can move 0.25 mm in any direction before its edge touches the gauge pin, which is at the virtual condition, ⌀10.5.',
+  },
+  {
+    ms: MMC.ms[1],
+    html: '<b>A larger hole gets a bonus.</b> As the hole grows to LMC, ⌀11.2, the zone grows by the same amount, to ⌀0.7. The gauge pin does not change.',
+  },
+  {
+    ms: MMC.ms[2],
+    html: '<b>A real position error.</b> The axis is 0.18 mm and 0.21 mm from true position: ⌀0.553. In a ⌀11.0 hole this is outside the ⌀0.5 zone, and the gauge pin does not go in.',
+  },
+  {
+    ms: MMC.ms[3],
+    html: '<b>The same error in a ⌀11.15 hole.</b> The bonus is 0.15, so ⌀0.65 is permitted, and the pin goes in. The hole conforms only because of the bonus.',
+  },
+];
+---
+
+<Explainer name="mmc" title="Animation · bonus tolerance at MMC" steps={steps}>
+  <svg viewBox="0 0 860 340" role="img" aria-labelledby="mm-desc">
+    <desc id="mm-desc">
+      Left: a clearance hole of diameter 11.15 with its axis off true position, and a gauge pin of diameter 10.5 at true
+      position. The pin goes into the hole. Right: the position zone, magnified. The axis of the hole is outside the
+      stated zone of diameter 0.5 but inside the permitted zone of diameter 0.65, so the hole conforms because of the
+      bonus.
+    </desc>
+
+    <!-- left: the hole and the gauge pin -->
+    <text x="30" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">HOLE AND GAUGE PIN</text>
+    {boxes.map((b) => (
+      <g>
+        <rect x={b.x} y="14" width={b.w} height="24" fill="var(--rd-panel)" stroke="var(--rd-ink)"></rect>
+        <text x={b.x + b.w / 2} y="31" font-size="13" text-anchor="middle" fill="var(--rd-ink)">{b.t}</text>
+      </g>
+    ))}
+    <rect x="40" y="46" width="340" height="272" fill="var(--rd-steel)" fill-opacity="0.45"></rect>
+    <circle data-k="hole" {...attrs(S.hole)} fill="var(--rd-panel)" stroke="var(--rd-ink)" stroke-width="1.5"></circle>
+    <circle data-k="pin" cx={L.cx} cy={L.cy} r={pinR} {...attrs(S.pin)} fill-opacity="0.45" stroke="var(--rd-ink)" stroke-width="1.5"></circle>
+    <g stroke="var(--rd-muted)" stroke-dasharray="6 4">
+      <line x1={L.cx - 150} y1={L.cy} x2={L.cx + 150} y2={L.cy}></line>
+      <line x1={L.cx} y1={L.cy - 124} x2={L.cx} y2={L.cy + 124}></line>
+    </g>
+    <g data-k="hAxis" {...attrs(S.hAxis)} stroke="var(--rd-ink)" stroke-width="2">
+      <line x1="-7" y1="0" x2="7" y2="0"></line>
+      <line x1="0" y1="-7" x2="0" y2="7"></line>
+    </g>
+    <text x={L.cx} y={L.cy + 34} font-size="13" text-anchor="middle" fill="var(--rd-ink)" class="halo">pin ⌀10.5</text>
+    <text x={L.cx + 146} y={L.cy - 6} font-size="12" text-anchor="end" fill="var(--rd-ink)" class="halo">true position</text>
+    <text data-k="holeLab" x="40" y="334" font-size="13" fill="var(--rd-ink)">{S.holeLab.text}</text>
+    <text x="380" y="334" font-size="12" text-anchor="end" fill="var(--rd-muted)">clearances magnified</text>
+
+    <line x1="420" y1="12" x2="420" y2="330" stroke="var(--rd-line)"></line>
+
+    <!-- right: the position zone -->
+    <text x="450" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">POSITION ZONE</text>
+    <text data-k="verdict" x="840" y="30" font-size="14" font-weight="600" text-anchor="end" {...attrs(S.verdict)}>{S.verdict.text}</text>
+    <circle data-k="zone" cx={R.cx} cy={R.cy} {...attrs(S.zone)} fill="var(--rd-ok)" fill-opacity="0.08" stroke="var(--rd-ok)" stroke-width="2"></circle>
+    <circle cx={R.cx} cy={R.cy} r={(R.k * MMC.t) / 2} fill="none" stroke="var(--rd-muted)" stroke-width="1.5" stroke-dasharray="5 4"></circle>
+    <g stroke="var(--rd-muted)" stroke-dasharray="6 4">
+      <line x1={R.cx - 130} y1={R.cy} x2={R.cx + 130} y2={R.cy}></line>
+      <line x1={R.cx} y1={R.cy - 130} x2={R.cx} y2={R.cy + 130}></line>
+    </g>
+    <line data-k="vec" x1={R.cx} y1={R.cy} {...attrs(S.vec)} stroke="var(--rd-ink)" stroke-width="1.5"></line>
+    <circle data-k="axis" r="6" {...attrs(S.axis)} stroke="var(--rd-panel)" stroke-width="1.5"></circle>
+    <text data-k="zoneLab" x={R.cx} font-size="13" text-anchor="middle" fill="var(--rd-ok)" class="halo" {...attrs(S.zoneLab)}>{S.zoneLab.text}</text>
+    <text x={R.cx} y={R.cy + (R.k * MMC.t) / 2 + 18} font-size="12" text-anchor="middle" fill="var(--rd-muted)" class="halo">stated ⌀0.5</text>
+    <text data-k="readout" x={R.cx} y="334" font-size="13" text-anchor="middle" fill="var(--rd-ink)">{S.readout.text}</text>
+  </svg>
+  <Fragment slot="caption">
+    The numbers are from the worked example on this page. The clearances and the zone are magnified, each by its own
+    scale. A pin at the virtual condition goes into every hole that conforms.
+  </Fragment>
+</Explainer>

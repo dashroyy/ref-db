@@ -1,0 +1,97 @@
+---
+// Animation: a part on a spring and a damper, on a shaker that sweeps up through the natural frequency. The
+// transmissibility curve is traced as the sweep goes, for Q = 10 and then Q = 3. State: vib() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { VIB, vib, vibPlot, attrs } from '../lib/explainers';
+
+const S = vib([1, 1, 1, 1]);
+const { X, Y } = vibPlot;
+const { plot } = VIB;
+const rt2 = Math.SQRT2;
+const steps = [
+  {
+    ms: VIB.ms[0],
+    html: '<b>Shake slowly.</b> Well below the natural frequency f<sub>n</sub>, the part moves with the base. The response is the same as the input.',
+  },
+  {
+    ms: VIB.ms[1],
+    html: '<b>Sweep up to f<sub>n</sub>.</b> Each push of the base now comes in rhythm with the spring. The response grows to Q times the input, here Q = 10, for this example only.',
+  },
+  {
+    ms: VIB.ms[2],
+    html: '<b>Sweep on, past √2 f<sub>n</sub>.</b> There the response is equal to the input again. Above it, the part moves less than the base: the mount isolates it.',
+  },
+  {
+    ms: VIB.ms[3],
+    html: '<b>Add damping.</b> With Q = 3, the peak is lower and the resonance is wider. Above √2 f<sub>n</sub>, the damper passes more of the input, so the isolation is less.',
+  },
+];
+---
+
+<Explainer name="vib" title="Animation · a sine sweep through a resonance" steps={steps}>
+  <svg viewBox="0 0 860 330" role="img" aria-labelledby="vb-desc">
+    <desc id="vb-desc">
+      Left: a part on a spring and a damper, on a shaker table. Right: the response of the part divided by the input,
+      against the frequency, on a log scale. The curve for Q = 10 is one at low frequency, has a peak of 10 at the natural
+      frequency, crosses one again at the square root of two times the natural frequency, and falls below one above it.
+      The curve for Q = 3 has a lower and wider peak, and isolates less at high frequency.
+    </desc>
+
+    <!-- left: the part on the shaker -->
+    <text x="30" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">PART ON A SHAKER</text>
+    <text data-k="stat" x="30" y="52" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    <text data-k="rLab" x="30" y="78" font-size="13" fill="var(--rd-ink)">{S.rLab.text}</text>
+    <text data-k="tLab" x="30" y="98" font-size="13" fill="var(--rd-ink)">{S.tLab.text}</text>
+    <rect x="110" y="284" width="100" height="26" fill="var(--rd-muted)" fill-opacity="0.5"></rect>
+    <text x="160" y="302" font-size="12" text-anchor="middle" fill="var(--rd-ink)">shaker</text>
+    <rect data-k="base" x="60" width="200" height="14" {...attrs(S.base)} fill="var(--rd-steel)" fill-opacity="0.9"></rect>
+    <polyline data-k="spring" {...attrs(S.spring)} fill="none" stroke="var(--rd-ink)" stroke-width="2" stroke-linejoin="round"></polyline>
+    <rect data-k="cyl" x="208" width="24" height="60" {...attrs(S.cyl)} fill="none" stroke="var(--rd-ink)" stroke-width="1.5"></rect>
+    <line data-k="rod" x1="220" x2="220" {...attrs(S.rod)} stroke="var(--rd-ink)" stroke-width="2"></line>
+    <rect data-k="pis" x="212" width="16" height="6" {...attrs(S.pis)} fill="var(--rd-ink)"></rect>
+    <rect data-k="part" x="80" width="160" height="40" {...attrs(S.part)} fill="var(--rd-steel)" fill-opacity="0.9" stroke="var(--rd-ink)"></rect>
+    <text data-k="partLab" x="160" font-size="13" text-anchor="middle" fill="var(--rd-ink)" class="halo" {...attrs(S.partLab)}>part</text>
+    <text x="126" y="236" font-size="12" text-anchor="end" fill="var(--rd-muted)">spring</text>
+    <text x="238" y="242" font-size="12" fill="var(--rd-muted)">damper</text>
+    <line data-k="env" x1="292" x2="292" {...attrs(S.env)} stroke="var(--rd-accent)" stroke-width="4" stroke-linecap="round"></line>
+    <text x="300" y={VIB.rest + 24} font-size="12" fill="var(--rd-accent)">amplitude</text>
+
+    <line x1="370" y1="12" x2="370" y2="312" stroke="var(--rd-line)"></line>
+
+    <!-- right: the transmissibility -->
+    <text x={plot.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">RESPONSE ÷ INPUT</text>
+    <g data-k="iso" {...attrs(S.iso)}>
+      <rect x={X(rt2)} y={plot.y1} width={plot.x1 - X(rt2)} height={plot.y0 - plot.y1} fill="var(--rd-ok)" fill-opacity="0.08"></rect>
+      <text x={X(2.25)} y={Y(0.18)} font-size="13" text-anchor="middle" fill="var(--rd-ok)">isolation</text>
+    </g>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x1} y2={plot.y0} stroke="var(--rd-muted)"></line>
+    <line x1={plot.x0} y1={plot.y0} x2={plot.x0} y2={plot.y1} stroke="var(--rd-muted)"></line>
+    {[0.1, 1, 10].map((t) => (
+      <text x={plot.x0 - 6} y={Y(t) + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">{t}</text>
+    ))}
+    {[0, 1, 2, 3].map((r) => (
+      <text x={X(r)} y={plot.y0 + 16} font-size="12" text-anchor="middle" fill="var(--rd-muted)">{r === 0 ? '0' : r === 1 ? 'fn' : `${r} fn`}</text>
+    ))}
+    <text x={plot.x1} y={plot.y0 + 32} font-size="12" text-anchor="end" fill="var(--rd-muted)">frequency</text>
+    <line x1={plot.x0} y1={Y(1)} x2={plot.x1} y2={Y(1)} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text x={plot.x1} y={Y(1) - 6} font-size="12" text-anchor="end" fill="var(--rd-muted)">response = input</text>
+    <line x1={X(1)} y1={plot.y0} x2={X(1)} y2={plot.y1} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <line x1={X(rt2)} y1={plot.y0} x2={X(rt2)} y2={plot.y1} stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text x={X(rt2) + 5} y={plot.y1 + 12} font-size="12" fill="var(--rd-muted)">√2 fn</text>
+    <polyline data-k="curveA" {...attrs(S.curveA)} fill="none" stroke="var(--rd-accent)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <polyline data-k="curveB" {...attrs(S.curveB)} fill="none" stroke="var(--rd-blue)" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <circle data-k="cur" r="5" {...attrs(S.cur)} stroke="var(--rd-panel)" stroke-width="1.5"></circle>
+    <g data-k="q10" {...attrs(S.q10)}>
+      <line x1="690" y1="62" x2="712" y2="62" stroke="var(--rd-accent)" stroke-width="2.5"></line>
+      <text x="718" y="66" font-size="13" fill="var(--rd-accent)">Q = 10</text>
+    </g>
+    <g data-k="q3" {...attrs(S.q3)}>
+      <line x1="690" y1="82" x2="712" y2="82" stroke="var(--rd-blue)" stroke-width="2.5"></line>
+      <text x="718" y="86" font-size="13" fill="var(--rd-blue)">Q = 3</text>
+    </g>
+  </svg>
+  <Fragment slot="caption">
+    Schematic: one mode with viscous damping, and the steady response at each frequency. Q = 10 and Q = 3 are for this
+    example only.
+  </Fragment>
+</Explainer>
