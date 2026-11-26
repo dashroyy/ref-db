@@ -1167,4 +1167,217 @@ export function recov(p: number[]): State {
   return s;
 }
 
-export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv, mmc, insul, vib, loose, shell, recov };
+// ---------------------------------------------------------------------------------------------------------------------
+// 14. Over- and underexpansion, and separation (motor/nozzle): schematic plume shapes
+// ---------------------------------------------------------------------------------------------------------------------
+export const PLUME = {
+  ms: [2400, 2800, 2800, 3400],
+  cy: 150,
+  xt: 150, // the throat
+  xe: 330, // the exit plane
+  x1: 840,
+  re: 66, // the exit half-height, px
+  pe: 0.35, // the exit pressure, in units of the sea-level pressure
+  peLow: 0.12, // the exit pressure at low chamber pressure (ignition, tail-off)
+};
+/** The upper wall of the exit cone at x (straight cone from the throat to the exit). */
+const plWall = (x: number) => 128 - ((x - PLUME.xt) * 44) / (PLUME.xe - PLUME.xt);
+export const plumeAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  let pa = 1;
+  if (k === 1) pa = lerp(1, PLUME.pe, ease(u));
+  else if (k === 2) pa = lerp(PLUME.pe, 0.1, ease(u));
+  const pe = k === 3 ? PLUME.peLow : PLUME.pe;
+  return { k, pa, pe, R: pe / pa };
+};
+const PL_TEXT = ['Sea level: overexpanded', 'Climbing: pe = pa', 'Altitude: underexpanded', 'Low pc at sea level: separated'];
+/** The half-width of the plume at x for the pressure ratio R = pe / pa, starting from the half-width w0. */
+const plumeW = (x: number, R: number, w0: number) => {
+  const L = 150;
+  const d = x - PLUME.xe;
+  const g = Math.sin(Math.PI * frac(d / L)) * Math.exp(-d / 700);
+  const A = R < 1 ? -0.55 * (1 - R) : 0.5 * Math.min(1, (R - 1) / 2.5);
+  return w0 * (1 + A * g);
+};
+
+export function plume(p: number[]): State {
+  const { k, pa, R } = plumeAt(p);
+  const { cy, xt, xe, x1, re } = PLUME;
+  const elapsed = PLUME.ms.reduce((s, m, i) => s + m * (p[i] ?? 0), 0) / 1000;
+  const psi = 2 * Math.PI * 1.3 * elapsed;
+  // the separation points on the top and the bottom wall (fraction along the cone), unsteady and not symmetrical
+  const sT = 0.6 + 0.12 * Math.sin(psi);
+  const sB = 0.6 - 0.12 * Math.sin(psi + 0.7);
+  const sep = k === 3;
+  const xT = xt + sT * (xe - xt);
+  const xB = xt + sB * (xe - xt);
+  const yT = plWall(xT);
+  const yB = 2 * cy - plWall(xB);
+  // the jet keeps its width from the separation point to the exit
+  const wT = sep ? cy - yT - 4 : re;
+  const wB = sep ? yB - cy - 4 : re;
+  const up: string[] = ['40,80', '100,80', `${xt},128`];
+  if (sep) up.push(`${r2(xT)},${r2(yT)}`, `${xe},${r2(cy - wT)}`);
+  else up.push(`${xe},84`);
+  const lo: string[] = [];
+  for (let x = xe + 10; x <= x1; x += 10) {
+    up.push(`${x},${r2(cy - plumeW(x, R, wT))}`);
+    lo.push(`${x},${r2(cy + plumeW(x, R, wB))}`);
+  }
+  lo.reverse();
+  if (sep) lo.push(`${xe},${r2(cy + wB)}`, `${r2(xB)},${r2(yB)}`);
+  else lo.push(`${xe},216`);
+  lo.push(`${xt},172`, '100,220', '40,220');
+  const s: State = {
+    gas: { points: [...up, ...lo].join(' ') },
+    stat: { text: PL_TEXT[k] },
+    rLab: { text: `pe ÷ pa = ${R.toFixed(2)}` },
+    paBar: { width: r2(160 * pa) },
+    sepLab: { opacity: sep ? 1 : 0 },
+  };
+  // shock diamonds in an overexpanded plume
+  for (let i = 0; i < 3; i++) {
+    const xc = xe + 150 * (i + 0.5);
+    const w = Math.min(wT, wB) * 0.75 * (1 - 0.55 * Math.max(0, 1 - R) * Math.exp(-(xc - xe) / 700));
+    const op = R < 1 ? 0.55 * Math.min(1, 2 * (1 - R)) * Math.exp(-i / 2) : 0;
+    s[`dia${i}`] = { points: `${r2(xc - 57)},${cy} ${r2(xc)},${r2(cy - w)} ${r2(xc + 57)},${cy} ${r2(xc)},${r2(cy + w)}`, opacity: r2(op) };
+  }
+  // the side load points toward the side that separates first
+  const dir = sT < sB ? -1 : 1;
+  const mag = 14 + 160 * Math.abs(sT - sB);
+  const y0 = dir < 0 ? 80 : 220;
+  s.side = { y1: y0, y2: r2(y0 + dir * mag), opacity: sep ? 1 : 0 };
+  s.sideLab = { y: r2(y0 + (dir * mag) / 2 + 4), opacity: sep ? 1 : 0 };
+  return s;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 15. Mean stress and the Goodman line (fundamentals/fatigue)
+// ---------------------------------------------------------------------------------------------------------------------
+// Stresses in units of the ultimate strength. Se = 0.5 Sut is for this example only.
+export const GOOD = {
+  ms: [2400, 2800, 2800, 3000],
+  se: 0.5,
+  sa: 0.3,
+  res: 0.2, // the compressive residual stress from shot peening
+  trace: { x0: 60, x1: 400, y0: 200, k: 160 },
+  dia: { x0: 480, x1: 830, y0: 270, y1: 60, aMax: 0.6 },
+};
+/** The Goodman equivalent fully reversed amplitude (stresses in units of Sut). */
+export const goodmanAmp = (sa: number, sm: number) => sa / (1 - sm);
+export const goodAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  let sm = 0;
+  if (k === 1) sm = 0.25 * ease(u);
+  else if (k === 2) sm = lerp(0.25, 0.45, ease(u));
+  else if (k === 3) sm = lerp(0.45, 0.45 - GOOD.res, ease(u));
+  const sar = goodmanAmp(GOOD.sa, sm);
+  return { k, sm, sar, ok: sar <= GOOD.se + 1e-9 };
+};
+const gdX = (sm: number) => GOOD.dia.x0 + (GOOD.dia.x1 - GOOD.dia.x0) * sm;
+const gdY = (sa: number) => GOOD.dia.y0 - ((GOOD.dia.y0 - GOOD.dia.y1) * sa) / GOOD.dia.aMax;
+export const goodPlot = { X: gdX, Y: gdY };
+const GD_TEXT = ['Fully reversed', 'Add a tensile mean stress', 'Over the line: finite life', 'Shot peened: back inside'];
+
+export function goodman(p: number[]): State {
+  const { k, sm, sar, ok } = goodAt(p);
+  const tr = GOOD.trace;
+  const sa = GOOD.sa;
+  const elapsed = GOOD.ms.reduce((s, m, i) => s + m * (p[i] ?? 0), 0) / 1000;
+  const pts: string[] = [];
+  for (let x = tr.x0; x <= tr.x1; x += 3) {
+    const t = (x - tr.x0) / (tr.x1 - tr.x0);
+    pts.push(`${x},${r2(tr.y0 - tr.k * (sm + sa * Math.sin(2 * Math.PI * (2.5 * t - 0.6 * elapsed))))}`);
+  }
+  const col = ok ? 'var(--rd-ok)' : 'var(--rd-accent)';
+  const u4 = p[3] ?? 0;
+  return {
+    wave: { points: pts.join(' '), stroke: col },
+    mean: { y1: r2(tr.y0 - tr.k * sm), y2: r2(tr.y0 - tr.k * sm) },
+    hi: { y1: r2(tr.y0 - tr.k * (sm + sa)), y2: r2(tr.y0 - tr.k * (sm + sa)) },
+    lo: { y1: r2(tr.y0 - tr.k * (sm - sa)), y2: r2(tr.y0 - tr.k * (sm - sa)) },
+    meanLab: { y: r2(tr.y0 - tr.k * sm - 6) },
+    pt: { cx: r2(gdX(sm)), cy: r2(gdY(sa)), fill: col },
+    trail: { x2: r2(gdX(Math.max(sm, k === 3 ? 0.45 : sm))) },
+    peen: { opacity: k === 3 ? r2(seg(u4, 0, 0.3)) : 0 },
+    stat: { text: k === 3 && !ok ? 'Shot peening lowers the mean' : GD_TEXT[k], fill: !ok ? 'var(--rd-accent)' : 'var(--rd-muted)' },
+    vals: { text: `σm = ${sm.toFixed(2)}  ·  σa = ${sa.toFixed(2)}  (× Sut)` },
+    eq: { text: `σar = σa / (1 − σm/Sut) = ${sar.toFixed(2)}`, fill: col },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 16. Sling angles, and the hook above the centre of gravity (verify/handling-and-transport)
+// ---------------------------------------------------------------------------------------------------------------------
+export const LIFT = {
+  ms: [2400, 2800, 2800, 3200],
+  lx: [200, 360], // the lift points
+  ly: 236, // the top of the motor, where the lift points are
+  hookX: 280,
+  beamY: 140,
+  motor: { x0: 70, x1: 490, y0: 236, y1: 292 },
+  cgShift: 12, // px aft of the middle, stage 4
+};
+const lfHookY = (beta: number) => LIFT.ly - 80 * Math.tan((beta * Math.PI) / 180);
+export const liftAt = (p: number[]) => {
+  const k = stageOf(p);
+  const u = p[k] ?? 1;
+  let beta = 90; // the leg angle from the horizontal
+  let spread = 1; // the spreader beam, 1 = in place
+  let top = 0; // 0: the legs end at the beam, 1: at the hook
+  let cg = 0;
+  let tilt = 0;
+  if (k === 1) {
+    spread = 1 - ease(seg(u, 0, 0.3));
+    top = ease(seg(u, 0.2, 1));
+    beta = 60;
+  } else if (k >= 2) {
+    spread = 0;
+    top = 1;
+    beta = k === 2 ? lerp(60, 30, ease(u)) : 30;
+  }
+  if (k === 3) {
+    cg = LIFT.cgShift * ease(seg(u, 0, 0.3));
+    const dy = LIFT.ly + 28 - lfHookY(30); // the hook to the centre line of the motor
+    tilt = (Math.atan2(cg, dy) * 180) / Math.PI * ease(seg(u, 0.2, 1));
+  }
+  // the legs as drawn: from the lift points to the beam ends or to the hook
+  const hookY = lfHookY(beta);
+  const ends = LIFT.lx.map((x) => [lerp(x, LIFT.hookX, top), lerp(LIFT.beamY, hookY, top)] as [number, number]);
+  const ang = Math.atan2(LIFT.ly - ends[0][1], ends[0][0] - LIFT.lx[0]); // the angle of a leg from the horizontal
+  const T = 1 / Math.sin(ang);
+  const push = Math.cos(ang) / Math.sin(ang);
+  return { k, beta, spread, top, cg, tilt, hookY, ends, ang: (ang * 180) / Math.PI, T, push };
+};
+const LF_TEXT = ['Spreader beam', 'No spreader: legs at 60°', 'Legs at 30°', 'Centre of gravity aft'];
+
+export function lift(p: number[]): State {
+  const { k, spread, top, cg, tilt, hookY, ends, ang, T, push } = liftAt(p);
+  const hook = [lerp(LIFT.hookX, LIFT.hookX, top), lerp(60, hookY, top)];
+  return {
+    rig: { transform: `rotate(${r2(tilt)} ${LIFT.hookX} ${r2(hookY)})` },
+    legL: { x2: r2(ends[0][0]), y2: r2(ends[0][1]) },
+    legR: { x2: r2(ends[1][0]), y2: r2(ends[1][1]) },
+    beam: { opacity: r2(spread) },
+    hook: { transform: `translate(${r2(hook[0])} ${r2(hook[1])})` },
+    cgMark: { transform: `translate(${r2(280 + cg)} 264)` },
+    arc: { d: arcPath(LIFT.lx[0], LIFT.ly, 30, ang), opacity: top > 0.5 ? 1 : 0 },
+    betaLab: { x: r2(LIFT.lx[0] + 36), y: r2(LIFT.ly - 6 - 12 * Math.sin((ang * Math.PI) / 360)), opacity: top > 0.5 ? 1 : 0 },
+    tBar: { width: r2((200 * T) / 2) },
+    pBar: { width: r2((200 * push) / 2) },
+    tLab: { text: `leg tension T = ${T.toFixed(2)} Q` },
+    pLab: { text: `push together = ${push.toFixed(2)} Q` },
+    aLab: { text: `β = ${Math.round(ang)}°` },
+    stat: { text: LF_TEXT[k] },
+    tiltLab: { text: `tilt ${Math.round(tilt)}°`, opacity: tilt > 0.5 ? 1 : 0 },
+  };
+}
+/** An arc at (x, y) of radius r from the horizontal (to the right) up to the angle a (degrees). */
+const arcPath = (x: number, y: number, r: number, a: number) => {
+  const t = (a * Math.PI) / 180;
+  return `M${r2(x + r)},${y} A${r},${r} 0 0 0 ${r2(x + r * Math.cos(t))},${r2(y - r * Math.sin(t))}`;
+};
+
+export const STATES = { cylinder, pcg, hbake, lbb, bolt, oring, galv, mmc, insul, vib, loose, shell, recov, plume, goodman, lift };

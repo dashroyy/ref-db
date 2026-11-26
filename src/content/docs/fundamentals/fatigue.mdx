@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 import Analogy from '../../../components/Analogy.astro';
 import FatigueStages from '../../../components/FatigueStages.astro';
 import FatigueCalc from '../../../components/FatigueCalc.astro';
+import GoodmanMean from '../../../components/GoodmanMean.astro';
 
 <div class="glance">
   <div><b>In one line</b>Fatigue is damage from repetition, not from magnitude. A part can pass all static checks and still crack at a fraction of the load that it survived on the first day.</div>
@@ -108,6 +109,8 @@ with an amplitude $\sigma_a$ and a mean $\sigma_m$ into an equivalent fully reve
 Usual practice gives **no credit for compressive mean stress**. **Residual stress acts as a mean stress.** Shot peening
 and rolling put the surface in compression and increase the life. Welding puts it in tension and decreases the life.
 See [Residual stress](../../materials/residual-stress/).
+
+<GoodmanMean />
 
 ## Variable loads: Miner's rule
 

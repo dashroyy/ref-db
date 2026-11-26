@@ -1,0 +1,74 @@
+---
+// Animation: the same nozzle at sea level (overexpanded), at its design altitude, above it (underexpanded), and at
+// sea level with a low chamber pressure, where the flow separates inside the cone. State: plume() in
+// src/lib/explainers.ts (schematic plume shapes).
+import Explainer from './Explainer.astro';
+import { PLUME, plume, attrs } from '../lib/explainers';
+
+const S = plume([1, 1, 1, 1]);
+const { xe, cy } = PLUME;
+const steps = [
+  {
+    ms: PLUME.ms[0],
+    html: '<b>At sea level, an altitude nozzle is overexpanded.</b> The gas leaves at a pressure below the ambient pressure, p<sub>e</sub> &lt; p<sub>a</sub>. The air pinches the plume, and shock diamonds form.',
+  },
+  {
+    ms: PLUME.ms[1],
+    html: '<b>Climb.</b> The ambient pressure falls. At the design altitude p<sub>e</sub> = p<sub>a</sub>, the plume leaves straight, and the nozzle gives the most thrust for that pressure.',
+  },
+  {
+    ms: PLUME.ms[2],
+    html: '<b>Above it, the nozzle is underexpanded,</b> p<sub>e</sub> &gt; p<sub>a</sub>. The plume opens out after the exit. A longer cone would give more thrust, for more mass and length.',
+  },
+  {
+    ms: PLUME.ms[3],
+    html: '<b>Sea level with a low chamber pressure</b> (ignition, tail-off, or an altitude nozzle tested at sea level). Below approximately 0.4 p<sub>a</sub> on the wall, the flow separates inside the cone. The separation is unsteady and not symmetrical, so it puts side loads on the cone.',
+  },
+];
+---
+
+<Explainer name="plume" title="Animation · overexpanded, underexpanded and separated flow" steps={steps}>
+  <svg viewBox="0 0 860 300" role="img" aria-labelledby="pl-desc">
+    <desc id="pl-desc">
+      A section through a nozzle with its plume. At sea level with a low chamber pressure, the flow leaves the wall of
+      the exit cone at different points on the two sides, the jet is narrow and pinched, and an arrow shows the side
+      load on the cone.
+    </desc>
+    <defs>
+      <linearGradient id="pl-gas" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="840" y2="0">
+        <stop offset="0" stop-color="var(--rd-hot)" stop-opacity="0.85"></stop>
+        <stop offset="0.36" stop-color="var(--rd-hot)" stop-opacity="0.5"></stop>
+        <stop offset="1" stop-color="var(--rd-hot)" stop-opacity="0.04"></stop>
+      </linearGradient>
+      <marker id="pl-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-accent)"></path>
+      </marker>
+    </defs>
+
+    <text data-k="stat" x="40" y="30" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    <text data-k="rLab" x="40" y="50" font-size="13" fill="var(--rd-ink)">{S.rLab.text}</text>
+    <text x="840" y="30" font-size="12" text-anchor="end" fill="var(--rd-muted)">ambient pressure</text>
+    <rect x="680" y="38" width="160" height="10" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="paBar" x="680" y="38" height="10" {...attrs(S.paBar)} fill="var(--rd-blue)"></rect>
+
+    <polygon data-k="gas" {...attrs(S.gas)} fill="url(#pl-gas)"></polygon>
+    {[0, 1, 2].map((i) => <polygon data-k={`dia${i}`} {...attrs(S[`dia${i}`])} fill="var(--rd-warn)" fill-opacity="0.35" stroke="var(--rd-warn)"></polygon>)}
+    <g fill="none" stroke="var(--rd-steel)" stroke-width="10" stroke-linejoin="round">
+      <polyline points="40,74 100,74 148,121 330,78"></polyline>
+      <polyline points="40,226 100,226 148,179 330,222"></polyline>
+    </g>
+    <line x1={xe} y1="60" x2={xe} y2="240" stroke="var(--rd-muted)" stroke-dasharray="4 4"></line>
+    <text x="60" y="64" font-size="12" fill="var(--rd-muted)">chamber</text>
+    <text x="150" y="218" font-size="12" text-anchor="middle" fill="var(--rd-muted)">throat</text>
+    <text x="236" y="92" font-size="12" text-anchor="middle" fill="var(--rd-muted)">exit cone</text>
+    <text x={xe + 6} y="66" font-size="12" fill="var(--rd-muted)">exit plane</text>
+    <text data-k="sepLab" x="40" y="284" font-size="12" fill="var(--rd-accent)" {...attrs(S.sepLab)}>separated inside the cone</text>
+    <line data-k="side" x1="290" x2="290" {...attrs(S.side)} stroke="var(--rd-accent)" stroke-width="3" marker-end="url(#pl-ah)"></line>
+    <text data-k="sideLab" x="282" font-size="12" text-anchor="end" fill="var(--rd-accent)" class="halo" {...attrs(S.sideLab)}>side load</text>
+    <text x="840" y={cy + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">plume</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic plume shapes. The ratio p<sub>e</sub>/p<sub>a</sub> is for this example only. The calculator on this
+    page gives the chamber pressure below which the flow separates.
+  </Fragment>
+</Explainer>

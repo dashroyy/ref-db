@@ -6,6 +6,7 @@ import { STATES, CYL, PCG, HBAKE, LBB, cylinder, pcg, hbake, lbb, lbDepth, lbHal
 import { BOLT, OR, GALV, bolt, oring, galv, boltForces, boltLoad, oringShape, oringLoad, polyArea, gamma, kappa, galvCurrent, galvCharge } from '../src/lib/explainers.ts';
 import { MMC, INS, VIB, mmc, insul, vib, mmcAt, insulModel, insulAt, insulLimit, charDepth, transmissibility, vibAt } from '../src/lib/explainers.ts';
 import { LOOSE, SHELL, REC, loose, shell, recov, looseAt, preloadLeft, knockdown, shellAt, recovery, recoveryTime, recAt } from '../src/lib/explainers.ts';
+import { PLUME, GOOD, LIFT, plume, goodman, lift, plumeAt, goodAt, goodmanAmp, liftAt } from '../src/lib/explainers.ts';
 
 const MS = {
   cylinder: CYL.ms,
@@ -21,6 +22,9 @@ const MS = {
   loose: LOOSE.ms,
   shell: SHELL.ms,
   recov: REC.ms,
+  plume: PLUME.ms,
+  goodman: GOOD.ms,
+  lift: LIFT.ms,
 };
 const FILES = {
   cylinder: 'CylinderSplit',
@@ -36,6 +40,9 @@ const FILES = {
   loose: 'LooseNut',
   shell: 'ShellBuckle',
   recov: 'SealRecovery',
+  plume: 'NozzlePlume',
+  goodman: 'GoodmanMean',
+  lift: 'LiftSlings',
 };
 const num = (v: string | number | undefined) => Number(v);
 
@@ -368,4 +375,54 @@ test('seal recovery: the worked-example points, and only the cold seal leaves a 
   assert.equal(num(lag.gasW.opacity), 0);
   const end = recov([1, 1, 1, 1]);
   assert.equal(num(end.mkC.opacity), 1);
+});
+
+test('nozzle: over, matched and underexpanded in turn, and separation only at low chamber pressure', () => {
+  assert.ok(plumeAt([1, 0, 0, 0]).R < 1);
+  assert.ok(Math.abs(plumeAt([1, 1, 0, 0]).R - 1) < 1e-12);
+  assert.ok(plumeAt([1, 1, 1, 0]).R > 1);
+  const sep = plume([1, 1, 1, 1]);
+  assert.equal(num(sep.sepLab.opacity), 1);
+  assert.equal(num(sep.side.opacity), 1);
+  const alt = plume([1, 1, 1, 0]);
+  assert.equal(num(alt.side.opacity), 0);
+  // shock diamonds only in an overexpanded plume
+  assert.ok(num(plume([1, 0, 0, 0]).dia0.opacity) > 0);
+  assert.equal(num(alt.dia0.opacity), 0);
+});
+
+test('Goodman: the point crosses the line where sa = Se (1 - sm / Sut), and peening brings it back', () => {
+  assert.ok(Math.abs(goodmanAmp(GOOD.sa, 0.4) - GOOD.se) < 1e-12, 'the crossing at a mean of 0.4 Sut');
+  assert.ok(goodAt([1, 0, 0, 0]).ok);
+  assert.ok(goodAt([1, 1, 0, 0]).ok);
+  assert.ok(!goodAt([1, 1, 1, 0]).ok);
+  const end = goodAt([1, 1, 1, 1]);
+  assert.ok(end.ok && Math.abs(end.sm - (0.45 - GOOD.res)) < 1e-12);
+  assert.equal(goodman([1, 1, 1, 0]).stat.text, 'Over the line: finite life');
+  assert.equal(num(goodman([1, 1, 1, 1]).peen.opacity), 1);
+});
+
+test('lifting: T = Q / sin β, the push is Q / tan β, and the motor tilts until the CG is below the hook', () => {
+  const cases: [number[], number][] = [
+    [[1, 0, 0, 0], 90],
+    [[1, 1, 0, 0], 60],
+    [[1, 1, 1, 0], 30],
+  ];
+  for (const [p, beta] of cases) {
+    const a = liftAt(p);
+    const b = (beta * Math.PI) / 180;
+    assert.ok(Math.abs(a.ang - beta) < 1e-9, `${a.ang} vs ${beta}`);
+    assert.ok(Math.abs(a.T - 1 / Math.sin(b)) < 1e-9);
+    assert.ok(Math.abs(a.push - Math.cos(b) / Math.sin(b)) < 1e-9);
+  }
+  const tilt = liftAt([1, 1, 1, 1]);
+  const dy = LIFT.ly + 28 - tilt.hookY;
+  assert.ok(Math.abs(tilt.tilt - (Math.atan2(LIFT.cgShift, dy) * 180) / Math.PI) < 1e-9);
+  // rotated about the hook by the tilt, the centre of gravity is directly below the hook
+  const t = (tilt.tilt * Math.PI) / 180;
+  const cx = LIFT.cgShift * Math.cos(t) - dy * Math.sin(t);
+  assert.ok(Math.abs(cx) < 1e-9);
+  assert.equal(num(lift([1, 0, 0, 0]).beam.opacity), 1);
+  assert.equal(num(lift([1, 1, 1, 1]).beam.opacity), 0);
+  assert.equal(lift([1, 1, 1, 0]).tLab.text, 'leg tension T = 2.00 Q');
 });

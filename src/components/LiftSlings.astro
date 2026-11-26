@@ -1,0 +1,88 @@
+---
+// Animation: lifting a motor with a spreader beam, then with slings at 60° and 30°, then with the centre of gravity
+// aft of the middle, so that the motor tilts. State: lift() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { LIFT, lift, attrs } from '../lib/explainers';
+
+const S = lift([1, 1, 1, 1]);
+const { lx, ly, hookX, beamY, motor: m } = LIFT;
+const cgIcon = 'M0,0 L8,0 A8,8 0 0 1 0,8 Z M0,0 L-8,0 A8,8 0 0 1 0,-8 Z';
+const steps = [
+  {
+    ms: LIFT.ms[0],
+    html: '<b>A spreader beam keeps the legs vertical.</b> Each leg carries the load at its lift point, Q, and nothing pushes the two lift points together.',
+  },
+  {
+    ms: LIFT.ms[1],
+    html: '<b>Remove the spreader.</b> The legs now meet at the hook, at an angle β from the horizontal. At 60°, each leg carries Q/sin β = 1.15 Q, and the slings push the lift points together with Q/tan β = 0.58 Q.',
+  },
+  {
+    ms: LIFT.ms[2],
+    html: '<b>A flatter angle costs more.</b> At 30°, each leg carries 2 Q and the push is 1.7 Q. The case and the skirts get a compression that a vertical lift never gives them.',
+  },
+  {
+    ms: LIFT.ms[3],
+    html: '<b>The hook must be above the centre of gravity.</b> Here the centre of gravity is aft of the middle, so the motor tilts in the slings until it is below the hook.',
+  },
+];
+---
+
+<Explainer name="lift" title="Animation · sling angles, and the hook above the centre of gravity" steps={steps}>
+  <svg viewBox="0 0 860 340" role="img" aria-labelledby="lf-desc">
+    <desc id="lf-desc">
+      A motor hangs from a hook on two slings at 30° from the horizontal. Its centre of gravity is aft of the middle, so
+      the motor has tilted until the centre of gravity is below the hook. Bars show that each leg carries two times the
+      load at its lift point, and that the slings push the lift points together with 1.7 times that load.
+    </desc>
+
+    <text data-k="stat" x="40" y="30" font-size="13" fill="var(--rd-accent)">{S.stat.text}</text>
+    <text data-k="aLab" x="40" y="50" font-size="13" fill="var(--rd-ink)">{S.aLab.text}</text>
+    <text data-k="tiltLab" x="40" y="70" font-size="13" fill="var(--rd-accent)" {...attrs(S.tiltLab)}>{S.tiltLab.text}</text>
+
+    <g data-k="beam" {...attrs(S.beam)}>
+      <line x1={hookX} y1={beamY} x2={hookX} y2="64" stroke="var(--rd-ink)" stroke-width="2.5"></line>
+      <rect x={lx[0] - 20} y={beamY - 6} width={lx[1] - lx[0] + 40} height="10" fill="var(--rd-ink)" fill-opacity="0.8"></rect>
+      <text x={lx[1] + 26} y={beamY + 3} font-size="12" fill="var(--rd-ink)">spreader beam</text>
+    </g>
+    <g data-k="rig" {...attrs(S.rig)}>
+      <rect x={m.x0} y={m.y0} width={m.x1 - m.x0} height={m.y1 - m.y0} rx="26" fill="var(--rd-steel)" fill-opacity="0.55" stroke="var(--rd-steel)"></rect>
+      <line data-k="legL" x1={lx[0]} y1={ly} {...attrs(S.legL)} stroke="var(--rd-ink)" stroke-width="2.5"></line>
+      <line data-k="legR" x1={lx[1]} y1={ly} {...attrs(S.legR)} stroke="var(--rd-ink)" stroke-width="2.5"></line>
+      {lx.map((x) => <circle cx={x} cy={ly} r="5" fill="var(--rd-ink)"></circle>)}
+      <path data-k="arc" {...attrs(S.arc)} fill="none" stroke="var(--rd-accent)" stroke-width="1.8"></path>
+      <text data-k="betaLab" font-size="13" fill="var(--rd-accent)" class="halo" {...attrs(S.betaLab)}>β</text>
+      <g data-k="cgMark" {...attrs(S.cgMark)}>
+        <circle r="8" fill="var(--rd-panel)" stroke="var(--rd-ink)" stroke-width="1.5"></circle>
+        <path d={cgIcon} fill="var(--rd-ink)"></path>
+        <text x="12" y="-10" font-size="12" fill="var(--rd-ink)" class="halo">CG</text>
+      </g>
+      <text x={m.x0 + 30} y={m.y0 + 33} font-size="12" fill="var(--rd-ink)" class="halo">forward</text>
+      <text x={m.x1 - 30} y={m.y0 + 33} font-size="12" text-anchor="end" fill="var(--rd-ink)" class="halo">aft</text>
+    </g>
+    <g data-k="hook" {...attrs(S.hook)}>
+      <rect x="-7" y="-40" width="14" height="16" fill="var(--rd-ink)" fill-opacity="0.8"></rect>
+      <path d="M0,-24 V-4 A8,8 0 1 1 -8,4" fill="none" stroke="var(--rd-ink)" stroke-width="3"></path>
+      <text x="14" y="-26" font-size="12" fill="var(--rd-ink)">hook</text>
+    </g>
+
+    <line x1="550" y1="12" x2="550" y2="312" stroke="var(--rd-line)"></line>
+
+    <!-- right: the loads at each lift point -->
+    <text x="580" y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">AT EACH LIFT POINT</text>
+    <text data-k="tLab" x="580" y="110" font-size="13" fill="var(--rd-ink)">{S.tLab.text}</text>
+    <rect x="580" y="118" width="220" height="12" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="tBar" x="580" y="118" height="12" {...attrs(S.tBar)} fill="var(--rd-accent)"></rect>
+    <text data-k="pLab" x="580" y="166" font-size="13" fill="var(--rd-ink)">{S.pLab.text}</text>
+    <rect x="580" y="174" width="220" height="12" fill="var(--rd-panel2)" stroke="var(--rd-line)"></rect>
+    <rect data-k="pBar" x="580" y="174" height="12" {...attrs(S.pBar)} fill="var(--rd-blue)"></rect>
+    <line x1="680" y1="114" x2="680" y2="134" stroke="var(--rd-ink)" stroke-width="1.5"></line>
+    <line x1="680" y1="170" x2="680" y2="190" stroke="var(--rd-ink)" stroke-width="1.5"></line>
+    <text x="680" y="210" font-size="12" text-anchor="middle" fill="var(--rd-muted)">1 Q</text>
+    <text x="580" y="250" font-size="12" fill="var(--rd-muted)">Q: the load at one lift point</text>
+    <text x="580" y="268" font-size="12" fill="var(--rd-muted)">(half the weight for two points)</text>
+  </svg>
+  <Fragment slot="caption">
+    Schematic. The dynamic factor for the crane and the lift comes from your lifting standard, and it multiplies all of
+    these loads.
+  </Fragment>
+</Explainer>

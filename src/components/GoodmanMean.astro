@@ -1,0 +1,84 @@
+---
+// Animation: one load cycle with an increasing tensile mean stress, as a stress-time trace and as a point on the
+// Goodman diagram; shot peening moves it back. State: goodman() in src/lib/explainers.ts.
+import Explainer from './Explainer.astro';
+import { GOOD, goodman, goodPlot, attrs } from '../lib/explainers';
+
+const S = goodman([1, 1, 1, 1]);
+const { X, Y } = goodPlot;
+const { trace: tr, dia, se, sa } = GOOD;
+const safe = `${X(0)},${Y(0)} ${X(0)},${Y(se)} ${X(1)},${Y(0)}`;
+const steps = [
+  {
+    ms: GOOD.ms[0],
+    html: '<b>A fully reversed cycle.</b> The mean stress is zero and the amplitude σ<sub>a</sub> is below the endurance limit S<sub>e</sub>. The point is inside the Goodman line.',
+  },
+  {
+    ms: GOOD.ms[1],
+    html: '<b>Add a tensile mean stress</b> at the same amplitude. The point moves toward the line. The permitted amplitude decreases as S<sub>e</sub>(1 − σ<sub>m</sub>/S<sub>ut</sub>).',
+  },
+  {
+    ms: GOOD.ms[2],
+    html: '<b>More mean stress takes the point over the line.</b> The same amplitude that was safe at zero mean now gives a finite life.',
+  },
+  {
+    ms: GOOD.ms[3],
+    html: '<b>Shot peening puts the surface in compression.</b> The residual stress acts as a mean stress, so the point moves back inside the line. S<sub>e</sub> = 0.5 S<sub>ut</sub> here, for this example only.',
+  },
+];
+---
+
+<Explainer name="goodman" title="Animation · mean stress and the Goodman line" steps={steps}>
+  <svg viewBox="0 0 860 300" role="img" aria-labelledby="gm-desc">
+    <desc id="gm-desc">
+      Left: a stress cycle against time, with its mean stress and its amplitude. Right: the Goodman diagram, amplitude
+      against mean stress, with the straight Goodman line from the endurance limit to the ultimate strength. The point of
+      the cycle is inside the line after shot peening has lowered the mean stress.
+    </desc>
+    <defs>
+      <marker id="gm-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="var(--rd-ok)"></path>
+      </marker>
+    </defs>
+
+    <!-- left: stress against time -->
+    <text x={tr.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">STRESS AGAINST TIME</text>
+    <text data-k="stat" x={tr.x0} y="50" font-size="13" {...attrs(S.stat)}>{S.stat.text}</text>
+    <line x1={tr.x0} y1="66" x2={tr.x0} y2="252" stroke="var(--rd-muted)"></line>
+    <line x1={tr.x0} y1={tr.y0} x2={tr.x1} y2={tr.y0} stroke="var(--rd-muted)"></line>
+    <text x={tr.x0 - 6} y={tr.y0 + 4} font-size="12" text-anchor="end" fill="var(--rd-muted)">0</text>
+    <text x={tr.x1} y={tr.y0 + 16} font-size="12" text-anchor="end" fill="var(--rd-muted)">time</text>
+    <line data-k="hi" x1={tr.x0} x2={tr.x1} {...attrs(S.hi)} stroke="var(--rd-muted)" stroke-dasharray="3 4"></line>
+    <line data-k="lo" x1={tr.x0} x2={tr.x1} {...attrs(S.lo)} stroke="var(--rd-muted)" stroke-dasharray="3 4"></line>
+    <line data-k="mean" x1={tr.x0} x2={tr.x1} {...attrs(S.mean)} stroke="var(--rd-ink)" stroke-dasharray="7 4"></line>
+    <text data-k="meanLab" x={tr.x1 + 6} font-size="13" fill="var(--rd-ink)" {...attrs(S.meanLab)}>σm</text>
+    <polyline data-k="wave" {...attrs(S.wave)} fill="none" stroke-width="2.5" stroke-linejoin="round"></polyline>
+    <text data-k="vals" x={tr.x0} y="272" font-size="13" fill="var(--rd-ink)">{S.vals.text}</text>
+    <text data-k="eq" x={tr.x0} y="292" font-size="13" {...attrs(S.eq)}>{S.eq.text}</text>
+
+    <line x1="450" y1="12" x2="450" y2="296" stroke="var(--rd-line)"></line>
+
+    <!-- right: the Goodman diagram -->
+    <text x={dia.x0} y="30" font-size="13" fill="var(--rd-muted)" letter-spacing="1">GOODMAN DIAGRAM</text>
+    <polygon points={safe} fill="var(--rd-ok)" fill-opacity="0.07"></polygon>
+    <line x1={dia.x0} y1={dia.y0} x2="836" y2={dia.y0} stroke="var(--rd-muted)"></line>
+    <line x1={dia.x0} y1={dia.y0} x2={dia.x0} y2={dia.y1 - 4} stroke="var(--rd-muted)"></line>
+    <text x={dia.x0 + 6} y={dia.y1 - 4} font-size="12" fill="var(--rd-muted)">amplitude σa</text>
+    <text x={X(0.5)} y={dia.y0 + 24} font-size="12" text-anchor="middle" fill="var(--rd-muted)">mean stress σm</text>
+    <line x1={X(0)} y1={Y(se)} x2={X(1)} y2={Y(0)} stroke="var(--rd-ink)" stroke-width="2"></line>
+    <text x={dia.x0 - 6} y={Y(se) + 4} font-size="12" text-anchor="end" fill="var(--rd-ink)">Se</text>
+    <text x={X(1)} y={dia.y0 + 14} font-size="12" text-anchor="middle" fill="var(--rd-ink)">Sut</text>
+    <text x={X(0.6) + 8} y={Y(0.2) - 8} font-size="13" fill="var(--rd-ink)">Goodman line</text>
+    <text x={X(0.04)} y={Y(0.05)} font-size="12" fill="var(--rd-ok)">inside the line</text>
+    <line data-k="trail" x1={X(0)} y1={Y(sa)} y2={Y(sa)} {...attrs(S.trail)} stroke="var(--rd-muted)" stroke-dasharray="3 4"></line>
+    <g data-k="peen" {...attrs(S.peen)}>
+      <line x1={X(0.45) - 4} y1={Y(sa) - 14} x2={X(0.25) + 6} y2={Y(sa) - 14} stroke="var(--rd-ok)" stroke-width="2.5" marker-end="url(#gm-ah)"></line>
+      <text x={X(0.25) - 8} y={Y(sa) - 22} font-size="12" text-anchor="end" fill="var(--rd-ok)">peening</text>
+    </g>
+    <circle data-k="pt" r="7" {...attrs(S.pt)} stroke="var(--rd-panel)" stroke-width="1.5"></circle>
+  </svg>
+  <Fragment slot="caption">
+    The stresses are in units of the ultimate strength S<sub>ut</sub>. Gerber and Soderberg give other lines; the table
+    above compares them. Usual practice gives no credit for a compressive mean stress.
+  </Fragment>
+</Explainer>
